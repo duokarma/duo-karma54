@@ -6,7 +6,7 @@ export const clientGrowth = [];
 
 export const leadConversion = [];
 
-export const expenseBreakdown: { label: string; value: number }[] = [];
+export const expenseBreakdown: { label: string; value: number; color: string }[] = [];
 
 export const team: TeamMember[] = [];
 
