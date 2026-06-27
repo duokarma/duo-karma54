@@ -1,0 +1,236 @@
+@import "tailwindcss";
+
+@theme {
+  /* Surface tokens */
+  --color-void: #08090b;
+  --color-graphite: #13151a;
+  --color-graphite-soft: #181a21;
+  --color-charcoal: #1c1f26;
+  --color-charcoal-soft: #21242c;
+  --color-edge: #2a2d36;
+
+  /* Light mode surfaces */
+  --color-pearl: #f7f7f5;
+  --color-pearl-soft: #ffffff;
+  --color-mist: #ececea;
+  --color-fog: #e2e2df;
+
+  /* Accent system */
+  --color-electric: #3b82f6;
+  --color-electric-deep: #2563eb;
+  --color-indigo: #6366f1;
+  --color-violet: #a855f7;
+  --color-cyan: #22d3ee;
+  --color-amber: #f5a524;
+  --color-emerald: #2dd4a4;
+  --color-rose: #fb5374;
+
+  /* Text */
+  --color-ink: #f4f5f7;
+  --color-ink-dim: #9a9ea8;
+  --color-ink-faint: #5d6170;
+  --color-ink-dark: #0f1115;
+  --color-ink-dark-dim: #5b5e66;
+
+  /* Fonts */
+  --font-display: "Geist Variable", "Inter", system-ui, sans-serif;
+  --font-body: "Inter", system-ui, sans-serif;
+  --font-mono: "Geist Mono Variable", "JetBrains Mono", monospace;
+
+  /* Radii */
+  --radius-panel: 1.25rem;
+  --radius-card: 1rem;
+  --radius-control: 0.625rem;
+
+  /* Shadows */
+  --shadow-glow-blue: 0 0 40px -8px rgba(59, 130, 246, 0.45);
+  --shadow-glow-violet: 0 0 40px -8px rgba(168, 85, 247, 0.4);
+  --shadow-panel: 0 8px 32px -8px rgba(0, 0, 0, 0.55), 0 1px 0 0 rgba(255, 255, 255, 0.04) inset;
+}
+
+@layer base {
+  * {
+    border-color: var(--color-edge);
+  }
+
+  html {
+    color-scheme: dark;
+  }
+
+  html.light {
+    color-scheme: light;
+
+    /* Re-point every surface/text/border token to its light-mode value.
+       Because Tailwind v4 utilities (bg-graphite, text-ink, border-edge, etc.)
+       compile down to `var(--color-*)`, redefining the variables here is enough
+       to flip every utility across the app without touching component code. */
+    --color-void: var(--color-pearl);
+    --color-graphite: #ffffff;
+    --color-graphite-soft: #fbfbfa;
+    --color-charcoal: var(--color-mist);
+    --color-charcoal-soft: #e6e6e3;
+    --color-edge: #ddddd9;
+
+    --color-ink: var(--color-ink-dark);
+    --color-ink-dim: #4b4e57;
+    --color-ink-faint: #80838c;
+    --color-ink-dark-dim: #80838c;
+  }
+
+  body {
+    background-color: var(--color-void);
+    color: var(--color-ink);
+    font-family: var(--font-body);
+    -webkit-font-smoothing: antialiased;
+    overflow-x: hidden;
+  }
+
+  ::selection {
+    background-color: rgba(59, 130, 246, 0.3);
+  }
+
+  ::-webkit-scrollbar {
+    width: 8px;
+    height: 8px;
+  }
+  ::-webkit-scrollbar-track {
+    background: transparent;
+  }
+  ::-webkit-scrollbar-thumb {
+    background: rgba(255, 255, 255, 0.12);
+    border-radius: 8px;
+  }
+  ::-webkit-scrollbar-thumb:hover {
+    background: rgba(255, 255, 255, 0.2);
+  }
+
+  :focus-visible {
+    outline: 2px solid var(--color-electric);
+    outline-offset: 2px;
+    border-radius: 4px;
+  }
+
+  @media (prefers-reduced-motion: reduce) {
+    *,
+    *::before,
+    *::after {
+      animation-duration: 0.001ms !important;
+      animation-iteration-count: 1 !important;
+      transition-duration: 0.001ms !important;
+      scroll-behavior: auto !important;
+    }
+  }
+}
+
+@layer utilities {
+  @keyframes dialog-in {
+    from {
+      opacity: 0;
+      transform: translate(-50%, -50%) scale(0.95);
+    }
+    to {
+      opacity: 1;
+      transform: translate(-50%, -50%) scale(1);
+    }
+  }
+  @keyframes overlay-in {
+    from {
+      opacity: 0;
+    }
+    to {
+      opacity: 1;
+    }
+  }
+
+  @keyframes drawer-in-right {
+    from {
+      opacity: 0;
+      transform: translateX(24px);
+    }
+    to {
+      opacity: 1;
+      transform: translateX(0);
+    }
+  }
+  @keyframes drawer-in-left {
+    from {
+      opacity: 0;
+      transform: translateX(-24px);
+    }
+    to {
+      opacity: 1;
+      transform: translateX(0);
+    }
+  }
+  @keyframes shimmer {
+    0% {
+      background-position: 200% 0;
+    }
+    100% {
+      background-position: -200% 0;
+    }
+  }
+
+  .drawer-in-right {
+    animation: drawer-in-right 0.22s ease-out;
+  }
+  .drawer-in-left {
+    animation: drawer-in-left 0.22s ease-out;
+  }
+
+  [data-state="open"].dialog-content-anim {
+    animation: dialog-in 0.18s ease-out;
+  }
+  [data-state="open"].overlay-anim {
+    animation: overlay-in 0.18s ease-out;
+  }
+
+  .glass-panel {
+    background: rgba(19, 21, 26, 0.6);
+    backdrop-filter: blur(20px) saturate(140%);
+    -webkit-backdrop-filter: blur(20px) saturate(140%);
+    border: 1px solid rgba(255, 255, 255, 0.07);
+  }
+
+  html.light .glass-panel {
+    background: rgba(255, 255, 255, 0.65);
+    border: 1px solid rgba(0, 0, 0, 0.06);
+  }
+
+  .glass-panel-strong {
+    background: rgba(28, 31, 38, 0.78);
+    backdrop-filter: blur(24px) saturate(150%);
+    -webkit-backdrop-filter: blur(24px) saturate(150%);
+    border: 1px solid rgba(255, 255, 255, 0.08);
+  }
+
+  html.light .glass-panel-strong {
+    background: rgba(255, 255, 255, 0.82);
+    border: 1px solid rgba(0, 0, 0, 0.07);
+  }
+
+  .text-gradient-brand {
+    background: linear-gradient(115deg, #3b82f6 0%, #6366f1 45%, #a855f7 100%);
+    -webkit-background-clip: text;
+    background-clip: text;
+    color: transparent;
+  }
+
+  .tabular {
+    font-family: var(--font-mono);
+    font-feature-settings: "tnum" 1;
+  }
+
+  .noise-overlay {
+    position: relative;
+  }
+
+  .noise-overlay::after {
+    content: "";
+    position: absolute;
+    inset: 0;
+    opacity: 0.025;
+    pointer-events: none;
+    background-image: url("data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' width='100' height='100'%3E%3Cfilter id='n'%3E%3CfeTurbulence type='fractalNoise' baseFrequency='0.9' numOctaves='2' stitchTiles='stitch'/%3E%3C/filter%3E%3Crect width='100%25' height='100%25' filter='url(%23n)'/%3E%3C/svg%3E");
+  }
+}
