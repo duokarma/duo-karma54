@@ -25,7 +25,7 @@ export function Sidebar() {
         animate={{ width: collapsed ? 84 : 260 }}
         transition={{ type: "spring", stiffness: 320, damping: 32 }}
         className={cn(
-          "fixed left-3 top-3 bottom-3 z-50 flex flex-col rounded-[var(--radius-panel)] glass-panel-strong shadow-[var(--shadow-panel)]",
+          "fixed left-3 top-3 bottom-3 z-50 flex flex-col rounded-[var(--radius-panel)] bg-black/20 backdrop-blur-3xl border border-white/[0.08] shadow-[0_8px_32px_0_rgba(0,0,0,0.6)]",
           "lg:translate-x-0 transition-transform duration-300",
           mobileOpen ? "translate-x-0" : "-translate-x-[120%] lg:translate-x-0"
         )}
