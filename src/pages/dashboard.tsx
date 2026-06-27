@@ -24,9 +24,10 @@ import { FinancialsAreaChart } from "@/components/charts/financials-area-chart";
 import { ExpensesBarChart } from "@/components/charts/expenses-bar-chart";
 import { ProfitLineChart } from "@/components/charts/profit-line-chart";
 import { monthlyFinancials, activities } from "@/data/misc";
-import { clients } from "@/data/clients";
-import { projects } from "@/data/projects";
 import { Link } from "react-router-dom";
+import { useQuery } from "@tanstack/react-query";
+import { supabase } from "@/lib/supabase";
+import type { Client, Project } from "@/types";
 
 const typeIcon = {
   payment: CreditCard,
@@ -46,6 +47,22 @@ function timeAgo(timestamp: string): string {
 }
 
 export function DashboardPage() {
+  const { data: projects = [] } = useQuery({
+    queryKey: ["projects"],
+    queryFn: async () => {
+      const { data } = await supabase.from("projects").select("*");
+      return (data || []) as Project[];
+    },
+  });
+
+  const { data: clients = [] } = useQuery({
+    queryKey: ["clients"],
+    queryFn: async () => {
+      const { data } = await supabase.from("clients").select("*");
+      return (data || []) as Client[];
+    },
+  });
+
   const activeProjects = projects.filter((p) => p.status === "in-progress").slice(0, 4);
   const recentClients = [...clients].sort((a, b) => b.joinedDate.localeCompare(a.joinedDate)).slice(0, 4);
 

@@ -22,7 +22,8 @@ import {
   DialogDescription,
   DialogFooter,
 } from "@/components/ui/dialog";
-import { invoices } from "@/data/invoices";
+import { useQuery } from "@tanstack/react-query";
+import { supabase } from "@/lib/supabase";
 import { formatCurrency } from "@/lib/utils";
 import type { Invoice } from "@/types";
 
@@ -30,6 +31,15 @@ export function InvoicesPage() {
   const [query, setQuery] = useState("");
   const [statusFilter, setStatusFilter] = useState("all");
   const [createOpen, setCreateOpen] = useState(false);
+
+  const { data: invoices = [], isLoading } = useQuery({
+    queryKey: ["invoices"],
+    queryFn: async () => {
+      const { data, error } = await supabase.from("invoices").select("*");
+      if (error) throw error;
+      return data as Invoice[];
+    },
+  });
 
   const filtered = useMemo(() => {
     return invoices.filter((inv) => {
@@ -132,7 +142,11 @@ export function InvoicesPage() {
         </Select>
       </div>
 
-      {filtered.length === 0 ? (
+      {isLoading ? (
+        <Card>
+          <div className="p-8 text-center text-ink-dim">Loading invoices...</div>
+        </Card>
+      ) : filtered.length === 0 ? (
         <Card>
           <EmptyState
             icon={FileText}

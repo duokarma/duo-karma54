@@ -5,7 +5,8 @@ import { Button } from "@/components/ui/button";
 import { Card } from "@/components/ui/card";
 import { Avatar } from "@/components/shared/avatar";
 import { Badge } from "@/components/ui/badge";
-import { tasks } from "@/data/tasks";
+import { useQuery } from "@tanstack/react-query";
+import { supabase } from "@/lib/supabase";
 import { cn } from "@/lib/utils";
 import type { Task } from "@/types";
 
@@ -48,6 +49,15 @@ function TaskCard({ task, index }: { task: Task; index: number }) {
 }
 
 export function TasksPage() {
+  const { data: tasks = [], isLoading } = useQuery({
+    queryKey: ["tasks"],
+    queryFn: async () => {
+      const { data, error } = await supabase.from("tasks").select("*");
+      if (error) throw error;
+      return data as Task[];
+    },
+  });
+
   return (
     <div>
       <PageHeader
@@ -60,7 +70,12 @@ export function TasksPage() {
         }
       />
 
-      <div className="grid grid-cols-1 gap-4 sm:grid-cols-2 lg:grid-cols-4">
+      {isLoading ? (
+        <Card>
+          <div className="p-8 text-center text-ink-dim">Loading tasks...</div>
+        </Card>
+      ) : (
+        <div className="grid grid-cols-1 gap-4 sm:grid-cols-2 lg:grid-cols-4">
         {columns.map((col) => {
           const colTasks = tasks.filter((t) => t.status === col.key);
           return (
@@ -82,7 +97,8 @@ export function TasksPage() {
             </div>
           );
         })}
-      </div>
+        </div>
+      )}
     </div>
   );
 }

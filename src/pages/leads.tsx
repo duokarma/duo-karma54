@@ -7,7 +7,8 @@ import { Card } from "@/components/ui/card";
 import { Avatar } from "@/components/shared/avatar";
 import { Badge } from "@/components/ui/badge";
 import { EmptyState } from "@/components/shared/empty-state";
-import { leads } from "@/data/leads";
+import { useQuery } from "@tanstack/react-query";
+import { supabase } from "@/lib/supabase";
 import { formatCurrency } from "@/lib/utils";
 import type { Lead } from "@/types";
 
@@ -51,6 +52,14 @@ function LeadCard({ lead, index }: { lead: Lead; index: number }) {
 
 export function LeadsPage() {
   const [showLost, setShowLost] = useState(false);
+  const { data: leads = [], isLoading } = useQuery({
+    queryKey: ["leads"],
+    queryFn: async () => {
+      const { data, error } = await supabase.from("leads").select("*");
+      if (error) throw error;
+      return data as Lead[];
+    },
+  });
   const totalPipelineValue = leads
     .filter((l) => l.stage !== "lost" && l.stage !== "won")
     .reduce((sum, l) => sum + l.value, 0);
@@ -72,7 +81,12 @@ export function LeadsPage() {
         }
       />
 
-      <div className="grid grid-cols-1 gap-4 sm:grid-cols-2 lg:grid-cols-5">
+      {isLoading ? (
+        <Card>
+          <div className="p-8 text-center text-ink-dim">Loading leads...</div>
+        </Card>
+      ) : (
+        <div className="grid grid-cols-1 gap-4 sm:grid-cols-2 lg:grid-cols-5">
         {stages.map((stage) => {
           const stageLeads = leads.filter((l) => l.stage === stage.key);
           return (
@@ -112,7 +126,6 @@ export function LeadsPage() {
                 ))}
             </div>
           )}
-        </div>
       )}
     </div>
   );

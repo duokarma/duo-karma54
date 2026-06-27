@@ -22,7 +22,8 @@ import {
   DrawerDescription,
 } from "@/components/ui/drawer";
 import { Card, CardContent } from "@/components/ui/card";
-import { clients } from "@/data/clients";
+import { useQuery } from "@tanstack/react-query";
+import { supabase } from "@/lib/supabase";
 import { formatCurrency } from "@/lib/utils";
 import type { Client } from "@/types";
 
@@ -31,6 +32,15 @@ export function ClientsPage() {
   const [statusFilter, setStatusFilter] = useState<string>("all");
   const [addOpen, setAddOpen] = useState(false);
   const [selected, setSelected] = useState<Client | null>(null);
+
+  const { data: clients = [], isLoading } = useQuery({
+    queryKey: ["clients"],
+    queryFn: async () => {
+      const { data, error } = await supabase.from("clients").select("*");
+      if (error) throw error;
+      return data as Client[];
+    },
+  });
 
   const filtered = useMemo(() => {
     return clients.filter((c) => {
@@ -126,7 +136,11 @@ export function ClientsPage() {
         </Select>
       </div>
 
-      {filtered.length === 0 ? (
+      {isLoading ? (
+        <Card>
+          <div className="p-8 text-center text-ink-dim">Loading clients...</div>
+        </Card>
+      ) : filtered.length === 0 ? (
         <Card>
           <EmptyState
             icon={Users}

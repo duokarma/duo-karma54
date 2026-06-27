@@ -1,6 +1,6 @@
 import { NavLink } from "react-router-dom";
 import { motion } from "framer-motion";
-import { ChevronsLeft, Search, Sparkle } from "lucide-react";
+import { ChevronsLeft, Search } from "lucide-react";
 import { cn } from "@/lib/utils";
 import { navGroups, navItems } from "@/lib/nav-config";
 import { useSidebar } from "@/hooks/use-sidebar";

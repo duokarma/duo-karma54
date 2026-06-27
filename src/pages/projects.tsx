@@ -16,7 +16,9 @@ import {
   SelectTrigger,
   SelectValue,
 } from "@/components/ui/select";
-import { projects } from "@/data/projects";
+import { useQuery } from "@tanstack/react-query";
+import { supabase } from "@/lib/supabase";
+import type { Project } from "@/types";
 import { formatCurrency, cn } from "@/lib/utils";
 
 const priorityDot: Record<string, string> = {
@@ -29,6 +31,15 @@ const priorityDot: Record<string, string> = {
 export function ProjectsPage() {
   const [query, setQuery] = useState("");
   const [statusFilter, setStatusFilter] = useState("all");
+
+  const { data: projects = [], isLoading } = useQuery({
+    queryKey: ["projects"],
+    queryFn: async () => {
+      const { data, error } = await supabase.from("projects").select("*");
+      if (error) throw error;
+      return data as Project[];
+    },
+  });
 
   const filtered = useMemo(() => {
     return projects.filter((p) => {
@@ -71,7 +82,11 @@ export function ProjectsPage() {
         </Select>
       </div>
 
-      {filtered.length === 0 ? (
+      {isLoading ? (
+        <Card>
+          <div className="p-8 text-center text-ink-dim">Loading projects...</div>
+        </Card>
+      ) : filtered.length === 0 ? (
         <Card>
           <EmptyState
             icon={FolderKanban}

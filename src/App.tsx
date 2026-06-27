@@ -1,4 +1,5 @@
 import { BrowserRouter, Routes, Route } from "react-router-dom";
+import { QueryClient, QueryClientProvider } from "@tanstack/react-query";
 import { Suspense, lazy, useEffect } from "react";
 import { ThemeProvider } from "@/hooks/use-theme";
 import { SidebarProvider } from "@/hooks/use-sidebar";
@@ -42,10 +43,13 @@ function usePrefetchCrystalScene() {
   }, []);
 }
 
+const queryClient = new QueryClient();
+
 function App() {
   usePrefetchCrystalScene();
 
   return (
+    <QueryClientProvider client={queryClient}>
     <ThemeProvider>
       <TooltipProvider>
         <ToastProvider>
@@ -80,6 +84,7 @@ function App() {
         </ToastProvider>
       </TooltipProvider>
     </ThemeProvider>
+    </QueryClientProvider>
   );
 }
 
