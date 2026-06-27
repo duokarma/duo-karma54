@@ -86,46 +86,50 @@ export function LeadsPage() {
           <div className="p-8 text-center text-ink-dim">Loading leads...</div>
         </Card>
       ) : (
-        <div className="grid grid-cols-1 gap-4 sm:grid-cols-2 lg:grid-cols-5">
-        {stages.map((stage) => {
-          const stageLeads = leads.filter((l) => l.stage === stage.key);
-          return (
-            <div key={stage.key}>
-              <div className="mb-3 flex items-center gap-2">
-                <span className={`h-2 w-2 rounded-full ${stage.color}`} />
-                <p className="text-xs font-semibold uppercase tracking-wider text-ink-faint">{stage.label}</p>
-                <span className="ml-auto text-xs text-ink-faint tabular">{stageLeads.length}</span>
-              </div>
-              <div className="space-y-3">
-                {stageLeads.length === 0 ? (
-                  <div className="rounded-[var(--radius-card)] border border-dashed border-edge p-6 text-center text-xs text-ink-faint">
-                    No leads
+        <>
+          <div className="grid grid-cols-1 gap-4 sm:grid-cols-2 lg:grid-cols-5">
+            {stages.map((stage) => {
+              const stageLeads = leads.filter((l) => l.stage === stage.key);
+              return (
+                <div key={stage.key}>
+                  <div className="mb-3 flex items-center gap-2">
+                    <span className={`h-2 w-2 rounded-full ${stage.color}`} />
+                    <p className="text-xs font-semibold uppercase tracking-wider text-ink-faint">{stage.label}</p>
+                    <span className="ml-auto text-xs text-ink-faint tabular">{stageLeads.length}</span>
                   </div>
-                ) : (
-                  stageLeads.map((lead, i) => <LeadCard key={lead.id} lead={lead} index={i} />)
-                )}
-              </div>
-            </div>
-          );
-        })}
-      </div>
+                  <div className="space-y-3">
+                    {stageLeads.length === 0 ? (
+                      <div className="rounded-[var(--radius-card)] border border-dashed border-edge p-6 text-center text-xs text-ink-faint">
+                        No leads
+                      </div>
+                    ) : (
+                      stageLeads.map((lead, i) => <LeadCard key={lead.id} lead={lead} index={i} />)
+                    )}
+                  </div>
+                </div>
+              );
+            })}
+          </div>
 
-      {showLost && (
-        <div className="mt-8">
-          <p className="mb-3 text-xs font-semibold uppercase tracking-wider text-ink-faint">Lost Leads</p>
-          {leads.filter((l) => l.stage === "lost").length === 0 ? (
-            <Card>
-              <EmptyState icon={Target} title="No lost leads" description="All leads are still active or won." />
-            </Card>
-          ) : (
-            <div className="grid grid-cols-1 gap-3 sm:grid-cols-2 lg:grid-cols-4">
-              {leads
-                .filter((l) => l.stage === "lost")
-                .map((lead, i) => (
-                  <LeadCard key={lead.id} lead={lead} index={i} />
-                ))}
+          {showLost && (
+            <div className="mt-8">
+              <p className="mb-3 text-xs font-semibold uppercase tracking-wider text-ink-faint">Lost Leads</p>
+              {leads.filter((l) => l.stage === "lost").length === 0 ? (
+                <Card>
+                  <EmptyState icon={Target} title="No lost leads" description="All leads are still active or won." />
+                </Card>
+              ) : (
+                <div className="grid grid-cols-1 gap-3 sm:grid-cols-2 lg:grid-cols-4">
+                  {leads
+                    .filter((l) => l.stage === "lost")
+                    .map((lead, i) => (
+                      <LeadCard key={lead.id} lead={lead} index={i} />
+                    ))}
+                </div>
+              )}
             </div>
           )}
+        </>
       )}
     </div>
   );
