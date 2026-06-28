@@ -1,5 +1,5 @@
 import { useLocation, Link, useNavigate } from "react-router-dom";
-import { Bell, Moon, Sun, Menu, ChevronRight, Search, LogOut, Settings } from "lucide-react";
+import { Bell, Menu, ChevronRight, Search, LogOut, Settings, Plus } from "lucide-react";
 import { useTheme } from "@/hooks/use-theme";
 import { useSidebar } from "@/hooks/use-sidebar";
 import { useCommandPalette } from "@/hooks/use-command-palette";
@@ -87,9 +87,9 @@ export function Topbar() {
           <kbd className="hidden rounded border border-[var(--color-edge)] bg-[var(--color-void)] px-1 text-[10px] sm:block">⌘K</kbd>
         </button>
 
-        {/* Theme */}
-        <Button variant="ghost" size="icon" onClick={toggleTheme} aria-label="Toggle theme" className="h-7 w-7">
-          {theme === "dark" ? <Sun className="h-3.5 w-3.5" /> : <Moon className="h-3.5 w-3.5" />}
+        {/* Quick Access */}
+        <Button variant="ghost" size="icon" className="h-7 w-7 text-ink-faint hover:text-ink-dim" title="Quick Add">
+          <Plus className="h-3.5 w-3.5" />
         </Button>
 
         {/* Notifications */}
