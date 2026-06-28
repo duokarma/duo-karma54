@@ -8,6 +8,8 @@ import { ToastProvider } from "@/components/ui/toast";
 import { TooltipProvider } from "@/components/ui/tooltip";
 import { AppLayout } from "@/layouts/app-layout";
 import { PageLoader } from "@/components/shared/page-loader";
+import { AuthProvider } from "@/hooks/use-auth";
+import { ProtectedRoute } from "@/components/shared/protected-route";
 
 const LoginPage = lazy(() => import("@/pages/login").then((m) => ({ default: m.LoginPage })));
 const DashboardPage = lazy(() => import("@/pages/dashboard").then((m) => ({ default: m.DashboardPage })));
@@ -50,16 +52,18 @@ function App() {
 
   return (
     <QueryClientProvider client={queryClient}>
-    <ThemeProvider>
-      <TooltipProvider>
-        <ToastProvider>
-          <BrowserRouter>
-            <CommandPaletteProvider>
-              <SidebarProvider>
-                <Suspense fallback={<PageLoader />}>
-                  <Routes>
-                    <Route path="/login" element={<LoginPage />} />
-                    <Route element={<AppLayout />}>
+      <AuthProvider>
+        <ThemeProvider>
+          <TooltipProvider>
+            <ToastProvider>
+              <BrowserRouter>
+                <CommandPaletteProvider>
+                  <SidebarProvider>
+                    <Suspense fallback={<PageLoader />}>
+                      <Routes>
+                        <Route path="/login" element={<LoginPage />} />
+                        <Route element={<ProtectedRoute />}>
+                          <Route element={<AppLayout />}>
                       <Route path="/" element={<DashboardPage />} />
                       <Route path="/clients" element={<ClientsPage />} />
                       <Route path="/leads" element={<LeadsPage />} />
@@ -74,16 +78,18 @@ function App() {
                       <Route path="/reports" element={<ReportsPage />} />
                       <Route path="/analytics" element={<AnalyticsPage />} />
                       <Route path="/settings" element={<SettingsPage />} />
-                    </Route>
-                    <Route path="*" element={<NotFoundPage />} />
-                  </Routes>
-                </Suspense>
-              </SidebarProvider>
-            </CommandPaletteProvider>
-          </BrowserRouter>
-        </ToastProvider>
-      </TooltipProvider>
-    </ThemeProvider>
+                          </Route>
+                        </Route>
+                        <Route path="*" element={<NotFoundPage />} />
+                      </Routes>
+                    </Suspense>
+                  </SidebarProvider>
+                </CommandPaletteProvider>
+              </BrowserRouter>
+            </ToastProvider>
+          </TooltipProvider>
+        </ThemeProvider>
+      </AuthProvider>
     </QueryClientProvider>
   );
 }

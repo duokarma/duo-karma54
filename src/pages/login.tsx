@@ -1,13 +1,69 @@
 import { useState } from "react";
 import { motion } from "framer-motion";
-import { Mail, Lock, Eye, EyeOff, ArrowRight } from "lucide-react";
+import { Mail, Lock, Eye, EyeOff, ArrowRight, Loader2, Users } from "lucide-react";
 import { Input } from "@/components/ui/input";
 import { Button } from "@/components/ui/button";
 import { CrystalScene } from "@/components/three/crystal-scene";
-import { Link } from "react-router-dom";
+import { useNavigate, useLocation } from "react-router-dom";
+import { supabase } from "@/lib/supabase";
 
 export function LoginPage() {
   const [showPassword, setShowPassword] = useState(false);
+  const [email, setEmail] = useState("");
+  const [password, setPassword] = useState("");
+  const [isLoading, setIsLoading] = useState(false);
+  const [error, setError] = useState<string | null>(null);
+
+  const navigate = useNavigate();
+  const location = useLocation();
+  const from = location.state?.from?.pathname || "/";
+
+  const handleLogin = async (e?: React.FormEvent) => {
+    if (e) e.preventDefault();
+    setIsLoading(true);
+    setError(null);
+
+    const { error } = await supabase.auth.signInWithPassword({
+      email,
+      password,
+    });
+
+    if (error) {
+      setError(error.message);
+      setIsLoading(false);
+    } else {
+      navigate(from, { replace: true });
+    }
+  };
+
+  const loginAs = (role: "admin" | "user") => {
+    const targetEmail = role === "admin" ? "admin@duokarrma.com" : "user@duokarrma.com";
+    const targetPassword = "password123";
+    
+    setEmail(targetEmail);
+    setPassword(targetPassword);
+    
+    // Automatically submit after state update
+    setTimeout(() => {
+      handleLoginAs(targetEmail, targetPassword);
+    }, 0);
+  };
+
+  const handleLoginAs = async (targetEmail: string, targetPassword: string) => {
+    setIsLoading(true);
+    setError(null);
+    const { error } = await supabase.auth.signInWithPassword({
+      email: targetEmail,
+      password: targetPassword,
+    });
+
+    if (error) {
+      setError(error.message);
+      setIsLoading(false);
+    } else {
+      navigate(from, { replace: true });
+    }
+  };
 
   return (
     <div className="relative grid min-h-screen lg:grid-cols-2">
@@ -63,12 +119,59 @@ export function LoginPage() {
           <h1 className="font-display text-xl font-semibold text-ink">Welcome back</h1>
           <p className="mt-1 text-sm text-ink-faint">Sign in to access your dashboard.</p>
 
-          <form className="mt-6 space-y-4" onSubmit={(e) => e.preventDefault()}>
+          <div className="mt-6 flex gap-2">
+            <Button
+              type="button"
+              variant="outline"
+              className="flex-1"
+              size="sm"
+              onClick={() => loginAs("admin")}
+              disabled={isLoading}
+            >
+              <Users className="mr-2 h-3.5 w-3.5" />
+              Admin
+            </Button>
+            <Button
+              type="button"
+              variant="outline"
+              className="flex-1"
+              size="sm"
+              onClick={() => loginAs("user")}
+              disabled={isLoading}
+            >
+              <Users className="mr-2 h-3.5 w-3.5" />
+              User
+            </Button>
+          </div>
+
+          <div className="relative mt-5 mb-5">
+            <div className="absolute inset-0 flex items-center">
+              <span className="w-full border-t border-edge" />
+            </div>
+            <div className="relative flex justify-center text-xs uppercase">
+              <span className="bg-background px-2 text-ink-faint">Or continue with</span>
+            </div>
+          </div>
+
+          {error && (
+            <div className="mb-4 rounded-md bg-rose/10 p-3 text-sm text-rose">
+              {error}
+            </div>
+          )}
+
+          <form className="space-y-4" onSubmit={handleLogin}>
             <div>
               <label className="mb-1.5 block text-xs font-medium text-ink-dim">Email address</label>
               <div className="relative">
                 <Mail className="absolute left-3 top-1/2 h-4 w-4 -translate-y-1/2 text-ink-faint" />
-                <Input type="email" placeholder="you@company.com" className="pl-10" defaultValue="admin@duokarrma.com" />
+                <Input 
+                  type="email" 
+                  placeholder="you@company.com" 
+                  className="pl-10" 
+                  value={email}
+                  onChange={(e) => setEmail(e.target.value)}
+                  required
+                />
               </div>
             </div>
             <div>
@@ -84,7 +187,9 @@ export function LoginPage() {
                   type={showPassword ? "text" : "password"}
                   placeholder="••••••••"
                   className="pl-10 pr-10"
-                  defaultValue="password123"
+                  value={password}
+                  onChange={(e) => setPassword(e.target.value)}
+                  required
                 />
                 <button
                   type="button"
@@ -96,16 +201,19 @@ export function LoginPage() {
               </div>
             </div>
 
-            <Button type="submit" className="w-full" size="lg" asChild>
-              <Link to="/">
-                Sign in <ArrowRight className="h-4 w-4" />
-              </Link>
+            <Button type="submit" className="w-full" size="lg" disabled={isLoading}>
+              {isLoading ? (
+                <>
+                  <Loader2 className="mr-2 h-4 w-4 animate-spin" />
+                  Signing in...
+                </>
+              ) : (
+                <>
+                  Sign in <ArrowRight className="ml-2 h-4 w-4" />
+                </>
+              )}
             </Button>
           </form>
-
-          <p className="mt-6 text-center text-xs text-ink-faint">
-            This is a UI template — authentication is not yet implemented.
-          </p>
         </motion.div>
       </div>
     </div>
