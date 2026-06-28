@@ -54,7 +54,7 @@ export function ProjectsPage() {
   const [addOpen, setAddOpen] = useState(false);
 
   const { register, handleSubmit, reset, formState: { errors }, setValue } = useForm<ProjectFormValues>({
-    resolver: zodResolver(projectSchema),
+    resolver: zodResolver(projectSchema) as any,
     defaultValues: { priority: "medium" }
   });
 

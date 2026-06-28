@@ -45,7 +45,7 @@ export function InvoicesPage() {
   const [createOpen, setCreateOpen] = useState(false);
 
   const { register, handleSubmit, reset, formState: { errors } } = useForm<InvoiceFormValues>({
-    resolver: zodResolver(invoiceSchema),
+    resolver: zodResolver(invoiceSchema) as any,
   });
 
   const createMutation = useMutation({

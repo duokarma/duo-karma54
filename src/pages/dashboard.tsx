@@ -140,10 +140,10 @@ export function DashboardPage() {
   const tasksDueToday = tasks.filter(t => new Date(t.dueDate).toDateString() === new Date().toDateString()).length;
 
   const invoiceStatusBreakdown = [
-    { name: "Paid", value: invoices.filter(i => i.status === "paid").length, color: "#10B981" },
-    { name: "Pending", value: invoices.filter(i => i.status === "pending").length, color: "#2563EB" },
-    { name: "Overdue", value: invoices.filter(i => i.status === "overdue").length, color: "#F43F5E" },
-    { name: "Draft", value: invoices.filter(i => i.status === "draft").length, color: "var(--color-ink-faint)" },
+    { label: "Paid", value: invoices.filter(i => i.status === "paid").length, color: "#10B981" },
+    { label: "Pending", value: invoices.filter(i => i.status === "pending").length, color: "#2563EB" },
+    { label: "Overdue", value: invoices.filter(i => i.status === "overdue").length, color: "#F43F5E" },
+    { label: "Draft", value: invoices.filter(i => i.status === "draft").length, color: "var(--color-ink-faint)" },
   ].filter(s => s.value > 0);
 
   return (
@@ -322,7 +322,7 @@ export function DashboardPage() {
                 return (
                   <div key={activity.id} className="flex items-start gap-3">
                     <div className="flex h-6 w-6 shrink-0 items-center justify-center rounded-md border border-[var(--color-edge)] bg-[var(--color-void)]">
-                      <Icon className={`h-3 w-3 ${activityColorMap[activity.type]}`} />
+                      <Icon className={`h-3 w-3 ${activityColorMap[activity.type as keyof typeof activityColorMap]}`} />
                     </div>
                     <div className="min-w-0 flex-1">
                       <p className="text-xs leading-snug text-ink-dim">{activity.message}</p>
