@@ -22,15 +22,51 @@ import {
   DialogDescription,
   DialogFooter,
 } from "@/components/ui/dialog";
-import { useQuery } from "@tanstack/react-query";
+import { useQuery, useMutation, useQueryClient } from "@tanstack/react-query";
+import { useForm } from "react-hook-form";
+import { zodResolver } from "@hookform/resolvers/zod";
+import * as z from "zod";
 import { supabase } from "@/lib/supabase";
 import { formatCurrency } from "@/lib/utils";
 import type { Invoice } from "@/types";
 
+const invoiceSchema = z.object({
+  client: z.string().min(2, "Client is required"),
+  amount: z.coerce.number().min(1, "Amount must be greater than 0"),
+  dueDate: z.string().min(1, "Due date is required"),
+});
+
+type InvoiceFormValues = z.infer<typeof invoiceSchema>;
+
 export function InvoicesPage() {
+  const queryClient = useQueryClient();
   const [query, setQuery] = useState("");
   const [statusFilter, setStatusFilter] = useState("all");
   const [createOpen, setCreateOpen] = useState(false);
+
+  const { register, handleSubmit, reset, formState: { errors } } = useForm<InvoiceFormValues>({
+    resolver: zodResolver(invoiceSchema),
+  });
+
+  const createMutation = useMutation({
+    mutationFn: async (values: InvoiceFormValues) => {
+      const newInvoice = {
+        id: Math.random().toString(36).substring(2, 9),
+        invoiceNumber: `INV-${new Date().getFullYear()}-${Math.floor(Math.random() * 1000).toString().padStart(3, '0')}`,
+        ...values,
+        status: "pending",
+        issueDate: new Date().toISOString().split("T")[0],
+        items: 1,
+      };
+      const { error } = await supabase.from("invoices").insert([newInvoice]);
+      if (error) throw error;
+    },
+    onSuccess: () => {
+      queryClient.invalidateQueries({ queryKey: ["invoices"] });
+      setCreateOpen(false);
+      reset();
+    },
+  });
 
   const { data: invoices = [], isLoading } = useQuery({
     queryKey: ["invoices"],
@@ -167,28 +203,35 @@ export function InvoicesPage() {
         <DialogContent>
           <DialogHeader>
             <DialogTitle>Create Invoice</DialogTitle>
-            <DialogDescription>This is a UI placeholder — invoice creation isn't wired up yet.</DialogDescription>
+            <DialogDescription>Draft a new invoice for a client.</DialogDescription>
           </DialogHeader>
-          <div className="space-y-4">
-            <div>
-              <label className="mb-1.5 block text-xs font-medium text-ink-dim">Client</label>
-              <Input placeholder="Select or type client name" />
+          <form onSubmit={handleSubmit((data) => createMutation.mutate(data))}>
+            <div className="space-y-4">
+              <div>
+                <label className="mb-1.5 block text-xs font-medium text-ink-dim">Client</label>
+                <Input placeholder="Select or type client name" {...register("client")} />
+                {errors.client && <p className="mt-1 text-[10px] text-rose">{errors.client.message}</p>}
+              </div>
+              <div>
+                <label className="mb-1.5 block text-xs font-medium text-ink-dim">Amount</label>
+                <Input placeholder="5000" type="number" {...register("amount")} />
+                {errors.amount && <p className="mt-1 text-[10px] text-rose">{errors.amount.message}</p>}
+              </div>
+              <div>
+                <label className="mb-1.5 block text-xs font-medium text-ink-dim">Due date</label>
+                <Input type="date" {...register("dueDate")} />
+                {errors.dueDate && <p className="mt-1 text-[10px] text-rose">{errors.dueDate.message}</p>}
+              </div>
             </div>
-            <div>
-              <label className="mb-1.5 block text-xs font-medium text-ink-dim">Amount</label>
-              <Input placeholder="$0.00" />
-            </div>
-            <div>
-              <label className="mb-1.5 block text-xs font-medium text-ink-dim">Due date</label>
-              <Input type="date" />
-            </div>
-          </div>
-          <DialogFooter>
-            <Button variant="secondary" onClick={() => setCreateOpen(false)}>
-              Cancel
-            </Button>
-            <Button onClick={() => setCreateOpen(false)}>Create Invoice</Button>
-          </DialogFooter>
+            <DialogFooter className="mt-6">
+              <Button variant="secondary" type="button" onClick={() => setCreateOpen(false)}>
+                Cancel
+              </Button>
+              <Button type="submit" disabled={createMutation.isPending}>
+                {createMutation.isPending ? "Creating..." : "Create Invoice"}
+              </Button>
+            </DialogFooter>
+          </form>
         </DialogContent>
       </Dialog>
     </div>

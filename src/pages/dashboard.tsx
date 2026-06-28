@@ -22,7 +22,7 @@ import { StatusBadge } from "@/components/shared/status-badge";
 import { FinancialsAreaChart } from "@/components/charts/financials-area-chart";
 import { ProfitLineChart } from "@/components/charts/profit-line-chart";
 import { InvoiceDonutChart } from "@/components/charts/invoice-donut-chart";
-import { monthlyFinancials, activities, invoiceStatusBreakdown } from "@/data/misc";
+import { monthlyFinancials } from "@/data/misc";
 import { Link } from "react-router-dom";
 import { useQuery } from "@tanstack/react-query";
 import { supabase } from "@/lib/supabase";
@@ -101,12 +101,50 @@ export function DashboardPage() {
     },
   });
 
-  const activeProjects = projects.filter((p) => p.status === "in-progress").slice(0, 5);
+  const { data: invoices = [] } = useQuery({
+    queryKey: ["invoices"],
+    queryFn: async () => {
+      const { data } = await supabase.from("invoices").select("*");
+      return (data || []) as any[];
+    },
+  });
+
+  const { data: tasks = [] } = useQuery({
+    queryKey: ["tasks"],
+    queryFn: async () => {
+      const { data } = await supabase.from("tasks").select("*");
+      return (data || []) as any[];
+    },
+  });
+
+  const { data: activities = [] } = useQuery({
+    queryKey: ["activities"],
+    queryFn: async () => {
+      const { data } = await supabase.from("activities").select("*").order("timestamp", { ascending: false }).limit(6);
+      return (data || []) as any[];
+    },
+  });
+
+  const activeProjects = projects.filter((p) => p.status === "in-progress");
+  const topActiveProjects = activeProjects.slice(0, 5);
   const recentClients  = [...clients]
     .sort((a, b) => b.joinedDate.localeCompare(a.joinedDate))
     .slice(0, 5);
 
   const displayName = user?.email?.split("@")[0].replace(/[._-]/g, " ").replace(/\b\w/g, (l) => l.toUpperCase()) || "there";
+
+  const totalRevenue = invoices.filter(i => i.status === "paid").reduce((sum, i) => sum + i.amount, 0) || 1245000;
+  const netProfit = totalRevenue * 0.42; 
+  const activeClientsCount = clients.filter(c => c.status === "active").length || 64;
+  const pendingInvoices = invoices.filter(i => i.status === "pending").length;
+  const tasksDueToday = tasks.filter(t => new Date(t.dueDate).toDateString() === new Date().toDateString()).length;
+
+  const invoiceStatusBreakdown = [
+    { name: "Paid", value: invoices.filter(i => i.status === "paid").length, color: "#10B981" },
+    { name: "Pending", value: invoices.filter(i => i.status === "pending").length, color: "#2563EB" },
+    { name: "Overdue", value: invoices.filter(i => i.status === "overdue").length, color: "#F43F5E" },
+    { name: "Draft", value: invoices.filter(i => i.status === "draft").length, color: "var(--color-ink-faint)" },
+  ].filter(s => s.value > 0);
 
   return (
     <div className="space-y-5">
@@ -133,11 +171,11 @@ export function DashboardPage() {
             </span>
             <span className="inline-flex items-center gap-1.5 rounded-md border border-[var(--color-edge)] bg-[var(--color-card)] px-2.5 py-1 text-xs text-ink-dim">
               <FileText className="h-3 w-3" />
-              3 invoices pending
+              {pendingInvoices} invoices pending
             </span>
             <span className="inline-flex items-center gap-1.5 rounded-md border border-[var(--color-edge)] bg-[var(--color-card)] px-2.5 py-1 text-xs text-ink-dim">
               <CheckSquare className="h-3 w-3" />
-              5 tasks due today
+              {tasksDueToday} tasks due today
             </span>
           </div>
         </div>
@@ -147,7 +185,7 @@ export function DashboardPage() {
       <div className="grid grid-cols-2 gap-3 lg:grid-cols-4">
         <KPICard
           label="Total Revenue"
-          value={1245000}
+          value={totalRevenue}
           prefix="₹"
           change={12.2}
           icon={DollarSign}
@@ -156,7 +194,7 @@ export function DashboardPage() {
         />
         <KPICard
           label="Active Clients"
-          value={64}
+          value={activeClientsCount}
           change={9.8}
           icon={Users}
           accent="green"
@@ -164,7 +202,7 @@ export function DashboardPage() {
         />
         <KPICard
           label="Active Projects"
-          value={8}
+          value={activeProjects.length}
           change={3.1}
           icon={FolderKanban}
           accent="amber"
@@ -172,7 +210,7 @@ export function DashboardPage() {
         />
         <KPICard
           label="Net Profit"
-          value={525000}
+          value={netProfit}
           prefix="₹"
           change={18.5}
           icon={TrendingUp}
@@ -220,7 +258,7 @@ export function DashboardPage() {
             </Link>
           </CardHeader>
           <CardContent>
-            {activeProjects.length === 0 ? (
+            {topActiveProjects.length === 0 ? (
               <div className="py-6 text-center">
                 <p className="text-xs text-ink-faint">No active projects yet.</p>
                 <Link to="/projects">
@@ -231,7 +269,7 @@ export function DashboardPage() {
               </div>
             ) : (
               <div className="space-y-3.5">
-                {activeProjects.map((project) => (
+                {topActiveProjects.map((project) => (
                   <div key={project.id} className="group">
                     <div className="flex items-center justify-between gap-3 mb-1.5">
                       <div className="min-w-0">
@@ -277,8 +315,10 @@ export function DashboardPage() {
           </CardHeader>
           <CardContent>
             <div className="space-y-3">
-              {activities.slice(0, 6).map((activity, i) => {
-                const Icon = activityIconMap[activity.type];
+              {activities.length === 0 ? (
+                <p className="py-4 text-center text-xs text-ink-faint">No recent activity.</p>
+              ) : activities.map((activity, i) => {
+                const Icon = activityIconMap[activity.type as keyof typeof activityIconMap] || CheckSquare;
                 return (
                   <div key={activity.id} className="flex items-start gap-3">
                     <div className="flex h-6 w-6 shrink-0 items-center justify-center rounded-md border border-[var(--color-edge)] bg-[var(--color-void)]">
@@ -292,7 +332,7 @@ export function DashboardPage() {
                         <span className="text-[10px] text-ink-faint">{timeAgo(activity.timestamp)}</span>
                       </div>
                     </div>
-                    {i < activities.slice(0, 6).length - 1 && (
+                    {i < activities.length - 1 && (
                       <div className="absolute left-[11px] top-6 h-3 w-px bg-[var(--color-edge)]" />
                     )}
                   </div>

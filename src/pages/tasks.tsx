@@ -5,10 +5,40 @@ import { Button } from "@/components/ui/button";
 import { Card } from "@/components/ui/card";
 import { Avatar } from "@/components/shared/avatar";
 import { Badge } from "@/components/ui/badge";
-import { useQuery } from "@tanstack/react-query";
+import { useState } from "react";
+import {
+  Dialog,
+  DialogContent,
+  DialogHeader,
+  DialogTitle,
+  DialogDescription,
+  DialogFooter,
+} from "@/components/ui/dialog";
+import { Input } from "@/components/ui/input";
+import {
+  Select,
+  SelectContent,
+  SelectItem,
+  SelectTrigger,
+  SelectValue,
+} from "@/components/ui/select";
+import { useQuery, useMutation, useQueryClient } from "@tanstack/react-query";
+import { useForm } from "react-hook-form";
+import { zodResolver } from "@hookform/resolvers/zod";
+import * as z from "zod";
 import { supabase } from "@/lib/supabase";
 import { cn } from "@/lib/utils";
 import type { Task } from "@/types";
+
+const taskSchema = z.object({
+  title: z.string().min(2, "Title is required"),
+  project: z.string().min(2, "Project is required"),
+  assignee: z.string().min(2, "Assignee is required"),
+  priority: z.enum(["low", "medium", "high", "urgent"]),
+  dueDate: z.string().min(1, "Due date is required"),
+});
+
+type TaskFormValues = z.infer<typeof taskSchema>;
 
 const columns: { key: Task["status"]; label: string }[] = [
   { key: "todo", label: "To Do" },
@@ -49,6 +79,31 @@ function TaskCard({ task, index }: { task: Task; index: number }) {
 }
 
 export function TasksPage() {
+  const queryClient = useQueryClient();
+  const [createOpen, setCreateOpen] = useState(false);
+
+  const { register, handleSubmit, reset, formState: { errors }, setValue } = useForm<TaskFormValues>({
+    resolver: zodResolver(taskSchema),
+    defaultValues: { priority: "medium" }
+  });
+
+  const createMutation = useMutation({
+    mutationFn: async (values: TaskFormValues) => {
+      const newTask = {
+        id: Math.random().toString(36).substring(2, 9),
+        ...values,
+        status: "todo",
+      };
+      const { error } = await supabase.from("tasks").insert([newTask]);
+      if (error) throw error;
+    },
+    onSuccess: () => {
+      queryClient.invalidateQueries({ queryKey: ["tasks"] });
+      setCreateOpen(false);
+      reset();
+    },
+  });
+
   const { data: tasks = [], isLoading } = useQuery({
     queryKey: ["tasks"],
     queryFn: async () => {
@@ -64,7 +119,7 @@ export function TasksPage() {
         title="Tasks"
         description={`${tasks.filter((t) => t.status !== "completed").length} open tasks across all projects`}
         actions={
-          <Button>
+          <Button onClick={() => setCreateOpen(true)}>
             <Plus className="h-4 w-4" /> New Task
           </Button>
         }
@@ -99,6 +154,61 @@ export function TasksPage() {
         })}
         </div>
       )}
+
+      <Dialog open={createOpen} onOpenChange={setCreateOpen}>
+        <DialogContent>
+          <DialogHeader>
+            <DialogTitle>Create Task</DialogTitle>
+            <DialogDescription>Add a new task to your board.</DialogDescription>
+          </DialogHeader>
+          <form onSubmit={handleSubmit((data) => createMutation.mutate(data))}>
+            <div className="space-y-4">
+              <div>
+                <label className="mb-1.5 block text-xs font-medium text-ink-dim">Title</label>
+                <Input placeholder="E.g., Review PRs" {...register("title")} />
+                {errors.title && <p className="mt-1 text-[10px] text-rose">{errors.title.message}</p>}
+              </div>
+              <div>
+                <label className="mb-1.5 block text-xs font-medium text-ink-dim">Project</label>
+                <Input placeholder="Select project" {...register("project")} />
+                {errors.project && <p className="mt-1 text-[10px] text-rose">{errors.project.message}</p>}
+              </div>
+              <div>
+                <label className="mb-1.5 block text-xs font-medium text-ink-dim">Assignee</label>
+                <Input placeholder="Team member name" {...register("assignee")} />
+                {errors.assignee && <p className="mt-1 text-[10px] text-rose">{errors.assignee.message}</p>}
+              </div>
+              <div>
+                <label className="mb-1.5 block text-xs font-medium text-ink-dim">Priority</label>
+                <Select onValueChange={(val) => setValue("priority", val as any)} defaultValue="medium">
+                  <SelectTrigger>
+                    <SelectValue placeholder="Select priority" />
+                  </SelectTrigger>
+                  <SelectContent>
+                    <SelectItem value="low">Low</SelectItem>
+                    <SelectItem value="medium">Medium</SelectItem>
+                    <SelectItem value="high">High</SelectItem>
+                    <SelectItem value="urgent">Urgent</SelectItem>
+                  </SelectContent>
+                </Select>
+              </div>
+              <div>
+                <label className="mb-1.5 block text-xs font-medium text-ink-dim">Due date</label>
+                <Input type="date" {...register("dueDate")} />
+                {errors.dueDate && <p className="mt-1 text-[10px] text-rose">{errors.dueDate.message}</p>}
+              </div>
+            </div>
+            <DialogFooter className="mt-6">
+              <Button variant="secondary" type="button" onClick={() => setCreateOpen(false)}>
+                Cancel
+              </Button>
+              <Button type="submit" disabled={createMutation.isPending}>
+                {createMutation.isPending ? "Creating..." : "Create Task"}
+              </Button>
+            </DialogFooter>
+          </form>
+        </DialogContent>
+      </Dialog>
     </div>
   );
 }

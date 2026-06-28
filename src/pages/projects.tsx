@@ -16,10 +16,29 @@ import {
   SelectTrigger,
   SelectValue,
 } from "@/components/ui/select";
-import { useQuery } from "@tanstack/react-query";
+import {
+  Drawer,
+  DrawerContent,
+  DrawerHeader,
+  DrawerTitle,
+  DrawerDescription,
+} from "@/components/ui/drawer";
+import { useQuery, useMutation, useQueryClient } from "@tanstack/react-query";
+import { useForm } from "react-hook-form";
+import { zodResolver } from "@hookform/resolvers/zod";
+import * as z from "zod";
 import { supabase } from "@/lib/supabase";
 import type { Project } from "@/types";
 import { formatCurrency, cn } from "@/lib/utils";
+
+const projectSchema = z.object({
+  name: z.string().min(2, "Name is required"),
+  client: z.string().min(2, "Client is required"),
+  budget: z.coerce.number().min(0, "Budget must be a number"),
+  priority: z.enum(["low", "medium", "high", "urgent"]),
+});
+
+type ProjectFormValues = z.infer<typeof projectSchema>;
 
 const priorityDot: Record<string, string> = {
   low: "bg-ink-faint",
@@ -29,8 +48,37 @@ const priorityDot: Record<string, string> = {
 };
 
 export function ProjectsPage() {
+  const queryClient = useQueryClient();
   const [query, setQuery] = useState("");
   const [statusFilter, setStatusFilter] = useState("all");
+  const [addOpen, setAddOpen] = useState(false);
+
+  const { register, handleSubmit, reset, formState: { errors }, setValue } = useForm<ProjectFormValues>({
+    resolver: zodResolver(projectSchema),
+    defaultValues: { priority: "medium" }
+  });
+
+  const createMutation = useMutation({
+    mutationFn: async (values: ProjectFormValues) => {
+      const newProject = {
+        id: Math.random().toString(36).substring(2, 9),
+        ...values,
+        status: "pending",
+        progress: 0,
+        spent: 0,
+        startDate: new Date().toISOString().split("T")[0],
+        dueDate: new Date(Date.now() + 30 * 24 * 60 * 60 * 1000).toISOString().split("T")[0],
+        team: ["Hatim"],
+      };
+      const { error } = await supabase.from("projects").insert([newProject]);
+      if (error) throw error;
+    },
+    onSuccess: () => {
+      queryClient.invalidateQueries({ queryKey: ["projects"] });
+      setAddOpen(false);
+      reset();
+    },
+  });
 
   const { data: projects = [], isLoading } = useQuery({
     queryKey: ["projects"],
@@ -57,7 +105,7 @@ export function ProjectsPage() {
         title="Projects"
         description={`${projects.length} projects · ${projects.filter((p) => p.status === "in-progress").length} in progress`}
         actions={
-          <Button>
+          <Button onClick={() => setAddOpen(true)}>
             <Plus className="h-4 w-4" /> New Project
           </Button>
         }
@@ -160,6 +208,50 @@ export function ProjectsPage() {
           ))}
         </div>
       )}
+
+      {/* Add Project Drawer */}
+      <Drawer open={addOpen} onOpenChange={setAddOpen}>
+        <DrawerContent>
+          <DrawerHeader>
+            <DrawerTitle>Create New Project</DrawerTitle>
+            <DrawerDescription>Set up a new project tracking space.</DrawerDescription>
+          </DrawerHeader>
+          <form onSubmit={handleSubmit((data) => createMutation.mutate(data))} className="space-y-4">
+            <div>
+              <label className="mb-1.5 block text-xs font-medium text-ink-dim">Project Name</label>
+              <Input placeholder="Rebranding Q3" {...register("name")} />
+              {errors.name && <p className="mt-1 text-[10px] text-rose">{errors.name.message}</p>}
+            </div>
+            <div>
+              <label className="mb-1.5 block text-xs font-medium text-ink-dim">Client</label>
+              <Input placeholder="Acme Corp" {...register("client")} />
+              {errors.client && <p className="mt-1 text-[10px] text-rose">{errors.client.message}</p>}
+            </div>
+            <div>
+              <label className="mb-1.5 block text-xs font-medium text-ink-dim">Budget</label>
+              <Input placeholder="50000" type="number" {...register("budget")} />
+              {errors.budget && <p className="mt-1 text-[10px] text-rose">{errors.budget.message}</p>}
+            </div>
+            <div>
+              <label className="mb-1.5 block text-xs font-medium text-ink-dim">Priority</label>
+              <Select onValueChange={(val) => setValue("priority", val as any)} defaultValue="medium">
+                <SelectTrigger>
+                  <SelectValue placeholder="Select priority" />
+                </SelectTrigger>
+                <SelectContent>
+                  <SelectItem value="low">Low</SelectItem>
+                  <SelectItem value="medium">Medium</SelectItem>
+                  <SelectItem value="high">High</SelectItem>
+                  <SelectItem value="urgent">Urgent</SelectItem>
+                </SelectContent>
+              </Select>
+            </div>
+            <Button className="w-full" type="submit" disabled={createMutation.isPending}>
+              {createMutation.isPending ? "Creating..." : "Create Project"}
+            </Button>
+          </form>
+        </DrawerContent>
+      </Drawer>
     </div>
   );
 }
