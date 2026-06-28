@@ -1,8 +1,8 @@
-import { useEffect, useRef, useState } from "react";
-import { motion, animate } from "framer-motion";
-import { ArrowUpRight, ArrowDownRight, type LucideIcon } from "lucide-react";
-import { Card } from "@/components/ui/card";
+import { useEffect, useState } from "react";
+import { animate } from "framer-motion";
+import { TrendingUp, TrendingDown, type LucideIcon } from "lucide-react";
 import { cn } from "@/lib/utils";
+import { Sparkline } from "@/components/charts/sparkline";
 
 interface KPICardProps {
   label: string;
@@ -11,25 +11,38 @@ interface KPICardProps {
   suffix?: string;
   change: number;
   icon: LucideIcon;
-  accent?: "blue" | "violet" | "cyan" | "amber";
+  accent?: "blue" | "green" | "amber" | "red";
   decimals?: number;
+  sparklineData?: number[];
+  secondaryLabel?: string;
 }
 
-const accentClasses: Record<string, string> = {
-  blue: "from-electric/20 to-electric/5 text-electric",
-  violet: "from-violet/20 to-violet/5 text-violet",
-  cyan: "from-cyan/20 to-cyan/5 text-cyan",
-  amber: "from-amber/20 to-amber/5 text-amber",
+const accentMap = {
+  blue:  { text: "text-[#2563EB]", sparkColor: "#2563EB", bg: "bg-[rgba(37,99,235,0.1)]" },
+  green: { text: "text-[#10B981]", sparkColor: "#10B981", bg: "bg-[rgba(16,185,129,0.1)]" },
+  amber: { text: "text-[#F59E0B]", sparkColor: "#F59E0B", bg: "bg-[rgba(245,158,11,0.1)]" },
+  red:   { text: "text-[#EF4444]", sparkColor: "#EF4444", bg: "bg-[rgba(239,68,68,0.1)]" },
 };
 
-export function KPICard({ label, value, prefix = "", suffix = "", change, icon: Icon, accent = "blue", decimals = 0 }: KPICardProps) {
-  const ref = useRef<HTMLSpanElement>(null);
+export function KPICard({
+  label,
+  value,
+  prefix = "",
+  suffix = "",
+  change,
+  icon: Icon,
+  accent = "blue",
+  decimals = 0,
+  sparklineData = [],
+  secondaryLabel = "vs last month",
+}: KPICardProps) {
   const [display, setDisplay] = useState(0);
   const isPositive = change >= 0;
+  const colors = accentMap[accent];
 
   useEffect(() => {
     const controls = animate(0, value, {
-      duration: 1.1,
+      duration: 1.0,
       ease: "easeOut",
       onUpdate: (v) => setDisplay(v),
     });
@@ -38,38 +51,46 @@ export function KPICard({ label, value, prefix = "", suffix = "", change, icon: 
   }, [value]);
 
   return (
-    <Card className="group relative overflow-hidden p-5 transition-transform duration-300 hover:-translate-y-0.5">
-      <div className={cn("absolute -right-6 -top-6 h-28 w-28 rounded-full bg-gradient-to-br opacity-60 blur-2xl transition-opacity group-hover:opacity-90", accentClasses[accent])} />
-      <div className="relative flex items-start justify-between">
-        <div>
-          <p className="text-xs font-medium text-ink-faint">{label}</p>
-          <p className="mt-2 font-display text-2xl font-semibold text-ink tabular">
-            {prefix}
-            <span ref={ref}>{display.toLocaleString("en-US", { minimumFractionDigits: decimals, maximumFractionDigits: decimals })}</span>
-            {suffix}
-          </p>
-        </div>
-        <div className={cn("flex h-9 w-9 items-center justify-center rounded-xl bg-gradient-to-br", accentClasses[accent])}>
-          <Icon className="h-4.5 w-4.5" />
+    <div className="group relative bg-[var(--color-card)] border border-[var(--color-edge)] rounded-[var(--radius-card)] p-4 transition-all duration-200 hover:border-[var(--color-edge-hover)] hover:bg-[var(--color-charcoal)]">
+      {/* Top row: label + icon */}
+      <div className="flex items-center justify-between">
+        <p className="text-xs font-medium text-ink-faint uppercase tracking-wide">{label}</p>
+        <div className={cn("flex h-7 w-7 items-center justify-center rounded-md", colors.bg)}>
+          <Icon className={cn("h-3.5 w-3.5", colors.text)} />
         </div>
       </div>
-      <motion.div
-        initial={{ opacity: 0 }}
-        animate={{ opacity: 1 }}
-        transition={{ delay: 0.4 }}
-        className="relative mt-3 flex items-center gap-1 text-xs"
-      >
-        {isPositive ? (
-          <ArrowUpRight className="h-3.5 w-3.5 text-emerald" />
-        ) : (
-          <ArrowDownRight className="h-3.5 w-3.5 text-rose" />
+
+      {/* Value */}
+      <p className="mt-2.5 font-display text-2xl font-semibold tracking-tight text-ink tabular">
+        {prefix}
+        {display.toLocaleString("en-US", {
+          minimumFractionDigits: decimals,
+          maximumFractionDigits: decimals,
+        })}
+        {suffix}
+      </p>
+
+      {/* Sparkline + change */}
+      <div className="mt-3 flex items-end justify-between gap-2">
+        <div className="flex items-center gap-1 text-xs">
+          {isPositive ? (
+            <TrendingUp className="h-3.5 w-3.5 text-[#10B981]" />
+          ) : (
+            <TrendingDown className="h-3.5 w-3.5 text-[#EF4444]" />
+          )}
+          <span className={isPositive ? "text-[#10B981]" : "text-[#EF4444]"}>
+            {isPositive ? "+" : ""}
+            {change.toFixed(1)}%
+          </span>
+          <span className="text-ink-faint">{secondaryLabel}</span>
+        </div>
+
+        {sparklineData.length > 0 && (
+          <div className="w-24 shrink-0">
+            <Sparkline data={sparklineData} color={colors.sparkColor} height={32} />
+          </div>
         )}
-        <span className={isPositive ? "text-emerald" : "text-rose"}>
-          {isPositive ? "+" : ""}
-          {change.toFixed(1)}%
-        </span>
-        <span className="text-ink-faint">vs last month</span>
-      </motion.div>
-    </Card>
+      </div>
+    </div>
   );
 }

@@ -3,18 +3,18 @@ import { cva, type VariantProps } from "class-variance-authority";
 import { cn } from "@/lib/utils";
 
 const badgeVariants = cva(
-  "inline-flex items-center gap-1.5 rounded-full px-2.5 py-1 text-xs font-medium whitespace-nowrap",
+  "inline-flex items-center gap-1.5 rounded-md px-2 py-0.5 text-[11px] font-medium whitespace-nowrap",
   {
     variants: {
       variant: {
-        default: "bg-white/8 text-ink-dim border border-white/10",
-        success: "bg-emerald/12 text-emerald border border-emerald/25",
-        warning: "bg-amber/12 text-amber border border-amber/25",
-        danger: "bg-rose/12 text-rose border border-rose/25",
-        info: "bg-electric/12 text-electric border border-electric/25",
-        violet: "bg-violet/12 text-violet border border-violet/25",
-        cyan: "bg-cyan/12 text-cyan border border-cyan/25",
-        outline: "border border-edge text-ink-dim",
+        default: "border border-[var(--color-edge)] bg-[var(--color-charcoal)] text-ink-dim",
+        success: "border border-[#10B981]/25 bg-[#10B981]/10 text-[#10B981]",
+        warning: "border border-[#F59E0B]/25 bg-[#F59E0B]/10 text-[#F59E0B]",
+        danger:  "border border-[#EF4444]/25 bg-[#EF4444]/10 text-[#EF4444]",
+        info:    "border border-[#2563EB]/25 bg-[#2563EB]/10 text-[#2563EB]",
+        violet:  "border border-[#7C3AED]/25 bg-[#7C3AED]/10 text-[#7C3AED]",
+        cyan:    "border border-[#06B6D4]/25 bg-[#06B6D4]/10 text-[#06B6D4]",
+        outline: "border border-[var(--color-edge)] text-ink-faint",
       },
     },
     defaultVariants: {
@@ -30,20 +30,22 @@ export interface BadgeProps
 }
 
 function Badge({ className, variant, dot, children, ...props }: BadgeProps) {
+  const dotColors: Record<string, string> = {
+    success: "#10B981",
+    warning: "#F59E0B",
+    danger:  "#EF4444",
+    info:    "#2563EB",
+    violet:  "#7C3AED",
+    cyan:    "#06B6D4",
+  };
+  const dotColor = variant ? dotColors[variant] : undefined;
+
   return (
     <span className={cn(badgeVariants({ variant }), className)} {...props}>
       {dot && (
         <span
-          className={cn(
-            "h-1.5 w-1.5 rounded-full",
-            variant === "success" && "bg-emerald",
-            variant === "warning" && "bg-amber",
-            variant === "danger" && "bg-rose",
-            variant === "info" && "bg-electric",
-            variant === "violet" && "bg-violet",
-            variant === "cyan" && "bg-cyan",
-            (!variant || variant === "default" || variant === "outline") && "bg-ink-dim"
-          )}
+          className="h-1.5 w-1.5 rounded-full"
+          style={dotColor ? { backgroundColor: dotColor } : { backgroundColor: "var(--color-ink-faint)" }}
         />
       )}
       {children}

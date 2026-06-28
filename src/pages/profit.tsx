@@ -17,10 +17,10 @@ export function ProfitPage() {
       <PageHeader title="Profit" description="Net profit performance and margin trends" />
 
       <div className="mb-6 grid grid-cols-1 gap-4 sm:grid-cols-2 lg:grid-cols-4">
-        <KPICard label="Total Profit (6mo)" value={totalProfit} prefix="$" change={22.4} icon={TrendingUp} accent="violet" />
+        <KPICard label="Total Profit (6mo)" value={totalProfit} prefix="$" change={22.4} icon={TrendingUp} accent="green" />
         <KPICard label="Profit Margin" value={margin} suffix="%" change={3.6} icon={Percent} accent="blue" decimals={1} />
         <KPICard label="Best Month" value={bestMonth.profit} prefix="$" change={0} icon={Award} accent="amber" />
-        <KPICard label="Target Progress" value={87} suffix="%" change={5.2} icon={Target} accent="cyan" />
+        <KPICard label="Target Progress" value={87} suffix="%" change={5.2} icon={Target} accent="blue" />
       </div>
 
       <Card>

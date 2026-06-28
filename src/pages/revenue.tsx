@@ -29,8 +29,8 @@ export function RevenuePage() {
 
       <div className="mb-6 grid grid-cols-1 gap-4 sm:grid-cols-2 lg:grid-cols-4">
         <KPICard label="Total Revenue (6mo)" value={totalRevenue} prefix="$" change={14.6} icon={DollarSign} accent="blue" />
-        <KPICard label="Avg Monthly" value={avgMonthly} prefix="$" change={8.2} icon={TrendingUp} accent="cyan" />
-        <KPICard label="Collected" value={paidRevenue} prefix="$" change={5.4} icon={Receipt} accent="violet" />
+        <KPICard label="Avg Monthly" value={avgMonthly} prefix="$" change={8.2} icon={TrendingUp} accent="green" />
+        <KPICard label="Collected" value={paidRevenue} prefix="$" change={5.4} icon={Receipt} accent="blue" />
         <KPICard label="Profit Margin" value={45.8} suffix="%" change={2.1} icon={Percent} accent="amber" decimals={1} />
       </div>
 

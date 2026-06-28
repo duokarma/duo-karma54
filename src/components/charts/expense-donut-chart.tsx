@@ -11,7 +11,7 @@ function CustomTooltip({ active, payload }: any) {
   if (!active || !payload?.length) return null;
   const item = payload[0];
   return (
-    <div className="rounded-lg glass-panel-strong px-3 py-2 text-xs shadow-lg">
+    <div className="rounded-[var(--radius-card)] border border-[var(--color-edge)] bg-[var(--color-card)] px-3 py-2 text-xs shadow-[var(--shadow-dropdown)]">
       <p className="font-medium text-ink">{item.name}</p>
       <p className="text-ink-dim">{formatCurrency(item.value)}</p>
     </div>

@@ -20,9 +20,9 @@ export function AnalyticsPage() {
       <PageHeader title="Analytics" description="Deeper insight into growth, conversion, and team performance" />
 
       <div className="mb-6 grid grid-cols-1 gap-4 sm:grid-cols-2 lg:grid-cols-4">
-        <KPICard label="Conversion Rate" value={16.7} suffix="%" change={4.2} icon={Target} accent="violet" decimals={1} />
-        <KPICard label="Avg. Deal Cycle" value={34} suffix=" days" change={-8.1} icon={Clock} accent="cyan" />
-        <KPICard label="Client Retention" value={94.2} suffix="%" change={1.8} icon={Users} accent="blue" decimals={1} />
+        <KPICard label="Conversion Rate" value={16.7} suffix="%" change={4.2} icon={Target} accent="blue" decimals={1} />
+        <KPICard label="Avg. Deal Cycle" value={34} suffix=" days" change={-8.1} icon={Clock} accent="amber" />
+        <KPICard label="Client Retention" value={94.2} suffix="%" change={1.8} icon={Users} accent="green" decimals={1} />
         <KPICard label="Team Utilization" value={85} suffix="%" change={2.5} icon={Activity} accent="amber" />
       </div>
 
@@ -32,7 +32,7 @@ export function AnalyticsPage() {
             <CardTitle>Client Growth</CardTitle>
           </CardHeader>
           <CardContent>
-            <ClientGrowthChart data={clientGrowth} />
+            <ClientGrowthChart data={clientGrowth.map(d => ({ label: d.label, clients: d.value }))} />
           </CardContent>
         </Card>
         <Card>

@@ -58,7 +58,7 @@ export function ReportsPage() {
               <CardTitle>Client Growth</CardTitle>
             </CardHeader>
             <CardContent>
-              <ClientGrowthChart data={clientGrowth} height={300} />
+              <ClientGrowthChart data={clientGrowth.map(d => ({ label: d.label, clients: d.value }))} height={300} />
             </CardContent>
           </Card>
         </TabsContent>

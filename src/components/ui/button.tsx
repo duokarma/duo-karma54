@@ -9,20 +9,20 @@ const buttonVariants = cva(
     variants: {
       variant: {
         default:
-          "bg-gradient-to-br from-electric to-indigo text-white shadow-[0_4px_20px_-4px_rgba(59,130,246,0.5)] hover:shadow-[0_4px_28px_-2px_rgba(59,130,246,0.65)] hover:brightness-110 active:brightness-95",
+          "bg-[#2563EB] text-white hover:bg-[#1D4ED8] active:bg-[#1E40AF] shadow-sm",
         secondary:
-          "bg-charcoal text-ink border border-edge hover:bg-charcoal-soft hover:border-white/15",
-        ghost: "text-ink-dim hover:text-ink hover:bg-white/5",
-        outline: "border border-edge text-ink hover:bg-white/5 hover:border-white/20",
-        destructive: "bg-rose/15 text-rose border border-rose/25 hover:bg-rose/25",
-        link: "text-electric underline-offset-4 hover:underline",
+          "bg-[var(--color-charcoal)] text-ink border border-[var(--color-edge)] hover:bg-[var(--color-charcoal-soft)] hover:border-[var(--color-edge-hover)]",
+        ghost: "text-ink-faint hover:text-ink hover:bg-[var(--color-charcoal)]",
+        outline: "border border-[var(--color-edge)] text-ink-dim hover:bg-[var(--color-charcoal)] hover:text-ink hover:border-[var(--color-edge-hover)]",
+        destructive: "bg-[#EF4444]/10 text-[#EF4444] border border-[#EF4444]/25 hover:bg-[#EF4444]/20",
+        link: "text-[#2563EB] underline-offset-4 hover:underline",
       },
       size: {
-        default: "h-10 px-4 py-2",
-        sm: "h-8 px-3 text-xs",
-        lg: "h-12 px-6 text-base",
-        icon: "h-10 w-10",
-        "icon-sm": "h-8 w-8",
+        default: "h-8 px-3.5 text-sm",
+        sm: "h-7 px-2.5 text-xs",
+        lg: "h-10 px-5 text-sm",
+        icon: "h-8 w-8",
+        "icon-sm": "h-7 w-7",
       },
     },
     defaultVariants: {

@@ -1,11 +1,16 @@
 import { useState } from "react";
 import { motion } from "framer-motion";
-import { Mail, Lock, Eye, EyeOff, ArrowRight, Loader2, Users } from "lucide-react";
+import { Mail, Lock, Eye, EyeOff, ArrowRight, Loader2, TrendingUp, Users, DollarSign } from "lucide-react";
 import { Input } from "@/components/ui/input";
 import { Button } from "@/components/ui/button";
-import { CrystalScene } from "@/components/three/crystal-scene";
 import { useNavigate, useLocation } from "react-router-dom";
 import { supabase } from "@/lib/supabase";
+
+const stats = [
+  { icon: DollarSign, label: "Monthly Revenue", value: "₹12.4L" },
+  { icon: Users,      label: "Active Clients",  value: "64" },
+  { icon: TrendingUp, label: "Projects Live",   value: "8" },
+];
 
 export function LoginPage() {
   const [showPassword, setShowPassword] = useState(false);
@@ -23,10 +28,7 @@ export function LoginPage() {
     setIsLoading(true);
     setError(null);
 
-    const { error } = await supabase.auth.signInWithPassword({
-      email,
-      password,
-    });
+    const { error } = await supabase.auth.signInWithPassword({ email, password });
 
     if (error) {
       setError(error.message);
@@ -36,25 +38,16 @@ export function LoginPage() {
     }
   };
 
-  const loginAs = (role: "admin" | "user") => {
+  const loginAs = async (role: "admin" | "user") => {
     const targetEmail = role === "admin" ? "admin@duokarrma.com" : "user@duokarrma.com";
-    const targetPassword = "password123";
-    
     setEmail(targetEmail);
-    setPassword(targetPassword);
-    
-    // Automatically submit after state update
-    setTimeout(() => {
-      handleLoginAs(targetEmail, targetPassword);
-    }, 0);
-  };
-
-  const handleLoginAs = async (targetEmail: string, targetPassword: string) => {
+    setPassword("password123");
     setIsLoading(true);
     setError(null);
+
     const { error } = await supabase.auth.signInWithPassword({
       email: targetEmail,
-      password: targetPassword,
+      password: "password123",
     });
 
     if (error) {
@@ -66,127 +59,152 @@ export function LoginPage() {
   };
 
   return (
-    <div className="relative grid min-h-screen lg:grid-cols-2">
-      {/* Ambient background */}
-      <div className="pointer-events-none fixed inset-0 overflow-hidden">
-        <div className="absolute -left-40 top-0 h-[500px] w-[500px] rounded-full bg-electric/[0.08] blur-[120px]" />
-        <div className="absolute -right-32 bottom-0 h-[450px] w-[450px] rounded-full bg-violet/[0.07] blur-[120px]" />
-      </div>
-
-      {/* Left: Crystal hero */}
-      <div className="relative hidden items-center justify-center lg:flex">
-        <div className="absolute inset-0">
-          <CrystalScene className="h-full w-full" />
+    <div className="grid min-h-screen bg-[var(--color-void)] lg:grid-cols-2">
+      {/* ── Left: Brand Panel ── */}
+      <div className="hidden flex-col justify-between p-12 bg-[var(--color-graphite)] border-r border-[var(--color-edge)] lg:flex">
+        {/* Logo */}
+        <div className="flex items-center gap-3">
+          <div className="flex h-8 w-8 items-center justify-center overflow-hidden rounded-md">
+            <img src="/logo.jpeg" alt="DuoKarma" className="h-full w-full object-cover" />
+          </div>
+          <div>
+            <p className="text-sm font-semibold text-ink">DuoKarma</p>
+            <p className="text-[10px] text-ink-faint">Business Hub</p>
+          </div>
         </div>
-        <div className="relative z-10 max-w-sm px-8 text-center">
-          <motion.p
-            initial={{ opacity: 0, y: 10 }}
+
+        {/* Core value prop */}
+        <div>
+          <motion.h1
+            initial={{ opacity: 0, y: 12 }}
             animate={{ opacity: 1, y: 0 }}
-            transition={{ delay: 0.3 }}
-            className="font-display text-3xl font-semibold tracking-tight text-ink"
+            transition={{ delay: 0.15, duration: 0.5 }}
+            className="text-3xl font-semibold leading-tight tracking-tight text-ink"
           >
-            Run your business like an operating system.
-          </motion.p>
+            Your business,
+            <br />
+            <span className="text-[var(--color-accent)]">fully orchestrated.</span>
+          </motion.h1>
           <motion.p
-            initial={{ opacity: 0, y: 10 }}
+            initial={{ opacity: 0, y: 8 }}
             animate={{ opacity: 1, y: 0 }}
+            transition={{ delay: 0.28, duration: 0.5 }}
+            className="mt-4 text-sm leading-relaxed text-ink-faint"
+          >
+            Clients, projects, invoices, and revenue — unified in one professional workspace built for modern agencies.
+          </motion.p>
+
+          {/* Stats row */}
+          <motion.div
+            initial={{ opacity: 0 }}
+            animate={{ opacity: 1 }}
             transition={{ delay: 0.45 }}
-            className="mt-3 text-sm text-ink-faint"
+            className="mt-8 grid grid-cols-3 gap-4"
           >
-            Clients, projects, and revenue — orchestrated in one elegant hub.
-          </motion.p>
+            {stats.map((stat) => (
+              <div
+                key={stat.label}
+                className="rounded-[var(--radius-card)] border border-[var(--color-edge)] bg-[var(--color-card)] p-3"
+              >
+                <stat.icon className="mb-2 h-4 w-4 text-[var(--color-accent)]" />
+                <p className="text-lg font-semibold text-ink">{stat.value}</p>
+                <p className="text-[10px] text-ink-faint mt-0.5">{stat.label}</p>
+              </div>
+            ))}
+          </motion.div>
         </div>
+
+        {/* Footer */}
+        <p className="text-[11px] text-ink-faint">
+          © {new Date().getFullYear()} DuoKarma. All rights reserved.
+        </p>
       </div>
 
-      {/* Right: Login form */}
-      <div className="relative z-10 flex items-center justify-center px-6 py-12">
+      {/* ── Right: Login Form ── */}
+      <div className="flex items-center justify-center px-6 py-12">
         <motion.div
-          initial={{ opacity: 0, y: 12 }}
+          initial={{ opacity: 0, y: 10 }}
           animate={{ opacity: 1, y: 0 }}
-          transition={{ duration: 0.4 }}
-          className="w-full max-w-sm rounded-[var(--radius-panel)] glass-panel-strong p-8 shadow-[var(--shadow-panel)]"
+          transition={{ duration: 0.35 }}
+          className="w-full max-w-[360px]"
         >
-          <div className="mb-7 flex items-center gap-3">
-            <div className="flex h-10 w-10 items-center justify-center overflow-hidden rounded-xl bg-black shadow-[var(--shadow-glow-blue)]">
-              <img src="/logo.jpeg" alt="DuoKarma Logo" className="h-full w-full object-cover" />
+          {/* Mobile logo */}
+          <div className="mb-8 flex items-center gap-2.5 lg:hidden">
+            <div className="flex h-7 w-7 items-center justify-center overflow-hidden rounded-md">
+              <img src="/logo.jpeg" alt="DuoKarma" className="h-full w-full object-cover" />
             </div>
-            <div>
-              <p className="font-display text-sm font-semibold text-ink">DuoKarma</p>
-              <p className="text-[11px] text-ink-faint">Business Hub</p>
-            </div>
+            <p className="text-sm font-semibold text-ink">DuoKarma</p>
           </div>
 
-          <h1 className="font-display text-xl font-semibold text-ink">Welcome back</h1>
-          <p className="mt-1 text-sm text-ink-faint">Sign in to access your dashboard.</p>
+          <h2 className="text-xl font-semibold text-ink">Welcome back</h2>
+          <p className="mt-1 text-sm text-ink-faint">Sign in to your workspace</p>
 
+          {/* Quick login */}
           <div className="mt-6 flex gap-2">
-            <Button
+            <button
               type="button"
-              variant="outline"
-              className="flex-1"
-              size="sm"
               onClick={() => loginAs("admin")}
               disabled={isLoading}
+              className="flex-1 rounded-[var(--radius-control)] border border-[var(--color-edge)] bg-[var(--color-card)] px-3 py-1.5 text-xs text-ink-dim transition-colors hover:border-[var(--color-accent)] hover:text-ink disabled:opacity-50"
             >
-              <Users className="mr-2 h-3.5 w-3.5" />
-              Admin
-            </Button>
-            <Button
+              Login as Admin
+            </button>
+            <button
               type="button"
-              variant="outline"
-              className="flex-1"
-              size="sm"
               onClick={() => loginAs("user")}
               disabled={isLoading}
+              className="flex-1 rounded-[var(--radius-control)] border border-[var(--color-edge)] bg-[var(--color-card)] px-3 py-1.5 text-xs text-ink-dim transition-colors hover:border-[var(--color-accent)] hover:text-ink disabled:opacity-50"
             >
-              <Users className="mr-2 h-3.5 w-3.5" />
-              User
-            </Button>
+              Login as User
+            </button>
           </div>
 
-          <div className="relative mt-5 mb-5">
+          <div className="relative my-5">
             <div className="absolute inset-0 flex items-center">
-              <span className="w-full border-t border-edge" />
+              <span className="w-full border-t border-[var(--color-edge)]" />
             </div>
-            <div className="relative flex justify-center text-xs uppercase">
-              <span className="bg-background px-2 text-ink-faint">Or continue with</span>
+            <div className="relative flex justify-center">
+              <span className="bg-[var(--color-void)] px-2 text-[10px] uppercase tracking-wider text-ink-faint">
+                or sign in manually
+              </span>
             </div>
           </div>
 
           {error && (
-            <div className="mb-4 rounded-md bg-rose/10 p-3 text-sm text-rose">
+            <div className="mb-4 rounded-[var(--radius-control)] border border-[#EF4444]/30 bg-[#EF4444]/10 px-3 py-2 text-xs text-[#EF4444]">
               {error}
             </div>
           )}
 
           <form className="space-y-4" onSubmit={handleLogin}>
             <div>
-              <label className="mb-1.5 block text-xs font-medium text-ink-dim">Email address</label>
+              <label className="mb-1.5 block text-xs font-medium text-ink-dim">Email</label>
               <div className="relative">
-                <Mail className="absolute left-3 top-1/2 h-4 w-4 -translate-y-1/2 text-ink-faint" />
-                <Input 
-                  type="email" 
-                  placeholder="you@company.com" 
-                  className="pl-10" 
+                <Mail className="absolute left-3 top-1/2 h-3.5 w-3.5 -translate-y-1/2 text-ink-faint" />
+                <Input
+                  type="email"
+                  placeholder="you@company.com"
+                  className="pl-9"
                   value={email}
                   onChange={(e) => setEmail(e.target.value)}
                   required
                 />
               </div>
             </div>
+
             <div>
               <div className="mb-1.5 flex items-center justify-between">
-                <label className="block text-xs font-medium text-ink-dim">Password</label>
-                <a href="#" className="text-xs text-electric hover:underline">
+                <label className="text-xs font-medium text-ink-dim">Password</label>
+                <a href="#" className="text-[10px] text-[var(--color-accent)] hover:underline">
                   Forgot password?
                 </a>
               </div>
               <div className="relative">
-                <Lock className="absolute left-3 top-1/2 h-4 w-4 -translate-y-1/2 text-ink-faint" />
+                <Lock className="absolute left-3 top-1/2 h-3.5 w-3.5 -translate-y-1/2 text-ink-faint" />
                 <Input
                   type={showPassword ? "text" : "password"}
                   placeholder="••••••••"
-                  className="pl-10 pr-10"
+                  className="pl-9 pr-9"
                   value={password}
                   onChange={(e) => setPassword(e.target.value)}
                   required
@@ -196,20 +214,21 @@ export function LoginPage() {
                   onClick={() => setShowPassword((s) => !s)}
                   className="absolute right-3 top-1/2 -translate-y-1/2 text-ink-faint hover:text-ink-dim"
                 >
-                  {showPassword ? <EyeOff className="h-4 w-4" /> : <Eye className="h-4 w-4" />}
+                  {showPassword ? <EyeOff className="h-3.5 w-3.5" /> : <Eye className="h-3.5 w-3.5" />}
                 </button>
               </div>
             </div>
 
-            <Button type="submit" className="w-full" size="lg" disabled={isLoading}>
+            <Button type="submit" className="w-full" disabled={isLoading}>
               {isLoading ? (
                 <>
-                  <Loader2 className="mr-2 h-4 w-4 animate-spin" />
+                  <Loader2 className="mr-2 h-3.5 w-3.5 animate-spin" />
                   Signing in...
                 </>
               ) : (
                 <>
-                  Sign in <ArrowRight className="ml-2 h-4 w-4" />
+                  Sign in
+                  <ArrowRight className="ml-2 h-3.5 w-3.5" />
                 </>
               )}
             </Button>

@@ -27,8 +27,8 @@ export function ExpensesPage() {
       <div className="mb-6 grid grid-cols-1 gap-4 sm:grid-cols-2 lg:grid-cols-4">
         <KPICard label="Total Expenses (6mo)" value={totalExpenses} prefix="$" change={-4.2} icon={Wallet} accent="amber" />
         <KPICard label="Avg Monthly" value={avgMonthly} prefix="$" change={2.8} icon={TrendingDown} accent="blue" />
-        <KPICard label="This Month" value={latestMonth.expenses} prefix="$" change={6.5} icon={CreditCard} accent="violet" />
-        <KPICard label="Payroll Share" value={58.6} suffix="%" change={1.2} icon={Users} accent="cyan" decimals={1} />
+        <KPICard label="This Month" value={latestMonth.expenses} prefix="$" change={6.5} icon={CreditCard} accent="blue" />
+        <KPICard label="Payroll Share" value={58.6} suffix="%" change={1.2} icon={Users} accent="green" decimals={1} />
       </div>
 
       <div className="grid grid-cols-1 gap-4 lg:grid-cols-3">

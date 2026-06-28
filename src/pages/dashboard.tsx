@@ -8,45 +8,83 @@ import {
   FileText,
   UserPlus,
   Calendar,
-  ArrowUpRight,
+  CheckSquare,
   CreditCard,
   Target,
-  CheckSquare,
+  ArrowUpRight,
+  Clock,
 } from "lucide-react";
 import { KPICard } from "@/components/shared/kpi-card";
 import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
 import { Button } from "@/components/ui/button";
 import { Avatar } from "@/components/shared/avatar";
 import { StatusBadge } from "@/components/shared/status-badge";
-import { Progress } from "@/components/ui/progress";
-import { CrystalScene } from "@/components/three/crystal-scene";
 import { FinancialsAreaChart } from "@/components/charts/financials-area-chart";
-import { ExpensesBarChart } from "@/components/charts/expenses-bar-chart";
 import { ProfitLineChart } from "@/components/charts/profit-line-chart";
-import { monthlyFinancials, activities } from "@/data/misc";
+import { InvoiceDonutChart } from "@/components/charts/invoice-donut-chart";
+import { monthlyFinancials, activities, invoiceStatusBreakdown } from "@/data/misc";
 import { Link } from "react-router-dom";
 import { useQuery } from "@tanstack/react-query";
 import { supabase } from "@/lib/supabase";
+import { useAuth } from "@/hooks/use-auth";
+import { formatCurrency } from "@/lib/utils";
 import type { Client, Project } from "@/types";
 
-const typeIcon = {
+// ── Helpers ────────────────────────────────────────────────
+const activityIconMap = {
   payment: CreditCard,
   project: FolderKanban,
-  lead: Target,
+  lead:    Target,
   invoice: FileText,
-  client: Users,
-  task: CheckSquare,
+  client:  Users,
+  task:    CheckSquare,
+};
+
+const activityColorMap = {
+  payment: "text-[#10B981]",
+  project: "text-[#2563EB]",
+  lead:    "text-[#F59E0B]",
+  invoice: "text-[#6366F1]",
+  client:  "text-[#06B6D4]",
+  task:    "text-ink-faint",
 };
 
 function timeAgo(timestamp: string): string {
   const diff = Date.now() - new Date(timestamp).getTime();
-  const hours = Math.floor(diff / (1000 * 60 * 60));
-  if (hours < 1) return "Just now";
+  const mins = Math.floor(diff / 60000);
+  if (mins < 1)  return "Just now";
+  if (mins < 60) return `${mins}m ago`;
+  const hours = Math.floor(mins / 60);
   if (hours < 24) return `${hours}h ago`;
   return `${Math.floor(hours / 24)}d ago`;
 }
 
+function greetingByHour(): string {
+  const h = new Date().getHours();
+  if (h < 12) return "Good morning";
+  if (h < 17) return "Good afternoon";
+  return "Good evening";
+}
+
+function todayFormatted(): string {
+  return new Date().toLocaleDateString("en-US", {
+    weekday: "long",
+    month:   "long",
+    day:     "numeric",
+    year:    "numeric",
+  });
+}
+
+// Sparkline data derived from last 7 months of financials
+const revenueSparkline  = monthlyFinancials.slice(-7).map((d) => d.revenue);
+const clientsSparkline  = [48, 52, 55, 59, 60, 62, 64];
+const projectsSparkline = [5, 6, 7, 8, 7, 8, 8];
+const profitSparkline   = monthlyFinancials.slice(-7).map((d) => d.profit);
+
+// ── Component ───────────────────────────────────────────────
 export function DashboardPage() {
+  const { user } = useAuth();
+
   const { data: projects = [] } = useQuery({
     queryKey: ["projects"],
     queryFn: async () => {
@@ -63,125 +101,204 @@ export function DashboardPage() {
     },
   });
 
-  const activeProjects = projects.filter((p) => p.status === "in-progress").slice(0, 4);
-  const recentClients = [...clients].sort((a, b) => b.joinedDate.localeCompare(a.joinedDate)).slice(0, 4);
+  const activeProjects = projects.filter((p) => p.status === "in-progress").slice(0, 5);
+  const recentClients  = [...clients]
+    .sort((a, b) => b.joinedDate.localeCompare(a.joinedDate))
+    .slice(0, 5);
+
+  const displayName = user?.email?.split("@")[0].replace(/[._-]/g, " ").replace(/\b\w/g, (l) => l.toUpperCase()) || "there";
 
   return (
-    <div>
-      {/* Hero / Welcome */}
+    <div className="space-y-5">
+
+      {/* ── Header: Greeting + Business Health ── */}
       <motion.div
-        initial={{ opacity: 0, y: -8 }}
+        initial={{ opacity: 0, y: -4 }}
         animate={{ opacity: 1, y: 0 }}
-        className="relative mb-6 overflow-hidden rounded-[var(--radius-panel)] glass-panel-strong p-6 shadow-[var(--shadow-panel)] sm:p-8"
+        transition={{ duration: 0.25 }}
       >
-        <div className="relative z-10 max-w-lg">
-          <p className="text-xs font-medium text-ink-faint">Welcome back</p>
-          <h1 className="mt-1 font-display text-2xl font-semibold tracking-tight text-ink sm:text-3xl">
-            Here's how the business is performing
-          </h1>
-          <p className="mt-2 text-sm text-ink-dim">
-            Revenue is up 12.2% this month, with 8 active projects across 64 clients. 3 invoices need
-            attention.
-          </p>
-          <div className="mt-5 flex flex-wrap gap-2">
-            <Button size="sm">
-              <Plus className="h-4 w-4" /> New Project
-            </Button>
-            <Button size="sm" variant="secondary">
-              <FileText className="h-4 w-4" /> Create Invoice
-            </Button>
+        <div className="flex flex-col gap-1 sm:flex-row sm:items-center sm:justify-between">
+          <div>
+            <h1 className="text-lg font-semibold text-ink">
+              {greetingByHour()}, {displayName} 👋
+            </h1>
+            <p className="mt-0.5 text-xs text-ink-faint">{todayFormatted()}</p>
           </div>
-        </div>
-        <div className="absolute -right-10 top-1/2 h-[280px] w-[380px] -translate-y-1/2 sm:-right-4 sm:h-[320px] sm:w-[420px]">
-          <CrystalScene className="h-full w-full" />
+
+          {/* Business health chips */}
+          <div className="flex flex-wrap items-center gap-2 mt-2 sm:mt-0">
+            <span className="inline-flex items-center gap-1.5 rounded-md border border-[#10B981]/30 bg-[#10B981]/10 px-2.5 py-1 text-xs font-medium text-[#10B981]">
+              <span className="h-1.5 w-1.5 rounded-full bg-[#10B981]" />
+              Business Health: Excellent
+            </span>
+            <span className="inline-flex items-center gap-1.5 rounded-md border border-[var(--color-edge)] bg-[var(--color-card)] px-2.5 py-1 text-xs text-ink-dim">
+              <FileText className="h-3 w-3" />
+              3 invoices pending
+            </span>
+            <span className="inline-flex items-center gap-1.5 rounded-md border border-[var(--color-edge)] bg-[var(--color-card)] px-2.5 py-1 text-xs text-ink-dim">
+              <CheckSquare className="h-3 w-3" />
+              5 tasks due today
+            </span>
+          </div>
         </div>
       </motion.div>
 
-      {/* KPI Cards */}
-      <div className="mb-6 grid grid-cols-1 gap-4 sm:grid-cols-2 lg:grid-cols-4">
-        <KPICard label="Total Revenue" value={1037000} prefix="$" change={12.2} icon={DollarSign} accent="blue" />
-        <KPICard label="Active Clients" value={64} change={9.8} icon={Users} accent="cyan" />
-        <KPICard label="Active Projects" value={8} change={3.1} icon={FolderKanban} accent="violet" />
-        <KPICard label="Net Profit" value={97000} prefix="$" change={18.5} icon={TrendingUp} accent="amber" />
+      {/* ── KPI Cards ── */}
+      <div className="grid grid-cols-2 gap-3 lg:grid-cols-4">
+        <KPICard
+          label="Total Revenue"
+          value={1245000}
+          prefix="₹"
+          change={12.2}
+          icon={DollarSign}
+          accent="blue"
+          sparklineData={revenueSparkline}
+        />
+        <KPICard
+          label="Active Clients"
+          value={64}
+          change={9.8}
+          icon={Users}
+          accent="green"
+          sparklineData={clientsSparkline}
+        />
+        <KPICard
+          label="Active Projects"
+          value={8}
+          change={3.1}
+          icon={FolderKanban}
+          accent="amber"
+          sparklineData={projectsSparkline}
+        />
+        <KPICard
+          label="Net Profit"
+          value={525000}
+          prefix="₹"
+          change={18.5}
+          icon={TrendingUp}
+          accent="green"
+          sparklineData={profitSparkline}
+        />
       </div>
 
-      {/* Charts Row */}
-      <div className="mb-6 grid grid-cols-1 gap-4 lg:grid-cols-3">
+      {/* ── Charts Row ── */}
+      <div className="grid grid-cols-1 gap-3 lg:grid-cols-3">
         <Card className="lg:col-span-2">
-          <CardHeader>
-            <CardTitle>Revenue & Profit</CardTitle>
+          <CardHeader className="flex-row items-center justify-between space-y-0">
+            <div>
+              <CardTitle>Revenue & Profit</CardTitle>
+              <p className="mt-0.5 text-[10px] text-ink-faint">Last 12 months</p>
+            </div>
+            <div className="flex items-center gap-3 text-[10px] text-ink-faint">
+              <span className="flex items-center gap-1"><span className="h-2 w-2 rounded-full bg-[#2563EB]" />Revenue</span>
+              <span className="flex items-center gap-1"><span className="h-2 w-2 rounded-full bg-[#10B981]" />Profit</span>
+            </div>
           </CardHeader>
           <CardContent>
-            <FinancialsAreaChart data={monthlyFinancials} />
+            <FinancialsAreaChart data={monthlyFinancials} height={220} />
           </CardContent>
         </Card>
+
         <Card>
           <CardHeader>
-            <CardTitle>Expenses</CardTitle>
+            <CardTitle>Invoice Status</CardTitle>
+            <p className="mt-0.5 text-[10px] text-ink-faint">Current billing cycle</p>
           </CardHeader>
           <CardContent>
-            <ExpensesBarChart data={monthlyFinancials} height={260} />
+            <InvoiceDonutChart data={invoiceStatusBreakdown} />
           </CardContent>
         </Card>
       </div>
 
-      <div className="mb-6 grid grid-cols-1 gap-4 lg:grid-cols-3">
-        {/* Active Projects */}
+      {/* ── Projects + Profit Trend ── */}
+      <div className="grid grid-cols-1 gap-3 lg:grid-cols-3">
         <Card className="lg:col-span-2">
           <CardHeader className="flex-row items-center justify-between space-y-0">
             <CardTitle>Active Projects</CardTitle>
-            <Link to="/projects" className="text-xs text-electric hover:underline">
-              View all
+            <Link to="/projects" className="flex items-center gap-1 text-xs text-[var(--color-accent)] hover:underline">
+              View all <ArrowUpRight className="h-3 w-3" />
             </Link>
           </CardHeader>
-          <CardContent className="space-y-4">
-            {activeProjects.map((project) => (
-              <div key={project.id} className="flex items-center gap-4">
-                <div className="flex-1 min-w-0">
-                  <div className="flex items-center justify-between gap-2">
-                    <p className="truncate text-sm font-medium text-ink">{project.name}</p>
-                    <span className="shrink-0 text-xs text-ink-faint tabular">{project.progress}%</span>
-                  </div>
-                  <p className="text-xs text-ink-faint">{project.client}</p>
-                  <Progress value={project.progress} className="mt-2 h-1.5" />
-                </div>
+          <CardContent>
+            {activeProjects.length === 0 ? (
+              <div className="py-6 text-center">
+                <p className="text-xs text-ink-faint">No active projects yet.</p>
+                <Link to="/projects">
+                  <Button size="sm" variant="secondary" className="mt-3">
+                    <Plus className="h-3.5 w-3.5 mr-1" /> Create project
+                  </Button>
+                </Link>
               </div>
-            ))}
+            ) : (
+              <div className="space-y-3.5">
+                {activeProjects.map((project) => (
+                  <div key={project.id} className="group">
+                    <div className="flex items-center justify-between gap-3 mb-1.5">
+                      <div className="min-w-0">
+                        <p className="truncate text-sm font-medium text-ink">{project.name}</p>
+                        <p className="text-xs text-ink-faint">{project.client}</p>
+                      </div>
+                      <div className="text-right shrink-0">
+                        <span className="text-xs font-medium tabular text-ink">{project.progress}%</span>
+                        <p className="text-[10px] text-ink-faint">{formatCurrency(project.budget)}</p>
+                      </div>
+                    </div>
+                    <div className="relative h-1 w-full rounded-full bg-[var(--color-edge)]">
+                      <div
+                        className="absolute left-0 top-0 h-1 rounded-full bg-[var(--color-accent)] transition-all"
+                        style={{ width: `${project.progress}%` }}
+                      />
+                    </div>
+                  </div>
+                ))}
+              </div>
+            )}
           </CardContent>
         </Card>
 
-        {/* Profit trend */}
         <Card>
           <CardHeader>
             <CardTitle>Profit Trend</CardTitle>
+            <p className="mt-0.5 text-[10px] text-ink-faint">Last 12 months</p>
           </CardHeader>
           <CardContent>
-            <ProfitLineChart data={monthlyFinancials} height={240} />
+            <ProfitLineChart data={monthlyFinancials} height={200} />
           </CardContent>
         </Card>
       </div>
 
-      <div className="grid grid-cols-1 gap-4 lg:grid-cols-3">
-        {/* Recent Activity */}
+      {/* ── Activity + Clients + Quick Actions ── */}
+      <div className="grid grid-cols-1 gap-3 lg:grid-cols-3">
+        {/* Activity Feed */}
         <Card>
-          <CardHeader>
+          <CardHeader className="flex-row items-center justify-between space-y-0">
             <CardTitle>Recent Activity</CardTitle>
+            <Clock className="h-3.5 w-3.5 text-ink-faint" />
           </CardHeader>
-          <CardContent className="space-y-3">
-            {activities.slice(0, 5).map((activity) => {
-              const Icon = typeIcon[activity.type];
-              return (
-                <div key={activity.id} className="flex items-start gap-3">
-                  <div className="flex h-7 w-7 shrink-0 items-center justify-center rounded-lg bg-white/[0.05]">
-                    <Icon className="h-3.5 w-3.5 text-ink-dim" />
+          <CardContent>
+            <div className="space-y-3">
+              {activities.slice(0, 6).map((activity, i) => {
+                const Icon = activityIconMap[activity.type];
+                return (
+                  <div key={activity.id} className="flex items-start gap-3">
+                    <div className="flex h-6 w-6 shrink-0 items-center justify-center rounded-md border border-[var(--color-edge)] bg-[var(--color-void)]">
+                      <Icon className={`h-3 w-3 ${activityColorMap[activity.type]}`} />
+                    </div>
+                    <div className="min-w-0 flex-1">
+                      <p className="text-xs leading-snug text-ink-dim">{activity.message}</p>
+                      <div className="mt-0.5 flex items-center gap-1.5">
+                        <span className="text-[10px] text-ink-faint">{activity.actor}</span>
+                        <span className="text-[10px] text-ink-faint">·</span>
+                        <span className="text-[10px] text-ink-faint">{timeAgo(activity.timestamp)}</span>
+                      </div>
+                    </div>
+                    {i < activities.slice(0, 6).length - 1 && (
+                      <div className="absolute left-[11px] top-6 h-3 w-px bg-[var(--color-edge)]" />
+                    )}
                   </div>
-                  <div className="min-w-0">
-                    <p className="text-xs text-ink-dim leading-snug">{activity.message}</p>
-                    <p className="mt-0.5 text-[11px] text-ink-faint">{timeAgo(activity.timestamp)}</p>
-                  </div>
-                </div>
-              );
-            })}
+                );
+              })}
+            </div>
           </CardContent>
         </Card>
 
@@ -189,46 +306,63 @@ export function DashboardPage() {
         <Card>
           <CardHeader className="flex-row items-center justify-between space-y-0">
             <CardTitle>Recent Clients</CardTitle>
-            <Link to="/clients" className="text-xs text-electric hover:underline">
-              View all
+            <Link to="/clients" className="flex items-center gap-1 text-xs text-[var(--color-accent)] hover:underline">
+              View all <ArrowUpRight className="h-3 w-3" />
             </Link>
           </CardHeader>
-          <CardContent className="space-y-3">
-            {recentClients.map((client) => (
-              <div key={client.id} className="flex items-center gap-3">
-                <Avatar seed={client.avatarSeed} size="sm" />
-                <div className="min-w-0 flex-1">
-                  <p className="truncate text-xs font-medium text-ink">{client.name}</p>
-                  <p className="truncate text-[11px] text-ink-faint">{client.company}</p>
-                </div>
-                <StatusBadge status={client.status} />
+          <CardContent>
+            {recentClients.length === 0 ? (
+              <p className="py-4 text-center text-xs text-ink-faint">No clients yet.</p>
+            ) : (
+              <div className="space-y-2.5">
+                {recentClients.map((client) => (
+                  <div key={client.id} className="flex items-center gap-3 rounded-[var(--radius-control)] p-1.5 transition-colors hover:bg-[var(--color-charcoal)]">
+                    <Avatar seed={client.avatarSeed} size="sm" />
+                    <div className="min-w-0 flex-1">
+                      <p className="truncate text-xs font-medium text-ink">{client.name}</p>
+                      <p className="truncate text-[10px] text-ink-faint">{client.company}</p>
+                    </div>
+                    <div className="text-right shrink-0">
+                      <p className="text-xs tabular text-ink-dim">{formatCurrency(client.totalValue)}</p>
+                      <StatusBadge status={client.status} />
+                    </div>
+                  </div>
+                ))}
               </div>
-            ))}
+            )}
           </CardContent>
         </Card>
 
-        {/* Quick Actions + Upcoming */}
+        {/* Quick Actions */}
         <Card>
           <CardHeader>
             <CardTitle>Quick Actions</CardTitle>
           </CardHeader>
-          <CardContent className="space-y-2">
-            {[
-              { label: "Add Client", icon: UserPlus, to: "/clients" },
-              { label: "New Invoice", icon: FileText, to: "/invoices" },
-              { label: "Schedule Meeting", icon: Calendar, to: "/calendar" },
-              { label: "Create Task", icon: CheckSquare, to: "/tasks" },
-            ].map((action) => (
-              <Link
-                key={action.label}
-                to={action.to}
-                className="flex items-center gap-3 rounded-[var(--radius-control)] border border-edge bg-white/[0.02] px-3 py-2.5 text-sm text-ink-dim transition-colors hover:bg-white/[0.05] hover:text-ink"
-              >
-                <action.icon className="h-4 w-4 text-electric" />
-                {action.label}
-                <ArrowUpRight className="ml-auto h-3.5 w-3.5 text-ink-faint" />
-              </Link>
-            ))}
+          <CardContent>
+            <div className="space-y-1.5">
+              {[
+                { label: "Add Client",        icon: UserPlus,   to: "/clients",  desc: "Onboard a new client" },
+                { label: "Create Invoice",    icon: FileText,   to: "/invoices", desc: "Bill for services" },
+                { label: "New Project",       icon: FolderKanban, to: "/projects", desc: "Start tracking work" },
+                { label: "Schedule Meeting",  icon: Calendar,   to: "/calendar", desc: "Block calendar time" },
+                { label: "Add Task",          icon: CheckSquare, to: "/tasks",   desc: "Track a to-do" },
+              ].map((action) => (
+                <Link
+                  key={action.label}
+                  to={action.to}
+                  className="flex items-center gap-3 rounded-[var(--radius-control)] border border-transparent px-2.5 py-2 text-xs text-ink-dim transition-colors hover:border-[var(--color-edge)] hover:bg-[var(--color-charcoal)] hover:text-ink"
+                >
+                  <div className="flex h-6 w-6 shrink-0 items-center justify-center rounded-md border border-[var(--color-edge)] bg-[var(--color-void)]">
+                    <action.icon className="h-3 w-3 text-[var(--color-accent)]" />
+                  </div>
+                  <div className="min-w-0">
+                    <p className="font-medium">{action.label}</p>
+                    <p className="text-[10px] text-ink-faint">{action.desc}</p>
+                  </div>
+                  <ArrowUpRight className="ml-auto h-3 w-3 text-ink-faint" />
+                </Link>
+              ))}
+            </div>
           </CardContent>
         </Card>
       </div>

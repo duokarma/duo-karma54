@@ -1,9 +1,8 @@
 import { useLocation, Link, useNavigate } from "react-router-dom";
-import { Bell, Moon, Sun, Menu, ChevronRight, Command, LogOut, Settings, User } from "lucide-react";
+import { Bell, Moon, Sun, Menu, ChevronRight, Search, LogOut, Settings } from "lucide-react";
 import { useTheme } from "@/hooks/use-theme";
 import { useSidebar } from "@/hooks/use-sidebar";
 import { useCommandPalette } from "@/hooks/use-command-palette";
-import { Avatar } from "@/components/shared/avatar";
 import { navItems } from "@/lib/nav-config";
 import { Button } from "@/components/ui/button";
 import { NotificationPanel } from "@/components/layout/notification-panel";
@@ -17,6 +16,14 @@ import {
   DropdownMenuSeparator,
   DropdownMenuTrigger,
 } from "@/components/ui/dropdown-menu";
+
+function formatDate(): string {
+  return new Date().toLocaleDateString("en-US", {
+    weekday: "short",
+    month: "short",
+    day: "numeric",
+  });
+}
 
 export function Topbar() {
   const location = useLocation();
@@ -43,85 +50,91 @@ export function Topbar() {
   }, []);
 
   return (
-    <header className="sticky top-3 z-30 mb-4 flex items-center gap-3 rounded-[var(--radius-panel)] glass-panel px-4 py-3 shadow-[var(--shadow-panel)]">
+    <header className="sticky top-0 z-30 flex h-11 items-center gap-3 border-b border-[var(--color-edge)] bg-[var(--color-void)] px-4">
+      {/* Mobile menu */}
       <button
         onClick={() => setMobileOpen(true)}
-        className="rounded-lg p-1.5 text-ink-dim hover:bg-white/5 lg:hidden"
+        className="rounded-md p-1 text-ink-faint hover:text-ink-dim lg:hidden"
       >
-        <Menu className="h-5 w-5" />
+        <Menu className="h-4 w-4" />
       </button>
 
-      {/* Breadcrumbs */}
-      <div className="flex items-center gap-1.5 text-sm">
-        <Link to="/" className="text-ink-faint hover:text-ink-dim transition-colors">
-          Home
+      {/* Breadcrumb */}
+      <div className="flex items-center gap-1.5 text-xs text-ink-faint">
+        <Link to="/" className="hover:text-ink-dim transition-colors">
+          DuoKarma
         </Link>
         {currentItem && currentItem.path !== "/" && (
           <>
-            <ChevronRight className="h-3.5 w-3.5 text-ink-faint" />
-            <span className="font-medium text-ink">{currentItem.label}</span>
+            <ChevronRight className="h-3 w-3" />
+            <span className="text-ink-dim">{currentItem.label}</span>
           </>
         )}
       </div>
 
-      <div className="ml-auto flex items-center gap-2">
-        {/* Global search / command palette trigger */}
+      {/* Right actions */}
+      <div className="ml-auto flex items-center gap-1">
+        {/* Date */}
+        <span className="hidden text-xs text-ink-faint sm:block mr-2">{formatDate()}</span>
+
+        {/* Search */}
         <button
           onClick={() => setOpen(true)}
-          className="hidden items-center gap-2 rounded-[var(--radius-control)] border border-edge bg-white/[0.03] px-3 py-1.5 text-ink-faint transition-colors hover:bg-white/[0.06] hover:text-ink-dim md:flex"
+          className="flex items-center gap-1.5 rounded-md border border-[var(--color-edge)] bg-[var(--color-charcoal)] px-2.5 py-1 text-xs text-ink-faint transition-colors hover:border-[var(--color-edge-hover)] hover:text-ink-dim"
         >
-          <Command className="h-3.5 w-3.5" />
-          <span className="text-xs">Quick actions</span>
+          <Search className="h-3 w-3" />
+          <span className="hidden sm:block">Search</span>
+          <kbd className="hidden rounded border border-[var(--color-edge)] bg-[var(--color-void)] px-1 text-[10px] sm:block">⌘K</kbd>
         </button>
 
-        <Button variant="ghost" size="icon" onClick={toggleTheme} aria-label="Toggle theme">
-          {theme === "dark" ? <Sun className="h-[18px] w-[18px]" /> : <Moon className="h-[18px] w-[18px]" />}
+        {/* Theme */}
+        <Button variant="ghost" size="icon" onClick={toggleTheme} aria-label="Toggle theme" className="h-7 w-7">
+          {theme === "dark" ? <Sun className="h-3.5 w-3.5" /> : <Moon className="h-3.5 w-3.5" />}
         </Button>
 
+        {/* Notifications */}
         <div className="relative" ref={notifRef}>
           <Button
             variant="ghost"
             size="icon"
             onClick={() => setNotifOpen((o) => !o)}
             aria-label="Notifications"
-            className="relative"
+            className="relative h-7 w-7"
           >
-            <Bell className="h-[18px] w-[18px]" />
-            <span className="absolute right-2 top-2 h-2 w-2 rounded-full bg-rose ring-2 ring-graphite" />
+            <Bell className="h-3.5 w-3.5" />
+            <span className="absolute right-1.5 top-1.5 h-1.5 w-1.5 rounded-full bg-[#EF4444]" />
           </Button>
           {notifOpen && <NotificationPanel onClose={() => setNotifOpen(false)} />}
         </div>
 
-        <div className="ml-1 h-6 w-px bg-edge" />
+        <div className="h-4 w-px bg-[var(--color-edge)] mx-1" />
 
+        {/* User dropdown */}
         <DropdownMenu>
           <DropdownMenuTrigger asChild>
-            <button className="flex items-center gap-2 rounded-full hover:bg-white/5 transition-colors focus:outline-none">
-              <Avatar seed={user?.email || "User"} size="sm" />
+            <button className="flex items-center gap-1.5 rounded-md px-2 py-1 text-xs text-ink-faint transition-colors hover:bg-[var(--color-charcoal)] hover:text-ink-dim focus:outline-none">
+              <span className="hidden sm:block">{user?.email?.split("@")[0] || "Account"}</span>
+              <div className="h-5 w-5 rounded-full bg-[var(--color-accent)] flex items-center justify-center text-[10px] font-semibold text-white">
+                {(user?.email?.[0] || "U").toUpperCase()}
+              </div>
             </button>
           </DropdownMenuTrigger>
-          <DropdownMenuContent align="end" className="w-56">
+          <DropdownMenuContent align="end" className="w-52">
             <DropdownMenuLabel className="font-normal">
-              <div className="flex flex-col space-y-1">
-                <p className="text-sm font-medium leading-none text-ink">My Account</p>
-                <p className="text-xs leading-none text-ink-faint">
-                  {user?.email || "user@example.com"}
-                </p>
+              <div className="flex flex-col gap-0.5">
+                <p className="text-xs font-medium text-ink">{user?.email?.split("@")[0] || "User"}</p>
+                <p className="text-[10px] text-ink-faint">{user?.email || "user@duokarrma.com"}</p>
               </div>
             </DropdownMenuLabel>
             <DropdownMenuSeparator />
-            <DropdownMenuItem onClick={() => navigate("/settings")} className="cursor-pointer">
-              <Settings className="mr-2 h-4 w-4" />
-              <span>Settings</span>
-            </DropdownMenuItem>
-            <DropdownMenuItem onClick={() => navigate("/profile")} className="cursor-pointer">
-              <User className="mr-2 h-4 w-4" />
-              <span>Profile</span>
+            <DropdownMenuItem onClick={() => navigate("/settings")} className="cursor-pointer text-xs">
+              <Settings className="mr-2 h-3.5 w-3.5" />
+              Settings
             </DropdownMenuItem>
             <DropdownMenuSeparator />
-            <DropdownMenuItem onClick={signOut} className="cursor-pointer text-rose focus:text-rose">
-              <LogOut className="mr-2 h-4 w-4" />
-              <span>Log out</span>
+            <DropdownMenuItem onClick={signOut} className="cursor-pointer text-xs text-[#EF4444] focus:text-[#EF4444]">
+              <LogOut className="mr-2 h-3.5 w-3.5" />
+              Sign out
             </DropdownMenuItem>
           </DropdownMenuContent>
         </DropdownMenu>

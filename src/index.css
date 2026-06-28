@@ -1,51 +1,70 @@
 @import "tailwindcss";
 
 @theme {
-  /* Surface tokens */
-  --color-void: #08090b;
-  --color-graphite: #13151a;
-  --color-graphite-soft: #181a21;
-  --color-charcoal: #1c1f26;
-  --color-charcoal-soft: #21242c;
-  --color-edge: #2a2d36;
+  /* ─── Surface tokens — Professional neutral dark palette ─── */
+  --color-void: #0B0F14;
+  --color-graphite: #11161D;         /* Sidebar background */
+  --color-card: #151B23;             /* Card backgrounds */
+  --color-graphite-soft: #1A2130;
+  --color-charcoal: #1C2430;         /* Hover states */
+  --color-charcoal-soft: #212B3A;
+  --color-edge: #242B36;             /* Borders */
+  --color-edge-hover: #2E3848;       /* Hovered borders */
 
-  /* Light mode surfaces */
-  --color-pearl: #f7f7f5;
-  --color-pearl-soft: #ffffff;
-  --color-mist: #ececea;
-  --color-fog: #e2e2df;
+  /* ─── Light mode surfaces ─── */
+  --color-pearl: #F8FAFC;
+  --color-pearl-soft: #FFFFFF;
+  --color-mist: #F1F5F9;
+  --color-fog: #E2E8F0;
 
-  /* Accent system */
-  --color-electric: #3b82f6;
-  --color-electric-deep: #2563eb;
-  --color-indigo: #6366f1;
-  --color-violet: #a855f7;
-  --color-cyan: #22d3ee;
-  --color-amber: #f5a524;
-  --color-emerald: #2dd4a4;
-  --color-rose: #fb5374;
+  /* ─── Single accent — Deep professional blue (Linear/Stripe) ─── */
+  --color-accent: #2563EB;
+  --color-accent-hover: #1D4ED8;
+  --color-accent-subtle: rgba(37, 99, 235, 0.12);
 
-  /* Text */
-  --color-ink: #f4f5f7;
-  --color-ink-dim: #9a9ea8;
-  --color-ink-faint: #5d6170;
-  --color-ink-dark: #0f1115;
-  --color-ink-dark-dim: #5b5e66;
+  /* Legacy compat: electric maps to accent */
+  --color-electric: #2563EB;
+  --color-electric-deep: #1D4ED8;
 
-  /* Fonts */
-  --font-display: "Geist Variable", "Inter", system-ui, sans-serif;
+  /* ─── Semantic palette — muted, professional ─── */
+  --color-emerald: #10B981;
+  --color-success: #10B981;
+  --color-success-subtle: rgba(16, 185, 129, 0.12);
+
+  --color-amber: #F59E0B;
+  --color-warning: #F59E0B;
+  --color-warning-subtle: rgba(245, 158, 11, 0.12);
+
+  --color-rose: #EF4444;
+  --color-danger: #EF4444;
+  --color-danger-subtle: rgba(239, 68, 68, 0.12);
+
+  /* Kept for any remaining references */
+  --color-cyan: #06B6D4;
+  --color-indigo: #6366F1;
+  --color-violet: #7C3AED;
+
+  /* ─── Text tokens ─── */
+  --color-ink: #F1F5F9;
+  --color-ink-dim: #94A3B8;
+  --color-ink-faint: #475569;
+  --color-ink-dark: #0F172A;
+  --color-ink-dark-dim: #64748B;
+
+  /* ─── Typography ─── */
+  --font-display: "Inter", system-ui, sans-serif;
   --font-body: "Inter", system-ui, sans-serif;
-  --font-mono: "Geist Mono Variable", "JetBrains Mono", monospace;
+  --font-mono: "JetBrains Mono", "Geist Mono Variable", monospace;
 
-  /* Radii */
-  --radius-panel: 1.25rem;
-  --radius-card: 1rem;
-  --radius-control: 0.625rem;
+  /* ─── Radii — tighter, more refined ─── */
+  --radius-panel: 0.625rem;
+  --radius-card: 0.5rem;
+  --radius-control: 0.375rem;
 
-  /* Shadows */
-  --shadow-glow-blue: 0 0 40px -8px rgba(59, 130, 246, 0.45);
-  --shadow-glow-violet: 0 0 40px -8px rgba(168, 85, 247, 0.4);
-  --shadow-panel: 0 8px 32px -8px rgba(0, 0, 0, 0.55), 0 1px 0 0 rgba(255, 255, 255, 0.04) inset;
+  /* ─── Shadows — elevation without glow ─── */
+  --shadow-panel: 0 1px 3px 0 rgba(0, 0, 0, 0.4), 0 0 0 1px rgba(255,255,255,0.03) inset;
+  --shadow-card: 0 1px 2px 0 rgba(0, 0, 0, 0.3);
+  --shadow-dropdown: 0 8px 24px -4px rgba(0, 0, 0, 0.6), 0 0 0 1px rgba(255,255,255,0.04) inset;
 }
 
 @layer base {
@@ -59,22 +78,17 @@
 
   html.light {
     color-scheme: light;
-
-    /* Re-point every surface/text/border token to its light-mode value.
-       Because Tailwind v4 utilities (bg-graphite, text-ink, border-edge, etc.)
-       compile down to `var(--color-*)`, redefining the variables here is enough
-       to flip every utility across the app without touching component code. */
     --color-void: var(--color-pearl);
-    --color-graphite: #ffffff;
-    --color-graphite-soft: #fbfbfa;
+    --color-graphite: #FFFFFF;
+    --color-card: #FFFFFF;
+    --color-graphite-soft: #F8FAFC;
     --color-charcoal: var(--color-mist);
-    --color-charcoal-soft: #e6e6e3;
-    --color-edge: #ddddd9;
-
+    --color-charcoal-soft: #E8EEF4;
+    --color-edge: #E2E8F0;
+    --color-edge-hover: #CBD5E1;
     --color-ink: var(--color-ink-dark);
-    --color-ink-dim: #4b4e57;
-    --color-ink-faint: #80838c;
-    --color-ink-dark-dim: #80838c;
+    --color-ink-dim: #475569;
+    --color-ink-faint: #94A3B8;
   }
 
   body {
@@ -82,38 +96,37 @@
     color: var(--color-ink);
     font-family: var(--font-body);
     -webkit-font-smoothing: antialiased;
+    -moz-osx-font-smoothing: grayscale;
     overflow-x: hidden;
   }
 
   ::selection {
-    background-color: rgba(59, 130, 246, 0.3);
+    background-color: rgba(37, 99, 235, 0.25);
   }
 
   ::-webkit-scrollbar {
-    width: 8px;
-    height: 8px;
+    width: 6px;
+    height: 6px;
   }
   ::-webkit-scrollbar-track {
     background: transparent;
   }
   ::-webkit-scrollbar-thumb {
-    background: rgba(255, 255, 255, 0.12);
-    border-radius: 8px;
+    background: var(--color-edge);
+    border-radius: 6px;
   }
   ::-webkit-scrollbar-thumb:hover {
-    background: rgba(255, 255, 255, 0.2);
+    background: var(--color-edge-hover);
   }
 
   :focus-visible {
-    outline: 2px solid var(--color-electric);
+    outline: 2px solid var(--color-accent);
     outline-offset: 2px;
     border-radius: 4px;
   }
 
   @media (prefers-reduced-motion: reduce) {
-    *,
-    *::before,
-    *::after {
+    *, *::before, *::after {
       animation-duration: 0.001ms !important;
       animation-iteration-count: 1 !important;
       transition-duration: 0.001ms !important;
@@ -123,114 +136,108 @@
 }
 
 @layer utilities {
+  /* ─── Animations ─── */
   @keyframes dialog-in {
-    from {
-      opacity: 0;
-      transform: translate(-50%, -50%) scale(0.95);
-    }
-    to {
-      opacity: 1;
-      transform: translate(-50%, -50%) scale(1);
-    }
+    from { opacity: 0; transform: translate(-50%, -50%) scale(0.96); }
+    to   { opacity: 1; transform: translate(-50%, -50%) scale(1); }
   }
   @keyframes overlay-in {
-    from {
-      opacity: 0;
-    }
-    to {
-      opacity: 1;
-    }
+    from { opacity: 0; }
+    to   { opacity: 1; }
   }
-
   @keyframes drawer-in-right {
-    from {
-      opacity: 0;
-      transform: translateX(24px);
-    }
-    to {
-      opacity: 1;
-      transform: translateX(0);
-    }
+    from { opacity: 0; transform: translateX(20px); }
+    to   { opacity: 1; transform: translateX(0); }
   }
   @keyframes drawer-in-left {
-    from {
-      opacity: 0;
-      transform: translateX(-24px);
-    }
-    to {
-      opacity: 1;
-      transform: translateX(0);
-    }
+    from { opacity: 0; transform: translateX(-20px); }
+    to   { opacity: 1; transform: translateX(0); }
   }
   @keyframes shimmer {
-    0% {
-      background-position: 200% 0;
-    }
-    100% {
-      background-position: -200% 0;
-    }
+    0%   { background-position: 200% 0; }
+    100% { background-position: -200% 0; }
+  }
+  @keyframes fade-in {
+    from { opacity: 0; transform: translateY(4px); }
+    to   { opacity: 1; transform: translateY(0); }
   }
 
-  .drawer-in-right {
-    animation: drawer-in-right 0.22s ease-out;
-  }
-  .drawer-in-left {
-    animation: drawer-in-left 0.22s ease-out;
-  }
+  .drawer-in-right { animation: drawer-in-right 0.2s ease-out; }
+  .drawer-in-left  { animation: drawer-in-left  0.2s ease-out; }
+  .fade-in         { animation: fade-in 0.25s ease-out; }
 
-  [data-state="open"].dialog-content-anim {
-    animation: dialog-in 0.18s ease-out;
-  }
-  [data-state="open"].overlay-anim {
-    animation: overlay-in 0.18s ease-out;
-  }
+  [data-state="open"].dialog-content-anim { animation: dialog-in  0.18s ease-out; }
+  [data-state="open"].overlay-anim        { animation: overlay-in 0.18s ease-out; }
 
+  /* ─── Surface utilities — REPLACES glassmorphism ─── */
+  /* 
+   * All glass-panel usages are now solid, dark surfaces.
+   * This is the key change: we drop the backdrop-filter + blur look 
+   * and use proper opaque backgrounds like Linear/Stripe.
+   */
   .glass-panel {
-    background: rgba(19, 21, 26, 0.6);
-    backdrop-filter: blur(20px) saturate(140%);
-    -webkit-backdrop-filter: blur(20px) saturate(140%);
-    border: 1px solid rgba(255, 255, 255, 0.07);
-  }
-
-  html.light .glass-panel {
-    background: rgba(255, 255, 255, 0.65);
-    border: 1px solid rgba(0, 0, 0, 0.06);
+    background-color: var(--color-card);
+    border: 1px solid var(--color-edge);
   }
 
   .glass-panel-strong {
-    background: rgba(28, 31, 38, 0.78);
-    backdrop-filter: blur(24px) saturate(150%);
-    -webkit-backdrop-filter: blur(24px) saturate(150%);
-    border: 1px solid rgba(255, 255, 255, 0.08);
+    background-color: var(--color-graphite);
+    border: 1px solid var(--color-edge);
+  }
+
+  html.light .glass-panel {
+    background-color: #FFFFFF;
+    border: 1px solid var(--color-edge);
   }
 
   html.light .glass-panel-strong {
-    background: rgba(255, 255, 255, 0.82);
-    border: 1px solid rgba(0, 0, 0, 0.07);
+    background-color: #FAFAFA;
+    border: 1px solid var(--color-edge);
   }
 
+  /* Clean surface for cards */
+  .surface-card {
+    background-color: var(--color-card);
+    border: 1px solid var(--color-edge);
+    border-radius: var(--radius-card);
+  }
+
+  /* Sidebar solid surface */
+  .surface-sidebar {
+    background-color: var(--color-graphite);
+    border-right: 1px solid var(--color-edge);
+  }
+
+  /* Subtle muted text gradient (brand label only) */
   .text-gradient-brand {
-    background: linear-gradient(115deg, #3b82f6 0%, #6366f1 45%, #a855f7 100%);
+    background: linear-gradient(120deg, #2563EB 0%, #10B981 100%);
     -webkit-background-clip: text;
     background-clip: text;
     color: transparent;
   }
 
+  /* Tabular numbers */
   .tabular {
     font-family: var(--font-mono);
     font-feature-settings: "tnum" 1;
+    font-variant-numeric: tabular-nums;
   }
 
-  .noise-overlay {
-    position: relative;
+  /* Skeleton loader */
+  .skeleton {
+    background: linear-gradient(
+      90deg,
+      var(--color-edge) 25%,
+      var(--color-charcoal) 50%,
+      var(--color-edge) 75%
+    );
+    background-size: 200% 100%;
+    animation: shimmer 1.5s ease-in-out infinite;
+    border-radius: var(--radius-control);
   }
 
-  .noise-overlay::after {
-    content: "";
-    position: absolute;
-    inset: 0;
-    opacity: 0.025;
-    pointer-events: none;
-    background-image: url("data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' width='100' height='100'%3E%3Cfilter id='n'%3E%3CfeTurbulence type='fractalNoise' baseFrequency='0.9' numOctaves='2' stitchTiles='stitch'/%3E%3C/filter%3E%3Crect width='100%25' height='100%25' filter='url(%23n)'/%3E%3C/svg%3E");
-  }
+  /* Status dot */
+  .status-dot-active  { background-color: var(--color-success); }
+  .status-dot-pending { background-color: var(--color-warning); }
+  .status-dot-danger  { background-color: var(--color-danger); }
 }
