@@ -67,7 +67,7 @@ export function SettingsPage() {
                 </div>
                 <div>
                   <label className="mb-1.5 block text-xs font-medium text-ink-dim">Phone</label>
-                  <Input defaultValue="+1 (415) 555-0100" />
+                  <Input defaultValue="+91 98765 43210" />
                 </div>
               </div>
               <Button>Save changes</Button>

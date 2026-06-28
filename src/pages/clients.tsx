@@ -233,7 +233,7 @@ export function ClientsPage() {
             </div>
             <div>
               <label className="mb-1.5 block text-xs font-medium text-ink-dim">Phone</label>
-              <Input placeholder="+1 (555) 000-0000" {...register("phone")} />
+              <Input placeholder="+91 98765 43210" {...register("phone")} />
               {errors.phone && <p className="mt-1 text-[10px] text-rose">{errors.phone.message}</p>}
             </div>
             <div>

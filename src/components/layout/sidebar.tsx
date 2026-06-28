@@ -33,7 +33,7 @@ export function Sidebar() {
         transition={{ type: "spring", stiffness: 340, damping: 34 }}
         className={cn(
           "fixed left-0 top-0 bottom-0 z-50 flex flex-col overflow-hidden",
-          "bg-[var(--color-graphite)]/80 backdrop-blur-md border-r border-[var(--color-edge)]",
+          "bg-void/40 backdrop-blur-2xl border-r border-white/10 shadow-[4px_0_24px_rgba(0,0,0,0.5)]",
           "lg:translate-x-0 transition-transform duration-300",
           mobileOpen ? "translate-x-0" : "-translate-x-full lg:translate-x-0"
         )}
@@ -88,7 +88,7 @@ export function Sidebar() {
             return (
               <div key={group} className="mb-3">
                 {!collapsed && (
-                  <p className="px-2 pb-1 text-[10px] font-semibold uppercase tracking-widest text-ink-dim">
+                  <p className="px-2 pb-1 text-[10px] font-semibold uppercase tracking-widest text-ink/70">
                     {group}
                   </p>
                 )}
@@ -104,8 +104,8 @@ export function Sidebar() {
                           "group relative flex items-center gap-2.5 rounded-[var(--radius-control)] px-2.5 py-1.5 text-sm transition-colors duration-150",
                           collapsed && "justify-center px-0 py-2",
                           isActive
-                            ? "bg-[var(--color-charcoal)] text-ink"
-                            : "text-ink-dim hover:bg-[var(--color-charcoal)] hover:text-ink"
+                            ? "bg-white/10 text-white shadow-sm"
+                            : "text-ink/80 hover:bg-white/5 hover:text-white"
                         )
                       }
                     >
@@ -118,7 +118,7 @@ export function Sidebar() {
                           <item.icon
                             className={cn(
                               "h-[15px] w-[15px] shrink-0",
-                              isActive ? "text-[var(--color-accent)]" : "text-ink-dim"
+                              isActive ? "text-white" : "text-ink/70 group-hover:text-ink/90"
                             )}
                           />
                           {!collapsed && (
