@@ -7,22 +7,22 @@ export function cn(...inputs: ClassValue[]) {
 
 export function formatCurrency(value: number, compact = false): string {
   if (compact) {
-    return new Intl.NumberFormat("en-US", {
+    return new Intl.NumberFormat("en-IN", {
       style: "currency",
-      currency: "USD",
+      currency: "INR",
       notation: "compact",
       maximumFractionDigits: 1,
     }).format(value);
   }
-  return new Intl.NumberFormat("en-US", {
+  return new Intl.NumberFormat("en-IN", {
     style: "currency",
-    currency: "USD",
+    currency: "INR",
     maximumFractionDigits: 0,
   }).format(value);
 }
 
 export function formatNumber(value: number, compact = false): string {
-  return new Intl.NumberFormat("en-US", {
+  return new Intl.NumberFormat("en-IN", {
     notation: compact ? "compact" : "standard",
     maximumFractionDigits: 1,
   }).format(value);

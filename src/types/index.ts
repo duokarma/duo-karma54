@@ -105,10 +105,34 @@ export interface Document {
 }
 
 export interface ChartPoint {
+  id: string;
   label: string;
   revenue: number;
   expenses: number;
   profit: number;
+  orderIndex: number;
+}
+
+export interface Expense {
+  id: string;
+  description: string;
+  category: string;
+  amount: number;
+  date: string;
+}
+
+export interface MetricPoint {
+  id: string;
+  label: string;
+  value: number;
+  orderIndex: number;
+}
+
+export interface ExpenseBreakdownPoint {
+  id: string;
+  label: string;
+  value: number;
+  color: string;
 }
 
 export interface KPI {

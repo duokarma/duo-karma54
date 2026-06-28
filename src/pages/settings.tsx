@@ -7,13 +7,24 @@ import { Button } from "@/components/ui/button";
 import { Switch } from "@/components/ui/switch";
 import { Avatar } from "@/components/shared/avatar";
 import { useTheme } from "@/hooks/use-theme";
-import { team } from "@/data/misc";
 import { cn } from "@/lib/utils";
+import { useQuery } from "@tanstack/react-query";
+import { supabase } from "@/lib/supabase";
+import type { TeamMember } from "@/types";
 import { useState } from "react";
 
 export function SettingsPage() {
   const { theme, toggleTheme } = useTheme();
   const [notifs, setNotifs] = useState({ email: true, push: false, weekly: true, mentions: true });
+
+  const { data: team = [], isLoading: isLoadingTeam } = useQuery({
+    queryKey: ["team_members"],
+    queryFn: async () => {
+      const { data, error } = await supabase.from("team_members").select("*");
+      if (error) throw error;
+      return data as TeamMember[];
+    },
+  });
 
   return (
     <div>
@@ -143,16 +154,20 @@ export function SettingsPage() {
               </Button>
             </CardHeader>
             <CardContent className="space-y-1">
-              {team.map((member) => (
-                <div key={member.id} className="flex items-center gap-3 border-b border-edge/60 py-3 last:border-0">
-                  <Avatar seed={member.avatarSeed} size="sm" />
-                  <div className="flex-1 min-w-0">
-                    <p className="text-sm font-medium text-ink">{member.name}</p>
-                    <p className="text-xs text-ink-faint">{member.email}</p>
+              {isLoadingTeam ? (
+                <div className="py-4 text-center text-sm text-ink-dim">Loading team...</div>
+              ) : (
+                team.map((member) => (
+                  <div key={member.id} className="flex items-center gap-3 border-b border-edge/60 py-3 last:border-0">
+                    <Avatar seed={member.avatarSeed} size="sm" />
+                    <div className="flex-1 min-w-0">
+                      <p className="text-sm font-medium text-ink">{member.name}</p>
+                      <p className="text-xs text-ink-faint">{member.email}</p>
+                    </div>
+                    <span className="text-xs text-ink-faint">{member.role}</span>
                   </div>
-                  <span className="text-xs text-ink-faint">{member.role}</span>
-                </div>
-              ))}
+                ))
+              )}
             </CardContent>
           </Card>
         </TabsContent>
@@ -167,7 +182,7 @@ export function SettingsPage() {
               <div className="flex items-center justify-between rounded-[var(--radius-card)] border border-edge bg-gradient-to-r from-electric/10 to-violet/10 p-4">
                 <div>
                   <p className="text-sm font-medium text-ink">Premium Plan</p>
-                  <p className="text-xs text-ink-faint">$249/month · renews Jul 15, 2026</p>
+                  <p className="text-xs text-ink-faint">₹2,499/month · renews Jul 15, 2026</p>
                 </div>
                 <Button variant="secondary" size="sm">
                   Manage plan

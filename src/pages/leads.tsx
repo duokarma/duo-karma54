@@ -7,10 +7,21 @@ import { Card } from "@/components/ui/card";
 import { Avatar } from "@/components/shared/avatar";
 import { Badge } from "@/components/ui/badge";
 import { EmptyState } from "@/components/shared/empty-state";
-import { useQuery } from "@tanstack/react-query";
+import { useQuery, useMutation, useQueryClient } from "@tanstack/react-query";
 import { supabase } from "@/lib/supabase";
 import { formatCurrency } from "@/lib/utils";
 import type { Lead } from "@/types";
+import {
+  Dialog,
+  DialogContent,
+  DialogHeader,
+  DialogTitle,
+  DialogTrigger,
+  DialogFooter,
+  DialogClose,
+} from "@/components/ui/dialog";
+import { Input } from "@/components/ui/input";
+import { Label } from "@/components/ui/label";
 
 const stages: { key: Lead["stage"]; label: string; color: string }[] = [
   { key: "new", label: "New", color: "bg-violet" },
@@ -60,6 +71,42 @@ export function LeadsPage() {
       return data as Lead[];
     },
   });
+
+  const queryClient = useQueryClient();
+  const [isDialogOpen, setIsDialogOpen] = useState(false);
+  const [formData, setFormData] = useState({
+    name: "",
+    company: "",
+    email: "",
+    source: "Website",
+    value: 0,
+    stage: "new" as Lead["stage"],
+    probability: 20,
+    assignedTo: "Hatim"
+  });
+
+  const createMutation = useMutation({
+    mutationFn: async (newLead: Partial<Lead>) => {
+      const { data, error } = await supabase.from("leads").insert([{
+        ...newLead,
+        id: Math.random().toString(36).substring(2, 9),
+        createdDate: new Date().toISOString().split('T')[0],
+        lastContact: new Date().toISOString().split('T')[0]
+      }]);
+      if (error) throw error;
+      return data;
+    },
+    onSuccess: () => {
+      queryClient.invalidateQueries({ queryKey: ["leads"] });
+      setIsDialogOpen(false);
+      setFormData({ name: "", company: "", email: "", source: "Website", value: 0, stage: "new", probability: 20, assignedTo: "Hatim" });
+    }
+  });
+
+  const handleSubmit = (e: React.FormEvent) => {
+    e.preventDefault();
+    createMutation.mutate(formData);
+  };
   const totalPipelineValue = leads
     .filter((l) => l.stage !== "lost" && l.stage !== "won")
     .reduce((sum, l) => sum + l.value, 0);
@@ -74,9 +121,44 @@ export function LeadsPage() {
             <Button variant="secondary" size="sm" onClick={() => setShowLost((s) => !s)}>
               {showLost ? "Hide" : "Show"} Lost
             </Button>
-            <Button>
-              <Plus className="h-4 w-4" /> New Lead
-            </Button>
+            <Dialog open={isDialogOpen} onOpenChange={setIsDialogOpen}>
+              <DialogTrigger asChild>
+                <Button>
+                  <Plus className="h-4 w-4" /> New Lead
+                </Button>
+              </DialogTrigger>
+              <DialogContent>
+                <DialogHeader>
+                  <DialogTitle>Add New Lead</DialogTitle>
+                </DialogHeader>
+                <form onSubmit={handleSubmit} className="space-y-4 pt-4">
+                  <div className="space-y-2">
+                    <Label htmlFor="name">Contact Name</Label>
+                    <Input id="name" required value={formData.name} onChange={(e) => setFormData({...formData, name: e.target.value})} />
+                  </div>
+                  <div className="space-y-2">
+                    <Label htmlFor="company">Company</Label>
+                    <Input id="company" required value={formData.company} onChange={(e) => setFormData({...formData, company: e.target.value})} />
+                  </div>
+                  <div className="space-y-2">
+                    <Label htmlFor="email">Email</Label>
+                    <Input id="email" type="email" required value={formData.email} onChange={(e) => setFormData({...formData, email: e.target.value})} />
+                  </div>
+                  <div className="space-y-2">
+                    <Label htmlFor="value">Estimated Value (₹)</Label>
+                    <Input id="value" type="number" required min="0" value={formData.value || ""} onChange={(e) => setFormData({...formData, value: Number(e.target.value)})} />
+                  </div>
+                  <DialogFooter>
+                    <DialogClose asChild>
+                      <Button variant="secondary" type="button">Cancel</Button>
+                    </DialogClose>
+                    <Button type="submit" disabled={createMutation.isPending}>
+                      {createMutation.isPending ? "Saving..." : "Save Lead"}
+                    </Button>
+                  </DialogFooter>
+                </form>
+              </DialogContent>
+            </Dialog>
           </>
         }
       />

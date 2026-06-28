@@ -5,16 +5,57 @@ import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
 import { ClientGrowthChart, LeadConversionChart } from "@/components/charts/misc-charts";
 import { Avatar } from "@/components/shared/avatar";
 import { Progress } from "@/components/ui/progress";
-import { clientGrowth, leadConversion, team } from "@/data/misc";
-import { projects } from "@/data/projects";
-
-const teamPerformance = team.map((member, i) => ({
-  ...member,
-  utilization: [88, 94, 76, 82][i] ?? 80,
-  projectsActive: projects.filter((p) => p.team.includes(member.name) && p.status === "in-progress").length,
-}));
+import { useQuery } from "@tanstack/react-query";
+import { supabase } from "@/lib/supabase";
+import type { MetricPoint, TeamMember, Project } from "@/types";
 
 export function AnalyticsPage() {
+  const { data: clientGrowth = [], isLoading: isLoadingCG } = useQuery({
+    queryKey: ["client_growth"],
+    queryFn: async () => {
+      const { data, error } = await supabase.from("client_growth").select("*").order("orderIndex");
+      if (error) throw error;
+      return data as MetricPoint[];
+    },
+  });
+
+  const { data: leadConversion = [], isLoading: isLoadingLC } = useQuery({
+    queryKey: ["lead_conversion"],
+    queryFn: async () => {
+      const { data, error } = await supabase.from("lead_conversion").select("*").order("orderIndex");
+      if (error) throw error;
+      return data as MetricPoint[];
+    },
+  });
+
+  const { data: team = [], isLoading: isLoadingTeam } = useQuery({
+    queryKey: ["team_members"],
+    queryFn: async () => {
+      const { data, error } = await supabase.from("team_members").select("*");
+      if (error) throw error;
+      return data as TeamMember[];
+    },
+  });
+
+  const { data: projects = [], isLoading: isLoadingProj } = useQuery({
+    queryKey: ["projects"],
+    queryFn: async () => {
+      const { data, error } = await supabase.from("projects").select("*");
+      if (error) throw error;
+      return data as Project[];
+    },
+  });
+
+  const teamPerformance = team.map((member, i) => ({
+    ...member,
+    utilization: [88, 94, 76, 82][i] ?? 80,
+    projectsActive: projects.filter((p) => p.team.includes(member.name) && p.status === "in-progress").length,
+  }));
+
+  if (isLoadingCG || isLoadingLC || isLoadingTeam || isLoadingProj) {
+    return <div className="p-8 text-center text-ink-dim">Loading...</div>;
+  }
+
   return (
     <div>
       <PageHeader title="Analytics" description="Deeper insight into growth, conversion, and team performance" />

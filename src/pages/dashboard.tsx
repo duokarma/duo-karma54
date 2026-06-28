@@ -22,13 +22,12 @@ import { StatusBadge } from "@/components/shared/status-badge";
 import { FinancialsAreaChart } from "@/components/charts/financials-area-chart";
 import { ProfitLineChart } from "@/components/charts/profit-line-chart";
 import { InvoiceDonutChart } from "@/components/charts/invoice-donut-chart";
-import { monthlyFinancials } from "@/data/misc";
 import { Link } from "react-router-dom";
 import { useQuery } from "@tanstack/react-query";
 import { supabase } from "@/lib/supabase";
 import { useAuth } from "@/hooks/use-auth";
 import { formatCurrency } from "@/lib/utils";
-import type { Client, Project } from "@/types";
+import type { Client, Project, ChartPoint } from "@/types";
 
 // ── Helpers ────────────────────────────────────────────────
 const activityIconMap = {
@@ -76,14 +75,24 @@ function todayFormatted(): string {
 }
 
 // Sparkline data derived from last 7 months of financials
-const revenueSparkline  = monthlyFinancials.slice(-7).map((d) => d.revenue);
 const clientsSparkline  = [48, 52, 55, 59, 60, 62, 64];
 const projectsSparkline = [5, 6, 7, 8, 7, 8, 8];
-const profitSparkline   = monthlyFinancials.slice(-7).map((d) => d.profit);
 
 // ── Component ───────────────────────────────────────────────
 export function DashboardPage() {
   const { user } = useAuth();
+
+  const { data: monthlyFinancials = [] } = useQuery({
+    queryKey: ["financial_metrics"],
+    queryFn: async () => {
+      const { data, error } = await supabase.from("financial_metrics").select("*").order("orderIndex");
+      if (error) throw error;
+      return data as ChartPoint[];
+    },
+  });
+
+  const revenueSparkline  = monthlyFinancials.slice(-7).map((d) => d.revenue);
+  const profitSparkline   = monthlyFinancials.slice(-7).map((d) => d.profit);
 
   const { data: projects = [] } = useQuery({
     queryKey: ["projects"],

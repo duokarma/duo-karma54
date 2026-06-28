@@ -1,8 +1,10 @@
 import { motion } from "framer-motion";
 import { CreditCard, FolderKanban, Target, FileText, Users, CheckSquare } from "lucide-react";
-import { activities } from "@/data/misc";
+import { useQuery } from "@tanstack/react-query";
+import { supabase } from "@/lib/supabase";
+import type { Activity } from "@/types";
 
-const typeIcon = {
+const typeIcon: Record<string, typeof CreditCard> = {
   payment: CreditCard,
   project: FolderKanban,
   lead:    Target,
@@ -11,7 +13,7 @@ const typeIcon = {
   task:    CheckSquare,
 };
 
-const typeIconColor = {
+const typeIconColor: Record<string, string> = {
   payment: "text-[#10B981]",
   project: "text-[#2563EB]",
   lead:    "text-[#F59E0B]",
@@ -31,6 +33,15 @@ function timeAgo(timestamp: string): string {
 }
 
 export function NotificationPanel({ onClose }: { onClose: () => void }) {
+  const { data: activities = [], isLoading } = useQuery({
+    queryKey: ["activities"],
+    queryFn: async () => {
+      const { data, error } = await supabase.from("activities").select("*").order("timestamp", { ascending: false }).limit(10);
+      if (error) throw error;
+      return data as Activity[];
+    },
+  });
+
   return (
     <motion.div
       initial={{ opacity: 0, y: -6, scale: 0.98 }}
@@ -46,28 +57,34 @@ export function NotificationPanel({ onClose }: { onClose: () => void }) {
         </span>
       </div>
       <div className="max-h-80 overflow-y-auto">
-        {activities.map((activity) => {
-          const Icon = typeIcon[activity.type];
-          return (
-            <button
-              key={activity.id}
-              onClick={onClose}
-              className="flex w-full items-start gap-3 px-4 py-2.5 text-left transition-colors hover:bg-[var(--color-charcoal)]"
-            >
-              <div className="flex h-7 w-7 shrink-0 items-center justify-center rounded-md border border-[var(--color-edge)] bg-[var(--color-void)]">
-                <Icon className={`h-3.5 w-3.5 ${typeIconColor[activity.type]}`} />
-              </div>
-              <div className="flex-1 min-w-0">
+        {isLoading ? (
+          <div className="p-4 text-center text-sm text-ink-dim">Loading...</div>
+        ) : activities.length === 0 ? (
+          <div className="p-4 text-center text-sm text-ink-dim">No notifications</div>
+        ) : (
+          activities.map((activity) => {
+            const Icon = typeIcon[activity.type] || CheckSquare;
+            return (
+              <button
+                key={activity.id}
+                onClick={onClose}
+                className="flex w-full items-start gap-3 px-4 py-2.5 text-left transition-colors hover:bg-[var(--color-charcoal)]"
+              >
+                <div className="flex h-7 w-7 shrink-0 items-center justify-center rounded-md border border-[var(--color-edge)] bg-[var(--color-void)]">
+                  <Icon className={`h-3.5 w-3.5 ${typeIconColor[activity.type] || "text-ink-faint"}`} />
+                </div>
+                <div className="flex-1 min-w-0">
                 <p className="text-xs text-ink leading-snug">{activity.message}</p>
                 <div className="mt-0.5 flex items-center gap-1.5">
                   <span className="text-[10px] text-ink-faint">{activity.actor}</span>
                   <span className="text-[10px] text-ink-faint">·</span>
                   <span className="text-[10px] text-ink-faint">{timeAgo(activity.timestamp)}</span>
                 </div>
-              </div>
-            </button>
-          );
-        })}
+                </div>
+              </button>
+            );
+          })
+        )}
       </div>
       <button
         onClick={onClose}

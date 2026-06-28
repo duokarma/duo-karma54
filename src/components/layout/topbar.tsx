@@ -1,6 +1,5 @@
 import { useLocation, Link, useNavigate } from "react-router-dom";
 import { Bell, Menu, ChevronRight, Search, LogOut, Settings, Plus } from "lucide-react";
-import { useTheme } from "@/hooks/use-theme";
 import { useSidebar } from "@/hooks/use-sidebar";
 import { useCommandPalette } from "@/hooks/use-command-palette";
 import { navItems } from "@/lib/nav-config";
@@ -28,7 +27,6 @@ function formatDate(): string {
 export function Topbar() {
   const location = useLocation();
   const navigate = useNavigate();
-  const { theme, toggleTheme } = useTheme();
   const { setMobileOpen } = useSidebar();
   const { setOpen } = useCommandPalette();
   const [notifOpen, setNotifOpen] = useState(false);

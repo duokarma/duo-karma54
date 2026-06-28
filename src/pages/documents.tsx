@@ -13,8 +13,10 @@ import {
   SelectTrigger,
   SelectValue,
 } from "@/components/ui/select";
-import { documents } from "@/data/misc";
 import { cn } from "@/lib/utils";
+import type { Document } from "@/types";
+import { useQuery } from "@tanstack/react-query";
+import { supabase } from "@/lib/supabase";
 
 const typeIcon: Record<string, typeof FileText> = {
   pdf: FileText,
@@ -33,10 +35,19 @@ const typeColor: Record<string, string> = {
 };
 
 export function DocumentsPage() {
+  const { data: documents = [], isLoading } = useQuery({
+    queryKey: ["documents"],
+    queryFn: async () => {
+      const { data, error } = await supabase.from("documents").select("*");
+      if (error) throw error;
+      return data as Document[];
+    },
+  });
+
   const [query, setQuery] = useState("");
   const [folderFilter, setFolderFilter] = useState("all");
 
-  const folders = useMemo(() => Array.from(new Set(documents.map((d) => d.folder))), []);
+  const folders = useMemo(() => Array.from(new Set(documents.map((d) => d.folder))), [documents]);
 
   const filtered = useMemo(() => {
     return documents.filter((d) => {
@@ -44,7 +55,11 @@ export function DocumentsPage() {
       const matchesFolder = folderFilter === "all" || d.folder === folderFilter;
       return matchesQuery && matchesFolder;
     });
-  }, [query, folderFilter]);
+  }, [documents, query, folderFilter]);
+
+  if (isLoading) {
+    return <div className="p-8 text-center text-ink-dim">Loading...</div>;
+  }
 
   return (
     <div>

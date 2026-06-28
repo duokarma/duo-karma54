@@ -99,6 +99,49 @@ CREATE TABLE documents (
   "sharedWith" INTEGER NOT NULL
 );
 
+-- Expenses Table
+CREATE TABLE expenses (
+  id TEXT PRIMARY KEY,
+  description TEXT NOT NULL,
+  category TEXT NOT NULL,
+  amount NUMERIC NOT NULL,
+  date DATE NOT NULL
+);
+
+-- Financial Metrics (Chart Data)
+CREATE TABLE financial_metrics (
+  id TEXT PRIMARY KEY,
+  label TEXT NOT NULL,
+  revenue NUMERIC NOT NULL,
+  expenses NUMERIC NOT NULL,
+  profit NUMERIC NOT NULL,
+  "orderIndex" INTEGER NOT NULL
+);
+
+-- Client Growth (Chart Data)
+CREATE TABLE client_growth (
+  id TEXT PRIMARY KEY,
+  label TEXT NOT NULL,
+  value INTEGER NOT NULL,
+  "orderIndex" INTEGER NOT NULL
+);
+
+-- Lead Conversion (Chart Data)
+CREATE TABLE lead_conversion (
+  id TEXT PRIMARY KEY,
+  label TEXT NOT NULL,
+  value INTEGER NOT NULL,
+  "orderIndex" INTEGER NOT NULL
+);
+
+-- Expense Breakdown (Chart Data)
+CREATE TABLE expense_breakdown (
+  id TEXT PRIMARY KEY,
+  label TEXT NOT NULL,
+  value NUMERIC NOT NULL,
+  color TEXT NOT NULL
+);
+
 -- Set up Row Level Security (RLS) to allow anon key to read/write for this demo
 -- Note: In a production app, you should restrict this to authenticated users.
 
@@ -149,3 +192,33 @@ CREATE POLICY "Allow anon read access on documents" ON documents FOR SELECT USIN
 CREATE POLICY "Allow anon insert access on documents" ON documents FOR INSERT WITH CHECK (true);
 CREATE POLICY "Allow anon update access on documents" ON documents FOR UPDATE USING (true);
 CREATE POLICY "Allow anon delete access on documents" ON documents FOR DELETE USING (true);
+
+ALTER TABLE expenses ENABLE ROW LEVEL SECURITY;
+CREATE POLICY "Allow anon read access on expenses" ON expenses FOR SELECT USING (true);
+CREATE POLICY "Allow anon insert access on expenses" ON expenses FOR INSERT WITH CHECK (true);
+CREATE POLICY "Allow anon update access on expenses" ON expenses FOR UPDATE USING (true);
+CREATE POLICY "Allow anon delete access on expenses" ON expenses FOR DELETE USING (true);
+
+ALTER TABLE financial_metrics ENABLE ROW LEVEL SECURITY;
+CREATE POLICY "Allow anon read access on financial_metrics" ON financial_metrics FOR SELECT USING (true);
+CREATE POLICY "Allow anon insert access on financial_metrics" ON financial_metrics FOR INSERT WITH CHECK (true);
+CREATE POLICY "Allow anon update access on financial_metrics" ON financial_metrics FOR UPDATE USING (true);
+CREATE POLICY "Allow anon delete access on financial_metrics" ON financial_metrics FOR DELETE USING (true);
+
+ALTER TABLE client_growth ENABLE ROW LEVEL SECURITY;
+CREATE POLICY "Allow anon read access on client_growth" ON client_growth FOR SELECT USING (true);
+CREATE POLICY "Allow anon insert access on client_growth" ON client_growth FOR INSERT WITH CHECK (true);
+CREATE POLICY "Allow anon update access on client_growth" ON client_growth FOR UPDATE USING (true);
+CREATE POLICY "Allow anon delete access on client_growth" ON client_growth FOR DELETE USING (true);
+
+ALTER TABLE lead_conversion ENABLE ROW LEVEL SECURITY;
+CREATE POLICY "Allow anon read access on lead_conversion" ON lead_conversion FOR SELECT USING (true);
+CREATE POLICY "Allow anon insert access on lead_conversion" ON lead_conversion FOR INSERT WITH CHECK (true);
+CREATE POLICY "Allow anon update access on lead_conversion" ON lead_conversion FOR UPDATE USING (true);
+CREATE POLICY "Allow anon delete access on lead_conversion" ON lead_conversion FOR DELETE USING (true);
+
+ALTER TABLE expense_breakdown ENABLE ROW LEVEL SECURITY;
+CREATE POLICY "Allow anon read access on expense_breakdown" ON expense_breakdown FOR SELECT USING (true);
+CREATE POLICY "Allow anon insert access on expense_breakdown" ON expense_breakdown FOR INSERT WITH CHECK (true);
+CREATE POLICY "Allow anon update access on expense_breakdown" ON expense_breakdown FOR UPDATE USING (true);
+CREATE POLICY "Allow anon delete access on expense_breakdown" ON expense_breakdown FOR DELETE USING (true);

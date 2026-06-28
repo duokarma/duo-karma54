@@ -7,10 +7,10 @@ import { FinancialsAreaChart } from "@/components/charts/financials-area-chart";
 import { ClientGrowthChart, LeadConversionChart } from "@/components/charts/misc-charts";
 import { DataTable, type Column } from "@/components/shared/data-table";
 import { StatusBadge } from "@/components/shared/status-badge";
-import { monthlyFinancials, clientGrowth, leadConversion } from "@/data/misc";
-import { projects } from "@/data/projects";
 import { formatCurrency } from "@/lib/utils";
-import type { Project } from "@/types";
+import type { Project, ChartPoint, MetricPoint } from "@/types";
+import { useQuery } from "@tanstack/react-query";
+import { supabase } from "@/lib/supabase";
 
 const projectColumns: Column<Project>[] = [
   { key: "name", header: "Project", sortValue: (p) => p.name, render: (p) => <span className="text-ink">{p.name}</span> },
@@ -21,6 +21,46 @@ const projectColumns: Column<Project>[] = [
 ];
 
 export function ReportsPage() {
+  const { data: monthlyFinancials = [], isLoading: isLoadingFin } = useQuery({
+    queryKey: ["financial_metrics"],
+    queryFn: async () => {
+      const { data, error } = await supabase.from("financial_metrics").select("*").order("orderIndex");
+      if (error) throw error;
+      return data as ChartPoint[];
+    },
+  });
+
+  const { data: clientGrowth = [], isLoading: isLoadingCG } = useQuery({
+    queryKey: ["client_growth"],
+    queryFn: async () => {
+      const { data, error } = await supabase.from("client_growth").select("*").order("orderIndex");
+      if (error) throw error;
+      return data as MetricPoint[];
+    },
+  });
+
+  const { data: leadConversion = [], isLoading: isLoadingLC } = useQuery({
+    queryKey: ["lead_conversion"],
+    queryFn: async () => {
+      const { data, error } = await supabase.from("lead_conversion").select("*").order("orderIndex");
+      if (error) throw error;
+      return data as MetricPoint[];
+    },
+  });
+
+  const { data: projects = [], isLoading: isLoadingProj } = useQuery({
+    queryKey: ["projects"],
+    queryFn: async () => {
+      const { data, error } = await supabase.from("projects").select("*");
+      if (error) throw error;
+      return data as Project[];
+    },
+  });
+
+  if (isLoadingFin || isLoadingCG || isLoadingLC || isLoadingProj) {
+    return <div className="p-8 text-center text-ink-dim">Loading...</div>;
+  }
+
   return (
     <div>
       <PageHeader

@@ -5,14 +5,32 @@ import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
 import { FinancialsAreaChart } from "@/components/charts/financials-area-chart";
 import { DataTable, type Column } from "@/components/shared/data-table";
 import { StatusBadge } from "@/components/shared/status-badge";
-import { monthlyFinancials } from "@/data/misc";
-import { invoices } from "@/data/invoices";
 import { formatCurrency } from "@/lib/utils";
-import type { Invoice } from "@/types";
+import type { Invoice, ChartPoint } from "@/types";
+import { useQuery } from "@tanstack/react-query";
+import { supabase } from "@/lib/supabase";
 
 export function RevenuePage() {
+  const { data: monthlyFinancials = [], isLoading: isLoadingFin } = useQuery({
+    queryKey: ["financial_metrics"],
+    queryFn: async () => {
+      const { data, error } = await supabase.from("financial_metrics").select("*").order("orderIndex");
+      if (error) throw error;
+      return data as ChartPoint[];
+    },
+  });
+
+  const { data: invoices = [], isLoading: isLoadingInv } = useQuery({
+    queryKey: ["invoices"],
+    queryFn: async () => {
+      const { data, error } = await supabase.from("invoices").select("*");
+      if (error) throw error;
+      return data as Invoice[];
+    },
+  });
+
   const totalRevenue = monthlyFinancials.reduce((sum, m) => sum + m.revenue, 0);
-  const avgMonthly = totalRevenue / monthlyFinancials.length;
+  const avgMonthly = monthlyFinancials.length ? totalRevenue / monthlyFinancials.length : 0;
   const paidRevenue = invoices.filter((i) => i.status === "paid").reduce((s, i) => s + i.amount, 0);
 
   const columns: Column<Invoice>[] = [
@@ -23,14 +41,18 @@ export function RevenuePage() {
     { key: "issueDate", header: "Issued", sortValue: (i) => i.issueDate, render: (i) => <span className="text-xs tabular">{new Date(i.issueDate).toLocaleDateString()}</span> },
   ];
 
+  if (isLoadingFin || isLoadingInv) {
+    return <div className="p-8 text-center text-ink-dim">Loading...</div>;
+  }
+
   return (
     <div>
       <PageHeader title="Revenue" description="Track income across all clients and invoices" />
 
       <div className="mb-6 grid grid-cols-1 gap-4 sm:grid-cols-2 lg:grid-cols-4">
-        <KPICard label="Total Revenue (6mo)" value={totalRevenue} prefix="$" change={14.6} icon={DollarSign} accent="blue" />
-        <KPICard label="Avg Monthly" value={avgMonthly} prefix="$" change={8.2} icon={TrendingUp} accent="green" />
-        <KPICard label="Collected" value={paidRevenue} prefix="$" change={5.4} icon={Receipt} accent="blue" />
+        <KPICard label="Total Revenue (6mo)" value={totalRevenue} prefix="₹" change={14.6} icon={DollarSign} accent="blue" />
+        <KPICard label="Avg Monthly" value={avgMonthly} prefix="₹" change={8.2} icon={TrendingUp} accent="green" />
+        <KPICard label="Collected" value={paidRevenue} prefix="₹" change={5.4} icon={Receipt} accent="blue" />
         <KPICard label="Profit Margin" value={45.8} suffix="%" change={2.1} icon={Percent} accent="amber" decimals={1} />
       </div>
 
