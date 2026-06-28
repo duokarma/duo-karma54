@@ -6,11 +6,6 @@ import { Button } from "@/components/ui/button";
 import { useNavigate, useLocation } from "react-router-dom";
 import { supabase } from "@/lib/supabase";
 
-const stats = [
-  { icon: DollarSign, label: "Monthly Revenue", value: "₹12.4L" },
-  { icon: Users,      label: "Active Clients",  value: "64" },
-  { icon: TrendingUp, label: "Projects Live",   value: "8" },
-];
 
 export function LoginPage() {
   const [showPassword, setShowPassword] = useState(false);
@@ -38,8 +33,8 @@ export function LoginPage() {
     }
   };
 
-  const loginAs = async (role: "admin" | "user") => {
-    const targetEmail = role === "admin" ? "admin@duokarrma.com" : "user@duokarrma.com";
+  const loginAsAdmin = async () => {
+    const targetEmail = "admin@duokarrma.com";
     setEmail(targetEmail);
     setPassword("password123");
     setIsLoading(true);
@@ -93,25 +88,6 @@ export function LoginPage() {
           >
             Clients, projects, invoices, and revenue — unified in one professional workspace built for modern agencies.
           </motion.p>
-
-          {/* Stats row */}
-          <motion.div
-            initial={{ opacity: 0 }}
-            animate={{ opacity: 1 }}
-            transition={{ delay: 0.45 }}
-            className="mt-8 grid grid-cols-3 gap-4"
-          >
-            {stats.map((stat) => (
-              <div
-                key={stat.label}
-                className="rounded-[var(--radius-card)] border border-[var(--color-edge)] bg-[var(--color-card)] p-3"
-              >
-                <stat.icon className="mb-2 h-4 w-4 text-[var(--color-accent)]" />
-                <p className="text-lg font-semibold text-ink">{stat.value}</p>
-                <p className="text-[10px] text-ink-faint mt-0.5">{stat.label}</p>
-              </div>
-            ))}
-          </motion.div>
         </div>
 
         {/* Footer */}
@@ -140,22 +116,14 @@ export function LoginPage() {
           <p className="mt-1 text-sm text-ink-faint">Sign in to your workspace</p>
 
           {/* Quick login */}
-          <div className="mt-6 flex gap-2">
+          <div className="mt-6 flex">
             <button
               type="button"
-              onClick={() => loginAs("admin")}
+              onClick={loginAsAdmin}
               disabled={isLoading}
               className="flex-1 rounded-[var(--radius-control)] border border-[var(--color-edge)] bg-[var(--color-card)] px-3 py-1.5 text-xs text-ink-dim transition-colors hover:border-[var(--color-accent)] hover:text-ink disabled:opacity-50"
             >
               Login as Admin
-            </button>
-            <button
-              type="button"
-              onClick={() => loginAs("user")}
-              disabled={isLoading}
-              className="flex-1 rounded-[var(--radius-control)] border border-[var(--color-edge)] bg-[var(--color-card)] px-3 py-1.5 text-xs text-ink-dim transition-colors hover:border-[var(--color-accent)] hover:text-ink disabled:opacity-50"
-            >
-              Login as User
             </button>
           </div>
 
