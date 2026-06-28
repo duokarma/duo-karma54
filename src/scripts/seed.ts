@@ -263,55 +263,6 @@ const seedData = async () => {
   console.log("Inserting Documents...");
   await supabase.from("documents").upsert(documents);
 
-  // Seed Financial Metrics
-  const financialMetrics = [
-    { id: generateId(), label: "Jul", revenue: 820000, expenses: 510000, profit: 310000, orderIndex: 1 },
-    { id: generateId(), label: "Aug", revenue: 940000, expenses: 580000, profit: 360000, orderIndex: 2 },
-    { id: generateId(), label: "Sep", revenue: 870000, expenses: 530000, profit: 340000, orderIndex: 3 },
-    { id: generateId(), label: "Oct", revenue: 1080000, expenses: 640000, profit: 440000, orderIndex: 4 },
-    { id: generateId(), label: "Nov", revenue: 1150000, expenses: 690000, profit: 460000, orderIndex: 5 },
-    { id: generateId(), label: "Dec", revenue: 1320000, expenses: 750000, profit: 570000, orderIndex: 6 },
-    { id: generateId(), label: "Jan", revenue: 980000, expenses: 600000, profit: 380000, orderIndex: 7 },
-    { id: generateId(), label: "Feb", revenue: 1040000, expenses: 620000, profit: 420000, orderIndex: 8 },
-    { id: generateId(), label: "Mar", revenue: 1180000, expenses: 670000, profit: 510000, orderIndex: 9 },
-    { id: generateId(), label: "Apr", revenue: 1250000, expenses: 710000, profit: 540000, orderIndex: 10 },
-    { id: generateId(), label: "May", revenue: 1090000, expenses: 650000, profit: 440000, orderIndex: 11 },
-    { id: generateId(), label: "Jun", revenue: 1245000, expenses: 720000, profit: 525000, orderIndex: 12 }
-  ];
-  console.log("Inserting Financial Metrics...");
-  await supabase.from("financial_metrics").upsert(financialMetrics);
-
-  const clientGrowth = [
-    { id: generateId(), label: "Jul", value: 48, orderIndex: 1 },
-    { id: generateId(), label: "Aug", value: 52, orderIndex: 2 },
-    { id: generateId(), label: "Sep", value: 54, orderIndex: 3 },
-    { id: generateId(), label: "Oct", value: 59, orderIndex: 4 },
-    { id: generateId(), label: "Nov", value: 61, orderIndex: 5 },
-    { id: generateId(), label: "Dec", value: 64, orderIndex: 6 },
-  ];
-  console.log("Inserting Client Growth...");
-  await supabase.from("client_growth").upsert(clientGrowth);
-
-  const leadConversion = [
-    { id: generateId(), label: "Jul", value: 24, orderIndex: 1 },
-    { id: generateId(), label: "Aug", value: 28, orderIndex: 2 },
-    { id: generateId(), label: "Sep", value: 25, orderIndex: 3 },
-    { id: generateId(), label: "Oct", value: 32, orderIndex: 4 },
-    { id: generateId(), label: "Nov", value: 35, orderIndex: 5 },
-    { id: generateId(), label: "Dec", value: 38, orderIndex: 6 },
-  ];
-  console.log("Inserting Lead Conversion...");
-  await supabase.from("lead_conversion").upsert(leadConversion);
-
-  const expenseBreakdown = [
-    { id: generateId(), label: "Payroll", value: 420000, color: "#2563EB" },
-    { id: generateId(), label: "Software", value: 85000, color: "#10B981" },
-    { id: generateId(), label: "Marketing", value: 125000, color: "#F59E0B" },
-    { id: generateId(), label: "Office", value: 90000, color: "#8B5CF6" },
-  ];
-  console.log("Inserting Expense Breakdown...");
-  await supabase.from("expense_breakdown").upsert(expenseBreakdown);
-
   console.log("✅ Seeding complete!");
 };
 

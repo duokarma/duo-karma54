@@ -108,39 +108,75 @@ CREATE TABLE expenses (
   date DATE NOT NULL
 );
 
--- Financial Metrics (Chart Data)
-CREATE TABLE financial_metrics (
-  id TEXT PRIMARY KEY,
-  label TEXT NOT NULL,
-  revenue NUMERIC NOT NULL,
-  expenses NUMERIC NOT NULL,
-  profit NUMERIC NOT NULL,
-  "orderIndex" INTEGER NOT NULL
-);
+-- Financial Metrics View
+CREATE OR REPLACE VIEW financial_metrics AS
+WITH months AS (
+    SELECT DISTINCT date_trunc('month', "issueDate") as month_date FROM invoices
+    UNION
+    SELECT DISTINCT date_trunc('month', date) as month_date FROM expenses
+),
+monthly_revenue AS (
+    SELECT date_trunc('month', "issueDate") as month_date, SUM(amount) as revenue
+    FROM invoices
+    GROUP BY 1
+),
+monthly_expenses AS (
+    SELECT date_trunc('month', date) as month_date, SUM(amount) as expenses
+    FROM expenses
+    GROUP BY 1
+)
+SELECT 
+    EXTRACT(EPOCH FROM m.month_date)::TEXT as id,
+    TO_CHAR(m.month_date, 'Mon') as label,
+    COALESCE(r.revenue, 0) as revenue,
+    COALESCE(e.expenses, 0) as expenses,
+    COALESCE(r.revenue, 0) - COALESCE(e.expenses, 0) as profit,
+    EXTRACT(MONTH FROM m.month_date)::INTEGER as "orderIndex"
+FROM months m
+LEFT JOIN monthly_revenue r ON m.month_date = r.month_date
+LEFT JOIN monthly_expenses e ON m.month_date = e.month_date;
 
--- Client Growth (Chart Data)
-CREATE TABLE client_growth (
-  id TEXT PRIMARY KEY,
-  label TEXT NOT NULL,
-  value INTEGER NOT NULL,
-  "orderIndex" INTEGER NOT NULL
-);
+-- Client Growth View
+CREATE OR REPLACE VIEW client_growth AS
+WITH monthly_clients AS (
+    SELECT date_trunc('month', "joinedDate") as month_date, COUNT(*) as new_clients
+    FROM clients
+    GROUP BY 1
+)
+SELECT 
+    EXTRACT(EPOCH FROM month_date)::TEXT as id,
+    TO_CHAR(month_date, 'Mon') as label,
+    SUM(new_clients) OVER (ORDER BY month_date)::INTEGER as value,
+    EXTRACT(MONTH FROM month_date)::INTEGER as "orderIndex"
+FROM monthly_clients;
 
--- Lead Conversion (Chart Data)
-CREATE TABLE lead_conversion (
-  id TEXT PRIMARY KEY,
-  label TEXT NOT NULL,
-  value INTEGER NOT NULL,
-  "orderIndex" INTEGER NOT NULL
-);
+-- Lead Conversion View
+CREATE OR REPLACE VIEW lead_conversion AS
+SELECT 
+  stage as id,
+  stage as label, 
+  COUNT(*)::INTEGER as value,
+  CASE stage 
+    WHEN 'new' THEN 1
+    WHEN 'contacted' THEN 2
+    WHEN 'proposal' THEN 3
+    WHEN 'negotiation' THEN 4
+    WHEN 'won' THEN 5
+    WHEN 'lost' THEN 6
+    ELSE 7
+  END as "orderIndex"
+FROM leads
+GROUP BY stage;
 
--- Expense Breakdown (Chart Data)
-CREATE TABLE expense_breakdown (
-  id TEXT PRIMARY KEY,
-  label TEXT NOT NULL,
-  value NUMERIC NOT NULL,
-  color TEXT NOT NULL
-);
+-- Expense Breakdown View
+CREATE OR REPLACE VIEW expense_breakdown AS
+SELECT 
+  category as id,
+  category as label, 
+  SUM(amount) as value, 
+  'bg-electric' as color
+FROM expenses
+GROUP BY category;
 
 -- Set up Row Level Security (RLS) to allow anon key to read/write for this demo
 -- Note: In a production app, you should restrict this to authenticated users.

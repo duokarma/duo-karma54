@@ -4,8 +4,9 @@ import { motion, AnimatePresence } from "framer-motion";
 import { Search, ArrowRight } from "lucide-react";
 import { navItems } from "@/lib/nav-config";
 import { useCommandPalette } from "@/hooks/use-command-palette";
-import { clients } from "@/data/clients";
-import { projects } from "@/data/projects";
+import { useQuery } from "@tanstack/react-query";
+import { supabase } from "@/lib/supabase";
+import type { Client, Project } from "@/types";
 
 export function CommandPalette() {
   const { open, setOpen } = useCommandPalette();
@@ -15,6 +16,24 @@ export function CommandPalette() {
     navigate(path);
     setOpen(false);
   }
+
+  const { data: clients = [] } = useQuery({
+    queryKey: ["cmd-clients"],
+    queryFn: async () => {
+      const { data } = await supabase.from("clients").select("*").limit(5);
+      return (data as Client[]) || [];
+    },
+    enabled: open,
+  });
+
+  const { data: projects = [] } = useQuery({
+    queryKey: ["cmd-projects"],
+    queryFn: async () => {
+      const { data } = await supabase.from("projects").select("*").limit(5);
+      return (data as Project[]) || [];
+    },
+    enabled: open,
+  });
 
   return (
     <AnimatePresence>

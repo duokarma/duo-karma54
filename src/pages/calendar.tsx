@@ -6,24 +6,9 @@ import { Button } from "@/components/ui/button";
 import { Card } from "@/components/ui/card";
 import { cn } from "@/lib/utils";
 
-interface CalEvent {
-  day: number;
-  title: string;
-  color: string;
-  time: string;
-}
-
-const events: CalEvent[] = [
-  { day: 2, title: "Kickoff — Lumen Health", color: "bg-electric", time: "10:00 AM" },
-  { day: 5, title: "Invoice review", color: "bg-amber", time: "2:00 PM" },
-  { day: 9, title: "Northwind sync", color: "bg-violet", time: "11:30 AM" },
-  { day: 9, title: "Design crit", color: "bg-cyan", time: "4:00 PM" },
-  { day: 14, title: "Kintsugi QA demo", color: "bg-rose", time: "9:00 AM" },
-  { day: 18, title: "Marbella reservation demo", color: "bg-electric", time: "1:00 PM" },
-  { day: 22, title: "Monthly close prep", color: "bg-amber", time: "3:00 PM" },
-  { day: 27, title: "Team retro", color: "bg-emerald", time: "5:00 PM" },
-  { day: 27, title: "Northwind portfolio review", color: "bg-violet", time: "11:00 AM" },
-];
+import { useQuery } from "@tanstack/react-query";
+import { supabase } from "@/lib/supabase";
+import type { Task } from "@/types";
 
 const WEEKDAYS = ["Sun", "Mon", "Tue", "Wed", "Thu", "Fri", "Sat"];
 
@@ -38,6 +23,15 @@ export function CalendarPage() {
   const daysInMonth = new Date(year, month + 1, 0).getDate();
   const today = 27; // current date context
   const isCurrentMonth = monthOffset === 0;
+
+  const { data: tasks = [] } = useQuery({
+    queryKey: ["tasks"],
+    queryFn: async () => {
+      const { data, error } = await supabase.from("tasks").select("*");
+      if (error) throw error;
+      return data as Task[];
+    },
+  });
 
   const cells: (number | null)[] = [
     ...Array(firstDayOfWeek).fill(null),
@@ -79,7 +73,10 @@ export function CalendarPage() {
             </div>
           ))}
           {cells.map((day, i) => {
-            const dayEvents = isCurrentMonth && day ? events.filter((e) => e.day === day) : [];
+            const dayEvents = isCurrentMonth && day ? tasks.filter((t) => {
+              const taskDate = new Date(t.dueDate);
+              return taskDate.getDate() === day && taskDate.getMonth() === month && taskDate.getFullYear() === year;
+            }) : [];
             const isToday = isCurrentMonth && day === today;
             return (
               <motion.div
@@ -98,22 +95,30 @@ export function CalendarPage() {
                     <span
                       className={cn(
                         "inline-flex h-6 w-6 items-center justify-center rounded-full text-xs tabular",
-                        isToday ? "bg-gradient-to-br from-electric to-indigo text-white" : "text-ink-dim"
+                        isToday ? "bg-electric text-white font-medium shadow-sm" : "text-ink-faint"
                       )}
                     >
                       {day}
                     </span>
-                    <div className="mt-1.5 space-y-1">
-                      {dayEvents.slice(0, 2).map((event) => (
-                        <div
-                          key={event.title}
-                          className="truncate rounded px-1.5 py-0.5 text-[10px] text-white"
-                          style={{ backgroundColor: "rgba(255,255,255,0.08)" }}
-                        >
-                          <span className={cn("mr-1 inline-block h-1.5 w-1.5 rounded-full", event.color)} />
-                          <span className="text-ink-dim">{event.title}</span>
-                        </div>
-                      ))}
+                    <div className="mt-1 flex flex-col gap-1">
+                      {dayEvents.map((ev) => {
+                        const priorityColor = {
+                          low: "bg-ink-faint",
+                          medium: "bg-electric",
+                          high: "bg-amber",
+                          urgent: "bg-rose",
+                        }[ev.priority] || "bg-electric";
+                        
+                        return (
+                          <div
+                            key={ev.id}
+                            className="flex items-center gap-1.5 rounded-[var(--radius-sm)] border border-edge/50 bg-charcoal p-1 shadow-sm"
+                          >
+                            <span className={cn("h-1.5 w-1.5 shrink-0 rounded-full", priorityColor)} />
+                            <span className="truncate text-[10px] font-medium text-ink leading-none">{ev.title}</span>
+                          </div>
+                        );
+                      })}
                     </div>
                   </>
                 )}
@@ -126,15 +131,26 @@ export function CalendarPage() {
       <Card className="mt-5 p-5">
         <p className="mb-4 font-display text-sm font-medium text-ink">Upcoming this week</p>
         <div className="space-y-3">
-          {events.slice(0, 4).map((event) => (
-            <div key={event.title} className="flex items-center gap-3">
-              <span className={cn("h-2 w-2 rounded-full", event.color)} />
-              <div className="flex-1">
-                <p className="text-sm text-ink-dim">{event.title}</p>
+          {tasks.slice(0, 4).map((task) => {
+            const priorityColor = {
+              low: "bg-ink-faint",
+              medium: "bg-electric",
+              high: "bg-amber",
+              urgent: "bg-rose",
+            }[task.priority] || "bg-electric";
+            
+            return (
+              <div key={task.id} className="flex items-center gap-3">
+                <span className={cn("h-2 w-2 rounded-full", priorityColor)} />
+                <div className="flex-1">
+                  <p className="text-sm text-ink-dim">{task.title}</p>
+                </div>
+                <span className="text-xs text-ink-faint tabular">
+                  {new Date(task.dueDate).toLocaleDateString()}
+                </span>
               </div>
-              <span className="text-xs text-ink-faint tabular">{event.time}</span>
-            </div>
-          ))}
+            );
+          })}
         </div>
       </Card>
     </div>
