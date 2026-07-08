@@ -1,67 +1,62 @@
-import { motion } from 'framer-motion';
-import { COLORS } from './ui/theme';
-import { MagneticButton } from './ui/MagneticButton';
+import { useState } from 'react';
 
 export function Nav() {
-    const links = ["Work", "Services", "Process", "Contact"];
+  const [active, setActive] = useState('Work');
+  const links = ['Work', 'Services', 'Process', 'Contact'];
+
+  const scrollTo = (id: string) => {
+    document.getElementById(id.toLowerCase())?.scrollIntoView({ behavior: 'smooth' });
+    setActive(id);
+  };
+
   return (
-    <>
-      <motion.nav
-        initial={{ y: -40, opacity: 0 }}
-        animate={{ y: 0, opacity: 1 }}
-        transition={{ duration: 0.8, delay: 0.3 }}
-        style={{
-          position: "fixed",
-          top: 0,
-          left: 0,
-          right: 0,
-          zIndex: 50,
-          display: "flex",
-          justifyContent: "space-between",
-          alignItems: "center",
-          padding: "22px 5%",
-          background: "linear-gradient(to bottom, rgba(10,9,8,0.85), transparent)",
-          backdropFilter: "blur(2px)",
-        }}
-      >
-        <div
-          style={{
-            fontFamily: "'Fraunces', serif",
-            fontSize: 20,
-            letterSpacing: "0.02em",
-            color: COLORS.text,
+    <nav className="fixed top-0 left-0 right-0 z-[100] flex items-center justify-between p-4 sm:p-5">
+      {/* Left: Logo + Wordmark */}
+      <div className="flex items-center gap-2">
+        <img 
+          src="/logo.png" 
+          alt="DuoKarma Logo" 
+          className="w-7 h-7 object-contain drop-shadow-md"
+          onError={(e) => {
+            // Fallback to inline SVG if logo.png is missing
+            (e.target as HTMLImageElement).style.display = 'none';
+            (e.target as HTMLImageElement).nextElementSibling?.classList.remove('hidden');
           }}
+        />
+        <svg 
+          className="hidden w-[26px] h-[26px]" 
+          viewBox="0 0 256 256" 
+          fill="#ffffff"
         >
-          DuoKarma
-        </div>
-        <div style={{ display: "flex", gap: 36 }} className="dk-nav-links">
-          {links.map((l) => (
-            <a
-              key={l}
-              href={`#${l.toLowerCase()}`}
-              style={{
-                fontFamily: "'Inter', sans-serif",
-                fontSize: 13,
-                color: COLORS.secondary,
-                textDecoration: "none",
-                letterSpacing: "0.02em",
-              }}
-            >
-              {l}
-            </a>
-          ))}
-        </div>
-        <div className="dk-nav-cta">
-          <MagneticButton primary onClick={() => {
-            document.getElementById('contact')?.scrollIntoView({ behavior: 'smooth' });
-          }}>Book a call</MagneticButton>
-        </div>
-      </motion.nav>
-      <style>{`
-        @media (max-width: 720px) {
-          .dk-nav-links { display: none !important; }
-        }
-      `}</style>
-    </>
+          <path d="M 256 256 L 128 256 L 0 128 L 128 128 Z M 256 128 L 128 128 L 0 0 L 128 0 Z"/>
+        </svg>
+        <span className="text-white text-2xl font-playfair italic font-medium tracking-tight">DuoKarma</span>
+      </div>
+
+      {/* Center Pill */}
+      <div className="hidden md:flex absolute left-1/2 -translate-x-1/2 bg-white/20 backdrop-blur-md border border-white/30 rounded-full px-2 py-2 items-center gap-1">
+        {links.map(link => (
+          <button
+            key={link}
+            onClick={() => scrollTo(link)}
+            className={`px-4 py-1.5 rounded-full text-sm font-medium transition-colors ${
+              active === link 
+                ? 'text-white' 
+                : 'text-white/80 hover:bg-white/20 hover:text-white'
+            }`}
+          >
+            {link}
+          </button>
+        ))}
+      </div>
+
+      {/* Right: Book a call */}
+      <button 
+        className="hidden md:block bg-white text-gray-900 text-sm font-semibold px-6 py-2.5 rounded-full hover:bg-gray-100 transition-colors shadow-sm"
+        onClick={() => scrollTo('Contact')}
+      >
+        Book a call
+      </button>
+    </nav>
   );
 }

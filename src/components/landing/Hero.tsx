@@ -1,201 +1,157 @@
-import { useState, useEffect, useRef, useMemo, Suspense } from 'react';
-import { motion, AnimatePresence } from 'framer-motion';
-import { Canvas, useFrame, useThree } from '@react-three/fiber';
-import * as THREE from 'three';
-import { COLORS } from './ui/theme';
-import { Eyebrow } from './ui/Eyebrow';
-import { MagneticButton } from './ui/MagneticButton';
+import { useState, useEffect, useRef } from 'react';
 
-function Panel({ position, rotation, scale = 1, color = COLORS.accent, speed = 1 }: any) {
-  const ref = useRef<THREE.Mesh>(null!);
-  const seed = useMemo(() => Math.random() * 100, []);
-  useFrame(({ clock, mouse }) => {
-    const t = clock.getElapsedTime() * speed + seed;
-    if (!ref.current) return;
-    ref.current.position.y = position[1] + Math.sin(t * 0.6) * 0.18;
-    ref.current.rotation.x = rotation[0] + mouse.y * 0.15;
-    ref.current.rotation.y = rotation[1] + mouse.x * 0.25 + Math.sin(t * 0.3) * 0.05;
-  });
+const SPOTLIGHT_R = 260;
+const BG_IMAGE_1 = "https://images.higgs.ai/?default=1&output=webp&url=https%3A%2F%2Fd8j0ntlcm91z4.cloudfront.net%2Fuser_38xzZboKViGWJOttwIXH07lWA1P%2Fhf_20260609_195923_b0ba8ace-1d1d-4f2c-9a28-1ab84b330680.png&w=1280&q=85";
+const BG_IMAGE_2 = "https://images.higgs.ai/?default=1&output=webp&url=https%3A%2F%2Fd8j0ntlcm91z4.cloudfront.net%2Fuser_38xzZboKViGWJOttwIXH07lWA1P%2Fhf_20260609_201152_bba90a12-bf12-459f-91f0-51f237dbaf3b.png&w=1280&q=85";
+
+function RevealLayer({ image, cursorX, cursorY }: { image: string, cursorX: number, cursorY: number }) {
+  const canvasRef = useRef<HTMLCanvasElement>(null);
+  const revealRef = useRef<HTMLDivElement>(null);
+
+  useEffect(() => {
+    const canvas = canvasRef.current;
+    if (!canvas) return;
+
+    const resize = () => {
+      canvas.width = window.innerWidth;
+      canvas.height = window.innerHeight;
+    };
+    resize();
+    window.addEventListener('resize', resize);
+    return () => window.removeEventListener('resize', resize);
+  }, []);
+
+  useEffect(() => {
+    const canvas = canvasRef.current;
+    const reveal = revealRef.current;
+    if (!canvas || !reveal) return;
+
+    const ctx = canvas.getContext('2d');
+    if (!ctx) return;
+
+    ctx.clearRect(0, 0, canvas.width, canvas.height);
+
+    if (cursorX !== -999 && cursorY !== -999) {
+      const gradient = ctx.createRadialGradient(
+        cursorX, cursorY, 0,
+        cursorX, cursorY, SPOTLIGHT_R
+      );
+      gradient.addColorStop(0, 'rgba(255, 255, 255, 1)');
+      gradient.addColorStop(0.4, 'rgba(255, 255, 255, 1)');
+      gradient.addColorStop(0.6, 'rgba(255, 255, 255, 0.75)');
+      gradient.addColorStop(0.75, 'rgba(255, 255, 255, 0.4)');
+      gradient.addColorStop(0.88, 'rgba(255, 255, 255, 0.12)');
+      gradient.addColorStop(1, 'rgba(255, 255, 255, 0)');
+
+      ctx.fillStyle = gradient;
+      ctx.beginPath();
+      ctx.arc(cursorX, cursorY, SPOTLIGHT_R, 0, Math.PI * 2);
+      ctx.fill();
+
+      const maskImage = `url(${canvas.toDataURL()})`;
+      reveal.style.maskImage = maskImage;
+      reveal.style.webkitMaskImage = maskImage;
+      reveal.style.maskSize = '100% 100%';
+      reveal.style.webkitMaskSize = '100% 100%';
+    }
+  }, [cursorX, cursorY]);
+
   return (
-    <mesh ref={ref} position={position} rotation={rotation} scale={scale}>
-      <planeGeometry args={[1.6, 1, 1]} />
-      <meshPhysicalMaterial
-        color={color}
-        transparent
-        opacity={0.08}
-        roughness={0.2}
-        metalness={0.3}
-        transmission={0.6}
-        thickness={0.5}
-        side={THREE.DoubleSide}
+    <>
+      <canvas ref={canvasRef} className="absolute inset-0 pointer-events-none" style={{ display: 'none' }} />
+      <div 
+        ref={revealRef}
+        className="absolute inset-0 bg-center bg-cover bg-no-repeat z-30 pointer-events-none"
+        style={{ backgroundImage: `url(${image})`, WebkitMaskRepeat: 'no-repeat', maskRepeat: 'no-repeat' }}
       />
-    </mesh>
-  );
-}
-
-function Rays() {
-  const ref = useRef<THREE.Group>(null!);
-  useFrame(({ clock }) => {
-    if (ref.current) ref.current.rotation.z = clock.getElapsedTime() * 0.02;
-  });
-  return (
-    <group ref={ref}>
-      <mesh rotation={[0, 0, 0.4]} position={[0, 0, -3]}>
-        <planeGeometry args={[12, 0.4]} />
-        <meshBasicMaterial color={COLORS.accent} transparent opacity={0.04} />
-      </mesh>
-      <mesh rotation={[0, 0, -0.3]} position={[1, -1, -3]}>
-        <planeGeometry args={[14, 0.3]} />
-        <meshBasicMaterial color={COLORS.accent} transparent opacity={0.03} />
-      </mesh>
-    </group>
-  );
-}
-
-function CameraRig() {
-  const { camera, mouse } = useThree();
-  useFrame(() => {
-    camera.position.x += (mouse.x * 0.6 - camera.position.x) * 0.02;
-    camera.position.y += (mouse.y * 0.35 - camera.position.y) * 0.02;
-    camera.lookAt(0, 0, 0);
-  });
-  return null;
-}
-
-function HeroScene() {
-  return (
-    <Canvas
-      camera={{ position: [0, 0, 5], fov: 45 }}
-      gl={{ antialias: true, alpha: true }}
-      dpr={[1, 1.5]}
-    >
-      <ambientLight intensity={0.4} />
-      <pointLight position={[3, 2, 4]} intensity={1.2} color={COLORS.accent2} />
-      <pointLight position={[-3, -1, 2]} intensity={0.5} color={COLORS.emerald} />
-      <Suspense fallback={null}>
-        <Panel position={[-1.4, 0.4, -1]} rotation={[0.1, 0.4, 0]} scale={1.1} speed={0.8} />
-        <Panel position={[1.5, -0.3, -1.5]} rotation={[-0.15, -0.3, 0.1]} scale={0.9} color={COLORS.emerald} speed={1.1} />
-        <Panel position={[0.2, 0.9, -2]} rotation={[0.2, 0.1, -0.1]} scale={0.7} speed={0.6} />
-        <Panel position={[-0.6, -0.9, -0.5]} rotation={[-0.05, 0.2, 0.05]} scale={0.6} speed={1.3} />
-        <Rays />
-      </Suspense>
-      <CameraRig />
-    </Canvas>
+    </>
   );
 }
 
 export function Hero() {
-  const [loaded, setLoaded] = useState(false);
+  const [cursorPos, setCursorPos] = useState({ x: -999, y: -999 });
+  const mouse = useRef({ x: -999, y: -999 });
+  const smooth = useRef({ x: -999, y: -999 });
+  const rafRef = useRef<number>(0);
+
   useEffect(() => {
-    const t = setTimeout(() => setLoaded(true), 200);
-    return () => clearTimeout(t);
+    const handleMouseMove = (e: MouseEvent) => {
+      mouse.current = { x: e.clientX, y: e.clientY };
+      if (smooth.current.x === -999) {
+        smooth.current = { x: e.clientX, y: e.clientY };
+      }
+    };
+
+    window.addEventListener('mousemove', handleMouseMove);
+
+    const updateCursor = () => {
+      if (smooth.current.x !== -999) {
+        smooth.current.x += (mouse.current.x - smooth.current.x) * 0.1;
+        smooth.current.y += (mouse.current.y - smooth.current.y) * 0.1;
+        setCursorPos({ x: smooth.current.x, y: smooth.current.y });
+      }
+      rafRef.current = requestAnimationFrame(updateCursor);
+    };
+    rafRef.current = requestAnimationFrame(updateCursor);
+
+    return () => {
+      window.removeEventListener('mousemove', handleMouseMove);
+      if (rafRef.current) cancelAnimationFrame(rafRef.current);
+    };
   }, []);
+
   return (
-    <section
-      style={{
-        position: "relative",
-        height: "100vh",
-        minHeight: 640,
-        overflow: "hidden",
-        display: "flex",
-        alignItems: "center",
-        justifyContent: "center",
-      }}
-    >
-      <div style={{ position: "absolute", inset: 0 }}>
-        <HeroScene />
-      </div>
-      <div
-        style={{
-          position: "absolute",
-          inset: 0,
-          background:
-            "radial-gradient(ellipse at 50% 40%, transparent 0%, rgba(10,9,8,0.4) 60%, rgba(10,9,8,0.95) 100%)",
-          pointerEvents: "none",
-        }}
-      />
-      <div style={{ position: "relative", zIndex: 2, textAlign: "center", padding: "0 20px" }}>
-        <AnimatePresence>
-          {loaded && (
-            <>
-              <motion.div
-                initial={{ opacity: 0, scale: 0.9 }}
-                animate={{ opacity: 1, scale: 1 }}
-                transition={{ duration: 1, ease: [0.16, 1, 0.3, 1] }}
-              >
-                <Eyebrow>
-                  <span style={{ margin: "0 auto" }} />
-                </Eyebrow>
-              </motion.div>
-              <motion.h1
-                initial={{ opacity: 0, y: 30 }}
-                animate={{ opacity: 1, y: 0 }}
-                transition={{ duration: 1, delay: 0.15, ease: [0.16, 1, 0.3, 1] }}
-                style={{
-                  fontFamily: "'Fraunces', serif",
-                  fontWeight: 400,
-                  fontSize: "clamp(38px, 6.2vw, 84px)",
-                  lineHeight: 1.05,
-                  color: COLORS.text,
-                  maxWidth: 900,
-                  margin: "0 auto",
-                }}
-              >
-                We build software
-                <br />
-                businesses <em style={{ color: COLORS.accent, fontStyle: "italic" }}>actually use.</em>
-              </motion.h1>
-              <motion.p
-                initial={{ opacity: 0, y: 20 }}
-                animate={{ opacity: 1, y: 0 }}
-                transition={{ duration: 1, delay: 0.35 }}
-                style={{
-                  fontFamily: "'Inter', sans-serif",
-                  fontSize: 16,
-                  color: COLORS.secondary,
-                  maxWidth: 480,
-                  margin: "22px auto 36px",
-                  lineHeight: 1.6,
-                }}
-              >
-                DuoKarma designs and builds custom dashboards, booking platforms, and
-                business systems — the kind that replace spreadsheets, not decorate a homepage.
-              </motion.p>
-              <motion.div
-                initial={{ opacity: 0, y: 20 }}
-                animate={{ opacity: 1, y: 0 }}
-                transition={{ duration: 1, delay: 0.5 }}
-                style={{ display: "flex", gap: 14, justifyContent: "center" }}
-              >
-                <MagneticButton primary onClick={() => {
-                  document.getElementById('contact')?.scrollIntoView({ behavior: 'smooth' });
-                }}>Book free consultation</MagneticButton>
-                <MagneticButton onClick={() => {
-                  document.getElementById('work')?.scrollIntoView({ behavior: 'smooth' });
-                }}>See our work</MagneticButton>
-              </motion.div>
-            </>
-          )}
-        </AnimatePresence>
-      </div>
-      <motion.div
-        initial={{ opacity: 0 }}
-        animate={{ opacity: 1 }}
-        transition={{ delay: 1.2, duration: 1 }}
-        style={{
-          position: "absolute",
-          bottom: 30,
-          left: "50%",
-          transform: "translateX(-50%)",
-          fontFamily: "'IBM Plex Mono', monospace",
-          fontSize: 11,
-          letterSpacing: "0.15em",
-          color: COLORS.secondary,
-          textTransform: "uppercase",
-        }}
-      >
-        Scroll
-      </motion.div>
-    </section>
+    <div className="min-h-screen bg-white tracking-[-0.02em]" style={{ fontFamily: "'Inter', sans-serif" }}>
+      <section className="relative w-full overflow-hidden h-screen bg-black" style={{ height: '100dvh' }}>
+        
+        {/* Layer 1: Base Image (Zooming out) */}
+        <div 
+          className="absolute inset-0 bg-center bg-cover bg-no-repeat z-10 hero-zoom"
+          style={{ backgroundImage: `url(${BG_IMAGE_1})` }}
+        />
+
+        {/* Layer 2: Reveal Layer */}
+        <RevealLayer image={BG_IMAGE_2} cursorX={cursorPos.x} cursorY={cursorPos.y} />
+
+        {/* Layer 3: Heading */}
+        <h1 className="absolute top-[14%] left-0 right-0 flex flex-col items-center text-center px-5 pointer-events-none z-50 text-white leading-[0.95]">
+          <span 
+            className="block font-playfair italic font-normal text-5xl sm:text-7xl md:text-8xl hero-anim hero-reveal" 
+            style={{ letterSpacing: '-0.05em', animationDelay: '0.25s' }}
+          >
+            We build software
+          </span>
+          <span 
+            className="block font-normal text-5xl sm:text-7xl md:text-8xl -mt-1 hero-anim hero-reveal" 
+            style={{ letterSpacing: '-0.08em', animationDelay: '0.42s' }}
+          >
+            businesses actually use
+          </span>
+        </h1>
+
+        {/* Layer 4: Bottom-left paragraph */}
+        <div className="hidden sm:block absolute bottom-14 left-10 md:left-14 max-w-[260px] z-50 hero-anim hero-fade" style={{ animationDelay: '0.7s' }}>
+          <p className="text-sm text-white/80 leading-relaxed">
+            Every line of code records a chapter of your business, from early spreadsheets to automated workflows, layered securely in the cloud.
+          </p>
+        </div>
+
+        {/* Layer 5: Bottom-right block */}
+        <div className="absolute bottom-10 sm:bottom-24 left-5 right-5 sm:left-auto sm:right-10 md:right-14 max-w-full sm:max-w-[260px] flex flex-col items-start gap-4 sm:gap-5 z-50 hero-anim hero-fade" style={{ animationDelay: '0.85s' }}>
+          <p className="text-xs sm:text-sm text-white/80 leading-relaxed">
+            Our interactive platforms let you peel back the complexity to trace how systems, automation, and design combine to accelerate your growth.
+          </p>
+          <button 
+            className="bg-[#e8702a] hover:bg-[#d2611f] text-white text-sm font-medium px-7 py-3 rounded-full transition-all hover:scale-[1.03] active:scale-95 hover:shadow-lg hover:shadow-[#e8702a]/30"
+            onClick={() => {
+              document.getElementById('contact')?.scrollIntoView({ behavior: 'smooth' });
+            }}
+          >
+            Start Building
+          </button>
+        </div>
+
+      </section>
+    </div>
   );
 }
