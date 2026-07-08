@@ -25,7 +25,7 @@ export function LoadingScreen({ done }: { done: boolean }) {
             transition={{ duration: 1.2, ease: [0.16, 1, 0.3, 1] }}
             style={{ fontFamily: "'Fraunces', serif", fontSize: 26, color: COLORS.text }}
           >
-            DuoKarma
+          <img src="/logo.jpeg" alt="DuoKarma" className="h-8 w-auto object-contain mx-auto" />
           </motion.div>
           <motion.div
             initial={{ width: 0 }}

@@ -59,8 +59,8 @@ export function Topbar() {
 
       {/* Breadcrumb */}
       <div className="flex items-center gap-1.5 text-xs text-ink-faint">
-        <Link to="/admin" className="hover:text-ink-dim transition-colors">
-          DuoKarma
+        <Link to="/admin" className="hover:opacity-80 transition-opacity">
+          <img src="/logo.jpeg" alt="DuoKarma" className="h-5 w-auto object-contain" />
         </Link>
         {currentItem && currentItem.path !== "/admin" && (
           <>

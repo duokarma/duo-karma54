@@ -14,7 +14,7 @@ export function Nav() {
       {/* Left: Logo + Wordmark */}
       <div className="flex items-center gap-2">
         <img 
-          src="/logo.png" 
+          src="/logo.jpeg" 
           alt="DuoKarma Logo" 
           className="w-7 h-7 object-contain drop-shadow-md"
           onError={(e) => {
