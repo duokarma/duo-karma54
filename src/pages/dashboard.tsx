@@ -262,7 +262,7 @@ export function DashboardPage() {
         <Card className="lg:col-span-2">
           <CardHeader className="flex-row items-center justify-between space-y-0">
             <CardTitle>Active Projects</CardTitle>
-            <Link to="/projects" className="flex items-center gap-1 text-xs text-[var(--color-accent)] hover:underline">
+            <Link to="/admin/projects" className="flex items-center gap-1 text-xs text-[var(--color-accent)] hover:underline">
               View all <ArrowUpRight className="h-3 w-3" />
             </Link>
           </CardHeader>
@@ -270,7 +270,7 @@ export function DashboardPage() {
             {topActiveProjects.length === 0 ? (
               <div className="py-6 text-center">
                 <p className="text-xs text-ink-faint">No active projects yet.</p>
-                <Link to="/projects">
+                <Link to="/admin/projects">
                   <Button size="sm" variant="secondary" className="mt-3">
                     <Plus className="h-3.5 w-3.5 mr-1" /> Create project
                   </Button>
@@ -355,7 +355,7 @@ export function DashboardPage() {
         <Card>
           <CardHeader className="flex-row items-center justify-between space-y-0">
             <CardTitle>Recent Clients</CardTitle>
-            <Link to="/clients" className="flex items-center gap-1 text-xs text-[var(--color-accent)] hover:underline">
+            <Link to="/admin/clients" className="flex items-center gap-1 text-xs text-[var(--color-accent)] hover:underline">
               View all <ArrowUpRight className="h-3 w-3" />
             </Link>
           </CardHeader>
@@ -390,11 +390,11 @@ export function DashboardPage() {
           <CardContent>
             <div className="space-y-1.5">
               {[
-                { label: "Add Client",        icon: UserPlus,   to: "/clients",  desc: "Onboard a new client" },
-                { label: "Create Invoice",    icon: FileText,   to: "/invoices", desc: "Bill for services" },
-                { label: "New Project",       icon: FolderKanban, to: "/projects", desc: "Start tracking work" },
-                { label: "Schedule Meeting",  icon: Calendar,   to: "/calendar", desc: "Block calendar time" },
-                { label: "Add Task",          icon: CheckSquare, to: "/tasks",   desc: "Track a to-do" },
+                { label: "Add Client",        icon: UserPlus,   to: "/admin/clients",  desc: "Onboard a new client" },
+                { label: "Create Invoice",    icon: FileText,   to: "/admin/invoices", desc: "Bill for services" },
+                { label: "New Project",       icon: FolderKanban, to: "/admin/projects", desc: "Start tracking work" },
+                { label: "Schedule Meeting",  icon: Calendar,   to: "/admin/calendar", desc: "Block calendar time" },
+                { label: "Add Task",          icon: CheckSquare, to: "/admin/tasks",   desc: "Track a to-do" },
               ].map((action) => (
                 <Link
                   key={action.label}

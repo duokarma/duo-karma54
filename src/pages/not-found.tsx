@@ -31,7 +31,7 @@ export function NotFoundPage() {
           The page you're looking for doesn't exist or may have moved.
         </p>
         <Button className="mt-6" asChild>
-          <Link to="/">
+          <Link to="/admin">
             <ArrowLeft className="h-4 w-4" /> Back to dashboard
           </Link>
         </Button>

@@ -28,6 +28,8 @@ const AnalyticsPage = lazy(() => import("@/pages/analytics").then((m) => ({ defa
 const SettingsPage = lazy(() => import("@/pages/settings").then((m) => ({ default: m.SettingsPage })));
 const NotFoundPage = lazy(() => import("@/pages/not-found").then((m) => ({ default: m.NotFoundPage })));
 
+const LandingPage = lazy(() => import("@/pages/landing").then((m) => ({ default: m.LandingPage })));
+
 // The crystal scene (three.js + drei) is used on Login, Dashboard, and 404 — it's the single
 // heaviest chunk in the app. Prefetching it during idle time avoids a visible skeleton on
 // whichever of those three routes the user lands on first, without blocking initial paint.
@@ -61,23 +63,24 @@ function App() {
                   <SidebarProvider>
                     <Suspense fallback={<PageLoader />}>
                       <Routes>
+                        <Route path="/" element={<LandingPage />} />
                         <Route path="/login" element={<LoginPage />} />
-                        <Route element={<ProtectedRoute />}>
+                        <Route path="/admin" element={<ProtectedRoute />}>
                           <Route element={<AppLayout />}>
-                      <Route path="/" element={<DashboardPage />} />
-                      <Route path="/clients" element={<ClientsPage />} />
-                      <Route path="/leads" element={<LeadsPage />} />
-                      <Route path="/projects" element={<ProjectsPage />} />
-                      <Route path="/revenue" element={<RevenuePage />} />
-                      <Route path="/expenses" element={<ExpensesPage />} />
-                      <Route path="/profit" element={<ProfitPage />} />
-                      <Route path="/invoices" element={<InvoicesPage />} />
-                      <Route path="/tasks" element={<TasksPage />} />
-                      <Route path="/calendar" element={<CalendarPage />} />
-                      <Route path="/documents" element={<DocumentsPage />} />
-                      <Route path="/reports" element={<ReportsPage />} />
-                      <Route path="/analytics" element={<AnalyticsPage />} />
-                      <Route path="/settings" element={<SettingsPage />} />
+                            <Route index element={<DashboardPage />} />
+                            <Route path="clients" element={<ClientsPage />} />
+                            <Route path="leads" element={<LeadsPage />} />
+                            <Route path="projects" element={<ProjectsPage />} />
+                            <Route path="revenue" element={<RevenuePage />} />
+                            <Route path="expenses" element={<ExpensesPage />} />
+                            <Route path="profit" element={<ProfitPage />} />
+                            <Route path="invoices" element={<InvoicesPage />} />
+                            <Route path="tasks" element={<TasksPage />} />
+                            <Route path="calendar" element={<CalendarPage />} />
+                            <Route path="documents" element={<DocumentsPage />} />
+                            <Route path="reports" element={<ReportsPage />} />
+                            <Route path="analytics" element={<AnalyticsPage />} />
+                            <Route path="settings" element={<SettingsPage />} />
                           </Route>
                         </Route>
                         <Route path="*" element={<NotFoundPage />} />

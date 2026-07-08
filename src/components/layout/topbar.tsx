@@ -34,7 +34,7 @@ export function Topbar() {
   const { user, signOut } = useAuth();
 
   const currentItem = navItems.find((item) =>
-    item.path === "/" ? location.pathname === "/" : location.pathname.startsWith(item.path)
+    item.path === "/admin" ? (location.pathname === "/admin" || location.pathname === "/admin/") : location.pathname.startsWith(item.path)
   );
 
   useEffect(() => {
@@ -59,10 +59,10 @@ export function Topbar() {
 
       {/* Breadcrumb */}
       <div className="flex items-center gap-1.5 text-xs text-ink-faint">
-        <Link to="/" className="hover:text-ink-dim transition-colors">
+        <Link to="/admin" className="hover:text-ink-dim transition-colors">
           DuoKarma
         </Link>
-        {currentItem && currentItem.path !== "/" && (
+        {currentItem && currentItem.path !== "/admin" && (
           <>
             <ChevronRight className="h-3 w-3" />
             <span className="text-ink-dim">{currentItem.label}</span>
@@ -125,7 +125,7 @@ export function Topbar() {
               </div>
             </DropdownMenuLabel>
             <DropdownMenuSeparator />
-            <DropdownMenuItem onClick={() => navigate("/settings")} className="cursor-pointer text-xs">
+            <DropdownMenuItem onClick={() => navigate("/admin/settings")} className="cursor-pointer text-xs">
               <Settings className="mr-2 h-3.5 w-3.5" />
               Settings
             </DropdownMenuItem>

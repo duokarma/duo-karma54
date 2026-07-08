@@ -44,7 +44,7 @@ export function Sidebar() {
           collapsed && "justify-center px-0"
         )}>
           <button
-            onClick={() => navigate("/")}
+            onClick={() => navigate("/admin")}
             className="flex h-7 w-7 shrink-0 items-center justify-center overflow-hidden rounded-md"
           >
             <img src="/logo.jpeg" alt="DuoKarma" className="h-full w-full object-cover" />
@@ -97,7 +97,7 @@ export function Sidebar() {
                     <NavLink
                       key={item.path}
                       to={item.path}
-                      end={item.path === "/"}
+                      end={item.path === "/admin"}
                       onClick={() => setMobileOpen(false)}
                       className={({ isActive }) =>
                         cn(

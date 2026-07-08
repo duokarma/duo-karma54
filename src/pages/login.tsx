@@ -16,7 +16,7 @@ export function LoginPage() {
 
   const navigate = useNavigate();
   const location = useLocation();
-  const from = location.state?.from?.pathname || "/";
+  const from = location.state?.from?.pathname || "/admin";
 
   const handleLogin = async (e?: React.FormEvent) => {
     if (e) e.preventDefault();
