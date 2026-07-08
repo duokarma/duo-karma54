@@ -1,4 +1,4 @@
-import React, { useState, useEffect, useRef, useMemo, Suspense } from 'react';
+import { useState, useEffect, useRef } from 'react';
 import { COLORS } from './ui/theme';
 
 function Counter({ to, suffix = "" }: { to: number, suffix?: string }) {

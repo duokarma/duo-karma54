@@ -1,4 +1,4 @@
-import React, { useState, useEffect, useRef, useMemo, Suspense } from 'react';
+import { useState, useEffect } from 'react';
 import { Nav } from '@/components/landing/Nav';
 import { Hero } from '@/components/landing/Hero';
 import { About } from '@/components/landing/About';
