@@ -85,7 +85,7 @@ export function InvoicesPage() {
       const matchesStatus = statusFilter === "all" || inv.status === statusFilter;
       return matchesQuery && matchesStatus;
     });
-  }, [query, statusFilter]);
+  }, [invoices, query, statusFilter]);
 
   const columns: Column<Invoice>[] = [
     {

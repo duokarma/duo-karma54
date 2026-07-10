@@ -108,7 +108,7 @@ export function ClientsPage() {
       const matchesStatus = statusFilter === "all" || c.status === statusFilter;
       return matchesQuery && matchesStatus;
     });
-  }, [query, statusFilter]);
+  }, [clients, query, statusFilter]);
 
   const columns: Column<Client>[] = [
     {

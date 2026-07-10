@@ -97,7 +97,7 @@ export function ProjectsPage() {
       const matchesStatus = statusFilter === "all" || p.status === statusFilter;
       return matchesQuery && matchesStatus;
     });
-  }, [query, statusFilter]);
+  }, [projects, query, statusFilter]);
 
   return (
     <div>
