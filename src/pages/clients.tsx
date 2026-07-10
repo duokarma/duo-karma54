@@ -32,8 +32,8 @@ import type { Client } from "@/types";
 
 const clientSchema = z.object({
   name: z.string().min(2, "Name is required"),
-  company: z.string().min(2, "Company is required"),
-  email: z.string().email("Invalid email"),
+  company: z.string().min(2, "Business name is required"),
+  email: z.string().email("Invalid email").or(z.literal("")),
   phone: z.string().min(5, "Phone is required"),
   location: z.string().min(2, "Location is required"),
 });
@@ -213,22 +213,22 @@ export function ClientsPage() {
         <DrawerContent>
           <DrawerHeader>
             <DrawerTitle>Add New Client</DrawerTitle>
-            <DrawerDescription>This form is a UI placeholder — no data will be saved.</DrawerDescription>
+            <DrawerDescription>Enter the client's details below.</DrawerDescription>
           </DrawerHeader>
           <form onSubmit={handleSubmit((data) => createMutation.mutate(data))} className="space-y-4">
             <div>
               <label className="mb-1.5 block text-xs font-medium text-ink-dim">Full name</label>
-              <Input placeholder="Jane Cooper" {...register("name")} />
+              <Input placeholder="Rahul Sharma" {...register("name")} />
               {errors.name && <p className="mt-1 text-[10px] text-rose">{errors.name.message}</p>}
             </div>
             <div>
-              <label className="mb-1.5 block text-xs font-medium text-ink-dim">Company</label>
-              <Input placeholder="Acme Corp" {...register("company")} />
+              <label className="mb-1.5 block text-xs font-medium text-ink-dim">Business</label>
+              <Input placeholder="Reliance Industries" {...register("company")} />
               {errors.company && <p className="mt-1 text-[10px] text-rose">{errors.company.message}</p>}
             </div>
             <div>
-              <label className="mb-1.5 block text-xs font-medium text-ink-dim">Email</label>
-              <Input placeholder="jane@acme.com" type="email" {...register("email")} />
+              <label className="mb-1.5 block text-xs font-medium text-ink-dim">Email (Optional)</label>
+              <Input placeholder="rahul@example.in" type="email" {...register("email")} />
               {errors.email && <p className="mt-1 text-[10px] text-rose">{errors.email.message}</p>}
             </div>
             <div>
@@ -238,7 +238,7 @@ export function ClientsPage() {
             </div>
             <div>
               <label className="mb-1.5 block text-xs font-medium text-ink-dim">Location</label>
-              <Input placeholder="New York, NY" {...register("location")} />
+              <Input placeholder="Mumbai, Maharashtra" {...register("location")} />
               {errors.location && <p className="mt-1 text-[10px] text-rose">{errors.location.message}</p>}
             </div>
             <Button className="w-full" type="submit" disabled={createMutation.isPending}>
