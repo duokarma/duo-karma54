@@ -1,6 +1,6 @@
 import { useMemo, useState, useRef } from "react";
 import { motion } from "framer-motion";
-import { Plus, Search, FileText, Sheet, Image, File, FolderOpen, MoreVertical, Users } from "lucide-react";
+import { Plus, Search, FileText, Sheet, Image, File, FolderOpen, MoreVertical, Users, Pencil, Trash2 } from "lucide-react";
 import { PageHeader } from "@/components/shared/page-header";
 import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
@@ -13,6 +13,21 @@ import {
   SelectTrigger,
   SelectValue,
 } from "@/components/ui/select";
+import {
+  DropdownMenu,
+  DropdownMenuContent,
+  DropdownMenuItem,
+  DropdownMenuTrigger,
+} from "@/components/ui/dropdown-menu";
+import {
+  Dialog,
+  DialogContent,
+  DialogHeader,
+  DialogTitle,
+  DialogDescription,
+  DialogFooter,
+} from "@/components/ui/dialog";
+import { Label } from "@/components/ui/label";
 import { cn } from "@/lib/utils";
 import type { Document } from "@/types";
 import { useQuery, useMutation, useQueryClient } from "@tanstack/react-query";
@@ -86,6 +101,31 @@ export function DocumentsPage() {
     }
   });
 
+  const deleteMutation = useMutation({
+    mutationFn: async (id: string) => {
+      const { error } = await supabase.from("documents").delete().eq("id", id);
+      if (error) throw error;
+    },
+    onSuccess: () => {
+      queryClient.invalidateQueries({ queryKey: ["documents"] });
+      toast({ title: "File deleted successfully", variant: "success" });
+    },
+  });
+
+  const renameMutation = useMutation({
+    mutationFn: async ({ id, name }: { id: string; name: string }) => {
+      const { error } = await supabase.from("documents").update({ name }).eq("id", id);
+      if (error) throw error;
+    },
+    onSuccess: () => {
+      queryClient.invalidateQueries({ queryKey: ["documents"] });
+      setRenameDialogOpen(false);
+      setSelectedDoc(null);
+      setNewName("");
+      toast({ title: "File renamed successfully", variant: "success" });
+    },
+  });
+
   const handleFileChange = (e: React.ChangeEvent<HTMLInputElement>) => {
     const file = e.target.files?.[0];
     if (file) {
@@ -96,6 +136,9 @@ export function DocumentsPage() {
 
   const [query, setQuery] = useState("");
   const [folderFilter, setFolderFilter] = useState("all");
+  const [renameDialogOpen, setRenameDialogOpen] = useState(false);
+  const [selectedDoc, setSelectedDoc] = useState<Document | null>(null);
+  const [newName, setNewName] = useState("");
 
   const folders = useMemo(() => Array.from(new Set(documents.map((d) => d.folder))), [documents]);
 
@@ -170,9 +213,25 @@ export function DocumentsPage() {
                     <div className={cn("flex h-10 w-10 items-center justify-center rounded-xl", typeColor[doc.type])}>
                       <Icon className="h-5 w-5" />
                     </div>
-                    <Button variant="ghost" size="icon-sm">
-                      <MoreVertical className="h-4 w-4" />
-                    </Button>
+                    <DropdownMenu>
+                      <DropdownMenuTrigger asChild>
+                        <Button variant="ghost" size="icon-sm">
+                          <MoreVertical className="h-4 w-4" />
+                        </Button>
+                      </DropdownMenuTrigger>
+                      <DropdownMenuContent align="end">
+                        <DropdownMenuItem onClick={() => {
+                          setSelectedDoc(doc);
+                          setNewName(doc.name);
+                          setRenameDialogOpen(true);
+                        }}>
+                          <Pencil className="mr-2 h-3.5 w-3.5" /> Rename
+                        </DropdownMenuItem>
+                        <DropdownMenuItem onClick={() => deleteMutation.mutate(doc.id)} className="text-rose focus:text-rose">
+                          <Trash2 className="mr-2 h-3.5 w-3.5" /> Delete
+                        </DropdownMenuItem>
+                      </DropdownMenuContent>
+                    </DropdownMenu>
                   </div>
                   <p className="mt-3 truncate text-sm font-medium text-ink">{doc.name}</p>
                   <p className="mt-0.5 text-xs text-ink-faint">{doc.folder}</p>
@@ -189,6 +248,46 @@ export function DocumentsPage() {
           })}
         </div>
       )}
+
+      <Dialog open={renameDialogOpen} onOpenChange={(open) => {
+        setRenameDialogOpen(open);
+        if (!open) {
+          setSelectedDoc(null);
+          setNewName("");
+        }
+      }}>
+        <DialogContent>
+          <DialogHeader>
+            <DialogTitle>Rename Document</DialogTitle>
+            <DialogDescription>Enter a new name for this file.</DialogDescription>
+          </DialogHeader>
+          <div className="space-y-4 py-2">
+            <div className="space-y-2">
+              <Label>File Name</Label>
+              <Input 
+                value={newName} 
+                onChange={(e) => setNewName(e.target.value)} 
+                placeholder="Document name" 
+              />
+            </div>
+          </div>
+          <DialogFooter>
+            <Button variant="secondary" onClick={() => setRenameDialogOpen(false)}>
+              Cancel
+            </Button>
+            <Button 
+              onClick={() => {
+                if (selectedDoc && newName) {
+                  renameMutation.mutate({ id: selectedDoc.id, name: newName });
+                }
+              }} 
+              disabled={!newName || renameMutation.isPending}
+            >
+              {renameMutation.isPending ? "Saving..." : "Save"}
+            </Button>
+          </DialogFooter>
+        </DialogContent>
+      </Dialog>
     </div>
   );
 }

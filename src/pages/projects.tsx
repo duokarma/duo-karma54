@@ -1,6 +1,6 @@
 import { useMemo, useState } from "react";
 import { motion } from "framer-motion";
-import { Plus, Search, FolderKanban, Calendar, Users } from "lucide-react";
+import { Plus, Search, FolderKanban, Calendar, Users, MoreVertical, Pencil, Trash2 } from "lucide-react";
 import { PageHeader } from "@/components/shared/page-header";
 import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
@@ -23,6 +23,14 @@ import {
   DrawerTitle,
   DrawerDescription,
 } from "@/components/ui/drawer";
+import {
+  DropdownMenu,
+  DropdownMenuContent,
+  DropdownMenuItem,
+  DropdownMenuTrigger,
+  DropdownMenuSeparator,
+  DropdownMenuLabel,
+} from "@/components/ui/dropdown-menu";
 import { useQuery, useMutation, useQueryClient } from "@tanstack/react-query";
 import { useForm } from "react-hook-form";
 import { zodResolver } from "@hookform/resolvers/zod";
@@ -52,6 +60,7 @@ export function ProjectsPage() {
   const [query, setQuery] = useState("");
   const [statusFilter, setStatusFilter] = useState("all");
   const [addOpen, setAddOpen] = useState(false);
+  const [selectedProject, setSelectedProject] = useState<Project | null>(null);
 
   const { register, handleSubmit, reset, formState: { errors }, setValue } = useForm<ProjectFormValues>({
     resolver: zodResolver(projectSchema) as any,
@@ -79,6 +88,51 @@ export function ProjectsPage() {
       reset();
     },
   });
+
+  const editMutation = useMutation({
+    mutationFn: async (values: ProjectFormValues & { id: string }) => {
+      const { id, ...rest } = values;
+      const { error } = await supabase.from("projects").update(rest).eq("id", id);
+      if (error) throw error;
+    },
+    onSuccess: () => {
+      queryClient.invalidateQueries({ queryKey: ["projects"] });
+      setAddOpen(false);
+      setSelectedProject(null);
+      reset();
+    },
+  });
+
+  const deleteMutation = useMutation({
+    mutationFn: async (id: string) => {
+      const { error } = await supabase.from("projects").delete().eq("id", id);
+      if (error) throw error;
+    },
+    onSuccess: () => {
+      queryClient.invalidateQueries({ queryKey: ["projects"] });
+    },
+  });
+
+  const statusMutation = useMutation({
+    mutationFn: async ({ id, status }: { id: string; status: Project["status"] }) => {
+      const { error } = await supabase.from("projects").update({ status }).eq("id", id);
+      if (error) throw error;
+    },
+    onSuccess: () => {
+      queryClient.invalidateQueries({ queryKey: ["projects"] });
+    },
+  });
+
+  const openEditDrawer = (project: Project) => {
+    setSelectedProject(project);
+    reset({
+      name: project.name,
+      client: project.client,
+      budget: project.budget,
+      priority: project.priority,
+    });
+    setAddOpen(true);
+  };
 
   const { data: projects = [], isLoading } = useQuery({
     queryKey: ["projects"],
@@ -163,7 +217,37 @@ export function ProjectsPage() {
                       <span className={cn("h-2 w-2 rounded-full", priorityDot[project.priority])} />
                       <p className="text-xs uppercase tracking-wide text-ink-faint">{project.priority}</p>
                     </div>
-                    <StatusBadge status={project.status} />
+                    <div className="flex items-center gap-2">
+                      <DropdownMenu>
+                        <DropdownMenuTrigger className="focus:outline-none">
+                          <StatusBadge status={project.status} />
+                        </DropdownMenuTrigger>
+                        <DropdownMenuContent align="end">
+                          <DropdownMenuLabel className="text-xs font-semibold text-ink-faint">Change Status</DropdownMenuLabel>
+                          <DropdownMenuItem onClick={() => statusMutation.mutate({ id: project.id, status: "pending" })}>Pending</DropdownMenuItem>
+                          <DropdownMenuItem onClick={() => statusMutation.mutate({ id: project.id, status: "in-progress" })}>In Progress</DropdownMenuItem>
+                          <DropdownMenuItem onClick={() => statusMutation.mutate({ id: project.id, status: "completed" })}>Completed</DropdownMenuItem>
+                          <DropdownMenuItem onClick={() => statusMutation.mutate({ id: project.id, status: "on-hold" })}>On Hold</DropdownMenuItem>
+                        </DropdownMenuContent>
+                      </DropdownMenu>
+
+                      <DropdownMenu>
+                        <DropdownMenuTrigger asChild>
+                          <Button variant="ghost" size="icon-sm" className="-mr-2 h-6 w-6">
+                            <MoreVertical className="h-3 w-3" />
+                          </Button>
+                        </DropdownMenuTrigger>
+                        <DropdownMenuContent align="end">
+                          <DropdownMenuItem onClick={() => openEditDrawer(project)}>
+                            <Pencil className="mr-2 h-3.5 w-3.5" /> Edit Project
+                          </DropdownMenuItem>
+                          <DropdownMenuSeparator />
+                          <DropdownMenuItem onClick={() => deleteMutation.mutate(project.id)} className="text-rose focus:text-rose">
+                            <Trash2 className="mr-2 h-3.5 w-3.5" /> Delete Project
+                          </DropdownMenuItem>
+                        </DropdownMenuContent>
+                      </DropdownMenu>
+                    </div>
                   </div>
                   <p className="mt-3 font-display text-base font-semibold text-ink">{project.name}</p>
                   <p className="text-xs text-ink-faint">{project.client}</p>
@@ -209,14 +293,26 @@ export function ProjectsPage() {
         </div>
       )}
 
-      {/* Add Project Drawer */}
-      <Drawer open={addOpen} onOpenChange={setAddOpen}>
+      {/* Add/Edit Project Drawer */}
+      <Drawer open={addOpen} onOpenChange={(open) => {
+        setAddOpen(open);
+        if (!open) {
+          setSelectedProject(null);
+          reset({ name: "", client: "", budget: 0, priority: "medium" });
+        }
+      }}>
         <DrawerContent>
           <DrawerHeader>
-            <DrawerTitle>Create New Project</DrawerTitle>
-            <DrawerDescription>Set up a new project tracking space.</DrawerDescription>
+            <DrawerTitle>{selectedProject ? "Edit Project" : "Create New Project"}</DrawerTitle>
+            <DrawerDescription>{selectedProject ? "Update project details." : "Set up a new project tracking space."}</DrawerDescription>
           </DrawerHeader>
-          <form onSubmit={handleSubmit((data) => createMutation.mutate(data))} className="space-y-4">
+          <form onSubmit={handleSubmit((data) => {
+            if (selectedProject) {
+              editMutation.mutate({ ...data, id: selectedProject.id });
+            } else {
+              createMutation.mutate(data);
+            }
+          })} className="space-y-4">
             <div>
               <label className="mb-1.5 block text-xs font-medium text-ink-dim">Project Name</label>
               <Input placeholder="Rebranding Q3" {...register("name")} />
@@ -246,8 +342,8 @@ export function ProjectsPage() {
                 </SelectContent>
               </Select>
             </div>
-            <Button className="w-full" type="submit" disabled={createMutation.isPending}>
-              {createMutation.isPending ? "Creating..." : "Create Project"}
+            <Button className="w-full" type="submit" disabled={createMutation.isPending || editMutation.isPending}>
+              {createMutation.isPending || editMutation.isPending ? "Saving..." : selectedProject ? "Save Changes" : "Create Project"}
             </Button>
           </form>
         </DrawerContent>

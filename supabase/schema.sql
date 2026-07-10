@@ -88,11 +88,6 @@ CREATE TABLE activities (
   timestamp TIMESTAMP NOT NULL
 );
 
--- Documents Table
-CREATE TABLE documents (
-  id TEXT PRIMARY KEY,
-  name TEXT NOT NULL,
-  type TEXT NOT NULL,
 -- Drop existing tables if they exist (optional, for clean slate)
 -- DROP TABLE IF EXISTS clients, leads, projects, invoices, tasks, team_members, activities, documents CASCADE;
 

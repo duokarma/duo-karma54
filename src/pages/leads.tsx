@@ -1,6 +1,6 @@
 import { useState } from "react";
 import { motion } from "framer-motion";
-import { Plus, Target } from "lucide-react";
+import { Plus, Target, MoreVertical, Pencil, Trash2 } from "lucide-react";
 import { PageHeader } from "@/components/shared/page-header";
 import { Button } from "@/components/ui/button";
 import { Card } from "@/components/ui/card";
@@ -22,6 +22,19 @@ import {
 } from "@/components/ui/dialog";
 import { Input } from "@/components/ui/input";
 import { Label } from "@/components/ui/label";
+import {
+  DropdownMenu,
+  DropdownMenuContent,
+  DropdownMenuItem,
+  DropdownMenuTrigger,
+} from "@/components/ui/dropdown-menu";
+import {
+  Select,
+  SelectContent,
+  SelectItem,
+  SelectTrigger,
+  SelectValue,
+} from "@/components/ui/select";
 
 const stages: { key: Lead["stage"]; label: string; color: string }[] = [
   { key: "new", label: "New", color: "bg-violet" },
@@ -31,25 +44,42 @@ const stages: { key: Lead["stage"]; label: string; color: string }[] = [
   { key: "won", label: "Won", color: "bg-emerald" },
 ];
 
-function LeadCard({ lead, index }: { lead: Lead; index: number }) {
+function LeadCard({ lead, index, onClick, onEdit, onDelete }: { lead: Lead; index: number; onClick: () => void; onEdit: () => void; onDelete: () => void }) {
   return (
     <motion.div
       initial={{ opacity: 0, y: 8 }}
       animate={{ opacity: 1, y: 0 }}
       transition={{ delay: index * 0.04 }}
     >
-      <Card className="cursor-pointer p-4 transition-transform hover:-translate-y-0.5">
+      <Card className="p-4 transition-transform hover:-translate-y-0.5">
         <div className="flex items-start justify-between gap-2">
-          <p className="text-sm font-medium text-ink">{lead.company}</p>
-          <Badge variant="outline" className="shrink-0">
-            {lead.probability}%
-          </Badge>
+          <p className="text-sm font-medium text-ink cursor-pointer flex-1" onClick={onClick}>{lead.company}</p>
+          <div className="flex items-center gap-2">
+            <Badge variant="outline" className="shrink-0">
+              {lead.probability}%
+            </Badge>
+            <DropdownMenu>
+              <DropdownMenuTrigger asChild>
+                <Button variant="ghost" size="icon-sm" className="-mr-2 h-6 w-6">
+                  <MoreVertical className="h-3 w-3" />
+                </Button>
+              </DropdownMenuTrigger>
+              <DropdownMenuContent align="end">
+                <DropdownMenuItem onClick={onEdit}>
+                  <Pencil className="mr-2 h-3.5 w-3.5" /> Edit
+                </DropdownMenuItem>
+                <DropdownMenuItem onClick={onDelete} className="text-rose focus:text-rose">
+                  <Trash2 className="mr-2 h-3.5 w-3.5" /> Delete
+                </DropdownMenuItem>
+              </DropdownMenuContent>
+            </DropdownMenu>
+          </div>
         </div>
-        <p className="mt-0.5 text-xs text-ink-faint">{lead.name}</p>
-        <p className="mt-2 font-display text-base font-semibold text-ink tabular">
+        <p className="mt-0.5 text-xs text-ink-faint cursor-pointer" onClick={onClick}>{lead.name}</p>
+        <p className="mt-2 font-display text-base font-semibold text-ink tabular cursor-pointer" onClick={onClick}>
           {formatCurrency(lead.value)}
         </p>
-        <div className="mt-3 flex items-center justify-between">
+        <div className="mt-3 flex items-center justify-between cursor-pointer" onClick={onClick}>
           <div className="flex items-center gap-1.5">
             <Avatar seed={lead.assignedTo} size="xs" />
             <span className="text-[11px] text-ink-faint">{lead.assignedTo}</span>
@@ -74,6 +104,7 @@ export function LeadsPage() {
 
   const queryClient = useQueryClient();
   const [isDialogOpen, setIsDialogOpen] = useState(false);
+  const [selectedLead, setSelectedLead] = useState<Lead | null>(null);
   const [formData, setFormData] = useState({
     name: "",
     company: "",
@@ -104,9 +135,53 @@ export function LeadsPage() {
     }
   });
 
+  const editMutation = useMutation({
+    mutationFn: async (updatedLead: Partial<Lead>) => {
+      const { data, error } = await supabase.from("leads").update(updatedLead).eq("id", updatedLead.id);
+      if (error) throw error;
+      return data;
+    },
+    onSuccess: () => {
+      queryClient.invalidateQueries({ queryKey: ["leads"] });
+      setIsDialogOpen(false);
+      setSelectedLead(null);
+      setFormData({ name: "", company: "", email: "", phone: "", source: "Website", value: 0, stage: "new", probability: 20, assignedTo: "Hatim" });
+    }
+  });
+
+  const deleteMutation = useMutation({
+    mutationFn: async (id: string) => {
+      const { error } = await supabase.from("leads").delete().eq("id", id);
+      if (error) throw error;
+    },
+    onSuccess: () => {
+      queryClient.invalidateQueries({ queryKey: ["leads"] });
+    }
+  });
+
   const handleSubmit = (e: React.FormEvent) => {
     e.preventDefault();
-    createMutation.mutate(formData);
+    if (selectedLead) {
+      editMutation.mutate({ ...formData, id: selectedLead.id });
+    } else {
+      createMutation.mutate(formData);
+    }
+  };
+
+  const openEditDialog = (lead: Lead) => {
+    setSelectedLead(lead);
+    setFormData({
+      name: lead.name,
+      company: lead.company,
+      email: lead.email || "",
+      phone: lead.phone || "",
+      source: lead.source,
+      value: lead.value,
+      stage: lead.stage,
+      probability: lead.probability,
+      assignedTo: lead.assignedTo,
+    });
+    setIsDialogOpen(true);
   };
   const totalPipelineValue = leads
     .filter((l) => l.stage !== "lost" && l.stage !== "won")
@@ -122,7 +197,13 @@ export function LeadsPage() {
             <Button variant="secondary" size="sm" onClick={() => setShowLost((s) => !s)}>
               {showLost ? "Hide" : "Show"} Lost
             </Button>
-            <Dialog open={isDialogOpen} onOpenChange={setIsDialogOpen}>
+            <Dialog open={isDialogOpen} onOpenChange={(open) => {
+              setIsDialogOpen(open);
+              if (!open) {
+                setSelectedLead(null);
+                setFormData({ name: "", company: "", email: "", phone: "", source: "Website", value: 0, stage: "new", probability: 20, assignedTo: "Hatim" });
+              }
+            }}>
               <DialogTrigger asChild>
                 <Button>
                   <Plus className="h-4 w-4" /> New Lead
@@ -130,7 +211,7 @@ export function LeadsPage() {
               </DialogTrigger>
               <DialogContent>
                 <DialogHeader>
-                  <DialogTitle>Add New Lead</DialogTitle>
+                  <DialogTitle>{selectedLead ? "Edit Lead" : "Add New Lead"}</DialogTitle>
                 </DialogHeader>
                 <form onSubmit={handleSubmit} className="space-y-4 pt-4">
                   <div className="space-y-2">
@@ -153,12 +234,31 @@ export function LeadsPage() {
                     <Label htmlFor="value">Estimated Value (₹)</Label>
                     <Input id="value" type="number" required min="0" value={formData.value || ""} onChange={(e) => setFormData({...formData, value: Number(e.target.value)})} />
                   </div>
+                  {selectedLead && (
+                    <div className="space-y-2">
+                      <Label>Stage</Label>
+                      <Select 
+                        value={formData.stage} 
+                        onValueChange={(val) => setFormData({...formData, stage: val as Lead["stage"]})}
+                      >
+                        <SelectTrigger>
+                          <SelectValue placeholder="Select stage" />
+                        </SelectTrigger>
+                        <SelectContent>
+                          {stages.map(s => (
+                            <SelectItem key={s.key} value={s.key}>{s.label}</SelectItem>
+                          ))}
+                          <SelectItem value="lost">Lost</SelectItem>
+                        </SelectContent>
+                      </Select>
+                    </div>
+                  )}
                   <DialogFooter>
                     <DialogClose asChild>
                       <Button variant="secondary" type="button">Cancel</Button>
                     </DialogClose>
-                    <Button type="submit" disabled={createMutation.isPending}>
-                      {createMutation.isPending ? "Saving..." : "Save Lead"}
+                    <Button type="submit" disabled={createMutation.isPending || editMutation.isPending}>
+                      {createMutation.isPending || editMutation.isPending ? "Saving..." : selectedLead ? "Save Changes" : "Save Lead"}
                     </Button>
                   </DialogFooter>
                 </form>
@@ -190,7 +290,16 @@ export function LeadsPage() {
                         No leads
                       </div>
                     ) : (
-                      stageLeads.map((lead, i) => <LeadCard key={lead.id} lead={lead} index={i} />)
+                      stageLeads.map((lead, i) => (
+                        <LeadCard 
+                          key={lead.id} 
+                          lead={lead} 
+                          index={i} 
+                          onClick={() => openEditDialog(lead)}
+                          onEdit={() => openEditDialog(lead)}
+                          onDelete={() => deleteMutation.mutate(lead.id)}
+                        />
+                      ))
                     )}
                   </div>
                 </div>
@@ -210,7 +319,14 @@ export function LeadsPage() {
                   {leads
                     .filter((l) => l.stage === "lost")
                     .map((lead, i) => (
-                      <LeadCard key={lead.id} lead={lead} index={i} />
+                      <LeadCard 
+                        key={lead.id} 
+                        lead={lead} 
+                        index={i} 
+                        onClick={() => openEditDialog(lead)}
+                        onEdit={() => openEditDialog(lead)}
+                        onDelete={() => deleteMutation.mutate(lead.id)}
+                      />
                     ))}
                 </div>
               )}

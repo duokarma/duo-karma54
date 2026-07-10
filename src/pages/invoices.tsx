@@ -1,5 +1,5 @@
 import { useMemo, useState } from "react";
-import { Plus, Search, FileText, Download } from "lucide-react";
+import { Plus, Search, FileText, Download, MoreVertical, Pencil, Trash2 } from "lucide-react";
 import { PageHeader } from "@/components/shared/page-header";
 import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
@@ -14,6 +14,14 @@ import {
   SelectTrigger,
   SelectValue,
 } from "@/components/ui/select";
+import {
+  DropdownMenu,
+  DropdownMenuContent,
+  DropdownMenuItem,
+  DropdownMenuTrigger,
+  DropdownMenuSeparator,
+  DropdownMenuLabel,
+} from "@/components/ui/dropdown-menu";
 import {
   Dialog,
   DialogContent,
@@ -42,7 +50,8 @@ export function InvoicesPage() {
   const queryClient = useQueryClient();
   const [query, setQuery] = useState("");
   const [statusFilter, setStatusFilter] = useState("all");
-  const [createOpen, setCreateOpen] = useState(false);
+  const [isDialogOpen, setIsDialogOpen] = useState(false);
+  const [selectedInvoice, setSelectedInvoice] = useState<Invoice | null>(null);
 
   const { register, handleSubmit, reset, formState: { errors } } = useForm<InvoiceFormValues>({
     resolver: zodResolver(invoiceSchema) as any,
@@ -63,10 +72,54 @@ export function InvoicesPage() {
     },
     onSuccess: () => {
       queryClient.invalidateQueries({ queryKey: ["invoices"] });
-      setCreateOpen(false);
+      setIsDialogOpen(false);
       reset();
     },
   });
+
+  const editMutation = useMutation({
+    mutationFn: async (values: InvoiceFormValues & { id: string }) => {
+      const { id, ...rest } = values;
+      const { error } = await supabase.from("invoices").update(rest).eq("id", id);
+      if (error) throw error;
+    },
+    onSuccess: () => {
+      queryClient.invalidateQueries({ queryKey: ["invoices"] });
+      setIsDialogOpen(false);
+      setSelectedInvoice(null);
+      reset();
+    },
+  });
+
+  const deleteMutation = useMutation({
+    mutationFn: async (id: string) => {
+      const { error } = await supabase.from("invoices").delete().eq("id", id);
+      if (error) throw error;
+    },
+    onSuccess: () => {
+      queryClient.invalidateQueries({ queryKey: ["invoices"] });
+    },
+  });
+
+  const statusMutation = useMutation({
+    mutationFn: async ({ id, status }: { id: string; status: Invoice["status"] }) => {
+      const { error } = await supabase.from("invoices").update({ status }).eq("id", id);
+      if (error) throw error;
+    },
+    onSuccess: () => {
+      queryClient.invalidateQueries({ queryKey: ["invoices"] });
+    },
+  });
+
+  const openEditDialog = (invoice: Invoice) => {
+    setSelectedInvoice(invoice);
+    reset({
+      client: invoice.client,
+      amount: invoice.amount,
+      dueDate: invoice.dueDate.split('T')[0],
+    });
+    setIsDialogOpen(true);
+  };
 
   const { data: invoices = [], isLoading } = useQuery({
     queryKey: ["invoices"],
@@ -108,7 +161,25 @@ export function InvoicesPage() {
       sortValue: (i) => i.amount,
       render: (i) => <span className="tabular font-medium text-ink">{formatCurrency(i.amount)}</span>,
     },
-    { key: "status", header: "Status", sortValue: (i) => i.status, render: (i) => <StatusBadge status={i.status} /> },
+    { 
+      key: "status", 
+      header: "Status", 
+      sortValue: (i) => i.status, 
+      render: (i) => (
+        <DropdownMenu>
+          <DropdownMenuTrigger className="focus:outline-none">
+            <StatusBadge status={i.status} />
+          </DropdownMenuTrigger>
+          <DropdownMenuContent align="start">
+            <DropdownMenuLabel className="text-xs font-semibold text-ink-faint">Change Status</DropdownMenuLabel>
+            <DropdownMenuItem onClick={() => statusMutation.mutate({ id: i.id, status: "pending" })}>Pending</DropdownMenuItem>
+            <DropdownMenuItem onClick={() => statusMutation.mutate({ id: i.id, status: "paid" })}>Paid</DropdownMenuItem>
+            <DropdownMenuItem onClick={() => statusMutation.mutate({ id: i.id, status: "overdue" })}>Overdue</DropdownMenuItem>
+            <DropdownMenuItem onClick={() => statusMutation.mutate({ id: i.id, status: "draft" })}>Draft</DropdownMenuItem>
+          </DropdownMenuContent>
+        </DropdownMenu>
+      )
+    },
     {
       key: "dueDate",
       header: "Due Date",
@@ -118,10 +189,28 @@ export function InvoicesPage() {
     {
       key: "actions",
       header: "",
-      render: () => (
-        <Button variant="ghost" size="icon-sm">
-          <Download className="h-4 w-4" />
-        </Button>
+      render: (i) => (
+        <div className="flex items-center gap-2 justify-end">
+          <Button variant="ghost" size="icon-sm">
+            <Download className="h-4 w-4" />
+          </Button>
+          <DropdownMenu>
+            <DropdownMenuTrigger asChild>
+              <Button variant="ghost" size="icon-sm" className="h-7 w-7">
+                <MoreVertical className="h-4 w-4 text-ink-faint" />
+              </Button>
+            </DropdownMenuTrigger>
+            <DropdownMenuContent align="end">
+              <DropdownMenuItem onClick={() => openEditDialog(i)}>
+                <Pencil className="mr-2 h-3.5 w-3.5" /> Edit
+              </DropdownMenuItem>
+              <DropdownMenuSeparator />
+              <DropdownMenuItem onClick={() => deleteMutation.mutate(i.id)} className="text-rose focus:text-rose">
+                <Trash2 className="mr-2 h-3.5 w-3.5" /> Delete
+              </DropdownMenuItem>
+            </DropdownMenuContent>
+          </DropdownMenu>
+        </div>
       ),
     },
   ];
@@ -138,7 +227,7 @@ export function InvoicesPage() {
         title="Invoices"
         description={`${invoices.length} invoices · ${formatCurrency(totals.paid)} collected this period`}
         actions={
-          <Button onClick={() => setCreateOpen(true)}>
+          <Button onClick={() => setIsDialogOpen(true)}>
             <Plus className="h-4 w-4" /> Create Invoice
           </Button>
         }
@@ -199,13 +288,25 @@ export function InvoicesPage() {
         <DataTable columns={columns} data={filtered} rowKey={(i) => i.id} />
       )}
 
-      <Dialog open={createOpen} onOpenChange={setCreateOpen}>
+      <Dialog open={isDialogOpen} onOpenChange={(open) => {
+        setIsDialogOpen(open);
+        if (!open) {
+          setSelectedInvoice(null);
+          reset({ client: "", amount: 0, dueDate: "" });
+        }
+      }}>
         <DialogContent>
           <DialogHeader>
-            <DialogTitle>Create Invoice</DialogTitle>
-            <DialogDescription>Draft a new invoice for a client.</DialogDescription>
+            <DialogTitle>{selectedInvoice ? "Edit Invoice" : "Create Invoice"}</DialogTitle>
+            <DialogDescription>{selectedInvoice ? "Update invoice details." : "Draft a new invoice for a client."}</DialogDescription>
           </DialogHeader>
-          <form onSubmit={handleSubmit((data) => createMutation.mutate(data))}>
+          <form onSubmit={handleSubmit((data) => {
+            if (selectedInvoice) {
+              editMutation.mutate({ ...data, id: selectedInvoice.id });
+            } else {
+              createMutation.mutate(data);
+            }
+          })}>
             <div className="space-y-4">
               <div>
                 <label className="mb-1.5 block text-xs font-medium text-ink-dim">Client</label>
@@ -224,11 +325,11 @@ export function InvoicesPage() {
               </div>
             </div>
             <DialogFooter className="mt-6">
-              <Button variant="secondary" type="button" onClick={() => setCreateOpen(false)}>
+              <Button variant="secondary" type="button" onClick={() => setIsDialogOpen(false)}>
                 Cancel
               </Button>
-              <Button type="submit" disabled={createMutation.isPending}>
-                {createMutation.isPending ? "Creating..." : "Create Invoice"}
+              <Button type="submit" disabled={createMutation.isPending || editMutation.isPending}>
+                {createMutation.isPending || editMutation.isPending ? "Saving..." : selectedInvoice ? "Save Changes" : "Create Invoice"}
               </Button>
             </DialogFooter>
           </form>
