@@ -37,7 +37,6 @@ export const navItems: NavItem[] = [
   { label: "Documents", path: "/admin/documents", icon: FolderOpen, group: "Workspace" },
   { label: "Reports", path: "/admin/reports", icon: BarChart3, group: "Insights" },
   { label: "Analytics", path: "/admin/analytics", icon: LineChart, group: "Insights" },
-  { label: "Settings", path: "/admin/settings", icon: Settings, group: "System" },
 ];
 
-export const navGroups = ["Overview", "Pipeline", "Finance", "Workspace", "Insights", "System"];
+export const navGroups = ["Overview", "Pipeline", "Finance", "Workspace", "Insights"];

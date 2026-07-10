@@ -25,7 +25,6 @@ const CalendarPage = lazy(() => import("@/pages/calendar").then((m) => ({ defaul
 const DocumentsPage = lazy(() => import("@/pages/documents").then((m) => ({ default: m.DocumentsPage })));
 const ReportsPage = lazy(() => import("@/pages/reports").then((m) => ({ default: m.ReportsPage })));
 const AnalyticsPage = lazy(() => import("@/pages/analytics").then((m) => ({ default: m.AnalyticsPage })));
-const SettingsPage = lazy(() => import("@/pages/settings").then((m) => ({ default: m.SettingsPage })));
 const NotFoundPage = lazy(() => import("@/pages/not-found").then((m) => ({ default: m.NotFoundPage })));
 
 const LandingPage = lazy(() => import("@/pages/landing").then((m) => ({ default: m.LandingPage })));
@@ -80,7 +79,6 @@ function App() {
                             <Route path="documents" element={<DocumentsPage />} />
                             <Route path="reports" element={<ReportsPage />} />
                             <Route path="analytics" element={<AnalyticsPage />} />
-                            <Route path="settings" element={<SettingsPage />} />
                           </Route>
                         </Route>
                         <Route path="*" element={<NotFoundPage />} />
