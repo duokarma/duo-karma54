@@ -1,4 +1,4 @@
-import { useLocation, Link, useNavigate } from "react-router-dom";
+import { useLocation, Link } from "react-router-dom";
 import { Bell, Menu, ChevronRight, Search, LogOut, Plus } from "lucide-react";
 import { useSidebar } from "@/hooks/use-sidebar";
 import { useCommandPalette } from "@/hooks/use-command-palette";
@@ -26,7 +26,6 @@ function formatDate(): string {
 
 export function Topbar() {
   const location = useLocation();
-  const navigate = useNavigate();
   const { setMobileOpen } = useSidebar();
   const { setOpen } = useCommandPalette();
   const [notifOpen, setNotifOpen] = useState(false);

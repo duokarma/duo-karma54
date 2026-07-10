@@ -29,6 +29,8 @@ import * as z from "zod";
 import { supabase } from "@/lib/supabase";
 import { formatCurrency } from "@/lib/utils";
 import type { Client } from "@/types";
+import { useToast } from "@/components/ui/toast";
+import { indianCities } from "@/lib/indian-cities";
 
 const clientSchema = z.object({
   name: z.string().min(2, "Name is required"),
@@ -42,6 +44,7 @@ type ClientFormValues = z.infer<typeof clientSchema>;
 
 export function ClientsPage() {
   const queryClient = useQueryClient();
+  const { toast } = useToast();
   const [query, setQuery] = useState("");
   const [statusFilter, setStatusFilter] = useState<string>("all");
   const [addOpen, setAddOpen] = useState(false);
@@ -70,7 +73,11 @@ export function ClientsPage() {
       queryClient.invalidateQueries({ queryKey: ["clients"] });
       setAddOpen(false);
       reset();
+      toast({ title: "Success", description: "Client added successfully", variant: "success" });
     },
+    onError: (error: any) => {
+      toast({ title: "Failed to save", description: error.message, variant: "error" });
+    }
   });
 
   const deleteMutation = useMutation({
@@ -238,7 +245,10 @@ export function ClientsPage() {
             </div>
             <div>
               <label className="mb-1.5 block text-xs font-medium text-ink-dim">Location</label>
-              <Input placeholder="Mumbai, Maharashtra" {...register("location")} />
+              <Input placeholder="Mumbai, Maharashtra" list="indian-cities" {...register("location")} />
+              <datalist id="indian-cities">
+                {indianCities.map(city => <option key={city} value={city} />)}
+              </datalist>
               {errors.location && <p className="mt-1 text-[10px] text-rose">{errors.location.message}</p>}
             </div>
             <Button className="w-full" type="submit" disabled={createMutation.isPending}>
