@@ -36,7 +36,7 @@ const SelectContent = React.forwardRef<
       ref={ref}
       position={position}
       className={cn(
-        "z-[80] min-w-[8rem] overflow-hidden rounded-[var(--radius-control)] glass-panel-strong shadow-[var(--shadow-panel)] dialog-content-anim",
+        "z-[100] min-w-[8rem] overflow-hidden rounded-[var(--radius-control)] glass-panel-strong shadow-[var(--shadow-panel)] dialog-content-anim",
         position === "popper" && "translate-y-1",
         className
       )}
