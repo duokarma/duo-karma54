@@ -15,6 +15,8 @@ import {
   DropdownMenuSeparator,
   DropdownMenuTrigger,
 } from "@/components/ui/dropdown-menu";
+import { useQuery } from "@tanstack/react-query";
+import { supabase } from "@/lib/supabase";
 
 function formatDate(): string {
   return new Date().toLocaleDateString("en-US", {
@@ -45,6 +47,28 @@ export function Topbar() {
     document.addEventListener("mousedown", handleClick);
     return () => document.removeEventListener("mousedown", handleClick);
   }, []);
+
+  const [lastViewed, setLastViewed] = useState(() => localStorage.getItem("lastViewedNotifications") || "0");
+
+  const { data: latestActivity } = useQuery({
+    queryKey: ["latest_activity"],
+    queryFn: async () => {
+      const { data, error } = await supabase.from("activities").select("timestamp").order("timestamp", { ascending: false }).limit(1);
+      if (error) throw error;
+      return data[0];
+    },
+  });
+
+  const hasNewNotifications = latestActivity && new Date(latestActivity.timestamp).getTime() > Number(lastViewed);
+
+  const handleOpenNotifications = () => {
+    setNotifOpen((o) => !o);
+    if (!notifOpen) {
+      const now = Date.now().toString();
+      localStorage.setItem("lastViewedNotifications", now);
+      setLastViewed(now);
+    }
+  };
 
   return (
     <header className="sticky top-0 z-30 flex h-11 items-center gap-3 border-b border-[var(--color-edge)] bg-[var(--color-void)] px-4">
@@ -94,12 +118,14 @@ export function Topbar() {
           <Button
             variant="ghost"
             size="icon"
-            onClick={() => setNotifOpen((o) => !o)}
+            onClick={handleOpenNotifications}
             aria-label="Notifications"
             className="relative h-7 w-7"
           >
             <Bell className="h-3.5 w-3.5" />
-            <span className="absolute right-1.5 top-1.5 h-1.5 w-1.5 rounded-full bg-[#EF4444]" />
+            {hasNewNotifications && (
+              <span className="absolute right-1.5 top-1.5 h-1.5 w-1.5 rounded-full bg-[#EF4444]" />
+            )}
           </Button>
           {notifOpen && <NotificationPanel onClose={() => setNotifOpen(false)} />}
         </div>
