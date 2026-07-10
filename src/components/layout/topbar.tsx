@@ -1,5 +1,5 @@
 import { useLocation, Link } from "react-router-dom";
-import { Bell, Menu, ChevronRight, Search, LogOut, Plus } from "lucide-react";
+import { Bell, Menu, ChevronRight, Search, LogOut } from "lucide-react";
 import { useSidebar } from "@/hooks/use-sidebar";
 import { useCommandPalette } from "@/hooks/use-command-palette";
 import { navItems } from "@/lib/nav-config";
