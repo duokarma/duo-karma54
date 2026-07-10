@@ -38,8 +38,6 @@ import {
 
 const stages: { key: Lead["stage"]; label: string; color: string }[] = [
   { key: "new", label: "New", color: "bg-violet" },
-  { key: "qualified", label: "Qualified", color: "bg-cyan" },
-  { key: "proposal", label: "Proposal", color: "bg-electric" },
   { key: "negotiation", label: "Negotiation", color: "bg-amber" },
   { key: "won", label: "Won", color: "bg-emerald" },
 ];

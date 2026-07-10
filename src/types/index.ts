@@ -37,7 +37,7 @@ export interface Lead {
   email: string;
   source: string;
   value: number;
-  stage: "new" | "qualified" | "proposal" | "negotiation" | "won" | "lost";
+  stage: "new" | "negotiation" | "won" | "lost";
   probability: number;
   assignedTo: string;
   createdDate: string;
