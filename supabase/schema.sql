@@ -117,6 +117,7 @@ CREATE TABLE leads (
   id TEXT PRIMARY KEY,
   name TEXT NOT NULL,
   company TEXT NOT NULL,
+  phone TEXT,
   email TEXT NOT NULL,
   source TEXT NOT NULL,
   value NUMERIC NOT NULL,

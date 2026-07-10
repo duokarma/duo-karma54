@@ -38,6 +38,8 @@ const clientSchema = z.object({
   email: z.string().email("Invalid email").or(z.literal("")),
   phone: z.string().min(5, "Phone is required"),
   location: z.string().min(2, "Location is required"),
+  status: z.enum(["active", "inactive"]).optional(),
+  totalValue: z.number().min(0).optional(),
 });
 
 type ClientFormValues = z.infer<typeof clientSchema>;
@@ -60,8 +62,8 @@ export function ClientsPage() {
         id: Math.random().toString(36).substring(2, 9),
         ...values,
         avatarSeed: values.name.toLowerCase().replace(/\s+/g, ""),
-        status: "pending",
-        totalValue: 0,
+        status: values.status || "active",
+        totalValue: values.totalValue || 0,
         projectsCount: 0,
         joinedDate: new Date().toISOString().split("T")[0],
         tags: ["New"],
@@ -77,6 +79,23 @@ export function ClientsPage() {
     },
     onError: (error: any) => {
       toast({ title: "Failed to save", description: error.message, variant: "error" });
+    }
+  });
+
+  const editMutation = useMutation({
+    mutationFn: async (values: ClientFormValues & { id: string }) => {
+      const { id, ...updateData } = values;
+      const { error } = await supabase.from("clients").update(updateData).eq("id", id);
+      if (error) throw error;
+    },
+    onSuccess: () => {
+      queryClient.invalidateQueries({ queryKey: ["clients"] });
+      setAddOpen(false);
+      reset();
+      toast({ title: "Success", description: "Client updated successfully", variant: "success" });
+    },
+    onError: (error: any) => {
+      toast({ title: "Failed to update", description: error.message, variant: "error" });
     }
   });
 
@@ -188,7 +207,6 @@ export function ClientsPage() {
           <SelectContent>
             <SelectItem value="all">All statuses</SelectItem>
             <SelectItem value="active">Active</SelectItem>
-            <SelectItem value="pending">Pending</SelectItem>
             <SelectItem value="inactive">Inactive</SelectItem>
           </SelectContent>
         </Select>
@@ -215,14 +233,25 @@ export function ClientsPage() {
         <DataTable columns={columns} data={filtered} rowKey={(c) => c.id} onRowClick={setSelected} />
       )}
 
-      {/* Add Client Drawer */}
-      <Drawer open={addOpen} onOpenChange={setAddOpen}>
+      {/* Add/Edit Client Drawer */}
+      <Drawer open={addOpen} onOpenChange={(open) => {
+        setAddOpen(open);
+        if (!open) {
+          reset({ name: "", company: "", email: "", phone: "", location: "", status: "active", totalValue: 0 });
+        }
+      }}>
         <DrawerContent>
           <DrawerHeader>
-            <DrawerTitle>Add New Client</DrawerTitle>
+            <DrawerTitle>{selected ? "Edit Client" : "Add New Client"}</DrawerTitle>
             <DrawerDescription>Enter the client's details below.</DrawerDescription>
           </DrawerHeader>
-          <form onSubmit={handleSubmit((data) => createMutation.mutate(data))} className="space-y-4">
+          <form onSubmit={handleSubmit((data) => {
+            if (selected) {
+              editMutation.mutate({ ...data, id: selected.id });
+            } else {
+              createMutation.mutate(data);
+            }
+          })} className="space-y-4">
             <div>
               <label className="mb-1.5 block text-xs font-medium text-ink-dim">Full name</label>
               <Input placeholder="Rahul Sharma" {...register("name")} />
@@ -251,8 +280,32 @@ export function ClientsPage() {
               </datalist>
               {errors.location && <p className="mt-1 text-[10px] text-rose">{errors.location.message}</p>}
             </div>
-            <Button className="w-full" type="submit" disabled={createMutation.isPending}>
-              {createMutation.isPending ? "Saving..." : "Save Client"}
+            {selected && (
+              <>
+                <div>
+                  <label className="mb-1.5 block text-xs font-medium text-ink-dim">Status</label>
+                  <Select
+                    defaultValue={selected.status}
+                    onValueChange={(val) => register("status").onChange({ target: { value: val, name: "status" } })}
+                  >
+                    <SelectTrigger>
+                      <SelectValue placeholder="Select status" />
+                    </SelectTrigger>
+                    <SelectContent>
+                      <SelectItem value="active">Active</SelectItem>
+                      <SelectItem value="inactive">Inactive</SelectItem>
+                    </SelectContent>
+                  </Select>
+                </div>
+                <div>
+                  <label className="mb-1.5 block text-xs font-medium text-ink-dim">Total Value Paid (₹)</label>
+                  <Input type="number" placeholder="0" {...register("totalValue", { valueAsNumber: true })} />
+                  {errors.totalValue && <p className="mt-1 text-[10px] text-rose">{errors.totalValue.message}</p>}
+                </div>
+              </>
+            )}
+            <Button className="w-full" type="submit" disabled={createMutation.isPending || editMutation.isPending}>
+              {createMutation.isPending || editMutation.isPending ? "Saving..." : "Save Client"}
             </Button>
           </form>
         </DrawerContent>
@@ -315,14 +368,32 @@ export function ClientsPage() {
                     </span>
                   ))}
                 </div>
-                <div className="pt-4 border-t border-[var(--color-edge)]">
+                <div className="pt-4 border-t border-[var(--color-edge)] flex gap-2">
+                  <Button
+                    variant="secondary"
+                    className="flex-1"
+                    onClick={() => {
+                      reset({
+                        name: selected.name,
+                        company: selected.company,
+                        email: selected.email,
+                        phone: selected.phone,
+                        location: selected.location,
+                        status: selected.status as any,
+                        totalValue: selected.totalValue,
+                      });
+                      setAddOpen(true);
+                    }}
+                  >
+                    Edit Client
+                  </Button>
                   <Button
                     variant="destructive"
-                    className="w-full"
+                    className="flex-1"
                     disabled={deleteMutation.isPending}
                     onClick={() => deleteMutation.mutate(selected.id)}
                   >
-                    {deleteMutation.isPending ? "Deleting..." : "Delete Client"}
+                    {deleteMutation.isPending ? "Deleting..." : "Delete"}
                   </Button>
                 </div>
               </div>

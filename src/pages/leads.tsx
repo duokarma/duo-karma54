@@ -78,6 +78,7 @@ export function LeadsPage() {
     name: "",
     company: "",
     email: "",
+    phone: "",
     source: "Website",
     value: 0,
     stage: "new" as Lead["stage"],
@@ -99,7 +100,7 @@ export function LeadsPage() {
     onSuccess: () => {
       queryClient.invalidateQueries({ queryKey: ["leads"] });
       setIsDialogOpen(false);
-      setFormData({ name: "", company: "", email: "", source: "Website", value: 0, stage: "new", probability: 20, assignedTo: "Hatim" });
+      setFormData({ name: "", company: "", email: "", phone: "", source: "Website", value: 0, stage: "new", probability: 20, assignedTo: "Hatim" });
     }
   });
 
@@ -137,12 +138,16 @@ export function LeadsPage() {
                     <Input id="name" required value={formData.name} onChange={(e) => setFormData({...formData, name: e.target.value})} />
                   </div>
                   <div className="space-y-2">
-                    <Label htmlFor="company">Company</Label>
+                    <Label htmlFor="company">Business</Label>
                     <Input id="company" required value={formData.company} onChange={(e) => setFormData({...formData, company: e.target.value})} />
                   </div>
                   <div className="space-y-2">
-                    <Label htmlFor="email">Email</Label>
-                    <Input id="email" type="email" required value={formData.email} onChange={(e) => setFormData({...formData, email: e.target.value})} />
+                    <Label htmlFor="email">Email (Optional)</Label>
+                    <Input id="email" type="email" value={formData.email} onChange={(e) => setFormData({...formData, email: e.target.value})} />
+                  </div>
+                  <div className="space-y-2">
+                    <Label htmlFor="phone">Phone</Label>
+                    <Input id="phone" type="tel" required value={formData.phone} onChange={(e) => setFormData({...formData, phone: e.target.value})} />
                   </div>
                   <div className="space-y-2">
                     <Label htmlFor="value">Estimated Value (₹)</Label>
