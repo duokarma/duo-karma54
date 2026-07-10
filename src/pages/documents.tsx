@@ -1,4 +1,4 @@
-import { useMemo, useState } from "react";
+import { useMemo, useState, useRef } from "react";
 import { motion } from "framer-motion";
 import { Plus, Search, FileText, Sheet, Image, File, FolderOpen, MoreVertical, Users } from "lucide-react";
 import { PageHeader } from "@/components/shared/page-header";
@@ -15,8 +15,9 @@ import {
 } from "@/components/ui/select";
 import { cn } from "@/lib/utils";
 import type { Document } from "@/types";
-import { useQuery } from "@tanstack/react-query";
+import { useQuery, useMutation, useQueryClient } from "@tanstack/react-query";
 import { supabase } from "@/lib/supabase";
+import { useToast } from "@/components/ui/toast";
 
 const typeIcon: Record<string, typeof FileText> = {
   pdf: FileText,
@@ -35,6 +36,9 @@ const typeColor: Record<string, string> = {
 };
 
 export function DocumentsPage() {
+  const queryClient = useQueryClient();
+  const { toast } = useToast();
+  const fileInputRef = useRef<HTMLInputElement>(null);
   const { data: documents = [], isLoading } = useQuery({
     queryKey: ["documents"],
     queryFn: async () => {
@@ -43,6 +47,52 @@ export function DocumentsPage() {
       return data as Document[];
     },
   });
+
+  const uploadMutation = useMutation({
+    mutationFn: async (file: File) => {
+      let type = "other";
+      if (file.type.includes("pdf")) type = "pdf";
+      else if (file.type.includes("image")) type = "image";
+      else if (file.name.endsWith(".doc") || file.name.endsWith(".docx") || file.type.includes("word")) type = "doc";
+      else if (file.name.endsWith(".xls") || file.name.endsWith(".xlsx") || file.type.includes("excel")) type = "xls";
+
+      let sizeStr = "";
+      if (file.size < 1024 * 1024) {
+        sizeStr = (file.size / 1024).toFixed(0) + " KB";
+      } else {
+        sizeStr = (file.size / 1024 / 1024).toFixed(1) + " MB";
+      }
+
+      const newDoc = {
+        id: crypto.randomUUID(),
+        name: file.name,
+        type,
+        size: sizeStr,
+        modifiedDate: new Date().toISOString(),
+        folder: "Uploads",
+        sharedWith: 0,
+      };
+
+      const { error } = await supabase.from("documents").insert(newDoc);
+      if (error) throw error;
+      return newDoc;
+    },
+    onSuccess: () => {
+      queryClient.invalidateQueries({ queryKey: ["documents"] });
+      toast({ title: "File uploaded successfully" });
+    },
+    onError: (error) => {
+      toast({ title: "Error uploading file", description: error.message, variant: "destructive" });
+    }
+  });
+
+  const handleFileChange = (e: React.ChangeEvent<HTMLInputElement>) => {
+    const file = e.target.files?.[0];
+    if (file) {
+      uploadMutation.mutate(file);
+    }
+    if (e.target) e.target.value = "";
+  };
 
   const [query, setQuery] = useState("");
   const [folderFilter, setFolderFilter] = useState("all");
@@ -67,9 +117,12 @@ export function DocumentsPage() {
         title="Documents"
         description={`${documents.length} files across ${folders.length} folders`}
         actions={
-          <Button>
-            <Plus className="h-4 w-4" /> Upload File
-          </Button>
+          <>
+            <input type="file" className="hidden" ref={fileInputRef} onChange={handleFileChange} />
+            <Button onClick={() => fileInputRef.current?.click()} disabled={uploadMutation.isPending}>
+              <Plus className="h-4 w-4" /> {uploadMutation.isPending ? "Uploading..." : "Upload File"}
+            </Button>
+          </>
         }
       />
 
