@@ -1,4 +1,4 @@
-import React, { useState } from 'react';
+import { useState } from 'react';
 import { motion } from 'motion/react';
 import { ChevronRight, Search, Sparkles, Paperclip, MoreHorizontal, Inbox, Star, Send, File, Archive, Trash2, Menu } from 'lucide-react';
 import { Link } from 'react-router-dom';
