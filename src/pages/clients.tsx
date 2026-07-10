@@ -1,5 +1,5 @@
 import { useMemo, useState } from "react";
-import { Plus, Search, Users, Mail, Phone, MapPin } from "lucide-react";
+import { Plus, Search, Users, Mail, Phone, MapPin, ChevronDown } from "lucide-react";
 import { PageHeader } from "@/components/shared/page-header";
 import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
@@ -21,6 +21,12 @@ import {
   DrawerTitle,
   DrawerDescription,
 } from "@/components/ui/drawer";
+import {
+  DropdownMenu,
+  DropdownMenuContent,
+  DropdownMenuItem,
+  DropdownMenuTrigger,
+} from "@/components/ui/dropdown-menu";
 import { Card, CardContent } from "@/components/ui/card";
 import { useQuery, useMutation, useQueryClient } from "@tanstack/react-query";
 import { useForm } from "react-hook-form";
@@ -148,7 +154,24 @@ export function ClientsPage() {
       key: "status",
       header: "Status",
       sortValue: (c) => c.status,
-      render: (c) => <StatusBadge status={c.status} />,
+      render: (c) => (
+        <DropdownMenu>
+          <DropdownMenuTrigger asChild>
+            <button className="flex items-center gap-1.5 rounded-full hover:bg-white/5 pr-1.5 transition-colors focus:outline-none" onClick={(e) => e.stopPropagation()}>
+              <StatusBadge status={c.status} />
+              <ChevronDown className="h-3 w-3 text-ink-faint" />
+            </button>
+          </DropdownMenuTrigger>
+          <DropdownMenuContent onClick={(e) => e.stopPropagation()}>
+            <DropdownMenuItem onClick={() => editMutation.mutate({ ...c, status: "active" })}>
+              Active
+            </DropdownMenuItem>
+            <DropdownMenuItem onClick={() => editMutation.mutate({ ...c, status: "inactive" })}>
+              Inactive
+            </DropdownMenuItem>
+          </DropdownMenuContent>
+        </DropdownMenu>
+      ),
     },
     {
       key: "value",
