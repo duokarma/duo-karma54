@@ -79,10 +79,10 @@ export function DocumentsPage() {
     },
     onSuccess: () => {
       queryClient.invalidateQueries({ queryKey: ["documents"] });
-      toast({ title: "File uploaded successfully" });
+      toast({ title: "File uploaded successfully", variant: "success" });
     },
     onError: (error) => {
-      toast({ title: "Error uploading file", description: error.message, variant: "destructive" });
+      toast({ title: "Error uploading file", description: error.message, variant: "error" });
     }
   });
 
