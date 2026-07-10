@@ -1,6 +1,6 @@
 import { motion } from "framer-motion";
 import {
-  DollarSign,
+  IndianRupee,
   Users,
   FolderKanban,
   TrendingUp,
@@ -142,9 +142,9 @@ export function DashboardPage() {
 
   const displayName = user?.email?.split("@")[0].replace(/[._-]/g, " ").replace(/\b\w/g, (l) => l.toUpperCase()) || "there";
 
-  const totalRevenue = invoices.filter(i => i.status === "paid").reduce((sum, i) => sum + i.amount, 0) || 1245000;
+  const totalRevenue = invoices.filter(i => i.status === "paid").reduce((sum, i) => sum + i.amount, 0);
   const netProfit = totalRevenue * 0.42; 
-  const activeClientsCount = clients.filter(c => c.status === "active").length || 64;
+  const activeClientsCount = clients.filter(c => c.status === "active").length;
   const pendingInvoices = invoices.filter(i => i.status === "pending").length;
   const tasksDueToday = tasks.filter(t => new Date(t.dueDate).toDateString() === new Date().toDateString()).length;
 
@@ -197,7 +197,7 @@ export function DashboardPage() {
           value={totalRevenue}
           prefix="₹"
           change={12.2}
-          icon={DollarSign}
+          icon={IndianRupee}
           accent="blue"
           sparklineData={revenueSparkline}
         />
