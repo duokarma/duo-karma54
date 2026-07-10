@@ -1,5 +1,5 @@
 import { useLocation, Link, useNavigate } from "react-router-dom";
-import { Bell, Menu, ChevronRight, Search, LogOut, Settings, Plus } from "lucide-react";
+import { Bell, Menu, ChevronRight, Search, LogOut, Plus } from "lucide-react";
 import { useSidebar } from "@/hooks/use-sidebar";
 import { useCommandPalette } from "@/hooks/use-command-palette";
 import { navItems } from "@/lib/nav-config";
@@ -124,11 +124,6 @@ export function Topbar() {
                 <p className="text-[10px] text-ink-faint">{user?.email || "user@duokarrma.com"}</p>
               </div>
             </DropdownMenuLabel>
-            <DropdownMenuSeparator />
-            <DropdownMenuItem onClick={() => navigate("/admin/settings")} className="cursor-pointer text-xs">
-              <Settings className="mr-2 h-3.5 w-3.5" />
-              Settings
-            </DropdownMenuItem>
             <DropdownMenuSeparator />
             <DropdownMenuItem onClick={signOut} className="cursor-pointer text-xs text-[#EF4444] focus:text-[#EF4444]">
               <LogOut className="mr-2 h-3.5 w-3.5" />
