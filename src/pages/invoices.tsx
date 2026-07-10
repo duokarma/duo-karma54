@@ -31,7 +31,7 @@ import {
   DialogFooter,
 } from "@/components/ui/dialog";
 import { useQuery, useMutation, useQueryClient } from "@tanstack/react-query";
-import { useForm } from "react-hook-form";
+import { useForm, useFieldArray, useWatch, Controller } from "react-hook-form";
 import { zodResolver } from "@hookform/resolvers/zod";
 import * as z from "zod";
 import { supabase } from "@/lib/supabase";
@@ -40,8 +40,16 @@ import type { Invoice } from "@/types";
 
 const invoiceSchema = z.object({
   client: z.string().min(2, "Client is required"),
-  amount: z.coerce.number().min(1, "Amount must be greater than 0"),
+  issueDate: z.string().min(1, "Issue date is required"),
   dueDate: z.string().min(1, "Due date is required"),
+  taxRate: z.coerce.number().min(0).max(100).optional(),
+  discount: z.coerce.number().min(0).optional(),
+  notes: z.string().optional(),
+  lineItems: z.array(z.object({
+    description: z.string().min(1, "Description required"),
+    quantity: z.coerce.number().min(1),
+    rate: z.coerce.number().min(0)
+  })).min(1, "At least one item is required")
 });
 
 type InvoiceFormValues = z.infer<typeof invoiceSchema>;
@@ -53,8 +61,37 @@ export function InvoicesPage() {
   const [isDialogOpen, setIsDialogOpen] = useState(false);
   const [selectedInvoice, setSelectedInvoice] = useState<Invoice | null>(null);
 
-  const { register, handleSubmit, reset, formState: { errors } } = useForm<InvoiceFormValues>({
+  const { register, control, handleSubmit, reset, formState: { errors } } = useForm<InvoiceFormValues>({
     resolver: zodResolver(invoiceSchema) as any,
+    defaultValues: {
+      lineItems: [{ description: "", quantity: 1, rate: 0 }],
+      taxRate: 0,
+      discount: 0,
+      notes: "",
+      issueDate: new Date().toISOString().split("T")[0],
+    }
+  });
+
+  const { fields, append, remove } = useFieldArray({
+    control,
+    name: "lineItems"
+  });
+
+  const watchLineItems = useWatch({ control, name: "lineItems" }) || [];
+  const watchTaxRate = useWatch({ control, name: "taxRate" }) || 0;
+  const watchDiscount = useWatch({ control, name: "discount" }) || 0;
+
+  const subtotal = watchLineItems.reduce((acc, item) => acc + (item.quantity * item.rate), 0);
+  const taxAmount = (subtotal * watchTaxRate) / 100;
+  const totalAmount = subtotal + taxAmount - watchDiscount;
+
+  const { data: clients = [] } = useQuery({
+    queryKey: ["clients_list"],
+    queryFn: async () => {
+      const { data, error } = await supabase.from("clients").select("id, name");
+      if (error) throw error;
+      return data;
+    },
   });
 
   const createMutation = useMutation({
@@ -63,9 +100,9 @@ export function InvoicesPage() {
         id: Math.random().toString(36).substring(2, 9),
         invoiceNumber: `INV-${new Date().getFullYear()}-${Math.floor(Math.random() * 1000).toString().padStart(3, '0')}`,
         ...values,
+        amount: totalAmount,
         status: "pending",
-        issueDate: new Date().toISOString().split("T")[0],
-        items: 1,
+        items: values.lineItems.length,
       };
       const { error } = await supabase.from("invoices").insert([newInvoice]);
       if (error) throw error;
@@ -80,7 +117,11 @@ export function InvoicesPage() {
   const editMutation = useMutation({
     mutationFn: async (values: InvoiceFormValues & { id: string }) => {
       const { id, ...rest } = values;
-      const { error } = await supabase.from("invoices").update(rest).eq("id", id);
+      const { error } = await supabase.from("invoices").update({
+        ...rest,
+        amount: totalAmount,
+        items: values.lineItems.length
+      }).eq("id", id);
       if (error) throw error;
     },
     onSuccess: () => {
@@ -115,8 +156,12 @@ export function InvoicesPage() {
     setSelectedInvoice(invoice);
     reset({
       client: invoice.client,
-      amount: invoice.amount,
+      issueDate: invoice.issueDate || new Date().toISOString().split("T")[0],
       dueDate: invoice.dueDate.split('T')[0],
+      taxRate: invoice.taxRate || 0,
+      discount: invoice.discount || 0,
+      notes: invoice.notes || "",
+      lineItems: invoice.lineItems && invoice.lineItems.length > 0 ? invoice.lineItems : [{ description: "", quantity: 1, rate: 0 }],
     });
     setIsDialogOpen(true);
   };
@@ -292,10 +337,18 @@ export function InvoicesPage() {
         setIsDialogOpen(open);
         if (!open) {
           setSelectedInvoice(null);
-          reset({ client: "", amount: 0, dueDate: "" });
+          reset({
+            client: "",
+            issueDate: new Date().toISOString().split("T")[0],
+            dueDate: "",
+            taxRate: 0,
+            discount: 0,
+            notes: "",
+            lineItems: [{ description: "", quantity: 1, rate: 0 }],
+          });
         }
       }}>
-        <DialogContent>
+        <DialogContent className="max-w-3xl max-h-[90vh] overflow-y-auto">
           <DialogHeader>
             <DialogTitle>{selectedInvoice ? "Edit Invoice" : "Create Invoice"}</DialogTitle>
             <DialogDescription>{selectedInvoice ? "Update invoice details." : "Draft a new invoice for a client."}</DialogDescription>
@@ -308,20 +361,102 @@ export function InvoicesPage() {
             }
           })}>
             <div className="space-y-4">
-              <div>
-                <label className="mb-1.5 block text-xs font-medium text-ink-dim">Client</label>
-                <Input placeholder="Select or type client name" {...register("client")} />
-                {errors.client && <p className="mt-1 text-[10px] text-rose">{errors.client.message}</p>}
+              <div className="grid grid-cols-2 gap-4">
+                <div>
+                  <label className="mb-1.5 block text-xs font-medium text-ink-dim">Client</label>
+                  <Controller
+                    control={control}
+                    name="client"
+                    render={({ field }) => (
+                      <Select value={field.value} onValueChange={field.onChange}>
+                        <SelectTrigger>
+                          <SelectValue placeholder="Select client" />
+                        </SelectTrigger>
+                        <SelectContent>
+                          {clients.map((c: any) => (
+                            <SelectItem key={c.id} value={c.name}>{c.name}</SelectItem>
+                          ))}
+                        </SelectContent>
+                      </Select>
+                    )}
+                  />
+                  {errors.client && <p className="mt-1 text-[10px] text-rose">{errors.client.message}</p>}
+                </div>
+                <div>
+                  <label className="mb-1.5 block text-xs font-medium text-ink-dim">Issue Date</label>
+                  <Input type="date" {...register("issueDate")} />
+                  {errors.issueDate && <p className="mt-1 text-[10px] text-rose">{errors.issueDate.message}</p>}
+                </div>
+                <div>
+                  <label className="mb-1.5 block text-xs font-medium text-ink-dim">Due Date</label>
+                  <Input type="date" {...register("dueDate")} />
+                  {errors.dueDate && <p className="mt-1 text-[10px] text-rose">{errors.dueDate.message}</p>}
+                </div>
               </div>
+
               <div>
-                <label className="mb-1.5 block text-xs font-medium text-ink-dim">Amount</label>
-                <Input placeholder="5000" type="number" {...register("amount")} />
-                {errors.amount && <p className="mt-1 text-[10px] text-rose">{errors.amount.message}</p>}
+                <div className="flex items-center justify-between mb-2 mt-4">
+                  <label className="text-xs font-medium text-ink-dim">Line Items</label>
+                  <Button type="button" variant="ghost" size="sm" onClick={() => append({ description: "", quantity: 1, rate: 0 })}>
+                    <Plus className="mr-2 h-4 w-4" /> Add Item
+                  </Button>
+                </div>
+                <div className="space-y-3">
+                  {fields.map((field, index) => (
+                    <div key={field.id} className="flex items-end gap-2">
+                      <div className="flex-1">
+                        <Input placeholder="Description" {...register(`lineItems.${index}.description` as const)} />
+                      </div>
+                      <div className="w-24">
+                        <Input type="number" placeholder="Qty" {...register(`lineItems.${index}.quantity` as const)} />
+                      </div>
+                      <div className="w-32">
+                        <Input type="number" placeholder="Rate" {...register(`lineItems.${index}.rate` as const)} />
+                      </div>
+                      <Button type="button" variant="ghost" size="icon" onClick={() => remove(index)} disabled={fields.length === 1}>
+                        <Trash2 className="h-4 w-4 text-rose" />
+                      </Button>
+                    </div>
+                  ))}
+                  {errors.lineItems && <p className="mt-1 text-[10px] text-rose">{errors.lineItems.message}</p>}
+                </div>
               </div>
-              <div>
-                <label className="mb-1.5 block text-xs font-medium text-ink-dim">Due date</label>
-                <Input type="date" {...register("dueDate")} />
-                {errors.dueDate && <p className="mt-1 text-[10px] text-rose">{errors.dueDate.message}</p>}
+
+              <div className="grid grid-cols-2 gap-4 pt-6 mt-4 border-t border-edge">
+                <div className="space-y-4">
+                  <div>
+                    <label className="mb-1.5 block text-xs font-medium text-ink-dim">Notes</label>
+                    <textarea 
+                      className="flex min-h-[80px] w-full rounded-md border border-edge bg-transparent px-3 py-2 text-sm text-ink placeholder:text-ink-faint focus:outline-none focus:ring-1 focus:ring-brand disabled:cursor-not-allowed disabled:opacity-50 resize-none" 
+                      placeholder="Thank you for your business!" 
+                      {...register("notes")} 
+                    />
+                  </div>
+                </div>
+                <div className="space-y-3">
+                  <div className="flex items-center gap-2 justify-end">
+                    <label className="text-xs font-medium text-ink-dim w-24 text-right">Tax Rate (%)</label>
+                    <Input type="number" className="w-24" {...register("taxRate")} />
+                  </div>
+                  <div className="flex items-center gap-2 justify-end">
+                    <label className="text-xs font-medium text-ink-dim w-24 text-right">Discount (₹)</label>
+                    <Input type="number" className="w-24" {...register("discount")} />
+                  </div>
+                  <div className="flex justify-end gap-4 text-sm pt-2">
+                    <div className="text-right text-ink-dim space-y-1">
+                      <p>Subtotal:</p>
+                      <p>Tax:</p>
+                      <p>Discount:</p>
+                      <p className="font-medium text-ink pt-2">Total:</p>
+                    </div>
+                    <div className="text-right tabular font-medium space-y-1">
+                      <p>{formatCurrency(subtotal)}</p>
+                      <p>{formatCurrency(taxAmount)}</p>
+                      <p>-{formatCurrency(watchDiscount)}</p>
+                      <p className="text-lg text-brand pt-1">{formatCurrency(totalAmount)}</p>
+                    </div>
+                  </div>
+                </div>
               </div>
             </div>
             <DialogFooter className="mt-6">

@@ -58,6 +58,13 @@ export interface Project {
   priority: "low" | "medium" | "high" | "urgent";
 }
 
+export interface InvoiceLineItem {
+  id: string;
+  description: string;
+  quantity: number;
+  rate: number;
+}
+
 export interface Invoice {
   id: string;
   invoiceNumber: string;
@@ -67,6 +74,10 @@ export interface Invoice {
   issueDate: string;
   dueDate: string;
   items: number;
+  lineItems?: InvoiceLineItem[];
+  taxRate?: number;
+  discount?: number;
+  notes?: string;
 }
 
 export interface Task {

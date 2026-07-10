@@ -147,7 +147,11 @@ CREATE TABLE invoices (
   status TEXT NOT NULL,
   "issueDate" DATE NOT NULL,
   "dueDate" DATE NOT NULL,
-  items INTEGER NOT NULL
+  items INTEGER NOT NULL,
+  "lineItems" JSONB DEFAULT '[]'::jsonb,
+  "taxRate" NUMERIC DEFAULT 0,
+  discount NUMERIC DEFAULT 0,
+  notes TEXT DEFAULT ''
 );
 
 -- Tasks Table
