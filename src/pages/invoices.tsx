@@ -112,6 +112,9 @@ export function InvoicesPage() {
       setIsDialogOpen(false);
       reset();
     },
+    onError: (error: any) => {
+      alert(`Error saving invoice: ${error.message || "Unknown error"}. Did you run the SQL migration for the new columns?`);
+    }
   });
 
   const editMutation = useMutation({
@@ -130,6 +133,9 @@ export function InvoicesPage() {
       setSelectedInvoice(null);
       reset();
     },
+    onError: (error: any) => {
+      alert(`Error updating invoice: ${error.message || "Unknown error"}. Did you run the SQL migration?`);
+    }
   });
 
   const deleteMutation = useMutation({

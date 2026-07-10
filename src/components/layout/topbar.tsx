@@ -108,10 +108,6 @@ export function Topbar() {
           <kbd className="hidden rounded border border-[var(--color-edge)] bg-[var(--color-void)] px-1 text-[10px] sm:block">⌘K</kbd>
         </button>
 
-        {/* Quick Access */}
-        <Button variant="ghost" size="icon" className="h-7 w-7 text-ink-faint hover:text-ink-dim" title="Quick Add">
-          <Plus className="h-3.5 w-3.5" />
-        </Button>
 
         {/* Notifications */}
         <div className="relative" ref={notifRef}>
