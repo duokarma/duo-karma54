@@ -312,9 +312,9 @@ export function ClientsPage() {
       </Drawer>
 
       {/* Client Detail Drawer */}
-      <Drawer open={!!selected} onOpenChange={(open) => !open && setSelected(null)}>
+      <Drawer open={!!selected && !addOpen} onOpenChange={(open) => !open && setSelected(null)}>
         <DrawerContent>
-          {selected && (
+          {selected && !addOpen && (
             <>
               <DrawerHeader>
                 <div className="flex items-center gap-4">
