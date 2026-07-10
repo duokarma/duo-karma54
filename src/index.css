@@ -4,14 +4,14 @@
 
 @theme {
   /* ─── Surface tokens — Professional neutral dark palette ─── */
-  --color-void: #0B0F14;
-  --color-graphite: #11161D;         /* Sidebar background */
-  --color-card: #151B23;             /* Card backgrounds */
-  --color-graphite-soft: #1A2130;
-  --color-charcoal: #1C2430;         /* Hover states */
-  --color-charcoal-soft: #212B3A;
-  --color-edge: #242B36;             /* Borders */
-  --color-edge-hover: #2E3848;       /* Hovered borders */
+  --color-void: transparent;
+  --color-graphite: rgba(0, 0, 0, 0.3);         /* Sidebar background */
+  --color-card: rgba(14, 16, 20, 0.6);             /* Card backgrounds */
+  --color-graphite-soft: rgba(26, 33, 48, 0.6);
+  --color-charcoal: rgba(28, 36, 48, 0.6);         /* Hover states */
+  --color-charcoal-soft: rgba(33, 43, 58, 0.6);
+  --color-edge: rgba(255, 255, 255, 0.1);             /* Borders */
+  --color-edge-hover: rgba(255, 255, 255, 0.2);       /* Hovered borders */
 
   /* ─── Light mode surfaces ─── */
   --color-pearl: #F8FAFC;
@@ -213,12 +213,16 @@
     background-color: var(--color-card);
     border: 1px solid var(--color-edge);
     border-radius: var(--radius-card);
+    backdrop-filter: blur(24px);
+    -webkit-backdrop-filter: blur(24px);
   }
 
   /* Sidebar solid surface */
   .surface-sidebar {
     background-color: var(--color-graphite);
     border-right: 1px solid var(--color-edge);
+    backdrop-filter: blur(24px);
+    -webkit-backdrop-filter: blur(24px);
   }
 
   /* Subtle muted text gradient (brand label only) */
