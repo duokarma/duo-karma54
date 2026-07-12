@@ -56,8 +56,8 @@ export function Contact() {
             <Reveal delay={i * 0.06} key={c.label}>
               <motion.a
                 href={c.href}
-                target="_blank"
-                rel="noopener noreferrer"
+                target={c.href.startsWith("mailto:") ? undefined : "_blank"}
+                rel={c.href.startsWith("mailto:") ? undefined : "noopener noreferrer"}
                 whileHover={{ y: -4, borderColor: COLORS.accent }}
                 style={{
                   display: 'block',
