@@ -282,8 +282,10 @@ export function ConversationFlow() {
     const t = setTimeout(() => {
       setIsTyping(false);
       setTimeout(() => {
-        inputRef.current?.focus();
-        chatEndRef.current?.scrollIntoView({ behavior: 'smooth' });
+        if (step > 0) {
+          inputRef.current?.focus({ preventScroll: true });
+          chatEndRef.current?.scrollIntoView({ behavior: 'smooth' });
+        }
       }, 50);
     }, delay);
     return () => clearTimeout(t);
