@@ -27,6 +27,13 @@ const FALLBACK_PROJECTS = [
     features: ["Booking & revenue overview", "Blackout date management", "Guest communication log", "Supabase-backed sync"],
     color: COLORS.accent2,
   },
+  {
+    title: "Salon Website",
+    problem: "The salon needed a digital presence to showcase their services, interior, and allow clients to book appointments online.",
+    solution: "A modern, responsive website with service menus, a gallery, and direct integration with their booking system.",
+    features: ["Service menu", "Photo gallery", "Online booking integration", "Mobile-responsive design"],
+    color: COLORS.accent,
+  },
 ];
 
 function ProjectCard({ project, index }: any) {
