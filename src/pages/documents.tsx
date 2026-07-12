@@ -1,6 +1,6 @@
 import { useMemo, useState, useRef } from "react";
-import { motion } from "framer-motion";
-import { Plus, Search, FileText, Sheet, Image, File, FolderOpen, MoreVertical, Users, Pencil, Trash2 } from "lucide-react";
+import { motion, AnimatePresence } from "framer-motion";
+import { Plus, Search, FileText, Sheet, Image as ImageIcon, File, FolderOpen, MoreVertical, Users, Pencil, Trash2, Link as LinkIcon, Eye, Download, X } from "lucide-react";
 import { PageHeader } from "@/components/shared/page-header";
 import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
@@ -38,7 +38,7 @@ const typeIcon: Record<string, typeof FileText> = {
   pdf: FileText,
   doc: FileText,
   xls: Sheet,
-  image: Image,
+  image: ImageIcon,
   other: File,
 };
 
@@ -54,6 +54,16 @@ export function DocumentsPage() {
   const queryClient = useQueryClient();
   const { toast } = useToast();
   const fileInputRef = useRef<HTMLInputElement>(null);
+  
+  const [query, setQuery] = useState("");
+  const [folderFilter, setFolderFilter] = useState("all");
+  const [renameDialogOpen, setRenameDialogOpen] = useState(false);
+  const [selectedDoc, setSelectedDoc] = useState<Document | null>(null);
+  const [newName, setNewName] = useState("");
+  
+  // Image Viewer state
+  const [viewerUrl, setViewerUrl] = useState<string | null>(null);
+
   const { data: documents = [], isLoading } = useQuery({
     queryKey: ["documents"],
     queryFn: async () => {
@@ -77,7 +87,26 @@ export function DocumentsPage() {
       } else {
         sizeStr = (file.size / 1024 / 1024).toFixed(1) + " MB";
       }
+      
+      const fileExt = file.name.split('.').pop();
+      const uniqueFileName = `${Date.now()}-${Math.random().toString(36).substring(7)}.${fileExt}`;
 
+      // 1. Upload to Supabase Storage bucket 'DUO-KARMA files'
+      const { error: storageError } = await supabase.storage
+        .from("DUO-KARMA files")
+        .upload(uniqueFileName, file, { cacheControl: '3600', upsert: false });
+
+      if (storageError) {
+        console.error("Storage upload error:", storageError);
+        throw new Error(storageError.message || "Failed to upload file to storage.");
+      }
+
+      // 2. Get Public URL
+      const { data: { publicUrl } } = supabase.storage
+        .from("DUO-KARMA files")
+        .getPublicUrl(uniqueFileName);
+
+      // 3. Save to database
       const newDoc = {
         id: crypto.randomUUID(),
         name: file.name,
@@ -86,18 +115,19 @@ export function DocumentsPage() {
         modifiedDate: new Date().toISOString(),
         folder: "Uploads",
         sharedWith: 0,
+        url: publicUrl, // Store the public URL
       };
 
-      const { error } = await supabase.from("documents").insert(newDoc);
-      if (error) throw error;
+      const { error: dbError } = await supabase.from("documents").insert(newDoc);
+      if (dbError) throw dbError;
       return newDoc;
     },
     onSuccess: () => {
       queryClient.invalidateQueries({ queryKey: ["documents"] });
       toast({ title: "File uploaded successfully", variant: "success" });
     },
-    onError: (error) => {
-      toast({ title: "Error uploading file", description: error.message, variant: "error" });
+    onError: (error: Error) => {
+      toast({ title: "Upload Failed", description: error.message, variant: "error" });
     }
   });
 
@@ -134,11 +164,10 @@ export function DocumentsPage() {
     if (e.target) e.target.value = "";
   };
 
-  const [query, setQuery] = useState("");
-  const [folderFilter, setFolderFilter] = useState("all");
-  const [renameDialogOpen, setRenameDialogOpen] = useState(false);
-  const [selectedDoc, setSelectedDoc] = useState<Document | null>(null);
-  const [newName, setNewName] = useState("");
+  const copyLink = (url: string) => {
+    navigator.clipboard.writeText(url);
+    toast({ title: "Link copied to clipboard", description: "You can now paste and share this link.", variant: "success" });
+  };
 
   const folders = useMemo(() => Array.from(new Set(documents.map((d) => d.folder))), [documents]);
 
@@ -151,7 +180,7 @@ export function DocumentsPage() {
   }, [documents, query, folderFilter]);
 
   if (isLoading) {
-    return <div className="p-8 text-center text-ink-dim">Loading...</div>;
+    return <div className="p-8 text-center text-ink-dim">Loading documents...</div>;
   }
 
   return (
@@ -163,7 +192,7 @@ export function DocumentsPage() {
           <>
             <input type="file" className="hidden" ref={fileInputRef} onChange={handleFileChange} />
             <Button onClick={() => fileInputRef.current?.click()} disabled={uploadMutation.isPending}>
-              <Plus className="h-4 w-4" /> {uploadMutation.isPending ? "Uploading..." : "Upload File"}
+              <Plus className="h-4 w-4 mr-2" /> {uploadMutation.isPending ? "Uploading..." : "Upload File"}
             </Button>
           </>
         }
@@ -203,45 +232,74 @@ export function DocumentsPage() {
           />
         </Card>
       ) : (
-        <div className="grid grid-cols-1 gap-4 sm:grid-cols-2 lg:grid-cols-3">
+        <div className="grid grid-cols-1 gap-4 sm:grid-cols-2 lg:grid-cols-3 xl:grid-cols-4">
           {filtered.map((doc, i) => {
-            const Icon = typeIcon[doc.type];
+            const Icon = typeIcon[doc.type] || File;
+            const hasUrl = !!doc.url;
             return (
               <motion.div key={doc.id} initial={{ opacity: 0, y: 8 }} animate={{ opacity: 1, y: 0 }} transition={{ delay: i * 0.04 }}>
-                <Card className="p-4 transition-transform hover:-translate-y-0.5">
+                <Card className="group flex flex-col p-4 transition-all duration-300 hover:shadow-lg hover:-translate-y-1 hover:border-electric/30 h-full">
                   <div className="flex items-start justify-between">
-                    <div className={cn("flex h-10 w-10 items-center justify-center rounded-xl", typeColor[doc.type])}>
-                      <Icon className="h-5 w-5" />
+                    <div className={cn("flex h-12 w-12 items-center justify-center rounded-xl", typeColor[doc.type])}>
+                      {doc.type === "image" && hasUrl ? (
+                        <img src={doc.url} alt={doc.name} className="h-full w-full rounded-xl object-cover" />
+                      ) : (
+                        <Icon className="h-6 w-6" />
+                      )}
                     </div>
                     <DropdownMenu>
                       <DropdownMenuTrigger asChild>
-                        <Button variant="ghost" size="icon-sm">
+                        <Button variant="ghost" size="icon-sm" className="opacity-0 group-hover:opacity-100 transition-opacity">
                           <MoreVertical className="h-4 w-4" />
                         </Button>
                       </DropdownMenuTrigger>
-                      <DropdownMenuContent align="end">
+                      <DropdownMenuContent align="end" className="w-48">
+                        {hasUrl && doc.type === "image" && (
+                          <DropdownMenuItem onClick={() => setViewerUrl(doc.url!)}>
+                            <Eye className="mr-2 h-4 w-4" /> View Image
+                          </DropdownMenuItem>
+                        )}
+                        {hasUrl && (
+                          <DropdownMenuItem onClick={() => window.open(doc.url, "_blank")}>
+                            <Download className="mr-2 h-4 w-4" /> Download
+                          </DropdownMenuItem>
+                        )}
+                        {hasUrl && (
+                          <DropdownMenuItem onClick={() => copyLink(doc.url!)}>
+                            <LinkIcon className="mr-2 h-4 w-4" /> Copy Share Link
+                          </DropdownMenuItem>
+                        )}
                         <DropdownMenuItem onClick={() => {
                           setSelectedDoc(doc);
                           setNewName(doc.name);
                           setRenameDialogOpen(true);
                         }}>
-                          <Pencil className="mr-2 h-3.5 w-3.5" /> Rename
+                          <Pencil className="mr-2 h-4 w-4" /> Rename
                         </DropdownMenuItem>
-                        <DropdownMenuItem onClick={() => deleteMutation.mutate(doc.id)} className="text-rose focus:text-rose">
-                          <Trash2 className="mr-2 h-3.5 w-3.5" /> Delete
+                        <DropdownMenuItem onClick={() => deleteMutation.mutate(doc.id)} className="text-rose focus:text-rose focus:bg-rose/10">
+                          <Trash2 className="mr-2 h-4 w-4" /> Delete
                         </DropdownMenuItem>
                       </DropdownMenuContent>
                     </DropdownMenu>
                   </div>
-                  <p className="mt-3 truncate text-sm font-medium text-ink">{doc.name}</p>
-                  <p className="mt-0.5 text-xs text-ink-faint">{doc.folder}</p>
-                  <div className="mt-3 flex items-center justify-between text-xs text-ink-faint">
+                  
+                  <div className="mt-4 flex-1">
+                    <p className="truncate font-semibold text-ink leading-tight cursor-default" title={doc.name}>{doc.name}</p>
+                    <p className="mt-1 text-xs text-ink-faint">{doc.folder}</p>
+                  </div>
+                  
+                  <div className="mt-4 pt-3 border-t border-edge/40 flex items-center justify-between text-[11px] font-medium text-ink-dim">
                     <span>{doc.size}</span>
                     <span>{new Date(doc.modifiedDate).toLocaleDateString()}</span>
                   </div>
-                  <div className="mt-2 flex items-center gap-1 text-xs text-ink-faint">
-                    <Users className="h-3 w-3" /> Shared with {doc.sharedWith}
-                  </div>
+                  
+                  {/* Action overlay for images */}
+                  {hasUrl && doc.type === "image" && (
+                    <div 
+                      className="absolute inset-0 cursor-pointer z-0 opacity-0" 
+                      onClick={() => setViewerUrl(doc.url!)}
+                    />
+                  )}
                 </Card>
               </motion.div>
             );
@@ -288,6 +346,37 @@ export function DocumentsPage() {
           </DialogFooter>
         </DialogContent>
       </Dialog>
+
+      {/* Image Viewer Dialog (Lightbox) */}
+      <AnimatePresence>
+        {viewerUrl && (
+          <Dialog open={!!viewerUrl} onOpenChange={() => setViewerUrl(null)}>
+            <DialogContent className="max-w-[90vw] max-h-[90vh] p-1 bg-black/95 border-none shadow-2xl [&>button]:text-white">
+              <DialogTitle className="sr-only">Image Viewer</DialogTitle>
+              <motion.div 
+                initial={{ opacity: 0, scale: 0.95 }}
+                animate={{ opacity: 1, scale: 1 }}
+                exit={{ opacity: 0, scale: 0.95 }}
+                className="relative flex items-center justify-center w-full h-[85vh] overflow-hidden"
+              >
+                <img 
+                  src={viewerUrl} 
+                  alt="Full view" 
+                  className="max-w-full max-h-full object-contain rounded-md"
+                />
+              </motion.div>
+              <div className="absolute top-4 right-12 flex gap-2">
+                <Button variant="outline" size="sm" className="bg-black/50 text-white border-white/20 hover:bg-black/80" onClick={() => window.open(viewerUrl, "_blank")}>
+                  <Download className="h-4 w-4 mr-2" /> Download
+                </Button>
+                <Button variant="outline" size="sm" className="bg-black/50 text-white border-white/20 hover:bg-black/80" onClick={() => copyLink(viewerUrl)}>
+                  <LinkIcon className="h-4 w-4 mr-2" /> Copy Link
+                </Button>
+              </div>
+            </DialogContent>
+          </Dialog>
+        )}
+      </AnimatePresence>
     </div>
   );
 }

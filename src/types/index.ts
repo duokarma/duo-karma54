@@ -138,6 +138,7 @@ export interface Document {
   modifiedDate: string;
   folder: string;
   sharedWith: number;
+  url?: string;
 }
 
 export interface ChartPoint {
