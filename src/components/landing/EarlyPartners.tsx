@@ -1,6 +1,5 @@
 import { useRef } from 'react';
 import { motion } from 'framer-motion';
-import { COLORS } from './ui/theme';
 import { Eyebrow } from './ui/Eyebrow';
 
 const VIDEO_URL =
