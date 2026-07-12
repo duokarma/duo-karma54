@@ -21,7 +21,7 @@ const CONTACT_CARDS = [
     label: "Email",
     value: "duokarma54@gmail.com",
     icon: "✉️",
-    href: "mailto:duokarma54@gmail.com",
+    href: "https://mail.google.com/mail/?view=cm&fs=1&to=duokarma54@gmail.com",
   },
 ];
 
@@ -56,8 +56,8 @@ export function Contact() {
             <Reveal delay={i * 0.06} key={c.label}>
               <motion.a
                 href={c.href}
-                target={c.href.startsWith("mailto:") ? undefined : "_blank"}
-                rel={c.href.startsWith("mailto:") ? undefined : "noopener noreferrer"}
+                target="_blank"
+                rel="noopener noreferrer"
                 whileHover={{ y: -4, borderColor: COLORS.accent }}
                 style={{
                   display: 'block',
