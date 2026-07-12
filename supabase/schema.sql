@@ -424,3 +424,32 @@ DROP POLICY IF EXISTS "Allow anon update access on portfolio_items" ON portfolio
 CREATE POLICY "Allow anon update access on portfolio_items" ON portfolio_items FOR UPDATE USING (true);
 DROP POLICY IF EXISTS "Allow anon delete access on portfolio_items" ON portfolio_items;
 CREATE POLICY "Allow anon delete access on portfolio_items" ON portfolio_items FOR DELETE USING (true);
+
+-- ============================================================
+-- Website Inquiries — from landing page conversation flow
+-- ============================================================
+CREATE TABLE IF NOT EXISTS website_inquiries (
+  id UUID PRIMARY KEY DEFAULT gen_random_uuid(),
+  name TEXT NOT NULL,
+  email TEXT NOT NULL,
+  phone TEXT NOT NULL,
+  business_type TEXT NOT NULL,
+  branches TEXT NOT NULL,
+  interested_in TEXT NOT NULL,
+  challenge TEXT,
+  timeline TEXT NOT NULL,
+  source TEXT NOT NULL DEFAULT 'website_chat',
+  status TEXT NOT NULL DEFAULT 'new',
+  lead_score INTEGER NOT NULL DEFAULT 0,
+  created_at TIMESTAMPTZ NOT NULL DEFAULT now()
+);
+
+ALTER TABLE website_inquiries ENABLE ROW LEVEL SECURITY;
+DROP POLICY IF EXISTS "Allow anon read access on website_inquiries" ON website_inquiries;
+CREATE POLICY "Allow anon read access on website_inquiries" ON website_inquiries FOR SELECT USING (true);
+DROP POLICY IF EXISTS "Allow anon insert access on website_inquiries" ON website_inquiries;
+CREATE POLICY "Allow anon insert access on website_inquiries" ON website_inquiries FOR INSERT WITH CHECK (true);
+DROP POLICY IF EXISTS "Allow anon update access on website_inquiries" ON website_inquiries;
+CREATE POLICY "Allow anon update access on website_inquiries" ON website_inquiries FOR UPDATE USING (true);
+DROP POLICY IF EXISTS "Allow anon delete access on website_inquiries" ON website_inquiries;
+CREATE POLICY "Allow anon delete access on website_inquiries" ON website_inquiries FOR DELETE USING (true);

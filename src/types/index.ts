@@ -42,7 +42,31 @@ export interface Lead {
   assignedTo: string;
   createdDate: string;
   lastContact: string;
+  // Enriched fields from conversation flow (optional)
+  businessType?: string;
+  branches?: string;
+  interestedIn?: string;
+  challenge?: string;
+  timeline?: string;
+  leadScore?: number;
 }
+
+export interface WebsiteInquiry {
+  id: string;
+  name: string;
+  email: string;
+  phone: string;
+  business_type: string;
+  branches: string;
+  interested_in: string;
+  challenge?: string;
+  timeline: string;
+  source: string;
+  status: "new" | "contacted" | "converted";
+  lead_score: number;
+  created_at: string;
+}
+
 
 export interface Project {
   id: string;
