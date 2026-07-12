@@ -18,7 +18,7 @@ export function CommandPalette() {
   }
 
   const { data: clients = [] } = useQuery({
-    queryKey: ["cmd-clients"],
+    queryKey: ["clients", "cmd"],
     queryFn: async () => {
       const { data } = await supabase.from("clients").select("*").limit(5);
       return (data as Client[]) || [];
@@ -27,7 +27,7 @@ export function CommandPalette() {
   });
 
   const { data: projects = [] } = useQuery({
-    queryKey: ["cmd-projects"],
+    queryKey: ["projects", "cmd"],
     queryFn: async () => {
       const { data } = await supabase.from("projects").select("*").limit(5);
       return (data as Project[]) || [];
