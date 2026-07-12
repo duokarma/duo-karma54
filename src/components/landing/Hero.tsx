@@ -148,7 +148,7 @@ export function Hero() {
           <button 
             className="bg-[#e8702a] hover:bg-[#d2611f] text-white text-sm font-medium px-7 py-3 rounded-full transition-all hover:scale-[1.03] active:scale-95 hover:shadow-lg hover:shadow-[#e8702a]/30"
             onClick={() => {
-              document.getElementById('contact')?.scrollIntoView({ behavior: 'smooth' });
+              document.getElementById('work')?.scrollIntoView({ behavior: 'smooth' });
             }}
           >
             Start Building
