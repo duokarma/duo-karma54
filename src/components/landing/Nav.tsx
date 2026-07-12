@@ -1,19 +1,20 @@
-import { useState, useEffect } from 'react';
+import { useState, useEffect, useRef } from 'react';
 import { motion, useScroll, useMotionValueEvent, AnimatePresence } from 'framer-motion';
+
+const LINKS = ['Work', 'Services', 'Process', 'Contact'];
 
 export function Nav() {
   const [active, setActive] = useState('Work');
   const [hidden, setHidden] = useState(false);
+  const [scrolled, setScrolled] = useState(false);
+  const [cursorLabel, setCursorLabel] = useState<string | null>(null);
+  const [cursorPos, setCursorPos] = useState({ x: 0, y: 0 });
   const { scrollY } = useScroll();
-  const links = ['Work', 'Services', 'Process', 'Contact'];
 
-  useMotionValueEvent(scrollY, "change", (latest) => {
-    const previous = scrollY.getPrevious() || 0;
-    if (latest > previous && latest > 150) {
-      setHidden(true);
-    } else {
-      setHidden(false);
-    }
+  useMotionValueEvent(scrollY, 'change', (latest) => {
+    const prev = scrollY.getPrevious() ?? 0;
+    setHidden(latest > prev && latest > 120);
+    setScrolled(latest > 40);
   });
 
   const scrollTo = (id: string) => {
@@ -22,67 +23,89 @@ export function Nav() {
   };
 
   return (
-    <motion.nav 
-      variants={{
-        visible: { y: 0 },
-        hidden: { y: "-100%" },
-      }}
-      animate={hidden ? "hidden" : "visible"}
-      transition={{ duration: 0.35, ease: "easeInOut" }}
-      className="fixed top-0 left-0 right-0 z-[100] flex items-center justify-between p-4 sm:p-5"
+    <motion.nav
+      variants={{ visible: { y: 0, opacity: 1 }, hidden: { y: -80, opacity: 0 } }}
+      animate={hidden ? 'hidden' : 'visible'}
+      transition={{ duration: 0.4, ease: [0.16, 1, 0.3, 1] }}
+      className="fixed top-0 left-0 right-0 z-[100] flex items-center justify-between px-5 pt-4 pb-0 pointer-events-none"
     >
-      {/* Left: Logo + Wordmark */}
-      <div className="flex items-center gap-2">
-        <img 
-          src="/logo.jpeg" 
-          alt="DuoKarma Logo" 
-          className="w-7 h-7 object-contain drop-shadow-md"
-          onError={(e) => {
-            (e.target as HTMLImageElement).style.display = 'none';
-            (e.target as HTMLImageElement).nextElementSibling?.classList.remove('hidden');
-          }}
+      {/* Logo — always visible, pointer-events restored */}
+      <div className="pointer-events-auto flex items-center gap-2 select-none">
+        <img
+          src="/logo.jpeg"
+          alt="DuoKarma"
+          className="w-7 h-7 object-contain drop-shadow"
+          onError={(e) => { (e.target as HTMLImageElement).style.display = 'none'; }}
         />
-        <svg 
-          className="hidden w-[26px] h-[26px]" 
-          viewBox="0 0 256 256" 
-          fill="#ffffff"
+        <span
+          style={{ fontFamily: "'Fraunces', serif" }}
+          className="text-white text-[1.35rem] italic font-medium tracking-tight leading-none"
         >
-          <path d="M 256 256 L 128 256 L 0 128 L 128 128 Z M 256 128 L 128 128 L 0 0 L 128 0 Z"/>
-        </svg>
-        <span className="text-white text-2xl font-playfair italic font-medium tracking-tight">DuoKarma</span>
+          DuoKarma
+        </span>
       </div>
 
-      {/* Center Pill */}
-      <div className="hidden md:flex absolute left-1/2 -translate-x-1/2 bg-black/40 backdrop-blur-xl border border-white/10 rounded-full px-2 py-2 items-center gap-1 shadow-2xl">
-        {links.map(link => (
-          <button
+      {/* Center floating pill — desktop only */}
+      <motion.div
+        animate={{
+          paddingTop: scrolled ? '6px' : '8px',
+          paddingBottom: scrolled ? '6px' : '8px',
+          backgroundColor: scrolled ? 'rgba(10,9,8,0.72)' : 'rgba(21,19,15,0.5)',
+          borderColor: scrolled ? 'rgba(201,168,118,0.25)' : 'rgba(201,168,118,0.12)',
+          backdropFilter: scrolled ? 'blur(28px)' : 'blur(16px)',
+        }}
+        transition={{ duration: 0.35, ease: 'easeOut' }}
+        className="pointer-events-auto absolute left-1/2 -translate-x-1/2 hidden md:flex items-center gap-1 px-2 rounded-full border"
+        style={{ WebkitBackdropFilter: scrolled ? 'blur(28px)' : 'blur(16px)' }}
+      >
+        {LINKS.map((link) => (
+          <NavItem
             key={link}
+            label={link}
+            active={active === link}
             onClick={() => scrollTo(link)}
-            className={`relative px-4 py-1.5 rounded-full text-sm font-medium transition-colors ${
-              active === link 
-                ? 'text-white' 
-                : 'text-white/60 hover:text-white'
-            }`}
-          >
-            {active === link && (
-              <motion.div 
-                layoutId="nav-pill"
-                className="absolute inset-0 bg-white/10 rounded-full -z-10"
-                transition={{ type: "spring", stiffness: 300, damping: 30 }}
-              />
-            )}
-            {link}
-          </button>
+          />
         ))}
-      </div>
+      </motion.div>
 
-      {/* Right: Book a call */}
-      <button 
-        className="hidden md:block bg-white text-gray-900 text-sm font-semibold px-6 py-2.5 rounded-full hover:bg-gray-100 transition-colors shadow-sm"
+      {/* Book a call — desktop only */}
+      <motion.button
+        whileHover={{ scale: 1.03, y: -1 }}
+        whileTap={{ scale: 0.97 }}
+        transition={{ type: 'spring', stiffness: 400, damping: 20 }}
+        className="pointer-events-auto hidden md:block bg-white text-[#0A0908] text-sm font-semibold px-5 py-2 rounded-full shadow-sm hover:bg-[#F3EEE3] transition-colors"
+        style={{ fontFamily: "'Inter', sans-serif" }}
         onClick={() => scrollTo('Contact')}
+        data-cursor="Book a call"
       >
         Book a call
-      </button>
+      </motion.button>
     </motion.nav>
+  );
+}
+
+function NavItem({ label, active, onClick }: { label: string; active: boolean; onClick: () => void }) {
+  return (
+    <motion.button
+      onClick={onClick}
+      whileHover={{ y: -1 }}
+      transition={{ type: 'spring', stiffness: 400, damping: 20 }}
+      className="relative px-4 py-1.5 rounded-full text-sm font-medium transition-colors select-none"
+      style={{
+        fontFamily: "'Inter', sans-serif",
+        color: active ? '#F3EEE3' : 'rgba(243,238,227,0.55)',
+      }}
+      data-cursor={label}
+    >
+      {active && (
+        <motion.div
+          layoutId="nav-active"
+          className="absolute inset-0 rounded-full"
+          style={{ background: 'rgba(201,168,118,0.14)', border: '1px solid rgba(201,168,118,0.22)' }}
+          transition={{ type: 'spring', stiffness: 350, damping: 30 }}
+        />
+      )}
+      <span className="relative z-10">{label}</span>
+    </motion.button>
   );
 }
