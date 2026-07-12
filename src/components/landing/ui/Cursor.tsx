@@ -1,4 +1,4 @@
-import { useState, useEffect, useRef } from 'react';
+import { useState, useEffect } from 'react';
 import { motion, useSpring } from 'framer-motion';
 import { COLORS } from './theme';
 
@@ -8,7 +8,6 @@ const CURSOR_LABELS: Record<string, string> = {
 };
 
 export function Cursor() {
-  const [pos, setPos] = useState({ x: -200, y: -200 });
   const [label, setLabel] = useState<string | null>(null);
   const [hovering, setHovering] = useState(false);
   const [isTouch, setIsTouch] = useState(false);
@@ -17,7 +16,6 @@ export function Cursor() {
   const y = useSpring(-200, { stiffness: 600, damping: 38, mass: 0.4 });
 
   useEffect(() => {
-    // Detect touch devices — hide cursor entirely
     if ('ontouchstart' in window || navigator.maxTouchPoints > 0) {
       setIsTouch(true);
       return;
@@ -26,7 +24,6 @@ export function Cursor() {
     const onMove = (e: MouseEvent) => {
       x.set(e.clientX);
       y.set(e.clientY);
-      setPos({ x: e.clientX, y: e.clientY });
 
       const target = e.target as HTMLElement;
       const closest = target.closest('[data-cursor], button, a') as HTMLElement | null;
@@ -48,9 +45,17 @@ export function Cursor() {
       window.removeEventListener('mousemove', onMove);
       document.removeEventListener('mouseleave', onLeave);
     };
-  }, []);
+  }, [x, y]);
 
   if (isTouch) return null;
+
+  // Shared motion style for both elements
+  const motionStyle = {
+    x,
+    y,
+    translateX: '-50%',
+    translateY: '-50%',
+  };
 
   return (
     <>
@@ -58,28 +63,19 @@ export function Cursor() {
       <motion.div
         className="dk-cursor fixed top-0 left-0 pointer-events-none z-[9998] flex items-center justify-center"
         style={{
-          x,
-          y,
-          translateX: '-50%',
-          translateY: '-50%',
-        }}
-        animate={{
-          width: hovering ? (label ? 72 : 36) : 24,
-          height: hovering ? 36 : 24,
-          borderRadius: hovering ? 999 : 999,
-          borderColor: hovering ? COLORS.accent : 'rgba(201,168,118,0.6)',
-          borderWidth: hovering ? 1.5 : 1,
-          backgroundColor: hovering ? 'rgba(201,168,118,0.08)' : 'transparent',
-        }}
-        transition={{ type: 'spring', stiffness: 300, damping: 28 }}
-        style={{
-          x,
-          y,
-          translateX: '-50%',
-          translateY: '-50%',
+          ...motionStyle,
           border: `1px solid rgba(201,168,118,0.6)`,
           mixBlendMode: 'normal',
         } as any}
+        animate={{
+          width: hovering ? (label ? 72 : 36) : 24,
+          height: hovering ? 36 : 24,
+          borderColor: hovering ? COLORS.accent : 'rgba(201,168,118,0.6)',
+          borderWidth: hovering ? 1.5 : 1,
+          backgroundColor: hovering ? 'rgba(201,168,118,0.08)' : 'transparent',
+          borderRadius: 999,
+        }}
+        transition={{ type: 'spring', stiffness: 300, damping: 28 }}
       >
         {label && hovering && (
           <motion.span
@@ -104,15 +100,12 @@ export function Cursor() {
       <motion.div
         className="dk-cursor fixed top-0 left-0 pointer-events-none z-[9999]"
         style={{
-          x,
-          y,
-          translateX: '-50%',
-          translateY: '-50%',
+          ...motionStyle,
           width: 4,
           height: 4,
           borderRadius: '50%',
           background: COLORS.accent,
-        }}
+        } as any}
         animate={{ opacity: hovering ? 0 : 1 }}
         transition={{ duration: 0.2 }}
       />

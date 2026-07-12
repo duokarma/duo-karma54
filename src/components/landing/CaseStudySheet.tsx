@@ -1,5 +1,5 @@
 import { useEffect, useRef } from 'react';
-import { motion, AnimatePresence, useMotionValue, useTransform, animate } from 'framer-motion';
+import { motion, useMotionValue, useTransform, animate } from 'framer-motion';
 import { COLORS } from './ui/theme';
 
 interface Project {
@@ -72,7 +72,6 @@ export function CaseStudySheet({ project, onClose }: CaseStudySheetProps) {
         dragConstraints={{ top: 0 }}
         dragElastic={{ top: 0, bottom: 0.4 }}
         onDragEnd={handleDragEnd}
-        style={{ y, opacity }}
         initial={{ y: '100%' }}
         animate={{ y: 0 }}
         exit={{ y: '100%' }}
@@ -83,6 +82,7 @@ export function CaseStudySheet({ project, onClose }: CaseStudySheetProps) {
         className="fixed bottom-0 left-0 right-0 z-[201] touch-none"
         style={{
           y,
+          opacity,
           background: COLORS.surface,
           borderRadius: '28px 28px 0 0',
           border: `1px solid ${COLORS.line}`,
