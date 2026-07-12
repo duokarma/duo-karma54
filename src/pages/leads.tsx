@@ -209,7 +209,7 @@ const defaultFormData = {
   company: "",
   email: "",
   phone: "",
-  source: "Website Chatbot",
+  source: "Website",
   value: 0,
   stage: "new" as Lead["stage"],
   probability: 20,
@@ -315,7 +315,7 @@ export function LeadsPage() {
         company: inquiry.business_type,
         email: inquiry.email,
         phone: inquiry.phone,
-        source: "Website Chatbot",
+        source: "Website",
         value: 0,
         stage: "new",
         probability: Math.min(10 + inquiry.lead_score, 90),
@@ -402,7 +402,6 @@ export function LeadsPage() {
                   <SelectItem value="all">All Sources</SelectItem>
                   <SelectItem value="Cold Calling">Cold Calling</SelectItem>
                   <SelectItem value="Email">Email</SelectItem>
-                  <SelectItem value="Website Chatbot">Website Chatbot</SelectItem>
                   <SelectItem value="Website">Website</SelectItem>
                 </SelectContent>
               </Select>
@@ -454,7 +453,6 @@ export function LeadsPage() {
                         <SelectContent>
                           <SelectItem value="Cold Calling">Cold Calling</SelectItem>
                           <SelectItem value="Email">Email</SelectItem>
-                          <SelectItem value="Website Chatbot">Website Chatbot</SelectItem>
                           <SelectItem value="Website">Website</SelectItem>
                         </SelectContent>
                       </Select>
