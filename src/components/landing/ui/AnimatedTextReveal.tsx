@@ -1,4 +1,4 @@
-import { motion } from "framer-motion";
+import { motion, type Variants } from "framer-motion";
 
 interface AnimatedTextRevealProps {
   text: string;
@@ -7,30 +7,29 @@ interface AnimatedTextRevealProps {
 }
 
 export function AnimatedTextReveal({ text, className = "", delayOffset = 0 }: AnimatedTextRevealProps) {
-  // Split the text into an array of characters
   const characters = text.split("");
 
-  const containerVariants = {
+  const containerVariants: Variants = {
     hidden: { opacity: 0 },
     visible: {
       opacity: 1,
       transition: {
-        staggerChildren: 0.03, // Delay between each letter
+        staggerChildren: 0.03,
         delayChildren: delayOffset,
-      },
+      } as any,
     },
   };
 
-  const childVariants = {
+  const childVariants: Variants = {
     hidden: { opacity: 0, y: 20 },
-    visible: { 
-      opacity: 1, 
+    visible: {
+      opacity: 1,
       y: 0,
       transition: {
         type: "spring",
         damping: 12,
         stiffness: 100,
-      }
+      } as any,
     },
   };
 
@@ -42,9 +41,9 @@ export function AnimatedTextReveal({ text, className = "", delayOffset = 0 }: An
       animate="visible"
     >
       {characters.map((char, index) => (
-        <motion.span 
-          key={index} 
-          variants={childVariants} 
+        <motion.span
+          key={index}
+          variants={childVariants}
           className="inline-block whitespace-pre"
         >
           {char}
