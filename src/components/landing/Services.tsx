@@ -70,6 +70,10 @@ function ServiceCard({ service }: { service: typeof SERVICES[0] }) {
         boxShadow: hovered ? '0 8px 32px rgba(0,0,0,0.2)' : 'none',
         position: 'relative',
         overflow: 'hidden',
+        display: 'flex',
+        flexDirection: 'column',
+        justifyContent: 'flex-start',
+        height: '100%'
       }}
     >
       {/* Icon */}
@@ -100,23 +104,20 @@ function ServiceCard({ service }: { service: typeof SERVICES[0] }) {
       </div>
 
       {/* Description */}
-      <motion.div
-        animate={{ opacity: hovered ? 1 : 0, height: hovered ? 'auto' : 0 }}
-        transition={{ duration: 0.25, ease: 'easeOut' }}
-        style={{ overflow: 'hidden' }}
-      >
+      <div style={{ marginTop: 6 }}>
         <p
           style={{
             fontFamily: "'Inter', sans-serif",
-            fontSize: 13,
-            color: COLORS.secondary,
+            fontSize: 13.5,
+            color: hovered ? 'rgba(255,255,255,0.7)' : COLORS.secondary,
+            transition: 'color 0.3s ease',
             lineHeight: 1.6,
             margin: 0,
           }}
         >
           {service.description}
         </p>
-      </motion.div>
+      </div>
 
       {/* Subtle corner accent */}
       <motion.div
