@@ -399,12 +399,22 @@ export function ConversationFlow() {
   }
 
   return (
-    <div style={{ 
-      display: 'grid', 
-      gridTemplateColumns: '1fr 340px', 
-      gap: 32, 
-      alignItems: 'start',
-    }}>
+    <>
+      <style>{`
+        .conv-layout-grid {
+          display: grid;
+          grid-template-columns: 1fr 340px;
+        }
+        @media (max-width: 900px) {
+          .conv-layout-grid {
+            grid-template-columns: 1fr;
+          }
+        }
+      `}</style>
+      <div className="conv-layout-grid" style={{ 
+        gap: 32, 
+        alignItems: 'start',
+      }}>
       
       {/* ── Left: Conversation ── */}
       <div style={{ 
@@ -772,5 +782,6 @@ export function ConversationFlow() {
 
       </div>
     </div>
+    </>
   );
 }
