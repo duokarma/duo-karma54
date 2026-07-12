@@ -15,7 +15,7 @@ const CONTACT_CARDS = [
     label: "WhatsApp",
     value: "Message us directly",
     icon: "💬",
-    href: "https://wa.me/919876543210",
+    href: "https://wa.me/918758457909",
   },
   {
     label: "Email",

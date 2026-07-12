@@ -120,7 +120,14 @@ CREATE TABLE leads (
   probability INTEGER NOT NULL,
   "assignedTo" TEXT NOT NULL,
   "createdDate" DATE NOT NULL,
-  "lastContact" DATE NOT NULL
+  "lastContact" DATE NOT NULL,
+  phone TEXT,
+  "businessType" TEXT,
+  branches TEXT,
+  "interestedIn" TEXT,
+  challenge TEXT,
+  timeline TEXT,
+  "leadScore" INTEGER
 );
 
 -- Projects Table

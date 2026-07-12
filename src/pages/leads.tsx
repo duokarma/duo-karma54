@@ -1,6 +1,6 @@
 import { useState } from "react";
 import { motion, AnimatePresence } from "framer-motion";
-import { Plus, Target, MoreVertical, Pencil, Trash2, Phone, Flame, Zap, ClipboardList, ArrowRight, RefreshCw } from "lucide-react";
+import { Plus, Target, MoreVertical, Pencil, Trash2, Phone, Flame, Zap, ClipboardList, ArrowRight, RefreshCw, Filter } from "lucide-react";
 import { PageHeader } from "@/components/shared/page-header";
 import { Button } from "@/components/ui/button";
 import { Card } from "@/components/ui/card";
@@ -84,7 +84,7 @@ function LeadCard({ lead, index, onClick, onEdit, onDelete }: { lead: Lead; inde
             <Avatar seed={lead.assignedTo} size="xs" />
             <span className="text-[11px] text-ink-faint">{lead.assignedTo}</span>
           </div>
-          <span className="text-[11px] text-ink-faint">{lead.source}</span>
+          <span className="text-[11px] font-medium px-1.5 py-0.5 rounded-md bg-surface text-ink-faint border border-edge">{lead.source}</span>
         </div>
       </Card>
     </motion.div>
@@ -204,11 +204,30 @@ function InquiryCard({
 }
 
 // ─── Main Page ────────────────────────────────────────────────────────────────
+const defaultFormData = {
+  name: "",
+  company: "",
+  email: "",
+  phone: "",
+  source: "Website Chatbot",
+  value: 0,
+  stage: "new" as Lead["stage"],
+  probability: 20,
+  assignedTo: "Hatim",
+  businessType: "",
+  branches: "",
+  interestedIn: "",
+  challenge: "",
+  timeline: "",
+  leadScore: 0
+};
+
 export function LeadsPage() {
   const [showLost, setShowLost] = useState(false);
   const [inquiryFilter, setInquiryFilter] = useState<InquiryStatus>("all");
+  const [kanbanSourceFilter, setKanbanSourceFilter] = useState<string>("all");
 
-  const { data: leads = [], isLoading } = useQuery({
+  const { data: allLeads = [], isLoading } = useQuery({
     queryKey: ["leads"],
     queryFn: async () => {
       const { data, error } = await supabase.from("leads").select("*");
@@ -216,6 +235,8 @@ export function LeadsPage() {
       return data as Lead[];
     },
   });
+
+  const leads = allLeads.filter(l => kanbanSourceFilter === "all" || l.source === kanbanSourceFilter);
 
   const { data: inquiries = [], isLoading: inquiriesLoading } = useQuery({
     queryKey: ["website_inquiries"],
@@ -233,17 +254,7 @@ export function LeadsPage() {
   const queryClient = useQueryClient();
   const [isDialogOpen, setIsDialogOpen] = useState(false);
   const [selectedLead, setSelectedLead] = useState<Lead | null>(null);
-  const [formData, setFormData] = useState({
-    name: "",
-    company: "",
-    email: "",
-    phone: "",
-    source: "Website",
-    value: 0,
-    stage: "new" as Lead["stage"],
-    probability: 20,
-    assignedTo: "Hatim"
-  });
+  const [formData, setFormData] = useState(defaultFormData);
 
   const createMutation = useMutation({
     mutationFn: async (newLead: Partial<Lead>) => {
@@ -259,7 +270,7 @@ export function LeadsPage() {
     onSuccess: () => {
       queryClient.invalidateQueries({ queryKey: ["leads"] });
       setIsDialogOpen(false);
-      setFormData({ name: "", company: "", email: "", phone: "", source: "Website", value: 0, stage: "new", probability: 20, assignedTo: "Hatim" });
+      setFormData(defaultFormData);
     }
   });
 
@@ -273,7 +284,7 @@ export function LeadsPage() {
       queryClient.invalidateQueries({ queryKey: ["leads"] });
       setIsDialogOpen(false);
       setSelectedLead(null);
-      setFormData({ name: "", company: "", email: "", phone: "", source: "Website", value: 0, stage: "new", probability: 20, assignedTo: "Hatim" });
+      setFormData(defaultFormData);
     }
   });
 
@@ -304,13 +315,19 @@ export function LeadsPage() {
         company: inquiry.business_type,
         email: inquiry.email,
         phone: inquiry.phone,
-        source: "website_chat",
+        source: "Website Chatbot",
         value: 0,
         stage: "new",
         probability: Math.min(10 + inquiry.lead_score, 90),
         assignedTo: "Hatim",
         createdDate: new Date().toISOString().split('T')[0],
         lastContact: new Date().toISOString().split('T')[0],
+        businessType: inquiry.business_type,
+        branches: inquiry.branches,
+        interestedIn: inquiry.interested_in,
+        challenge: inquiry.challenge || "",
+        timeline: inquiry.timeline,
+        leadScore: inquiry.lead_score,
       }]);
       if (insertError) throw insertError;
       // Mark inquiry as converted
@@ -347,6 +364,12 @@ export function LeadsPage() {
       stage: lead.stage,
       probability: lead.probability,
       assignedTo: lead.assignedTo,
+      businessType: lead.businessType || "",
+      branches: lead.branches || "",
+      interestedIn: lead.interestedIn || "",
+      challenge: lead.challenge || "",
+      timeline: lead.timeline || "",
+      leadScore: lead.leadScore || 0,
     });
     setIsDialogOpen(true);
   };
@@ -369,6 +392,21 @@ export function LeadsPage() {
         description={`${formatCurrency(totalPipelineValue)} in active pipeline across ${leads.length} leads`}
         actions={
           <>
+            <div className="flex items-center gap-2 mr-2">
+              <Filter className="h-4 w-4 text-ink-faint" />
+              <Select value={kanbanSourceFilter} onValueChange={setKanbanSourceFilter}>
+                <SelectTrigger className="h-8 text-xs border-edge bg-surface w-[140px]">
+                  <SelectValue placeholder="All Sources" />
+                </SelectTrigger>
+                <SelectContent>
+                  <SelectItem value="all">All Sources</SelectItem>
+                  <SelectItem value="Cold Calling">Cold Calling</SelectItem>
+                  <SelectItem value="Email">Email</SelectItem>
+                  <SelectItem value="Website Chatbot">Website Chatbot</SelectItem>
+                  <SelectItem value="Website">Website</SelectItem>
+                </SelectContent>
+              </Select>
+            </div>
             <Button variant="secondary" size="sm" onClick={() => setShowLost((s) => !s)}>
               {showLost ? "Hide" : "Show"} Lost
             </Button>
@@ -376,7 +414,7 @@ export function LeadsPage() {
               setIsDialogOpen(open);
               if (!open) {
                 setSelectedLead(null);
-                setFormData({ name: "", company: "", email: "", phone: "", source: "Website", value: 0, stage: "new", probability: 20, assignedTo: "Hatim" });
+                setFormData(defaultFormData);
               }
             }}>
               <DialogTrigger asChild>
@@ -384,50 +422,101 @@ export function LeadsPage() {
                   <Plus className="h-4 w-4" /> New Lead
                 </Button>
               </DialogTrigger>
-              <DialogContent>
+              <DialogContent className="max-w-xl">
                 <DialogHeader>
                   <DialogTitle>{selectedLead ? "Edit Lead" : "Add New Lead"}</DialogTitle>
                 </DialogHeader>
                 <form onSubmit={handleSubmit} className="space-y-4 pt-4">
-                  <div className="space-y-2">
-                    <Label htmlFor="name">Contact Name</Label>
-                    <Input id="name" required value={formData.name} onChange={(e) => setFormData({...formData, name: e.target.value})} />
-                  </div>
-                  <div className="space-y-2">
-                    <Label htmlFor="company">Business</Label>
-                    <Input id="company" required value={formData.company} onChange={(e) => setFormData({...formData, company: e.target.value})} />
-                  </div>
-                  <div className="space-y-2">
-                    <Label htmlFor="email">Email (Optional)</Label>
-                    <Input id="email" type="email" value={formData.email} onChange={(e) => setFormData({...formData, email: e.target.value})} />
-                  </div>
-                  <div className="space-y-2">
-                    <Label htmlFor="phone">Phone</Label>
-                    <Input id="phone" type="tel" required value={formData.phone} onChange={(e) => setFormData({...formData, phone: e.target.value})} />
-                  </div>
-                  <div className="space-y-2">
-                    <Label htmlFor="value">Estimated Value (₹)</Label>
-                    <Input id="value" type="number" required min="0" value={formData.value || ""} onChange={(e) => setFormData({...formData, value: Number(e.target.value)})} />
-                  </div>
-                  {selectedLead && (
+                  <div className="grid grid-cols-2 gap-4">
                     <div className="space-y-2">
-                      <Label>Stage</Label>
-                      <Select
-                        value={formData.stage}
-                        onValueChange={(val) => setFormData({...formData, stage: val as Lead["stage"]})}
-                      >
+                      <Label htmlFor="name">Contact Name</Label>
+                      <Input id="name" required value={formData.name} onChange={(e) => setFormData({...formData, name: e.target.value})} />
+                    </div>
+                    <div className="space-y-2">
+                      <Label htmlFor="company">Company / Business</Label>
+                      <Input id="company" required value={formData.company} onChange={(e) => setFormData({...formData, company: e.target.value})} />
+                    </div>
+                    <div className="space-y-2">
+                      <Label htmlFor="email">Email</Label>
+                      <Input id="email" type="email" required value={formData.email} onChange={(e) => setFormData({...formData, email: e.target.value})} />
+                    </div>
+                    <div className="space-y-2">
+                      <Label htmlFor="phone">Phone</Label>
+                      <Input id="phone" type="tel" required value={formData.phone} onChange={(e) => setFormData({...formData, phone: e.target.value})} />
+                    </div>
+                    
+                    <div className="space-y-2">
+                      <Label htmlFor="source">Source</Label>
+                      <Select value={formData.source} onValueChange={(val) => setFormData({...formData, source: val})}>
                         <SelectTrigger>
-                          <SelectValue placeholder="Select stage" />
+                          <SelectValue placeholder="Select source" />
                         </SelectTrigger>
                         <SelectContent>
-                          {stages.map(s => (
-                            <SelectItem key={s.key} value={s.key}>{s.label}</SelectItem>
-                          ))}
-                          <SelectItem value="lost">Lost</SelectItem>
+                          <SelectItem value="Cold Calling">Cold Calling</SelectItem>
+                          <SelectItem value="Email">Email</SelectItem>
+                          <SelectItem value="Website Chatbot">Website Chatbot</SelectItem>
+                          <SelectItem value="Website">Website</SelectItem>
                         </SelectContent>
                       </Select>
                     </div>
-                  )}
+                    <div className="space-y-2">
+                      <Label htmlFor="value">Estimated Value (₹)</Label>
+                      <Input id="value" type="number" required min="0" value={formData.value || ""} onChange={(e) => setFormData({...formData, value: Number(e.target.value)})} />
+                    </div>
+                    
+                    {/* Extra Details */}
+                    <div className="space-y-2">
+                      <Label htmlFor="businessType">Business Type (e.g. Salon)</Label>
+                      <Input id="businessType" value={formData.businessType} onChange={(e) => setFormData({...formData, businessType: e.target.value})} />
+                    </div>
+                    <div className="space-y-2">
+                      <Label htmlFor="branches">Branches</Label>
+                      <Input id="branches" value={formData.branches} onChange={(e) => setFormData({...formData, branches: e.target.value})} />
+                    </div>
+                    <div className="space-y-2">
+                      <Label htmlFor="interestedIn">Interested In</Label>
+                      <Input id="interestedIn" value={formData.interestedIn} onChange={(e) => setFormData({...formData, interestedIn: e.target.value})} />
+                    </div>
+                    <div className="space-y-2">
+                      <Label htmlFor="timeline">Timeline</Label>
+                      <Input id="timeline" value={formData.timeline} onChange={(e) => setFormData({...formData, timeline: e.target.value})} />
+                    </div>
+                    <div className="space-y-2">
+                      <Label htmlFor="leadScore">Lead Score</Label>
+                      <Input id="leadScore" type="number" value={formData.leadScore} onChange={(e) => setFormData({...formData, leadScore: Number(e.target.value)})} />
+                    </div>
+                    {selectedLead && (
+                      <div className="space-y-2">
+                        <Label>Stage</Label>
+                        <Select
+                          value={formData.stage}
+                          onValueChange={(val) => setFormData({...formData, stage: val as Lead["stage"]})}
+                        >
+                          <SelectTrigger>
+                            <SelectValue placeholder="Select stage" />
+                          </SelectTrigger>
+                          <SelectContent>
+                            {stages.map(s => (
+                              <SelectItem key={s.key} value={s.key}>{s.label}</SelectItem>
+                            ))}
+                            <SelectItem value="lost">Lost</SelectItem>
+                          </SelectContent>
+                        </Select>
+                      </div>
+                    )}
+                  </div>
+                  
+                  <div className="space-y-2">
+                    <Label htmlFor="challenge">Biggest Challenge</Label>
+                    <textarea 
+                      id="challenge" 
+                      className="flex min-h-[80px] w-full resize-none rounded-[var(--radius-control)] border border-[var(--color-edge)] bg-[var(--color-card)] px-3 py-2 text-sm text-ink placeholder:text-ink-faint transition-colors focus-visible:outline-none focus-visible:border-[#2563EB]/60 focus-visible:ring-1 focus-visible:ring-[#2563EB]/30 disabled:cursor-not-allowed disabled:opacity-50"
+                      rows={2} 
+                      value={formData.challenge} 
+                      onChange={(e: React.ChangeEvent<HTMLTextAreaElement>) => setFormData({...formData, challenge: e.target.value})} 
+                    />
+                  </div>
+
                   <DialogFooter>
                     <DialogClose asChild>
                       <Button variant="secondary" type="button">Cancel</Button>
