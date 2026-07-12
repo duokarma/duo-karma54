@@ -19,15 +19,9 @@ const CONTACT_CARDS = [
   },
   {
     label: "Email",
-    value: "hello@duokarma.com",
+    value: "duokarma54@gmail.com",
     icon: "✉️",
-    href: "mailto:hello@duokarma.com",
-  },
-  {
-    label: "LinkedIn",
-    value: "@duokarma",
-    icon: "🔗",
-    href: "https://linkedin.com/company/duokarma",
+    href: "mailto:duokarma54@gmail.com",
   },
 ];
 
