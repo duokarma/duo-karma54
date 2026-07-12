@@ -1,4 +1,4 @@
-import { useRef } from 'react';
+import { useRef, useState, useEffect } from 'react';
 import { motion, useScroll, useTransform, useSpring } from 'framer-motion';
 import { COLORS } from './ui/theme';
 import { Eyebrow } from './ui/Eyebrow';
@@ -84,14 +84,30 @@ const PROCESS = [
 export function Process() {
   const sectionRef = useRef<HTMLDivElement>(null);
   const trackRef = useRef<HTMLDivElement>(null);
+  const [scrollRange, setScrollRange] = useState(0);
+
+  // Measure the exact track width to scroll perfectly
+  useEffect(() => {
+    const measure = () => {
+      if (trackRef.current) {
+        const scrollWidth = trackRef.current.scrollWidth;
+        const viewportWidth = window.innerWidth;
+        // The distance to translate is the total width of the track minus viewport width + padding
+        setScrollRange(scrollWidth - viewportWidth + (viewportWidth * 0.1)); // 5% padding on each side
+      }
+    };
+    measure();
+    window.addEventListener('resize', measure);
+    return () => window.removeEventListener('resize', measure);
+  }, []);
 
   const { scrollYProgress } = useScroll({
     target: sectionRef,
     offset: ['start start', 'end end'],
   });
 
-  // Map vertical scroll → horizontal translate using exact bounds (track width minus viewport width)
-  const xRaw = useTransform(scrollYProgress, [0, 1], ['0%', 'calc(-100% + 100vw - 10vw)']);
+  // Map vertical scroll → horizontal translate using the measured pixels
+  const xRaw = useTransform(scrollYProgress, [0, 1], [0, -scrollRange]);
   const x = useSpring(xRaw, { stiffness: 60, damping: 18 });
 
   // Progress bar fills as you scroll
@@ -104,8 +120,7 @@ export function Process() {
       style={{
         background: COLORS.bg,
         position: 'relative',
-        // Tall enough so scrolling through provides enough scroll distance
-        height: '400vh',
+        height: '350vh', // Slightly shorter for better pacing
       }}
     >
       {/* Sticky container */}
@@ -116,9 +131,11 @@ export function Process() {
           height: '100vh',
           display: 'flex',
           flexDirection: 'column',
-          justifyContent: 'center',
+          justifyContent: 'flex-start', // Fixed the cutoff issue by avoiding 'center'
+          paddingTop: '16vh', // Natural padding from top
           overflow: 'hidden',
-          padding: '0 5%',
+          paddingLeft: '5%',
+          paddingRight: '5%',
         }}
       >
         <Reveal>
@@ -159,8 +176,9 @@ export function Process() {
         </div>
 
         {/* Horizontal track */}
-        <div ref={trackRef} style={{ overflow: 'hidden' }}>
+        <div style={{ overflow: 'hidden', margin: '0 -5vw', padding: '0 5vw' }}>
           <motion.div
+            ref={trackRef}
             style={{ x, display: 'flex', gap: 24, width: 'max-content' }}
           >
             {PROCESS.map((step, i) => (
@@ -187,8 +205,9 @@ export function Process() {
 }
 
 function ProcessCard({ step, index, scrollYProgress, total }: { step: typeof PROCESS[0]; index: number; scrollYProgress: any; total: number }) {
-  const start = 0.05 + (index / total) * 0.7;
-  const end = start + 0.12;
+  // Timing for scale/opacity per card based on its index
+  const start = (index / total) * 0.8;
+  const end = start + 0.15;
   const opacity = useTransform(scrollYProgress, [start, end], [0.35, 1]);
   const scale = useTransform(scrollYProgress, [start, end], [0.94, 1]);
 
@@ -205,56 +224,19 @@ function ProcessCard({ step, index, scrollYProgress, total }: { step: typeof PRO
         padding: '28px 24px',
       }}
     >
-      {/* Step number + icon */}
       <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'flex-start', marginBottom: 20 }}>
-        <span
-          style={{
-            fontFamily: "'IBM Plex Mono', monospace",
-            fontSize: 11,
-            color: COLORS.accent,
-            letterSpacing: '0.1em',
-          }}
-        >
+        <span style={{ fontFamily: "'IBM Plex Mono', monospace", fontSize: 11, color: COLORS.accent, letterSpacing: '0.1em' }}>
           {step.step}
         </span>
         <div style={{ color: COLORS.accent, opacity: 0.7 }}>
           {step.icon}
         </div>
       </div>
-
-      {/* Dot */}
-      <div
-        style={{
-          width: 8,
-          height: 8,
-          borderRadius: '50%',
-          background: COLORS.accent,
-          marginBottom: 14,
-        }}
-      />
-
-      {/* Title */}
-      <h3
-        style={{
-          fontFamily: "'Fraunces', serif",
-          fontSize: 22,
-          color: COLORS.text,
-          fontWeight: 400,
-          marginBottom: 10,
-        }}
-      >
+      <div style={{ width: 8, height: 8, borderRadius: '50%', background: COLORS.accent, marginBottom: 14 }} />
+      <h3 style={{ fontFamily: "'Fraunces', serif", fontSize: 22, color: COLORS.text, fontWeight: 400, marginBottom: 10 }}>
         {step.title}
       </h3>
-
-      {/* Description */}
-      <p
-        style={{
-          fontFamily: "'Inter', sans-serif",
-          fontSize: 13.5,
-          color: COLORS.secondary,
-          lineHeight: 1.65,
-        }}
-      >
+      <p style={{ fontFamily: "'Inter', sans-serif", fontSize: 13.5, color: COLORS.secondary, lineHeight: 1.65 }}>
         {step.description}
       </p>
     </motion.div>
