@@ -1,6 +1,6 @@
 import { useState, useEffect, useRef } from 'react';
 import { motion, AnimatePresence } from 'framer-motion';
-import { ArrowLeft, ArrowRight, Check, Calendar, MessageCircle } from 'lucide-react';
+import { ArrowLeft, ArrowRight, Check, Calendar, MessageCircle, Mail } from 'lucide-react';
 import { supabase } from '@/lib/supabase';
 import { COLORS } from './ui/theme';
 
@@ -16,6 +16,25 @@ function computeLeadScore(answers: Partial<Answers>): number {
   return score;
 }
 
+// ─── Dynamic Themes & Content ──────────────────────────────────────────────
+const THEMES: Record<string, string> = {
+  'Salon': '#F4C073', // Warmer gold
+  'Clinic': '#64B5F6', // Clean blue
+  'Farmhouse': '#81C784', // Earthy green
+  'Gym': '#FF8A65', // Energy orange
+  'Restaurant': '#E57373', // Soft red
+  'default': COLORS.accent,
+};
+
+const CONTEXT_PANEL: Record<string, string[]> = {
+  'Salon': ['✓ Appointment System', '✓ Staff Management', '✓ Billing', '✓ Inventory'],
+  'Clinic': ['✓ Patient Records', '✓ Appointment Scheduling', '✓ Secure Billing', '✓ Reminders'],
+  'Farmhouse': ['✓ Online Booking', '✓ Payments', '✓ Availability Calendar', '✓ Admin Dashboard'],
+  'Gym': ['✓ Member Management', '✓ Class Scheduling', '✓ Automated Billing', '✓ Progress Tracking'],
+  'Restaurant': ['✓ Table Reservations', '✓ Digital Menus', '✓ Order Management', '✓ POS Integration'],
+  'default': ['✓ Tailored Software', '✓ Modern Design', '✓ Automations', '✓ Dedicated Support'],
+};
+
 // ─── Types ───────────────────────────────────────────────────────────────────
 interface Answers {
   name: string;
@@ -28,12 +47,12 @@ interface Answers {
   phone: string;
 }
 
-type StepKey = keyof Answers;
+type StepKey = keyof Answers | 'intro';
 
 interface Step {
   key: StepKey;
-  type: 'text' | 'email' | 'tel' | 'textarea' | 'select';
-  question: string;
+  type: 'text' | 'email' | 'tel' | 'textarea' | 'select' | 'intro';
+  question: (a: Partial<Answers>) => React.ReactNode;
   placeholder?: string;
   options?: string[];
   validate?: (val: string) => string | null;
@@ -41,224 +60,81 @@ interface Step {
 
 const STEPS: Step[] = [
   {
+    key: 'intro',
+    type: 'intro',
+    question: () => (
+      <>
+        Hi there.<br/><br/>
+        I'll ask you a few quick questions so we can understand your project before our first call.<br/><br/>
+        Ready?
+      </>
+    ),
+  },
+  {
     key: 'name',
     type: 'text',
-    question: "What's your name?",
+    question: () => "What's your name?",
     placeholder: 'e.g. Raj Patel',
     validate: (v) => (v.trim().length < 2 ? 'Please enter your name' : null),
   },
   {
-    key: 'email',
-    type: 'email',
-    question: "What's your email address?",
-    placeholder: 'you@example.com',
-    validate: (v) => (/^[^\s@]+@[^\s@]+\.[^\s@]+$/.test(v) ? null : 'Please enter a valid email'),
-  },
-  {
     key: 'businessType',
     type: 'select',
-    question: 'What type of business do you have?',
+    question: (a) => `Nice meeting you, ${a.name?.split(' ')[0] || 'there'}. What type of business do you have?`,
     options: ['Salon', 'Farmhouse', 'Clinic', 'Gym', 'Restaurant', 'Other'],
   },
   {
     key: 'branches',
     type: 'select',
-    question: 'How many branches do you have?',
+    question: () => 'How many branches do you operate?',
     options: ['1 Branch', '2–5 Branches', '5+ Branches'],
   },
   {
     key: 'interestedIn',
     type: 'select',
-    question: "What are you looking for?",
+    question: () => "What are you primarily looking for?",
     options: ['Website', 'Admin Software', 'Booking System', 'CRM', 'Automation', 'Not Sure'],
   },
   {
     key: 'challenge',
     type: 'textarea',
-    question: "What's the biggest challenge you're facing right now?",
+    question: () => "What's the biggest challenge you're facing right now?",
     placeholder: 'e.g. Managing appointments, tracking revenue…',
     validate: (v) => (v.trim().length < 5 ? 'Please describe your challenge briefly' : null),
   },
   {
     key: 'timeline',
     type: 'select',
-    question: 'When are you planning to start?',
+    question: () => 'When are you planning to start this project?',
     options: ['Immediately', 'This Month', 'Just Exploring'],
+  },
+  {
+    key: 'email',
+    type: 'email',
+    question: () => "Where should we send the proposal?",
+    placeholder: 'you@example.com',
+    validate: (v) => (/^[^\s@]+@[^\s@]+\.[^\s@]+$/.test(v) ? null : 'Please enter a valid email'),
   },
   {
     key: 'phone',
     type: 'tel',
-    question: "What's the best number to contact you?",
+    question: () => "And what's the best number to contact you?",
     placeholder: '9876543210',
     validate: (v) => (/^\+?[\d\s\-()]{7,15}$/.test(v.trim()) ? null : 'Please enter a valid phone number'),
   },
 ];
 
-const STORAGE_KEY = 'dk_convo_draft';
-const TOTAL = STEPS.length;
-
-// ─── Styles ──────────────────────────────────────────────────────────────────
-const s = {
-  wrapper: {
-    background: COLORS.surface,
-    border: `1px solid ${COLORS.line}`,
-    borderRadius: 20,
-    padding: '32px 28px',
-    position: 'relative' as const,
-    overflow: 'hidden',
-  },
-  assistantRow: {
-    display: 'flex',
-    alignItems: 'flex-start',
-    gap: 12,
-    marginBottom: 24,
-  },
-  avatar: {
-    width: 36,
-    height: 36,
-    borderRadius: '50%',
-    background: `linear-gradient(135deg, ${COLORS.accent}, ${COLORS.accent2})`,
-    display: 'flex',
-    alignItems: 'center',
-    justifyContent: 'center',
-    flexShrink: 0,
-    fontSize: 16,
-  },
-  bubble: {
-    background: COLORS.surface2,
-    border: `1px solid ${COLORS.line}`,
-    borderRadius: '4px 16px 16px 16px',
-    padding: '14px 18px',
-    fontFamily: "'Inter', sans-serif",
-    fontSize: 15,
-    color: COLORS.text,
-    lineHeight: 1.55,
-    maxWidth: 'calc(100% - 48px)',
-  },
-  question: {
-    fontFamily: "'Inter', sans-serif",
-    fontWeight: 600,
-    fontSize: 16,
-    color: COLORS.text,
-    marginBottom: 20,
-    lineHeight: 1.45,
-  },
-  input: {
-    width: '100%',
-    padding: '14px 18px',
-    borderRadius: 12,
-    background: COLORS.bg,
-    border: `1.5px solid ${COLORS.line}`,
-    color: COLORS.text,
-    fontFamily: "'Inter', sans-serif",
-    fontSize: 15,
-    outline: 'none',
-    transition: 'border-color 0.2s',
-    boxSizing: 'border-box' as const,
-  },
-  textarea: {
-    width: '100%',
-    padding: '14px 18px',
-    borderRadius: 12,
-    background: COLORS.bg,
-    border: `1.5px solid ${COLORS.line}`,
-    color: COLORS.text,
-    fontFamily: "'Inter', sans-serif",
-    fontSize: 15,
-    outline: 'none',
-    resize: 'vertical' as const,
-    minHeight: 100,
-    boxSizing: 'border-box' as const,
-  },
-  optionGrid: {
-    display: 'grid',
-    gridTemplateColumns: 'repeat(auto-fill, minmax(130px, 1fr))',
-    gap: 10,
-  },
-  option: (selected: boolean) => ({
-    padding: '12px 16px',
-    borderRadius: 12,
-    border: `1.5px solid ${selected ? COLORS.accent : COLORS.line}`,
-    background: selected ? `${COLORS.accent}18` : COLORS.bg,
-    color: selected ? COLORS.accent : COLORS.secondary,
-    fontFamily: "'Inter', sans-serif",
-    fontSize: 14,
-    fontWeight: selected ? 500 : 400,
-    cursor: 'pointer',
-    transition: 'all 0.18s',
-    textAlign: 'center' as const,
-  }),
-  progressBar: {
-    height: 3,
-    background: COLORS.line,
-    borderRadius: 99,
-    marginBottom: 28,
-    overflow: 'hidden',
-  },
-  progressFill: (pct: number) => ({
-    height: '100%',
-    width: `${pct}%`,
-    background: COLORS.accent,
-    borderRadius: 99,
-    transition: 'width 0.4s ease',
-  }),
-  navRow: {
-    display: 'flex',
-    alignItems: 'center',
-    justifyContent: 'space-between',
-    marginTop: 24,
-  },
-  btnBack: {
-    display: 'flex',
-    alignItems: 'center',
-    gap: 6,
-    padding: '10px 16px',
-    borderRadius: 10,
-    border: `1px solid ${COLORS.line}`,
-    background: 'transparent',
-    color: COLORS.secondary,
-    fontFamily: "'Inter', sans-serif",
-    fontSize: 14,
-    cursor: 'pointer',
-  },
-  btnNext: {
-    display: 'flex',
-    alignItems: 'center',
-    gap: 6,
-    padding: '10px 22px',
-    borderRadius: 10,
-    border: 'none',
-    background: COLORS.accent,
-    color: '#15130F',
-    fontFamily: "'Inter', sans-serif",
-    fontSize: 14,
-    fontWeight: 600,
-    cursor: 'pointer',
-  },
-  errorMsg: {
-    fontFamily: "'Inter', sans-serif",
-    fontSize: 12,
-    color: '#e57373',
-    marginTop: 8,
-  },
-  stepLabel: {
-    fontFamily: "'IBM Plex Mono', monospace",
-    fontSize: 11,
-    color: COLORS.accent,
-    textTransform: 'uppercase' as const,
-    letterSpacing: '0.08em',
-    marginBottom: 6,
-  },
-};
+const STORAGE_KEY = 'dk_convo_draft_v2';
+const TOTAL = STEPS.length - 1; // excluding intro from total count
 
 // ─── Typing Animation ─────────────────────────────────────────────────────────
-function TypingDots() {
+function TypingDots({ color }: { color: string }) {
   return (
     <div style={{ display: 'flex', gap: 5, alignItems: 'center', padding: '4px 0' }}>
       {[0, 1, 2].map((i) => (
         <motion.span
           key={i}
-          style={{ width: 7, height: 7, borderRadius: '50%', background: COLORS.accent, display: 'block' }}
+          style={{ width: 6, height: 6, borderRadius: '50%', background: color, display: 'block' }}
           animate={{ opacity: [0.3, 1, 0.3], scale: [0.8, 1.1, 0.8] }}
           transition={{ duration: 1, delay: i * 0.18, repeat: Infinity }}
         />
@@ -267,43 +143,44 @@ function TypingDots() {
   );
 }
 
-// ─── Final / Success Screen ───────────────────────────────────────────────────
-function SuccessScreen({ name }: { name: string }) {
+// ─── Success Screen ───────────────────────────────────────────────────────────
+function SuccessScreen({ name, theme }: { name: string; theme: string }) {
   return (
     <motion.div
       initial={{ opacity: 0, scale: 0.96 }}
       animate={{ opacity: 1, scale: 1 }}
       transition={{ duration: 0.4, ease: 'easeOut' }}
-      style={{ textAlign: 'center', padding: '20px 0' }}
+      style={{ textAlign: 'center', padding: '40px 20px' }}
     >
       <motion.div
         initial={{ scale: 0 }}
         animate={{ scale: 1 }}
         transition={{ delay: 0.2, type: 'spring', stiffness: 200 }}
         style={{
-          width: 64,
-          height: 64,
+          width: 72,
+          height: 72,
           borderRadius: '50%',
-          background: `${COLORS.accent}20`,
-          border: `2px solid ${COLORS.accent}`,
+          background: `${theme}15`,
+          border: `2px solid ${theme}`,
           display: 'flex',
           alignItems: 'center',
           justifyContent: 'center',
-          margin: '0 auto 20px',
+          margin: '0 auto 24px',
         }}
       >
-        <Check size={28} color={COLORS.accent} />
+        <Check size={32} color={theme} />
       </motion.div>
 
-      <h3 style={{ fontFamily: "'Fraunces', serif", fontWeight: 400, fontSize: 22, color: COLORS.text, marginBottom: 8 }}>
-        Perfect, {name}!
+      <h3 style={{ fontFamily: "'Fraunces', serif", fontWeight: 400, fontSize: 26, color: COLORS.text, marginBottom: 12 }}>
+        Perfect, {name}.
       </h3>
-      <p style={{ fontFamily: "'Inter', sans-serif", fontSize: 14, color: COLORS.secondary, marginBottom: 28, lineHeight: 1.6 }}>
-        We've got everything we need.<br />
-        Our team will review your requirements and contact you <strong style={{ color: COLORS.text }}>within 24 hours</strong>.
+      <p style={{ fontFamily: "'Inter', sans-serif", fontSize: 16, color: COLORS.secondary, marginBottom: 36, lineHeight: 1.6 }}>
+        Your project has been received.<br />
+        We'll review everything before contacting you.<br/>
+        Estimated response: <strong style={{ color: COLORS.text }}>Within 24 hours.</strong>
       </p>
 
-      <div style={{ display: 'flex', flexDirection: 'column', gap: 12 }}>
+      <div style={{ display: 'flex', gap: 16, justifyContent: 'center' }}>
         <a
           href="https://calendar.app.google/ycwYzWhqVRR6ZB3R9"
           target="_blank"
@@ -313,18 +190,17 @@ function SuccessScreen({ name }: { name: string }) {
             alignItems: 'center',
             justifyContent: 'center',
             gap: 10,
-            padding: '13px 20px',
-            borderRadius: 12,
-            border: `1px solid ${COLORS.accent}`,
-            background: 'transparent',
-            color: COLORS.accent,
+            padding: '16px 28px',
+            borderRadius: 14,
+            background: theme,
+            color: '#15130F',
             fontFamily: "'Inter', sans-serif",
-            fontSize: 14,
-            fontWeight: 500,
+            fontSize: 15,
+            fontWeight: 600,
             textDecoration: 'none',
           }}
         >
-          <Calendar size={16} /> Book a Google Meet call
+          <Calendar size={18} /> Book a call
         </a>
         <a
           href="https://wa.me/918758457909"
@@ -335,18 +211,18 @@ function SuccessScreen({ name }: { name: string }) {
             alignItems: 'center',
             justifyContent: 'center',
             gap: 10,
-            padding: '13px 20px',
-            borderRadius: 12,
-            border: `1px solid ${COLORS.line}`,
-            background: COLORS.bg,
+            padding: '16px 28px',
+            borderRadius: 14,
+            border: `1.5px solid ${COLORS.line}`,
+            background: 'transparent',
             color: COLORS.text,
             fontFamily: "'Inter', sans-serif",
-            fontSize: 14,
+            fontSize: 15,
             fontWeight: 500,
             textDecoration: 'none',
           }}
         >
-          <MessageCircle size={16} /> Chat on WhatsApp
+          <MessageCircle size={18} /> WhatsApp
         </a>
       </div>
     </motion.div>
@@ -363,11 +239,15 @@ export function ConversationFlow() {
   const [isDone, setIsDone] = useState(false);
   const [isSubmitting, setIsSubmitting] = useState(false);
   const [submitError, setSubmitError] = useState<string | null>(null);
+  
   const inputRef = useRef<HTMLInputElement | HTMLTextAreaElement | null>(null);
+  const chatEndRef = useRef<HTMLDivElement | null>(null);
 
   const currentStep = STEPS[step];
+  const themeColor = answers.businessType ? THEMES[answers.businessType] || THEMES.default : THEMES.default;
+  const currentContext = answers.businessType ? CONTEXT_PANEL[answers.businessType] || CONTEXT_PANEL.default : CONTEXT_PANEL.default;
 
-  // Restore draft from localStorage
+  // Restore draft
   useEffect(() => {
     try {
       const saved = localStorage.getItem(STORAGE_KEY);
@@ -376,7 +256,10 @@ export function ConversationFlow() {
         if (typeof s === 'number' && a) {
           setStep(s);
           setAnswers(a);
-          setCurrentInput((a as Answers)[STEPS[s]?.key] ?? '');
+          const k = STEPS[s]?.key;
+          if (k && k !== 'intro') {
+            setCurrentInput((a as Answers)[k as keyof Answers] ?? '');
+          }
         }
       }
     } catch {
@@ -391,67 +274,67 @@ export function ConversationFlow() {
     }
   }, [step, answers, isDone]);
 
-  // Typing animation before showing input
+  // Typing animation & autofocus
   useEffect(() => {
     setIsTyping(true);
     setError(null);
+    const delay = step === 0 ? 1200 : 800; // longer for intro
     const t = setTimeout(() => {
       setIsTyping(false);
-      setTimeout(() => inputRef.current?.focus(), 80);
-    }, 900);
+      setTimeout(() => {
+        inputRef.current?.focus();
+        chatEndRef.current?.scrollIntoView({ behavior: 'smooth' });
+      }, 50);
+    }, delay);
     return () => clearTimeout(t);
   }, [step]);
 
-  // Pre-fill current input when navigating back
+  // Pre-fill input
   useEffect(() => {
-    if (currentStep) {
-      setCurrentInput((answers[currentStep.key] as string) ?? '');
+    if (currentStep && currentStep.key !== 'intro') {
+      setCurrentInput((answers[currentStep.key as keyof Answers] as string) ?? '');
     }
   }, [step]); // eslint-disable-line react-hooks/exhaustive-deps
 
   const handleNext = () => {
-    const stepDef = STEPS[step];
+    if (currentStep.type === 'intro') {
+      setStep(s => s + 1);
+      return;
+    }
+
     const val = currentInput.trim();
-    if (stepDef.validate) {
-      const err = stepDef.validate(val);
+    if (currentStep.validate) {
+      const err = currentStep.validate(val);
       if (err) { setError(err); return; }
-    } else if (stepDef.type === 'select' && !val) {
+    } else if (currentStep.type === 'select' && !val) {
       setError('Please select an option');
       return;
     }
-    const updated = { ...answers, [stepDef.key]: val };
+    const updated = { ...answers, [currentStep.key]: val };
     setAnswers(updated);
     setCurrentInput('');
     setError(null);
 
-    if (step < TOTAL - 1) {
+    if (step < STEPS.length - 1) {
       setStep((s) => s + 1);
     } else {
       handleSubmit(updated as Answers);
     }
   };
 
-  const handleBack = () => {
-    if (step > 0) {
-      setStep((s) => s - 1);
-    }
-  };
-
   const handleSelect = (option: string) => {
     setCurrentInput(option);
     setError(null);
-    // Auto-advance on select after brief delay
     const updated = { ...answers, [currentStep.key]: option };
     setAnswers(updated);
-    setError(null);
     setTimeout(() => {
-      if (step < TOTAL - 1) {
+      if (step < STEPS.length - 1) {
         setStep((s) => s + 1);
         setCurrentInput('');
       } else {
         handleSubmit(updated as Answers);
       }
-    }, 220);
+    }, 250);
   };
 
   const handleKeyDown = (e: React.KeyboardEvent) => {
@@ -465,7 +348,6 @@ export function ConversationFlow() {
     setIsSubmitting(true);
     setSubmitError(null);
     try {
-      // Duplicate guard — same email in last 24h
       const since = new Date(Date.now() - 86_400_000).toISOString();
       const { data: existing } = await supabase
         .from('website_inquiries')
@@ -490,7 +372,7 @@ export function ConversationFlow() {
         interested_in: finalAnswers.interestedIn,
         challenge: finalAnswers.challenge || null,
         timeline: finalAnswers.timeline,
-        source: 'website_chat',
+        source: 'Website',
         status: 'new',
         lead_score: leadScore,
       });
@@ -500,163 +382,395 @@ export function ConversationFlow() {
       localStorage.removeItem(STORAGE_KEY);
     } catch (err) {
       console.error(err);
-      setSubmitError("Something went wrong. Please try again or email us at hello@duokarma.com");
+      setSubmitError("Something went wrong. Please try again or email us at duokarma54@gmail.com");
       setIsSubmitting(false);
     }
   };
 
+  const progressCount = Math.max(0, step); // 0 at intro
+  const dots = Array.from({ length: TOTAL }).map((_, i) => (i < progressCount ? '●' : '○')).join('');
+
   if (isDone) {
     return (
-      <div style={s.wrapper}>
-        <SuccessScreen name={answers.name ?? 'there'} />
+      <div style={{ background: COLORS.surface, border: `1px solid ${COLORS.line}`, borderRadius: 24, padding: '40px 0' }}>
+        <SuccessScreen name={answers.name?.split(' ')[0] ?? 'there'} theme={themeColor} />
       </div>
     );
   }
 
-  const progress = ((step) / TOTAL) * 100;
-  const isSelect = currentStep.type === 'select';
-
   return (
-    <div style={s.wrapper}>
-      {/* Progress */}
-      <div style={{ display: 'flex', alignItems: 'center', justifyContent: 'space-between', marginBottom: 10 }}>
-        <div style={s.stepLabel}>Step {step + 1} of {TOTAL}</div>
-        <div style={{ fontFamily: "'IBM Plex Mono', monospace", fontSize: 11, color: COLORS.secondary }}>
-          {Math.round(progress)}%
+    <div style={{ 
+      display: 'grid', 
+      gridTemplateColumns: '1fr 340px', 
+      gap: 32, 
+      alignItems: 'start',
+    }}>
+      
+      {/* ── Left: Conversation ── */}
+      <div style={{ 
+        background: COLORS.surface, 
+        border: `1px solid ${COLORS.line}`, 
+        borderRadius: 24, 
+        padding: '32px 32px 40px',
+        minHeight: 560,
+        display: 'flex',
+        flexDirection: 'column'
+      }}>
+        
+        {/* Progress Header */}
+        <div style={{ display: 'flex', alignItems: 'center', justifyContent: 'space-between', marginBottom: 32, paddingBottom: 16, borderBottom: `1px solid ${COLORS.line}` }}>
+          <div style={{ display: 'flex', alignItems: 'center', gap: 16 }}>
+            <span style={{ fontFamily: "'Fraunces', serif", fontSize: 20, color: COLORS.text }}>01 Discover</span>
+            <span style={{ fontFamily: "'IBM Plex Mono', monospace", fontSize: 13, color: themeColor, letterSpacing: '0.1em' }}>{dots}</span>
+          </div>
+          <div style={{ fontFamily: "'Inter', sans-serif", fontSize: 13, color: COLORS.secondary }}>
+            {TOTAL - progressCount + 1} minutes remaining
+          </div>
+        </div>
+
+        {/* Chat History */}
+        <div style={{ flex: 1, overflowY: 'auto', paddingRight: 10, display: 'flex', flexDirection: 'column', gap: 24 }}>
+          {/* Intro Message is always shown first once step > 0 */}
+          {step > 0 && (
+            <div style={{ display: 'flex', flexDirection: 'column', gap: 6 }}>
+              <div style={{ fontFamily: "'Inter', sans-serif", fontSize: 12, color: COLORS.secondary, marginLeft: 44 }}>👋 DuoKarma Assistant</div>
+              <div style={{ display: 'flex', gap: 12 }}>
+                <div style={{ width: 32, height: 32, borderRadius: '50%', background: `${themeColor}20`, display: 'flex', alignItems: 'center', justifyContent: 'center', flexShrink: 0 }}>
+                  🤝
+                </div>
+                <div style={{ background: COLORS.surface2, border: `1px solid ${COLORS.line}`, padding: '14px 18px', borderRadius: '4px 16px 16px 16px', fontFamily: "'Inter', sans-serif", fontSize: 15, color: COLORS.text, lineHeight: 1.5 }}>
+                  {STEPS[0].question({})}
+                </div>
+              </div>
+            </div>
+          )}
+
+          {/* Previous Steps */}
+          {STEPS.slice(1, step).map((s) => (
+            <div key={s.key} style={{ display: 'flex', flexDirection: 'column', gap: 16 }}>
+              <div style={{ display: 'flex', gap: 12 }}>
+                <div style={{ width: 32, height: 32, borderRadius: '50%', background: `${themeColor}20`, display: 'flex', alignItems: 'center', justifyContent: 'center', flexShrink: 0 }}>
+                  🤝
+                </div>
+                <div style={{ background: COLORS.surface2, border: `1px solid ${COLORS.line}`, padding: '14px 18px', borderRadius: '4px 16px 16px 16px', fontFamily: "'Inter', sans-serif", fontSize: 15, color: COLORS.text, lineHeight: 1.5 }}>
+                  {s.question(answers)}
+                </div>
+              </div>
+              <div style={{ display: 'flex', justifyContent: 'flex-end' }}>
+                <div style={{ background: themeColor, padding: '12px 18px', borderRadius: '16px 16px 4px 16px', fontFamily: "'Inter', sans-serif", fontSize: 15, color: '#15130F', fontWeight: 500 }}>
+                  {answers[s.key as keyof Answers]}
+                </div>
+              </div>
+            </div>
+          ))}
+
+          {/* Current Step */}
+          <div style={{ display: 'flex', flexDirection: 'column', gap: 6 }}>
+             {step === 0 && <div style={{ fontFamily: "'Inter', sans-serif", fontSize: 12, color: COLORS.secondary, marginLeft: 44 }}>👋 DuoKarma Assistant</div>}
+            <div style={{ display: 'flex', gap: 12 }}>
+              <div style={{ width: 32, height: 32, borderRadius: '50%', background: `${themeColor}20`, display: 'flex', alignItems: 'center', justifyContent: 'center', flexShrink: 0 }}>
+                🤝
+              </div>
+              <AnimatePresence mode="wait">
+                <motion.div
+                  key={step + '-bubble'}
+                  initial={{ opacity: 0, y: 10, scale: 0.98 }}
+                  animate={{ opacity: 1, y: 0, scale: 1 }}
+                  transition={{ duration: 0.3 }}
+                  style={{ background: COLORS.surface2, border: `1px solid ${COLORS.line}`, padding: '14px 18px', borderRadius: '4px 16px 16px 16px', fontFamily: "'Inter', sans-serif", fontSize: 15, color: COLORS.text, lineHeight: 1.5, maxWidth: '90%' }}
+                >
+                  {isTyping ? <TypingDots color={themeColor} /> : currentStep.question(answers)}
+                </motion.div>
+              </AnimatePresence>
+            </div>
+          </div>
+
+          <div ref={chatEndRef} />
+        </div>
+
+        {/* Current Input */}
+        <div style={{ marginTop: 24, paddingTop: 16 }}>
+          <AnimatePresence mode="wait">
+            {!isTyping && (
+              <motion.div
+                key={step + '-input'}
+                initial={{ opacity: 0, y: 15 }}
+                animate={{ opacity: 1, y: 0 }}
+                transition={{ duration: 0.3, ease: 'easeOut' }}
+                style={{ display: 'flex', flexDirection: 'column', gap: 16 }}
+              >
+                {currentStep.type === 'intro' ? (
+                  <motion.button
+                    whileHover={{ scale: 1.01 }}
+                    whileTap={{ scale: 0.98 }}
+                    onClick={handleNext}
+                    style={{
+                      padding: '18px 24px',
+                      borderRadius: 16,
+                      border: 'none',
+                      background: themeColor,
+                      color: '#15130F',
+                      fontFamily: "'Inter', sans-serif",
+                      fontSize: 16,
+                      fontWeight: 600,
+                      cursor: 'pointer',
+                      display: 'flex',
+                      alignItems: 'center',
+                      justifyContent: 'center',
+                      gap: 8,
+                      width: '100%',
+                      boxShadow: `0 4px 20px ${themeColor}20`
+                    }}
+                  >
+                    Yes, let's start <ArrowRight size={18} />
+                  </motion.button>
+                ) : currentStep.type === 'select' ? (
+                  <div style={{ display: 'grid', gridTemplateColumns: 'repeat(auto-fill, minmax(140px, 1fr))', gap: 12 }}>
+                    {currentStep.options!.map((opt) => (
+                      <motion.button
+                        key={opt}
+                        whileHover={{ scale: 1.02 }}
+                        whileTap={{ scale: 0.98 }}
+                        onClick={() => handleSelect(opt)}
+                        style={{
+                          padding: '16px 20px',
+                          borderRadius: 14,
+                          border: `1.5px solid ${currentInput === opt ? themeColor : COLORS.line}`,
+                          background: currentInput === opt ? `${themeColor}12` : COLORS.bg,
+                          color: currentInput === opt ? themeColor : COLORS.secondary,
+                          fontFamily: "'Inter', sans-serif",
+                          fontSize: 15,
+                          fontWeight: currentInput === opt ? 500 : 400,
+                          cursor: 'pointer',
+                          transition: 'all 0.2s',
+                        }}
+                      >
+                        {opt}
+                      </motion.button>
+                    ))}
+                  </div>
+                ) : currentStep.type === 'textarea' ? (
+                  <textarea
+                    ref={inputRef as React.RefObject<HTMLTextAreaElement>}
+                    value={currentInput}
+                    onChange={(e) => { setCurrentInput(e.target.value); setError(null); }}
+                    placeholder={currentStep.placeholder}
+                    style={{
+                      width: '100%',
+                      padding: '18px 20px',
+                      borderRadius: 16,
+                      background: COLORS.bg,
+                      border: `1.5px solid ${error ? '#e57373' : COLORS.line}`,
+                      color: COLORS.text,
+                      fontFamily: "'Inter', sans-serif",
+                      fontSize: 16,
+                      outline: 'none',
+                      resize: 'vertical',
+                      minHeight: 120,
+                      boxSizing: 'border-box',
+                    }}
+                  />
+                ) : (
+                  <input
+                    ref={inputRef as React.RefObject<HTMLInputElement>}
+                    type={currentStep.type}
+                    value={currentInput}
+                    onChange={(e) => { setCurrentInput(e.target.value); setError(null); }}
+                    onKeyDown={handleKeyDown}
+                    placeholder={currentStep.placeholder}
+                    style={{
+                      width: '100%',
+                      padding: '18px 20px',
+                      borderRadius: 16,
+                      background: COLORS.bg,
+                      border: `1.5px solid ${error ? '#e57373' : COLORS.line}`,
+                      color: COLORS.text,
+                      fontFamily: "'Inter', sans-serif",
+                      fontSize: 16,
+                      outline: 'none',
+                      boxSizing: 'border-box',
+                    }}
+                  />
+                )}
+
+                {error && <div style={{ fontFamily: "'Inter', sans-serif", fontSize: 13, color: '#e57373', marginTop: -4 }}>⚠ {error}</div>}
+                {submitError && <div style={{ fontFamily: "'Inter', sans-serif", fontSize: 13, color: '#e57373' }}>⚠ {submitError}</div>}
+
+                {currentStep.type !== 'intro' && currentStep.type !== 'select' && (
+                  <div style={{ display: 'flex', gap: 12, marginTop: 8 }}>
+                    {step > 1 && (
+                      <motion.button
+                        whileHover={{ scale: 1.01 }}
+                        whileTap={{ scale: 0.98 }}
+                        onClick={() => setStep(s => s - 1)}
+                        style={{
+                          padding: '18px 20px',
+                          borderRadius: 16,
+                          border: `1.5px solid ${COLORS.line}`,
+                          background: 'transparent',
+                          color: COLORS.secondary,
+                          cursor: 'pointer',
+                          display: 'flex',
+                          alignItems: 'center',
+                          justifyContent: 'center',
+                        }}
+                      >
+                        <ArrowLeft size={18} />
+                      </motion.button>
+                    )}
+                    <motion.button
+                      whileHover={{ scale: 1.01 }}
+                      whileTap={{ scale: 0.98 }}
+                      onClick={handleNext}
+                      disabled={isSubmitting}
+                      style={{
+                        flex: 1,
+                        padding: '18px 24px',
+                        borderRadius: 16,
+                        border: 'none',
+                        background: themeColor,
+                        color: '#15130F',
+                        fontFamily: "'Inter', sans-serif",
+                        fontSize: 16,
+                        fontWeight: 600,
+                        cursor: isSubmitting ? 'not-allowed' : 'pointer',
+                        display: 'flex',
+                        alignItems: 'center',
+                        justifyContent: 'center',
+                        gap: 8,
+                        opacity: isSubmitting ? 0.7 : 1,
+                        boxShadow: `0 4px 20px ${themeColor}20`
+                      }}
+                    >
+                      {isSubmitting ? 'Submitting…' : step === STEPS.length - 1 ? 'Submit' : 'Continue'} ────────&rarr;
+                    </motion.button>
+                  </div>
+                )}
+              </motion.div>
+            )}
+          </AnimatePresence>
         </div>
       </div>
-      <div style={s.progressBar}>
-        <div style={s.progressFill(progress + (100 / TOTAL))} />
-      </div>
 
-      {/* Assistant bubble */}
-      <div style={s.assistantRow}>
-        <div style={s.avatar}>🤝</div>
-        <AnimatePresence mode="wait">
-          <motion.div
-            key={step + '-bubble'}
-            initial={{ opacity: 0, y: 6 }}
-            animate={{ opacity: 1, y: 0 }}
-            exit={{ opacity: 0 }}
-            transition={{ duration: 0.25 }}
-            style={s.bubble}
+      {/* ── Right: Context Pane ── */}
+      <div style={{ display: 'flex', flexDirection: 'column', gap: 24 }}>
+        
+        {/* Dynamic Features Box */}
+        <div style={{ background: COLORS.surface, border: `1px solid ${COLORS.line}`, borderRadius: 24, padding: 32 }}>
+          <div style={{ fontFamily: "'IBM Plex Mono', monospace", fontSize: 11, color: themeColor, textTransform: 'uppercase', letterSpacing: '0.08em', marginBottom: 20 }}>
+            {answers.businessType ? `Typical ${answers.businessType} Projects` : 'Typical Projects'}
+          </div>
+          <div style={{ display: 'flex', flexDirection: 'column', gap: 14 }}>
+            {currentContext.map((feature, i) => (
+              <motion.div
+                key={feature + i}
+                initial={{ opacity: 0, x: -10 }}
+                animate={{ opacity: 1, x: 0 }}
+                transition={{ duration: 0.3, delay: i * 0.1 }}
+                style={{ fontFamily: "'Inter', sans-serif", fontSize: 14, color: COLORS.text }}
+              >
+                <span style={{ color: themeColor, marginRight: 8, fontWeight: 600 }}>✓</span> 
+                {feature.replace('✓ ', '')}
+              </motion.div>
+            ))}
+          </div>
+
+          <div style={{ marginTop: 32, paddingTop: 24, borderTop: `1px solid ${COLORS.line}`, display: 'flex', flexDirection: 'column', gap: 12 }}>
+            <div style={{ fontFamily: "'Inter', sans-serif", fontSize: 13, color: COLORS.secondary, display: 'flex', alignItems: 'center', gap: 8 }}>
+              <span style={{ color: themeColor }}>✓</span> Response within 24 hours
+            </div>
+            <div style={{ fontFamily: "'Inter', sans-serif", fontSize: 13, color: COLORS.secondary, display: 'flex', alignItems: 'center', gap: 8 }}>
+              <span style={{ color: themeColor }}>✓</span> Free consultation
+            </div>
+            <div style={{ fontFamily: "'Inter', sans-serif", fontSize: 13, color: COLORS.secondary, display: 'flex', alignItems: 'center', gap: 8 }}>
+              <span style={{ color: themeColor }}>✓</span> No obligation
+            </div>
+          </div>
+        </div>
+
+        {/* Contact CTA */}
+        <div style={{ background: COLORS.surface, border: `1px solid ${COLORS.line}`, borderRadius: 24, padding: 32 }}>
+          <div style={{ fontFamily: "'Inter', sans-serif", fontSize: 16, fontWeight: 500, color: COLORS.text, marginBottom: 20 }}>
+            Need to talk sooner?
+          </div>
+          <a
+            href="https://calendar.app.google/ycwYzWhqVRR6ZB3R9"
+            target="_blank"
+            rel="noopener noreferrer"
+            style={{
+              display: 'block',
+              padding: '20px 24px',
+              borderRadius: 16,
+              background: COLORS.bg,
+              border: `1.5px solid ${themeColor}`,
+              textDecoration: 'none',
+              marginBottom: 16,
+              transition: 'transform 0.2s',
+            }}
+            onMouseOver={(e) => e.currentTarget.style.transform = 'translateY(-2px)'}
+            onMouseOut={(e) => e.currentTarget.style.transform = 'none'}
           >
-            {isTyping ? <TypingDots /> : currentStep.question}
-          </motion.div>
-        </AnimatePresence>
+            <div style={{ display: 'flex', alignItems: 'center', gap: 12, marginBottom: 8 }}>
+              <Calendar size={18} color={themeColor} strokeWidth={1.5} />
+              <div style={{ fontFamily: "'IBM Plex Mono', monospace", fontSize: 11, color: themeColor, textTransform: 'uppercase', letterSpacing: '0.08em' }}>
+                Google Meet
+              </div>
+            </div>
+            <div style={{ fontFamily: "'Inter', sans-serif", fontSize: 15, fontWeight: 500, color: COLORS.text, marginBottom: 4 }}>
+              Schedule a strategy call
+            </div>
+            <div style={{ fontFamily: "'Inter', sans-serif", fontSize: 13, color: COLORS.secondary }}>
+              20–30 minutes
+            </div>
+          </a>
+
+          <div style={{ display: 'grid', gridTemplateColumns: '1fr 1fr', gap: 12 }}>
+            <a
+              href="https://wa.me/918758457909"
+              target="_blank"
+              rel="noopener noreferrer"
+              style={{
+                display: 'flex',
+                alignItems: 'center',
+                justifyContent: 'center',
+                gap: 8,
+                padding: '14px',
+                borderRadius: 12,
+                border: `1px solid ${COLORS.line}`,
+                background: COLORS.bg,
+                color: COLORS.text,
+                fontFamily: "'Inter', sans-serif",
+                fontSize: 13,
+                textDecoration: 'none',
+              }}
+            >
+              <MessageCircle size={16} strokeWidth={1.5} color={COLORS.secondary} /> WhatsApp
+            </a>
+            <a
+              href="https://mail.google.com/mail/?view=cm&fs=1&to=duokarma54@gmail.com"
+              target="_blank"
+              rel="noopener noreferrer"
+              style={{
+                display: 'flex',
+                alignItems: 'center',
+                justifyContent: 'center',
+                gap: 8,
+                padding: '14px',
+                borderRadius: 12,
+                border: `1px solid ${COLORS.line}`,
+                background: COLORS.bg,
+                color: COLORS.text,
+                fontFamily: "'Inter', sans-serif",
+                fontSize: 13,
+                textDecoration: 'none',
+              }}
+            >
+              <Mail size={16} strokeWidth={1.5} color={COLORS.secondary} /> Email
+            </a>
+          </div>
+        </div>
+
       </div>
-
-      {/* Input area */}
-      <AnimatePresence mode="wait">
-        {!isTyping && (
-          <motion.div
-            key={step + '-input'}
-            initial={{ opacity: 0, y: 12 }}
-            animate={{ opacity: 1, y: 0 }}
-            exit={{ opacity: 0, y: -8 }}
-            transition={{ duration: 0.28, ease: 'easeOut' }}
-          >
-            {isSelect ? (
-              <div style={s.optionGrid}>
-                {currentStep.options!.map((opt) => (
-                  <motion.button
-                    key={opt}
-                    whileHover={{ scale: 1.03 }}
-                    whileTap={{ scale: 0.97 }}
-                    onClick={() => handleSelect(opt)}
-                    style={s.option(currentInput === opt)}
-                  >
-                    {opt}
-                  </motion.button>
-                ))}
-              </div>
-            ) : currentStep.type === 'textarea' ? (
-              <textarea
-                ref={inputRef as React.RefObject<HTMLTextAreaElement>}
-                value={currentInput}
-                onChange={(e) => { setCurrentInput(e.target.value); setError(null); }}
-                placeholder={currentStep.placeholder}
-                style={{
-                  ...s.textarea,
-                  borderColor: error ? '#e57373' : COLORS.line,
-                }}
-              />
-            ) : (
-              <input
-                ref={inputRef as React.RefObject<HTMLInputElement>}
-                type={currentStep.type}
-                value={currentInput}
-                onChange={(e) => { setCurrentInput(e.target.value); setError(null); }}
-                onKeyDown={handleKeyDown}
-                placeholder={currentStep.placeholder}
-                style={{
-                  ...s.input,
-                  borderColor: error ? '#e57373' : COLORS.line,
-                }}
-              />
-            )}
-
-            {error && <div style={s.errorMsg}>⚠ {error}</div>}
-            {submitError && <div style={{ ...s.errorMsg, marginTop: 12 }}>⚠ {submitError}</div>}
-
-            {/* Navigation */}
-            {!isSelect && (
-              <div style={s.navRow}>
-                {step > 0 ? (
-                  <motion.button whileTap={{ scale: 0.96 }} onClick={handleBack} style={s.btnBack}>
-                    <ArrowLeft size={14} /> Back
-                  </motion.button>
-                ) : <div />}
-                <motion.button
-                  whileTap={{ scale: 0.97 }}
-                  onClick={handleNext}
-                  disabled={isSubmitting}
-                  style={{ ...s.btnNext, opacity: isSubmitting ? 0.7 : 1, cursor: isSubmitting ? 'not-allowed' : 'pointer' }}
-                >
-                  {isSubmitting ? 'Submitting…' : step === TOTAL - 1 ? (
-                    <><Check size={14} /> Submit</>
-                  ) : (
-                    <>Next <ArrowRight size={14} /></>
-                  )}
-                </motion.button>
-              </div>
-            )}
-
-            {/* Back button for select steps */}
-            {isSelect && step > 0 && (
-              <div style={{ marginTop: 16 }}>
-                <button onClick={handleBack} style={{ ...s.btnBack, border: 'none', background: 'none', padding: '6px 0' }}>
-                  <ArrowLeft size={13} /> Back
-                </button>
-              </div>
-            )}
-          </motion.div>
-        )}
-      </AnimatePresence>
-
-      {/* Welcome tag */}
-      {step === 0 && !isTyping && (
-        <motion.div
-          initial={{ opacity: 0 }}
-          animate={{ opacity: 1 }}
-          transition={{ delay: 0.4 }}
-          style={{
-            position: 'absolute',
-            top: 16,
-            right: 16,
-            fontFamily: "'IBM Plex Mono', monospace",
-            fontSize: 10,
-            color: COLORS.accent,
-            background: `${COLORS.accent}15`,
-            border: `1px solid ${COLORS.accent}30`,
-            borderRadius: 99,
-            padding: '3px 10px',
-            letterSpacing: '0.06em',
-          }}
-        >
-          2 min
-        </motion.div>
-      )}
     </div>
   );
 }
