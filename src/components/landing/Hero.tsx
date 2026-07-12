@@ -1,4 +1,7 @@
 import { useState, useEffect, useRef } from 'react';
+import { AnimatedTextReveal } from './ui/AnimatedTextReveal';
+import { InfiniteMarquee } from './ui/InfiniteMarquee';
+import { GridPattern } from './ui/GridPattern';
 
 const SPOTLIGHT_R = 260;
 const BG_IMAGE_1 = "https://images.higgs.ai/?default=1&output=webp&url=https%3A%2F%2Fd8j0ntlcm91z4.cloudfront.net%2Fuser_38xzZboKViGWJOttwIXH07lWA1P%2Fhf_20260609_195923_b0ba8ace-1d1d-4f2c-9a28-1ab84b330680.png&w=1280&q=85";
@@ -109,24 +112,25 @@ export function Hero() {
           className="absolute inset-0 bg-center bg-cover bg-no-repeat z-10 hero-zoom"
           style={{ backgroundImage: `url(${BG_IMAGE_1})` }}
         />
+        
+        {/* Layer 1.5: Grid Pattern */}
+        <GridPattern />
 
         {/* Layer 2: Reveal Layer */}
         <RevealLayer image={BG_IMAGE_2} cursorX={cursorPos.x} cursorY={cursorPos.y} />
 
         {/* Layer 3: Heading */}
-        <h1 className="absolute top-[14%] left-0 right-0 flex flex-col items-center text-center px-5 pointer-events-none z-50 text-white leading-[0.95]">
-          <span 
-            className="block font-playfair italic font-normal text-5xl sm:text-7xl md:text-8xl hero-anim hero-reveal" 
-            style={{ letterSpacing: '-0.05em', animationDelay: '0.25s' }}
-          >
-            We build software
-          </span>
-          <span 
-            className="block font-normal text-5xl sm:text-7xl md:text-8xl -mt-1 hero-anim hero-reveal" 
-            style={{ letterSpacing: '-0.08em', animationDelay: '0.42s' }}
-          >
-            businesses actually use
-          </span>
+        <h1 className="absolute top-[14%] left-0 right-0 flex flex-col items-center text-center px-5 pointer-events-none z-50 text-white leading-[0.95] tracking-tight">
+          <AnimatedTextReveal 
+            text="We build software" 
+            className="block font-playfair italic font-normal text-5xl sm:text-7xl md:text-8xl" 
+            delayOffset={0.25} 
+          />
+          <AnimatedTextReveal 
+            text="businesses actually use" 
+            className="block font-normal text-5xl sm:text-7xl md:text-8xl -mt-1" 
+            delayOffset={0.7} 
+          />
         </h1>
 
         {/* Layer 4: Bottom-left paragraph */}
@@ -151,6 +155,7 @@ export function Hero() {
           </button>
         </div>
 
+      <InfiniteMarquee />
       </section>
     </div>
   );

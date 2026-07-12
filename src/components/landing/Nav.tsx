@@ -1,8 +1,20 @@
-import { useState } from 'react';
+import { useState, useEffect } from 'react';
+import { motion, useScroll, useMotionValueEvent, AnimatePresence } from 'framer-motion';
 
 export function Nav() {
   const [active, setActive] = useState('Work');
+  const [hidden, setHidden] = useState(false);
+  const { scrollY } = useScroll();
   const links = ['Work', 'Services', 'Process', 'Contact'];
+
+  useMotionValueEvent(scrollY, "change", (latest) => {
+    const previous = scrollY.getPrevious() || 0;
+    if (latest > previous && latest > 150) {
+      setHidden(true);
+    } else {
+      setHidden(false);
+    }
+  });
 
   const scrollTo = (id: string) => {
     document.getElementById(id.toLowerCase())?.scrollIntoView({ behavior: 'smooth' });
@@ -10,7 +22,15 @@ export function Nav() {
   };
 
   return (
-    <nav className="fixed top-0 left-0 right-0 z-[100] flex items-center justify-between p-4 sm:p-5">
+    <motion.nav 
+      variants={{
+        visible: { y: 0 },
+        hidden: { y: "-100%" },
+      }}
+      animate={hidden ? "hidden" : "visible"}
+      transition={{ duration: 0.35, ease: "easeInOut" }}
+      className="fixed top-0 left-0 right-0 z-[100] flex items-center justify-between p-4 sm:p-5"
+    >
       {/* Left: Logo + Wordmark */}
       <div className="flex items-center gap-2">
         <img 
@@ -18,7 +38,6 @@ export function Nav() {
           alt="DuoKarma Logo" 
           className="w-7 h-7 object-contain drop-shadow-md"
           onError={(e) => {
-            // Fallback to inline SVG if logo.png is missing
             (e.target as HTMLImageElement).style.display = 'none';
             (e.target as HTMLImageElement).nextElementSibling?.classList.remove('hidden');
           }}
@@ -34,17 +53,24 @@ export function Nav() {
       </div>
 
       {/* Center Pill */}
-      <div className="hidden md:flex absolute left-1/2 -translate-x-1/2 bg-white/20 backdrop-blur-md border border-white/30 rounded-full px-2 py-2 items-center gap-1">
+      <div className="hidden md:flex absolute left-1/2 -translate-x-1/2 bg-black/40 backdrop-blur-xl border border-white/10 rounded-full px-2 py-2 items-center gap-1 shadow-2xl">
         {links.map(link => (
           <button
             key={link}
             onClick={() => scrollTo(link)}
-            className={`px-4 py-1.5 rounded-full text-sm font-medium transition-colors ${
+            className={`relative px-4 py-1.5 rounded-full text-sm font-medium transition-colors ${
               active === link 
                 ? 'text-white' 
-                : 'text-white/80 hover:bg-white/20 hover:text-white'
+                : 'text-white/60 hover:text-white'
             }`}
           >
+            {active === link && (
+              <motion.div 
+                layoutId="nav-pill"
+                className="absolute inset-0 bg-white/10 rounded-full -z-10"
+                transition={{ type: "spring", stiffness: 300, damping: 30 }}
+              />
+            )}
             {link}
           </button>
         ))}
@@ -57,6 +83,6 @@ export function Nav() {
       >
         Book a call
       </button>
-    </nav>
+    </motion.nav>
   );
 }
