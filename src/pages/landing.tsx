@@ -8,8 +8,7 @@ import { Services } from '@/components/landing/Services';
 import { Process } from '@/components/landing/Process';
 import { TechStack } from '@/components/landing/TechStack';
 import { Stats } from '@/components/landing/Stats';
-import { EarlyPartners } from '@/components/landing/EarlyPartners';
-import { CTA } from '@/components/landing/CTA';
+import { CinematicOutro } from '@/components/landing/CinematicOutro';
 import { Contact } from '@/components/landing/Contact';
 import { Footer } from '@/components/landing/Footer';
 import { Cursor } from '@/components/landing/ui/Cursor';
@@ -158,8 +157,7 @@ export function LandingPage() {
       <Process />
       <TechStack />
       <Stats />
-      <EarlyPartners />
-      <CTA />
+      <CinematicOutro />
       <Contact />
       <Footer />
     </div>
