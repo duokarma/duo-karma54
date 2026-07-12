@@ -305,7 +305,7 @@ function SuccessScreen({ name }: { name: string }) {
 
       <div style={{ display: 'flex', flexDirection: 'column', gap: 12 }}>
         <a
-          href="https://calendar.google.com/calendar/appointments/schedules/AcZssZ"
+          href="https://calendar.app.google/ycwYzWhqVRR6ZB3R9"
           target="_blank"
           rel="noopener noreferrer"
           style={{

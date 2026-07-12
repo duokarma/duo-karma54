@@ -9,7 +9,7 @@ const CONTACT_CARDS = [
     label: "Google Meet",
     value: "Schedule a call",
     icon: "📅",
-    href: "https://calendar.google.com/calendar/appointments/schedules/AcZssZ",
+    href: "https://calendar.app.google/ycwYzWhqVRR6ZB3R9",
   },
   {
     label: "WhatsApp",
