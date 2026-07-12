@@ -1,6 +1,5 @@
 import { useState, useEffect, useRef } from 'react';
 import { AnimatedTextReveal } from './ui/AnimatedTextReveal';
-import { InfiniteMarquee } from './ui/InfiniteMarquee';
 import { GridPattern } from './ui/GridPattern';
 
 const SPOTLIGHT_R = 260;
@@ -154,8 +153,6 @@ export function Hero() {
             Start Building
           </button>
         </div>
-
-      <InfiniteMarquee />
       </section>
     </div>
   );
