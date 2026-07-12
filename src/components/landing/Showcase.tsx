@@ -46,35 +46,35 @@ function ProjectCard({ project, index }: any) {
         style={{
           background: COLORS.surface,
           border: `1px solid ${COLORS.line}`,
-          borderRadius: 20,
-          padding: "36px 34px",
+          borderRadius: 16,
+          padding: "24px 28px",
           cursor: "pointer",
-          marginBottom: 22,
+          marginBottom: 16,
         }}
       >
         <div style={{ display: "flex", justifyContent: "space-between", alignItems: "flex-start", flexWrap: "wrap", gap: 14 }}>
           <div>
             <div
               style={{
-                width: 8,
-                height: 8,
+                width: 6,
+                height: 6,
                 borderRadius: "50%",
                 background: project.color || COLORS.accent,
-                marginBottom: 16,
+                marginBottom: 12,
               }}
             />
             <h3
               style={{
                 fontFamily: "'Fraunces', serif",
-                fontSize: "clamp(22px, 2.6vw, 32px)",
+                fontSize: "clamp(18px, 2vw, 24px)",
                 color: COLORS.text,
                 fontWeight: 400,
-                marginBottom: 8,
+                marginBottom: 6,
               }}
             >
               {project.title}
             </h3>
-            <p style={{ fontFamily: "'Inter', sans-serif", fontSize: 14.5, color: COLORS.secondary, maxWidth: 520, lineHeight: 1.6 }}>
+            <p style={{ fontFamily: "'Inter', sans-serif", fontSize: 13.5, color: COLORS.secondary, maxWidth: 520, lineHeight: 1.5 }}>
               {project.problem}
             </p>
           </div>
@@ -82,7 +82,7 @@ function ProjectCard({ project, index }: any) {
             animate={{ rotate: open ? 45 : 0 }}
             style={{
               fontFamily: "'IBM Plex Mono', monospace",
-              fontSize: 22,
+              fontSize: 18,
               color: COLORS.accent,
               flexShrink: 0,
             }}
@@ -99,11 +99,11 @@ function ProjectCard({ project, index }: any) {
               transition={{ duration: 0.4, ease: [0.16, 1, 0.3, 1] }}
               style={{ overflow: "hidden" }}
             >
-              <div style={{ paddingTop: 26, borderTop: `1px solid ${COLORS.line}`, marginTop: 26 }}>
+              <div style={{ paddingTop: 20, borderTop: `1px solid ${COLORS.line}`, marginTop: 20 }}>
                 <div style={{ fontFamily: "'IBM Plex Mono', monospace", fontSize: 11, letterSpacing: "0.1em", color: project.color || COLORS.accent, marginBottom: 10, textTransform: "uppercase" }}>
                   What we built
                 </div>
-                <p style={{ fontFamily: "'Inter', sans-serif", fontSize: 14.5, color: COLORS.text, lineHeight: 1.7, marginBottom: 20, maxWidth: 560 }}>
+                <p style={{ fontFamily: "'Inter', sans-serif", fontSize: 13.5, color: COLORS.text, lineHeight: 1.6, marginBottom: 16, maxWidth: 560 }}>
                   {project.solution}
                 </p>
                 <div style={{ display: "flex", flexWrap: "wrap", gap: 10 }}>
@@ -112,8 +112,8 @@ function ProjectCard({ project, index }: any) {
                       key={f}
                       style={{
                         fontFamily: "'Inter', sans-serif",
-                        fontSize: 12.5,
-                        padding: "8px 14px",
+                        fontSize: 11.5,
+                        padding: "6px 12px",
                         borderRadius: 999,
                         border: `1px solid ${COLORS.line}`,
                         color: COLORS.secondary,
