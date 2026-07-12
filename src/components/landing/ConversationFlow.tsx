@@ -106,7 +106,7 @@ const STEPS: Step[] = [
     key: 'timeline',
     type: 'select',
     question: () => 'When are you planning to start this project?',
-    options: ['Immediately', 'This Month', 'Just Exploring'],
+    options: ['Immediately', '1–2 Weeks', 'This Month', '1–3 Months', 'Just Exploring'],
   },
   {
     key: 'email',
