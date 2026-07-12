@@ -1,6 +1,6 @@
 import { useMemo, useState, useRef } from "react";
 import { motion, AnimatePresence } from "framer-motion";
-import { Plus, Search, FileText, Sheet, Image as ImageIcon, File, FolderOpen, MoreVertical, Users, Pencil, Trash2, Link as LinkIcon, Eye, Download, X } from "lucide-react";
+import { Plus, Search, FileText, Sheet, Image as ImageIcon, File, FolderOpen, MoreVertical, Pencil, Trash2, Link as LinkIcon, Eye, Download } from "lucide-react";
 import { PageHeader } from "@/components/shared/page-header";
 import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
