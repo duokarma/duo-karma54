@@ -73,7 +73,7 @@ function RollingCounter({ to, suffix = '', prefix = '', delay = 0 }: { to: numbe
       {prefix}
       {started
         ? digits.map((d, i) => <RollingDigit key={i} digit={d} delay={delay + i * 0.05} />)
-        : digits.map((_d, i) => <span key={i} style={{ display: 'inline-block' }}>0</span>)
+        : digits.map((d, i) => <span key={i} style={{ display: 'inline-block' }}>{isNaN(Number(d)) ? d : '0'}</span>)
       }
       {suffix && (
         <span style={{ fontSize: '0.6em', marginLeft: 2, color: COLORS.accent }}>{suffix}</span>

@@ -87,11 +87,11 @@ export function Process() {
 
   const { scrollYProgress } = useScroll({
     target: sectionRef,
-    offset: ['start end', 'end start'],
+    offset: ['start start', 'end end'],
   });
 
-  // Map vertical scroll → horizontal translate
-  const xRaw = useTransform(scrollYProgress, [0.05, 0.9], ['0%', '-62%']);
+  // Map vertical scroll → horizontal translate using exact bounds (track width minus viewport width)
+  const xRaw = useTransform(scrollYProgress, [0, 1], ['0%', 'calc(-100% + 100vw - 10vw)']);
   const x = useSpring(xRaw, { stiffness: 60, damping: 18 });
 
   // Progress bar fills as you scroll
