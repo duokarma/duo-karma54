@@ -44,16 +44,6 @@ export function CinematicOutro() {
           muted
           loop
           playsInline
-          animate={{
-            scale: [1, 1.04, 1],
-            y: [0, -30, 0],
-            x: [0, 10, 0]
-          }}
-          transition={{
-            duration: 45,
-            repeat: Infinity,
-            ease: 'linear'
-          }}
           style={{
             width: '100%',
             height: '100%',

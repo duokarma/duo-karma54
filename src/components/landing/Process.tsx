@@ -1,5 +1,5 @@
-import { useRef, useState, useEffect } from 'react';
-import { motion, useScroll, useTransform, useSpring } from 'framer-motion';
+import { useRef } from 'react';
+import { motion, useScroll, useTransform } from 'framer-motion';
 import { COLORS } from './ui/theme';
 import { Eyebrow } from './ui/Eyebrow';
 import { Reveal } from './ui/Reveal';
@@ -82,62 +82,22 @@ const PROCESS = [
 ];
 
 export function Process() {
-  const sectionRef = useRef<HTMLDivElement>(null);
-  const trackRef = useRef<HTMLDivElement>(null);
-  const [scrollRange, setScrollRange] = useState(0);
+  const scrollRef = useRef<HTMLDivElement>(null);
 
-  // Measure the exact track width to scroll perfectly
-  useEffect(() => {
-    const measure = () => {
-      if (trackRef.current) {
-        const scrollWidth = trackRef.current.scrollWidth;
-        const viewportWidth = window.innerWidth;
-        // The distance to translate is the total width of the track minus viewport width + padding
-        setScrollRange(scrollWidth - viewportWidth + (viewportWidth * 0.1)); // 5% padding on each side
-      }
-    };
-    measure();
-    window.addEventListener('resize', measure);
-    return () => window.removeEventListener('resize', measure);
-  }, []);
-
-  const { scrollYProgress } = useScroll({
-    target: sectionRef,
-    offset: ['start start', 'end end'],
-  });
-
-  // Map vertical scroll → horizontal translate using the measured pixels
-  const xRaw = useTransform(scrollYProgress, [0, 1], [0, -scrollRange]);
-  const x = useSpring(xRaw, { stiffness: 60, damping: 18 });
-
-  // Progress bar fills as you scroll
-  const progressWidth = useTransform(scrollYProgress, [0.05, 0.9], ['0%', '100%']);
+  // Sync scroll progress to the progress bar
+  const { scrollXProgress } = useScroll({ container: scrollRef });
+  const progressWidth = useTransform(scrollXProgress, [0, 1], ['0%', '100%']);
 
   return (
     <section
-      ref={sectionRef}
       id="process"
       style={{
         background: COLORS.bg,
         position: 'relative',
-        height: '350vh', // Slightly shorter for better pacing
+        padding: '120px 0', // Natural document flow, no sticky height hacks
       }}
     >
-      {/* Sticky container */}
-      <div
-        style={{
-          position: 'sticky',
-          top: 0,
-          height: '100vh',
-          display: 'flex',
-          flexDirection: 'column',
-          justifyContent: 'flex-start', // Fixed the cutoff issue by avoiding 'center'
-          paddingTop: '16vh', // Natural padding from top
-          overflow: 'hidden',
-          paddingLeft: '5%',
-          paddingRight: '5%',
-        }}
-      >
+      <div style={{ padding: '0 5%' }}>
         <Reveal>
           <Eyebrow>Development process</Eyebrow>
           <h2
@@ -154,7 +114,7 @@ export function Process() {
           </h2>
         </Reveal>
 
-        {/* Progress bar */}
+        {/* Progress bar mapped directly to the native scroll container */}
         <div
           style={{
             height: 1,
@@ -174,54 +134,64 @@ export function Process() {
             }}
           />
         </div>
+      </div>
 
-        {/* Horizontal track */}
-        <div style={{ overflow: 'hidden', margin: '0 -5vw', padding: '0 5vw' }}>
-          <motion.div
-            ref={trackRef}
-            style={{ x, display: 'flex', gap: 24, width: 'max-content' }}
-          >
-            {PROCESS.map((step, i) => (
-              <ProcessCard key={step.step} step={step} index={i} scrollYProgress={scrollYProgress} total={PROCESS.length} />
-            ))}
-          </motion.div>
-        </div>
+      {/* Native Horizontal Scroll Container for 120fps zero-lag performance */}
+      <div
+        ref={scrollRef}
+        className="hide-scrollbar"
+        style={{
+          display: 'flex',
+          gap: 24,
+          overflowX: 'auto',
+          padding: '0 5%',
+          paddingBottom: 40,
+          WebkitOverflowScrolling: 'touch',
+          scrollSnapType: 'x mandatory',
+          scrollbarWidth: 'none', // Firefox
+          msOverflowStyle: 'none', // IE/Edge
+        }}
+      >
+        <style>
+          {`
+            .hide-scrollbar::-webkit-scrollbar {
+              display: none;
+            }
+          `}
+        </style>
+        {PROCESS.map((step) => (
+          <ProcessCard key={step.step} step={step} />
+        ))}
+      </div>
 
-        {/* Step counter */}
-        <motion.div
+      <div style={{ padding: '0 5%' }}>
+        <div
           style={{
-            marginTop: 40,
             fontFamily: "'IBM Plex Mono', monospace",
             fontSize: 12,
             color: COLORS.secondary,
             letterSpacing: '0.08em',
+            marginTop: 10,
           }}
         >
-          Scroll to progress →
-        </motion.div>
+          Swipe to progress →
+        </div>
       </div>
     </section>
   );
 }
 
-function ProcessCard({ step, index, scrollYProgress, total }: { step: typeof PROCESS[0]; index: number; scrollYProgress: any; total: number }) {
-  // Timing for scale/opacity per card based on its index
-  const start = (index / total) * 0.8;
-  const end = start + 0.15;
-  const opacity = useTransform(scrollYProgress, [start, end], [0.35, 1]);
-  const scale = useTransform(scrollYProgress, [start, end], [0.94, 1]);
-
+function ProcessCard({ step }: { step: typeof PROCESS[0] }) {
   return (
-    <motion.div
+    <div
       style={{
-        opacity,
-        scale,
         width: 280,
         flexShrink: 0,
         background: COLORS.surface,
         border: `1px solid ${COLORS.line}`,
         borderRadius: 20,
         padding: '28px 24px',
+        scrollSnapAlign: 'start',
       }}
     >
       <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'flex-start', marginBottom: 20 }}>
@@ -239,6 +209,6 @@ function ProcessCard({ step, index, scrollYProgress, total }: { step: typeof PRO
       <p style={{ fontFamily: "'Inter', sans-serif", fontSize: 13.5, color: COLORS.secondary, lineHeight: 1.65 }}>
         {step.description}
       </p>
-    </motion.div>
+    </div>
   );
 }
