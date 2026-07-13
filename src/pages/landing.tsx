@@ -25,7 +25,8 @@ export function LandingPage() {
   const rafRef = useRef<number>(0);
 
   useEffect(() => {
-    const t = setTimeout(() => setReady(true), 1100);
+    // Fallback: auto-dismiss if video hasn't ended after 15s
+    const t = setTimeout(() => setReady(true), 15000);
     return () => clearTimeout(t);
   }, []);
 
