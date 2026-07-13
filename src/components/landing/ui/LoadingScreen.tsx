@@ -1,6 +1,6 @@
 import { motion, AnimatePresence } from 'framer-motion';
 import { useState, useEffect } from 'react';
-import { Atom } from 'lucide-react';
+import { Atom } from 'react-loading-indicators';
 
 const STATUS_MESSAGES = [
   "Initializing Workspace...",
@@ -110,14 +110,13 @@ export function LoadingScreen({ done }: { done: boolean }) {
             className="relative flex flex-col items-center z-10"
           >
             <div className="relative flex items-center justify-center mb-16">
-              {/* Orbiting Atom */}
-              <motion.div
-                animate={{ rotate: 360 }}
-                transition={{ duration: 12, repeat: Infinity, ease: "linear" }}
-                className="absolute flex items-center justify-center pointer-events-none drop-shadow-[0_0_12px_rgba(59,130,246,0.4)]"
+              {/* Animated Atom from react-loading-indicators */}
+              <div
+                className="absolute flex items-center justify-center pointer-events-none drop-shadow-[0_0_12px_rgba(59,130,246,0.6)]"
+                style={{ transform: 'scale(1.8)' }}
               >
-                <Atom color="#3B82F6" size={160} strokeWidth={1} />
-              </motion.div>
+                <Atom color="#3B82F6" size="large" text="" />
+              </div>
 
               {/* Thin glowing circular progress ring */}
               <svg className="absolute w-[200px] h-[200px] -rotate-90 pointer-events-none">
@@ -149,6 +148,7 @@ export function LoadingScreen({ done }: { done: boolean }) {
                 src="/logo.jpeg"
                 alt="DuoKarma"
                 className="relative h-20 w-auto object-contain rounded drop-shadow-[0_0_25px_rgba(96,165,250,0.3)] z-10"
+                style={{ mixBlendMode: 'lighten' }}
                 animate={{ scale: [1, 1.05, 1] }}
                 transition={{ duration: 4, repeat: Infinity, ease: "easeInOut" }}
               />
