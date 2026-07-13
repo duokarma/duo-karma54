@@ -25,7 +25,7 @@ export function LandingPage() {
   const rafRef = useRef<number>(0);
 
   useEffect(() => {
-    // Fallback: auto-dismiss if animation hasn't completed after 8s
+    // Safety fallback — animation self-dismisses at ~6.2s
     const t = setTimeout(() => setReady(true), 8000);
     return () => clearTimeout(t);
   }, []);
