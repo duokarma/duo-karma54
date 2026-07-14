@@ -11,6 +11,9 @@ const MODULES = [
   { name: "CRM Systems", detail: "Track leads, clients, and follow-ups without a spreadsheet duct-taped to email." },
   { name: "Inventory & Billing", detail: "Stock levels, invoicing, and POS flows that stay in sync with what's actually sold." },
   { name: "Business Automation", detail: "Notifications, reminders, and workflows that remove the manual middle step." },
+  { name: "Gym Management", detail: "Member subscriptions, class scheduling, and automated billing for fitness centers." },
+  { name: "Clinic Management", detail: "Patient records, appointment scheduling, secure billing, and automated reminders." },
+  { name: "Restaurant Systems", detail: "Table reservations, digital menus, order management, and seamless POS integration." },
 ];
 
 export function WhatWeBuild() {
@@ -29,7 +32,7 @@ export function WhatWeBuild() {
             maxWidth: 620,
           }}
         >
-          Six kinds of systems, one build quality.
+          Nine kinds of systems, one build quality.
         </h2>
       </Reveal>
       <div style={{ display: "grid", gridTemplateColumns: "minmax(0,1fr) minmax(0,1fr)", gap: 50 }} className="dk-modules-grid">

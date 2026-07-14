@@ -14,7 +14,7 @@ export function Footer() {
     >
       <div style={{ fontFamily: "'Fraunces', serif", fontSize: 15, color: COLORS.secondary }}>DuoKarma © 2026</div>
       <div style={{ fontFamily: "'IBM Plex Mono', monospace", fontSize: 12, color: COLORS.secondary }}>
-        Built by DuoKarma, obviously.
+        Designed & Engineered by DuoKarma
       </div>
     </footer>
   );

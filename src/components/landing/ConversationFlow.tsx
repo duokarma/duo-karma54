@@ -436,7 +436,7 @@ export function ConversationFlow() {
             <span style={{ fontFamily: "'IBM Plex Mono', monospace", fontSize: 13, color: themeColor, letterSpacing: '0.1em' }}>{dots}</span>
           </div>
           <div style={{ fontFamily: "'Inter', sans-serif", fontSize: 13, color: COLORS.secondary }}>
-            {TOTAL - progressCount + 1} minutes remaining
+            {progressCount === 0 ? 'Introduction' : `Step ${progressCount} of ${TOTAL}`}
           </div>
         </div>
 

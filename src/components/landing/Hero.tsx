@@ -142,7 +142,7 @@ export function Hero() {
         {/* Layer 5: Bottom-right block */}
         <div className="absolute bottom-10 sm:bottom-24 left-5 right-5 sm:left-auto sm:right-10 md:right-14 max-w-full sm:max-w-[260px] flex flex-col items-start gap-4 sm:gap-5 z-50 hero-anim hero-fade" style={{ animationDelay: '0.85s' }}>
           <p className="text-xs sm:text-sm text-white/80 leading-relaxed">
-            Our interactive platforms let you peel back the complexity to trace how systems, automation, and design combine to accelerate your growth.
+            We engineer scalable, intuitive platforms that transform complex operations into streamlined workflows. Discover how intelligent automation and purposeful design drive measurable business growth.
           </p>
           <button 
             className="bg-[#e8702a] hover:bg-[#d2611f] text-white text-sm font-medium px-7 py-3 rounded-full transition-all hover:scale-[1.03] active:scale-95 hover:shadow-lg hover:shadow-[#e8702a]/30"

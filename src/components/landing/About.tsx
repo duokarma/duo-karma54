@@ -2,12 +2,23 @@ import { COLORS } from './ui/theme';
 import { Eyebrow } from './ui/Eyebrow';
 import { Reveal } from './ui/Reveal';
 
-const TIMELINE = [
-  { label: "Idea", text: "A founder describes the business problem — no code yet, just chaos to untangle." },
-  { label: "Planning", text: "We map data, roles, and workflows into a system architecture that will hold up." },
-  { label: "Development", text: "Real components, real state, real interactions — built to survive daily use." },
-  { label: "Deployment", text: "Shipped, monitored, and handed over with documentation your team can act on." },
-  { label: "Growth", text: "Systems evolve with the business — new modules, not new rewrites." },
+const PRINCIPLES = [
+  {
+    title: "Direct Partnership",
+    description: "You work directly with the engineers writing the code. No account managers, no miscommunication, no game of telephone."
+  },
+  {
+    title: "Business-Driven",
+    description: "We don't just ship features; we solve operational bottlenecks. Every line of code is tied to efficiency, revenue, or scale."
+  },
+  {
+    title: "Built to Last",
+    description: "We use enterprise-grade architecture. Your system is built to handle your growth for the next five years, without needing a rewrite."
+  },
+  {
+    title: "Absolute Transparency",
+    description: "No black boxes. You get weekly updates, staging links, and a clear view into exactly what we are building and why."
+  }
 ];
 
 export function About() {
@@ -22,7 +33,7 @@ export function About() {
             fontSize: "clamp(28px, 3.6vw, 46px)",
             color: COLORS.text,
             maxWidth: 680,
-            marginBottom: 90,
+            marginBottom: 80,
           }}
         >
           Two people, one discipline: build the software a business will still be running in five years.
@@ -31,43 +42,38 @@ export function About() {
       <div
         style={{
           display: "grid",
-          gridTemplateColumns: "repeat(auto-fit, minmax(180px, 1fr))",
-          gap: 0,
+          gridTemplateColumns: "repeat(auto-fit, minmax(240px, 1fr))",
+          gap: "48px 40px",
           borderTop: `1px solid ${COLORS.line}`,
+          paddingTop: 60,
         }}
       >
-        {TIMELINE.map((step, i) => (
-          <Reveal delay={i * 0.08} key={step.label}>
-            <div
-              style={{
-                borderRight: i < TIMELINE.length - 1 ? `1px solid ${COLORS.line}` : "none",
-                padding: "28px 20px 0",
-                minHeight: 180,
-              }}
-            >
+        {PRINCIPLES.map((principle, i) => (
+          <Reveal delay={i * 0.1} key={principle.title}>
+            <div>
               <div
                 style={{
                   fontFamily: "'IBM Plex Mono', monospace",
                   fontSize: 12,
                   color: COLORS.accent,
+                  marginBottom: 16,
+                }}
+              >
+                0{i + 1} //
+              </div>
+              <h3
+                style={{
+                  fontFamily: "'Fraunces', serif",
+                  fontSize: 22,
+                  color: COLORS.text,
                   marginBottom: 12,
                 }}
               >
-                {String(i + 1).padStart(2, "0")}
-              </div>
-              <div
-                style={{
-                  fontFamily: "'Fraunces', serif",
-                  fontSize: 19,
-                  color: COLORS.text,
-                  marginBottom: 10,
-                }}
-              >
-                {step.label}
-              </div>
-              <div style={{ fontFamily: "'Inter', sans-serif", fontSize: 13.5, color: COLORS.secondary, lineHeight: 1.6 }}>
-                {step.text}
-              </div>
+                {principle.title}
+              </h3>
+              <p style={{ fontFamily: "'Inter', sans-serif", fontSize: 14.5, color: COLORS.secondary, lineHeight: 1.6, margin: 0 }}>
+                {principle.description}
+              </p>
             </div>
           </Reveal>
         ))}

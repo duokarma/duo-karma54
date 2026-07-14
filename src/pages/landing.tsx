@@ -6,7 +6,6 @@ import { WhatWeBuild } from '@/components/landing/WhatWeBuild';
 import { Showcase } from '@/components/landing/Showcase';
 import { Services } from '@/components/landing/Services';
 import { Process } from '@/components/landing/Process';
-import { TechStack } from '@/components/landing/TechStack';
 import { Stats } from '@/components/landing/Stats';
 import { CinematicOutro } from '@/components/landing/CinematicOutro';
 import { Contact } from '@/components/landing/Contact';
@@ -156,7 +155,6 @@ export function LandingPage() {
       <Showcase />
       <Services />
       <Process />
-      <TechStack />
       <Stats />
       <CinematicOutro />
       <Contact />
