@@ -127,7 +127,7 @@ export function LoadingScreen({ done }: { done: boolean }) {
           >
             <svg
               viewBox="0 0 600 400"
-              className="w-full max-w-[600px]"
+              className="w-full max-w-[900px]"
               fill="none"
               xmlns="http://www.w3.org/2000/svg"
             >
@@ -305,7 +305,7 @@ export function LoadingScreen({ done }: { done: boolean }) {
           <motion.img
             src="/logo.jpeg"
             alt="DuoKarma"
-            className="absolute h-16 w-auto object-contain rounded-md z-20"
+            className="absolute h-28 w-auto object-contain rounded-lg z-20"
             style={{ mixBlendMode: 'lighten' }}
             initial={{ opacity: 0, scale: 1.3 }}
             animate={{

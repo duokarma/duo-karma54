@@ -32,12 +32,12 @@ export function Nav() {
         <img
           src="/logo.jpeg"
           alt="DuoKarma"
-          className="w-7 h-7 object-contain drop-shadow"
+          className="w-10 h-10 object-contain drop-shadow rounded"
           onError={(e) => { (e.target as HTMLImageElement).style.display = 'none'; }}
         />
         <span
           style={{ fontFamily: "'Fraunces', serif" }}
-          className="text-white text-[1.35rem] italic font-medium tracking-tight leading-none"
+          className="text-white text-[1.5rem] italic font-medium tracking-tight leading-none"
         >
           DuoKarma
         </span>
