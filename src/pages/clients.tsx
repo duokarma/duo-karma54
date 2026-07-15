@@ -47,6 +47,8 @@ const clientSchema = z.object({
   status: z.enum(["active", "inactive"]).optional(),
   totalValue: z.number().min(0).optional(),
   joinedDate: z.string().optional(),
+  incomeType: z.enum(["one-time", "monthly", "yearly"]).optional(),
+  amountPaid: z.number().min(0).optional(),
 });
 
 type ClientFormValues = z.infer<typeof clientSchema>;
@@ -73,6 +75,8 @@ export function ClientsPage() {
         totalValue: values.totalValue || 0,
         projectsCount: 0,
         joinedDate: values.joinedDate || new Date().toISOString().split("T")[0],
+        incomeType: values.incomeType || "one-time",
+        amountPaid: values.amountPaid || 0,
         tags: ["New"],
       };
       const { error } = await supabase.from("clients").insert([newClient]);
@@ -179,7 +183,21 @@ export function ClientsPage() {
       header: "Total Value",
       align: "right",
       sortValue: (c) => c.totalValue,
-      render: (c) => <span className="tabular text-ink">{formatCurrency(c.totalValue)}</span>,
+      render: (c) => {
+        const due = (c.totalValue || 0) - (c.amountPaid || 0);
+        return (
+          <div className="flex flex-col items-end">
+            <span className="tabular font-medium text-ink">{formatCurrency(c.totalValue)}</span>
+            {(c.amountPaid || 0) > 0 && due > 0 ? (
+               <span className="text-[10px] text-amber">Due: {formatCurrency(due)}</span>
+            ) : (c.amountPaid || 0) >= (c.totalValue || 0) && (c.totalValue || 0) > 0 ? (
+               <span className="text-[10px] text-emerald">Paid in full</span>
+            ) : null}
+            {c.incomeType === 'monthly' && <span className="text-[10px] text-blue-500">Monthly</span>}
+            {c.incomeType === 'yearly' && <span className="text-[10px] text-blue-500">Yearly</span>}
+          </div>
+        );
+      },
     },
     {
       key: "location",
@@ -254,7 +272,7 @@ export function ClientsPage() {
       <Drawer open={addOpen} onOpenChange={(open) => {
         setAddOpen(open);
         if (!open) {
-          reset({ name: "", company: "", email: "", phone: "", location: "", status: "active", totalValue: 0, joinedDate: new Date().toISOString().split("T")[0] });
+          reset({ name: "", company: "", email: "", phone: "", location: "", status: "active", totalValue: 0, joinedDate: new Date().toISOString().split("T")[0], incomeType: "one-time" as any, amountPaid: 0 });
         }
       }}>
         <DrawerContent>
@@ -320,9 +338,30 @@ export function ClientsPage() {
                   </Select>
                 </div>
                 <div>
-                  <label className="mb-1.5 block text-xs font-medium text-ink-dim">Total Value Paid (₹)</label>
+                  <label className="mb-1.5 block text-xs font-medium text-ink-dim">Income Type</label>
+                  <Select
+                    defaultValue={selected.incomeType || "one-time"}
+                    onValueChange={(val) => register("incomeType").onChange({ target: { value: val, name: "incomeType" } })}
+                  >
+                    <SelectTrigger>
+                      <SelectValue placeholder="Select type" />
+                    </SelectTrigger>
+                    <SelectContent>
+                      <SelectItem value="one-time">One-time Payment</SelectItem>
+                      <SelectItem value="monthly">Monthly Subscription</SelectItem>
+                      <SelectItem value="yearly">Yearly Subscription</SelectItem>
+                    </SelectContent>
+                  </Select>
+                </div>
+                <div>
+                  <label className="mb-1.5 block text-xs font-medium text-ink-dim">Total Promised (₹)</label>
                   <Input type="number" placeholder="0" {...register("totalValue", { valueAsNumber: true })} />
                   {errors.totalValue && <p className="mt-1 text-[10px] text-rose">{errors.totalValue.message}</p>}
+                </div>
+                <div>
+                  <label className="mb-1.5 block text-xs font-medium text-ink-dim">Amount Paid (₹)</label>
+                  <Input type="number" placeholder="0" {...register("amountPaid", { valueAsNumber: true })} />
+                  {errors.amountPaid && <p className="mt-1 text-[10px] text-rose">{errors.amountPaid.message}</p>}
                 </div>
               </>
             )}
@@ -354,12 +393,28 @@ export function ClientsPage() {
                     Joined {new Date(selected.joinedDate).toLocaleDateString()}
                   </span>
                 </div>
-                <div className="grid grid-cols-1 gap-3">
+                <div className="grid grid-cols-3 gap-3">
                   <Card>
                     <CardContent className="p-4">
-                      <p className="text-xs text-ink-faint">Total Value</p>
+                      <p className="text-xs text-ink-faint">Promised</p>
                       <p className="mt-1 font-display text-lg font-semibold text-ink tabular">
                         {formatCurrency(selected.totalValue)}
+                      </p>
+                    </CardContent>
+                  </Card>
+                  <Card>
+                    <CardContent className="p-4">
+                      <p className="text-xs text-ink-faint">Paid</p>
+                      <p className="mt-1 font-display text-lg font-semibold text-emerald tabular">
+                        {formatCurrency(selected.amountPaid || 0)}
+                      </p>
+                    </CardContent>
+                  </Card>
+                  <Card>
+                    <CardContent className="p-4">
+                      <p className="text-xs text-ink-faint">Due</p>
+                      <p className="mt-1 font-display text-lg font-semibold text-amber tabular">
+                        {formatCurrency((selected.totalValue || 0) - (selected.amountPaid || 0))}
                       </p>
                     </CardContent>
                   </Card>
@@ -396,6 +451,8 @@ export function ClientsPage() {
                         status: selected.status as any,
                         totalValue: selected.totalValue,
                         joinedDate: selected.joinedDate,
+                        incomeType: (selected.incomeType || "one-time") as any,
+                        amountPaid: selected.amountPaid || 0,
                       });
                       setAddOpen(true);
                     }}

@@ -28,6 +28,8 @@ export interface Client {
   joinedDate: string;
   location: string;
   tags: string[];
+  incomeType?: "one-time" | "monthly" | "yearly";
+  amountPaid?: number;
 }
 
 export interface Lead {

@@ -19,7 +19,6 @@ const ProjectsPage = lazy(() => import("@/pages/projects").then((m) => ({ defaul
 const RevenuePage = lazy(() => import("@/pages/revenue").then((m) => ({ default: m.RevenuePage })));
 const ExpensesPage = lazy(() => import("@/pages/expenses").then((m) => ({ default: m.ExpensesPage })));
 const ProfitPage = lazy(() => import("@/pages/profit").then((m) => ({ default: m.ProfitPage })));
-const InvoicesPage = lazy(() => import("@/pages/invoices").then((m) => ({ default: m.InvoicesPage })));
 const TasksPage = lazy(() => import("@/pages/tasks").then((m) => ({ default: m.TasksPage })));
 const CalendarPage = lazy(() => import("@/pages/calendar").then((m) => ({ default: m.CalendarPage })));
 const DocumentsPage = lazy(() => import("@/pages/documents").then((m) => ({ default: m.DocumentsPage })));
@@ -73,7 +72,6 @@ function App() {
                             <Route path="revenue" element={<RevenuePage />} />
                             <Route path="expenses" element={<ExpensesPage />} />
                             <Route path="profit" element={<ProfitPage />} />
-                            <Route path="invoices" element={<InvoicesPage />} />
                             <Route path="tasks" element={<TasksPage />} />
                             <Route path="calendar" element={<CalendarPage />} />
                             <Route path="documents" element={<DocumentsPage />} />

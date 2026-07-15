@@ -110,13 +110,7 @@ export function DashboardPage() {
     },
   });
 
-  const { data: invoices = [] } = useQuery({
-    queryKey: ["invoices"],
-    queryFn: async () => {
-      const { data } = await supabase.from("invoices").select("*");
-      return (data || []) as any[];
-    },
-  });
+
 
   const { data: tasks = [] } = useQuery({
     queryKey: ["tasks"],
@@ -142,17 +136,15 @@ export function DashboardPage() {
 
   const displayName = user?.email?.split("@")[0].replace(/[._-]/g, " ").replace(/\b\w/g, (l) => l.toUpperCase()) || "there";
 
-  const totalRevenue = invoices.filter(i => i.status === "paid").reduce((sum, i) => sum + i.amount, 0);
+  const totalRevenue = clients.reduce((sum, c) => sum + (c.amountPaid || 0), 0);
   const netProfit = totalRevenue * 0.42; 
   const activeClientsCount = clients.filter(c => c.status === "active").length;
-  const pendingInvoices = invoices.filter(i => i.status === "pending").length;
+  const dueClientsCount = clients.filter(c => (c.totalValue || 0) > (c.amountPaid || 0)).length;
   const tasksDueToday = tasks.filter(t => new Date(t.dueDate).toDateString() === new Date().toDateString()).length;
 
   const invoiceStatusBreakdown = [
-    { label: "Paid", value: invoices.filter(i => i.status === "paid").length, color: "#10B981" },
-    { label: "Pending", value: invoices.filter(i => i.status === "pending").length, color: "#2563EB" },
-    { label: "Overdue", value: invoices.filter(i => i.status === "overdue").length, color: "#F43F5E" },
-    { label: "Draft", value: invoices.filter(i => i.status === "draft").length, color: "var(--color-ink-faint)" },
+    { label: "Active", value: clients.filter(c => c.status === "active").length, color: "#10B981" },
+    { label: "Inactive", value: clients.filter(c => c.status === "inactive").length, color: "var(--color-ink-faint)" },
   ].filter(s => s.value > 0);
 
   return (
@@ -180,7 +172,7 @@ export function DashboardPage() {
             </span>
             <span className="inline-flex items-center gap-1.5 rounded-md border border-[var(--color-edge)] bg-[var(--color-card)] px-2.5 py-1 text-xs text-ink-dim">
               <FileText className="h-3 w-3" />
-              {pendingInvoices} invoices pending
+              {dueClientsCount} clients with pending dues
             </span>
             <span className="inline-flex items-center gap-1.5 rounded-md border border-[var(--color-edge)] bg-[var(--color-card)] px-2.5 py-1 text-xs text-ink-dim">
               <CheckSquare className="h-3 w-3" />
@@ -248,8 +240,8 @@ export function DashboardPage() {
 
         <Card>
           <CardHeader>
-            <CardTitle>Invoice Status</CardTitle>
-            <p className="mt-0.5 text-[10px] text-ink-faint">Current billing cycle</p>
+            <CardTitle>Client Status</CardTitle>
+            <p className="mt-0.5 text-[10px] text-ink-faint">Active vs Inactive</p>
           </CardHeader>
           <CardContent>
             <InvoiceDonutChart data={invoiceStatusBreakdown} />
@@ -391,7 +383,7 @@ export function DashboardPage() {
             <div className="space-y-1.5">
               {[
                 { label: "Add Client",        icon: UserPlus,   to: "/admin/clients",  desc: "Onboard a new client" },
-                { label: "Create Invoice",    icon: FileText,   to: "/admin/invoices", desc: "Bill for services" },
+                
                 { label: "New Project",       icon: FolderKanban, to: "/admin/projects", desc: "Start tracking work" },
                 { label: "Schedule Meeting",  icon: Calendar,   to: "/admin/calendar", desc: "Block calendar time" },
                 { label: "Add Task",          icon: CheckSquare, to: "/admin/tasks",   desc: "Track a to-do" },
