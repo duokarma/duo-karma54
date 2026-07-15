@@ -45,6 +45,8 @@ const invoiceSchema = z.object({
   taxRate: z.coerce.number().min(0).max(100).optional(),
   discount: z.coerce.number().min(0).optional(),
   notes: z.string().optional(),
+  incomeType: z.enum(["one-time", "monthly", "yearly"]).default("one-time"),
+  amountPaid: z.coerce.number().min(0).optional(),
   lineItems: z.array(z.object({
     description: z.string().min(1, "Description required"),
     quantity: z.coerce.number().min(1),
@@ -68,6 +70,8 @@ export function InvoicesPage() {
       taxRate: 0,
       discount: 0,
       notes: "",
+      incomeType: "one-time",
+      amountPaid: 0,
       issueDate: new Date().toISOString().split("T")[0],
     }
   });
@@ -80,10 +84,12 @@ export function InvoicesPage() {
   const watchLineItems = useWatch({ control, name: "lineItems" }) || [];
   const watchTaxRate = useWatch({ control, name: "taxRate" }) || 0;
   const watchDiscount = useWatch({ control, name: "discount" }) || 0;
+  const watchAmountPaid = useWatch({ control, name: "amountPaid" }) || 0;
 
   const subtotal = watchLineItems.reduce((acc, item) => acc + (item.quantity * item.rate), 0);
   const taxAmount = (subtotal * watchTaxRate) / 100;
   const totalAmount = subtotal + taxAmount - watchDiscount;
+  const amountDue = totalAmount - watchAmountPaid;
 
   const { data: clients = [] } = useQuery({
     queryKey: ["clients_list"],
@@ -101,7 +107,7 @@ export function InvoicesPage() {
         invoiceNumber: `INV-${new Date().getFullYear()}-${Math.floor(Math.random() * 1000).toString().padStart(3, '0')}`,
         ...values,
         amount: totalAmount,
-        status: "pending",
+        status: (values.amountPaid || 0) >= totalAmount ? "paid" : ((values.amountPaid || 0) > 0) ? "partially_paid" : "pending",
         items: values.lineItems.length,
       };
       const { error } = await supabase.from("invoices").insert([newInvoice]);
@@ -167,6 +173,8 @@ export function InvoicesPage() {
       taxRate: invoice.taxRate || 0,
       discount: invoice.discount || 0,
       notes: invoice.notes || "",
+      incomeType: invoice.incomeType || "one-time",
+      amountPaid: invoice.amountPaid || 0,
       lineItems: invoice.lineItems && invoice.lineItems.length > 0 ? invoice.lineItems : [{ description: "", quantity: 1, rate: 0 }],
     });
     setIsDialogOpen(true);
@@ -210,7 +218,18 @@ export function InvoicesPage() {
       header: "Amount",
       align: "right",
       sortValue: (i) => i.amount,
-      render: (i) => <span className="tabular font-medium text-ink">{formatCurrency(i.amount)}</span>,
+      render: (i) => (
+        <div className="flex flex-col items-end">
+          <span className="tabular font-medium text-ink">{formatCurrency(i.amount)}</span>
+          {(i.amountPaid !== undefined && i.amountPaid > 0 && i.amountPaid < i.amount) ? (
+             <span className="text-[10px] text-amber">Due: {formatCurrency(i.amount - i.amountPaid)}</span>
+          ) : (i.amountPaid !== undefined && i.amountPaid >= i.amount) ? (
+             <span className="text-[10px] text-emerald">Paid in full</span>
+          ) : null}
+          {i.incomeType === 'monthly' && <span className="text-[10px] text-blue-500">Monthly</span>}
+          {i.incomeType === 'yearly' && <span className="text-[10px] text-blue-500">Yearly</span>}
+        </div>
+      ),
     },
     { 
       key: "status", 
@@ -224,6 +243,7 @@ export function InvoicesPage() {
           <DropdownMenuContent align="start">
             <DropdownMenuLabel className="text-xs font-semibold text-ink-faint">Change Status</DropdownMenuLabel>
             <DropdownMenuItem onClick={() => statusMutation.mutate({ id: i.id, status: "pending" })}>Pending</DropdownMenuItem>
+            <DropdownMenuItem onClick={() => statusMutation.mutate({ id: i.id, status: "partially_paid" })}>Partially Paid</DropdownMenuItem>
             <DropdownMenuItem onClick={() => statusMutation.mutate({ id: i.id, status: "paid" })}>Paid</DropdownMenuItem>
             <DropdownMenuItem onClick={() => statusMutation.mutate({ id: i.id, status: "overdue" })}>Overdue</DropdownMenuItem>
             <DropdownMenuItem onClick={() => statusMutation.mutate({ id: i.id, status: "draft" })}>Draft</DropdownMenuItem>
@@ -389,6 +409,30 @@ export function InvoicesPage() {
                   {errors.client && <p className="mt-1 text-[10px] text-rose">{errors.client.message}</p>}
                 </div>
                 <div>
+                  <label className="mb-1.5 block text-xs font-medium text-ink-dim">Income Type</label>
+                  <Controller
+                    control={control}
+                    name="incomeType"
+                    render={({ field }) => (
+                      <Select value={field.value} onValueChange={field.onChange}>
+                        <SelectTrigger>
+                          <SelectValue placeholder="Select type" />
+                        </SelectTrigger>
+                        <SelectContent>
+                          <SelectItem value="one-time">One-time Payment</SelectItem>
+                          <SelectItem value="monthly">Monthly Subscription</SelectItem>
+                          <SelectItem value="yearly">Yearly Subscription</SelectItem>
+                        </SelectContent>
+                      </Select>
+                    )}
+                  />
+                </div>
+                <div>
+                  <label className="mb-1.5 block text-xs font-medium text-ink-dim">Amount Paid (₹)</label>
+                  <Input type="number" {...register("amountPaid")} />
+                  {errors.amountPaid && <p className="mt-1 text-[10px] text-rose">{errors.amountPaid.message}</p>}
+                </div>
+                <div>
                   <label className="mb-1.5 block text-xs font-medium text-ink-dim">Issue Date</label>
                   <Input type="date" {...register("issueDate")} />
                   {errors.issueDate && <p className="mt-1 text-[10px] text-rose">{errors.issueDate.message}</p>}
@@ -454,12 +498,16 @@ export function InvoicesPage() {
                       <p>Tax:</p>
                       <p>Discount:</p>
                       <p className="font-medium text-ink pt-2">Total:</p>
+                      <p className="text-emerald">Paid:</p>
+                      <p className="text-amber">Due:</p>
                     </div>
                     <div className="text-right tabular font-medium space-y-1">
                       <p>{formatCurrency(subtotal)}</p>
                       <p>{formatCurrency(taxAmount)}</p>
                       <p>-{formatCurrency(watchDiscount)}</p>
                       <p className="text-lg text-brand pt-1">{formatCurrency(totalAmount)}</p>
+                      <p className="text-emerald">{formatCurrency(watchAmountPaid)}</p>
+                      <p className="text-amber">{formatCurrency(amountDue)}</p>
                     </div>
                   </div>
                 </div>

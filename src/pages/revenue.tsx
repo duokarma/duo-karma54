@@ -31,12 +31,29 @@ export function RevenuePage() {
 
   const totalRevenue = monthlyFinancials.reduce((sum, m) => sum + m.revenue, 0);
   const avgMonthly = monthlyFinancials.length ? totalRevenue / monthlyFinancials.length : 0;
-  const paidRevenue = invoices.filter((i) => i.status === "paid").reduce((s, i) => s + i.amount, 0);
+  const paidRevenue = invoices.reduce((s, i) => s + (i.amountPaid !== undefined ? i.amountPaid : (i.status === "paid" ? i.amount : 0)), 0);
 
   const columns: Column<Invoice>[] = [
     { key: "invoiceNumber", header: "Invoice", sortValue: (i) => i.invoiceNumber, render: (i) => <span className="font-medium text-ink">{i.invoiceNumber}</span> },
     { key: "client", header: "Client", sortValue: (i) => i.client, render: (i) => i.client },
-    { key: "amount", header: "Amount", align: "right", sortValue: (i) => i.amount, render: (i) => <span className="tabular text-ink">{formatCurrency(i.amount)}</span> },
+    {
+      key: "amount",
+      header: "Amount",
+      align: "right",
+      sortValue: (i) => i.amount,
+      render: (i) => (
+        <div className="flex flex-col items-end">
+          <span className="tabular font-medium text-ink">{formatCurrency(i.amount)}</span>
+          {(i.amountPaid !== undefined && i.amountPaid > 0 && i.amountPaid < i.amount) ? (
+             <span className="text-[10px] text-amber">Due: {formatCurrency(i.amount - i.amountPaid)}</span>
+          ) : (i.amountPaid !== undefined && i.amountPaid >= i.amount) ? (
+             <span className="text-[10px] text-emerald">Paid in full</span>
+          ) : null}
+          {i.incomeType === 'monthly' && <span className="text-[10px] text-blue-500">Monthly</span>}
+          {i.incomeType === 'yearly' && <span className="text-[10px] text-blue-500">Yearly</span>}
+        </div>
+      ),
+    },
     { key: "status", header: "Status", sortValue: (i) => i.status, render: (i) => <StatusBadge status={i.status} /> },
     { key: "issueDate", header: "Issued", sortValue: (i) => i.issueDate, render: (i) => <span className="text-xs tabular">{new Date(i.issueDate).toLocaleDateString()}</span> },
   ];

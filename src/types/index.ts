@@ -6,6 +6,7 @@ export type Status =
   | "overdue"
   | "draft"
   | "paid"
+  | "partially_paid"
   | "cancelled"
   | "won"
   | "lost"
@@ -94,7 +95,7 @@ export interface Invoice {
   invoiceNumber: string;
   client: string;
   amount: number;
-  status: "paid" | "pending" | "overdue" | "draft";
+  status: "paid" | "pending" | "overdue" | "draft" | "partially_paid";
   issueDate: string;
   dueDate: string;
   items: number;
@@ -102,6 +103,8 @@ export interface Invoice {
   taxRate?: number;
   discount?: number;
   notes?: string;
+  incomeType?: "one-time" | "monthly" | "yearly";
+  amountPaid?: number;
 }
 
 export interface Task {
