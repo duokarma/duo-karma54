@@ -11,6 +11,8 @@ export function LoginPage() {
   const [isLoading, setIsLoading] = useState(false);
   const [error, setError] = useState<string | null>(null);
   const [isBiometricSupported, setIsBiometricSupported] = useState(false);
+  const [rememberDevice, setRememberDevice] = useState(false);
+  const isTrusted = localStorage.getItem("duokarma_trusted_device") === "true";
 
   const navigate = useNavigate();
   const location = useLocation();
@@ -42,6 +44,7 @@ export function LoginPage() {
     await new Promise((r) => setTimeout(r, 400));
 
     if (pin === "duokarma5453") {
+      if (rememberDevice) localStorage.setItem("duokarma_trusted_device", "true");
       handleSuccess();
     } else {
       setError("Incorrect PIN.");
@@ -166,6 +169,18 @@ export function LoginPage() {
               </div>
             </div>
 
+            {isBiometricSupported && !isTrusted && (
+              <div className="flex items-center gap-2 mt-2 mb-4">
+                <input 
+                  type="checkbox" 
+                  id="remember" 
+                  className="rounded border-[var(--color-edge)] bg-[var(--color-void)]"
+                  checked={rememberDevice}
+                  onChange={(e) => setRememberDevice(e.target.checked)}
+                />
+                <label htmlFor="remember" className="text-xs text-ink-dim">Enable Fingerprint login on this device</label>
+              </div>
+            )}
             <Button type="submit" className="w-full" disabled={isLoading}>
               {isLoading ? (
                 <>
@@ -180,7 +195,7 @@ export function LoginPage() {
             </Button>
           </form>
 
-          {isBiometricSupported && (
+          {isBiometricSupported && isTrusted && (
             <div className="mt-6">
               <div className="relative my-5">
                 <div className="absolute inset-0 flex items-center">
