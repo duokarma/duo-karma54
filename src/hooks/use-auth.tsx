@@ -1,47 +1,76 @@
 import { createContext, useContext, useEffect, useState } from "react";
-import type { Session, User } from "@supabase/supabase-js";
-import { supabase } from "@/lib/supabase";
 
 type AuthContextType = {
-  session: Session | null;
-  user: User | null;
+  isAuthenticated: boolean;
   isLoading: boolean;
-  signOut: () => Promise<void>;
+  signIn: () => void;
+  signOut: () => void;
 };
 
 const AuthContext = createContext<AuthContextType | undefined>(undefined);
 
 export function AuthProvider({ children }: { children: React.ReactNode }) {
-  const [session, setSession] = useState<Session | null>(null);
-  const [user, setUser] = useState<User | null>(null);
+  const [isAuthenticated, setIsAuthenticated] = useState<boolean>(false);
   const [isLoading, setIsLoading] = useState(true);
 
+  // Check session storage on mount
   useEffect(() => {
-    // Get initial session
-    supabase.auth.getSession().then(({ data: { session } }) => {
-      setSession(session);
-      setUser(session?.user ?? null);
-      setIsLoading(false);
-    });
-
-    // Listen for auth changes
-    const {
-      data: { subscription },
-    } = supabase.auth.onAuthStateChange((_event, session) => {
-      setSession(session);
-      setUser(session?.user ?? null);
-      setIsLoading(false);
-    });
-
-    return () => subscription.unsubscribe();
+    const authStatus = sessionStorage.getItem("duokarma_auth");
+    if (authStatus === "true") {
+      setIsAuthenticated(true);
+    }
+    setIsLoading(false);
   }, []);
 
-  const signOut = async () => {
-    await supabase.auth.signOut();
+  // Idle timeout and visibility listener (auto-logout)
+  useEffect(() => {
+    if (!isAuthenticated) return;
+
+    let timeoutId: NodeJS.Timeout;
+
+    const resetTimer = () => {
+      clearTimeout(timeoutId);
+      // 5 minutes of inactivity logs you out
+      timeoutId = setTimeout(() => {
+        signOut();
+      }, 5 * 60 * 1000);
+    };
+
+    const handleVisibilityChange = () => {
+      if (document.visibilityState === "hidden") {
+        // Log out immediately if the user leaves the page/tab
+        signOut();
+      }
+    };
+
+    window.addEventListener("mousemove", resetTimer);
+    window.addEventListener("keypress", resetTimer);
+    window.addEventListener("touchstart", resetTimer);
+    document.addEventListener("visibilitychange", handleVisibilityChange);
+
+    resetTimer();
+
+    return () => {
+      clearTimeout(timeoutId);
+      window.removeEventListener("mousemove", resetTimer);
+      window.removeEventListener("keypress", resetTimer);
+      window.removeEventListener("touchstart", resetTimer);
+      document.removeEventListener("visibilitychange", handleVisibilityChange);
+    };
+  }, [isAuthenticated]);
+
+  const signIn = () => {
+    sessionStorage.setItem("duokarma_auth", "true");
+    setIsAuthenticated(true);
+  };
+
+  const signOut = () => {
+    sessionStorage.removeItem("duokarma_auth");
+    setIsAuthenticated(false);
   };
 
   return (
-    <AuthContext.Provider value={{ session, user, isLoading, signOut }}>
+    <AuthContext.Provider value={{ isAuthenticated, isLoading, signIn, signOut }}>
       {children}
     </AuthContext.Provider>
   );

@@ -25,7 +25,6 @@ import { InvoiceDonutChart } from "@/components/charts/invoice-donut-chart";
 import { Link } from "react-router-dom";
 import { useQuery } from "@tanstack/react-query";
 import { supabase } from "@/lib/supabase";
-import { useAuth } from "@/hooks/use-auth";
 import { formatCurrency } from "@/lib/utils";
 import type { Client, Project, ChartPoint } from "@/types";
 
@@ -80,8 +79,6 @@ const projectsSparkline = [5, 6, 7, 8, 7, 8, 8];
 
 // ── Component ───────────────────────────────────────────────
 export function DashboardPage() {
-  const { user } = useAuth();
-
   const { data: monthlyFinancials = [] } = useQuery({
     queryKey: ["financial_metrics"],
     queryFn: async () => {
@@ -134,7 +131,7 @@ export function DashboardPage() {
     .sort((a, b) => b.joinedDate.localeCompare(a.joinedDate))
     .slice(0, 5);
 
-  const displayName = user?.email?.split("@")[0].replace(/[._-]/g, " ").replace(/\b\w/g, (l) => l.toUpperCase()) || "there";
+  const displayName = "Admin";
 
   const totalRevenue = clients.reduce((sum, c) => sum + (c.amountPaid || 0), 0);
   const netProfit = totalRevenue * 0.42; 

@@ -3,14 +3,14 @@ import { useAuth } from "@/hooks/use-auth";
 import { PageLoader } from "@/components/shared/page-loader";
 
 export function ProtectedRoute() {
-  const { session, isLoading } = useAuth();
+  const { isAuthenticated, isLoading } = useAuth();
   const location = useLocation();
 
   if (isLoading) {
     return <PageLoader />;
   }
 
-  if (!session) {
+  if (!isAuthenticated) {
     return <Navigate to="/login" state={{ from: location }} replace />;
   }
 

@@ -11,10 +11,10 @@ import { Avatar } from "@/components/shared/avatar";
 export function Sidebar() {
   const { collapsed, toggleCollapsed, mobileOpen, setMobileOpen } = useSidebar();
   const { setOpen } = useCommandPalette();
-  const { user, signOut } = useAuth();
+  const { signOut } = useAuth();
   const navigate = useNavigate();
 
-  const userEmail = user?.email || "user@duokarrma.com";
+  const userEmail = "admin@duokarrma.com";
   const displayName = userEmail.split("@")[0].replace(/[._-]/g, " ").replace(/\b\w/g, (l) => l.toUpperCase());
 
   return (
