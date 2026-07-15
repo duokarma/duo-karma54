@@ -34,7 +34,7 @@ export interface Lead {
   name: string;
   company: string;
   phone: string;
-  email: string;
+  email?: string;
   source: string;
   value: number;
   stage: "new" | "negotiation" | "won" | "lost";

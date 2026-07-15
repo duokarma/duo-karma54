@@ -437,7 +437,7 @@ export function LeadsPage() {
                     </div>
                     <div className="space-y-2">
                       <Label htmlFor="email">Email</Label>
-                      <Input id="email" type="email" required value={formData.email} onChange={(e) => setFormData({...formData, email: e.target.value})} />
+                      <Input id="email" type="email" value={formData.email} onChange={(e) => setFormData({...formData, email: e.target.value})} />
                     </div>
                     <div className="space-y-2">
                       <Label htmlFor="phone">Phone</Label>
