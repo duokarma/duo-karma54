@@ -46,6 +46,7 @@ const clientSchema = z.object({
   location: z.string().min(2, "Location is required"),
   status: z.enum(["active", "inactive"]).optional(),
   totalValue: z.number().min(0).optional(),
+  joinedDate: z.string().optional(),
 });
 
 type ClientFormValues = z.infer<typeof clientSchema>;
@@ -71,7 +72,7 @@ export function ClientsPage() {
         status: values.status || "active",
         totalValue: values.totalValue || 0,
         projectsCount: 0,
-        joinedDate: new Date().toISOString().split("T")[0],
+        joinedDate: values.joinedDate || new Date().toISOString().split("T")[0],
         tags: ["New"],
       };
       const { error } = await supabase.from("clients").insert([newClient]);
@@ -181,13 +182,6 @@ export function ClientsPage() {
       render: (c) => <span className="tabular text-ink">{formatCurrency(c.totalValue)}</span>,
     },
     {
-      key: "projects",
-      header: "Projects",
-      align: "center",
-      sortValue: (c) => c.projectsCount,
-      render: (c) => <span className="tabular">{c.projectsCount}</span>,
-    },
-    {
       key: "location",
       header: "Location",
       sortValue: (c) => c.location,
@@ -260,7 +254,7 @@ export function ClientsPage() {
       <Drawer open={addOpen} onOpenChange={(open) => {
         setAddOpen(open);
         if (!open) {
-          reset({ name: "", company: "", email: "", phone: "", location: "", status: "active", totalValue: 0 });
+          reset({ name: "", company: "", email: "", phone: "", location: "", status: "active", totalValue: 0, joinedDate: new Date().toISOString().split("T")[0] });
         }
       }}>
         <DrawerContent>
@@ -302,6 +296,11 @@ export function ClientsPage() {
                 {indianCities.map(city => <option key={city} value={city} />)}
               </datalist>
               {errors.location && <p className="mt-1 text-[10px] text-rose">{errors.location.message}</p>}
+            </div>
+            <div>
+              <label className="mb-1.5 block text-xs font-medium text-ink-dim">Joined Date</label>
+              <Input type="date" {...register("joinedDate")} />
+              {errors.joinedDate && <p className="mt-1 text-[10px] text-rose">{errors.joinedDate.message}</p>}
             </div>
             {selected && (
               <>
@@ -355,20 +354,12 @@ export function ClientsPage() {
                     Joined {new Date(selected.joinedDate).toLocaleDateString()}
                   </span>
                 </div>
-                <div className="grid grid-cols-2 gap-3">
+                <div className="grid grid-cols-1 gap-3">
                   <Card>
                     <CardContent className="p-4">
                       <p className="text-xs text-ink-faint">Total Value</p>
                       <p className="mt-1 font-display text-lg font-semibold text-ink tabular">
                         {formatCurrency(selected.totalValue)}
-                      </p>
-                    </CardContent>
-                  </Card>
-                  <Card>
-                    <CardContent className="p-4">
-                      <p className="text-xs text-ink-faint">Projects</p>
-                      <p className="mt-1 font-display text-lg font-semibold text-ink tabular">
-                        {selected.projectsCount}
                       </p>
                     </CardContent>
                   </Card>
@@ -404,6 +395,7 @@ export function ClientsPage() {
                         location: selected.location,
                         status: selected.status as any,
                         totalValue: selected.totalValue,
+                        joinedDate: selected.joinedDate,
                       });
                       setAddOpen(true);
                     }}
