@@ -18,7 +18,6 @@ import {
 import { KPICard } from "@/components/shared/kpi-card";
 import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
 import { Button } from "@/components/ui/button";
-import { Avatar } from "@/components/shared/avatar";
 import { StatusBadge } from "@/components/shared/status-badge";
 import { FinancialsAreaChart } from "@/components/charts/financials-area-chart";
 import { ProfitLineChart } from "@/components/charts/profit-line-chart";
@@ -65,14 +64,7 @@ function greetingByHour(): string {
   return "Good evening";
 }
 
-function todayFormatted(): string {
-  return new Date().toLocaleDateString("en-US", {
-    weekday: "long",
-    month:   "long",
-    day:     "numeric",
-    year:    "numeric",
-  });
-}
+
 
 // Sparkline data derived from last 7 months of financials
 const clientsSparkline  = [48, 52, 55, 59, 60, 62, 64];

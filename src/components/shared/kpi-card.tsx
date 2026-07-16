@@ -11,6 +11,7 @@ interface KPICardProps {
   change: number;
   icon: LucideIcon;
   accent?: "blue" | "green" | "amber" | "red";
+  decimals?: number;
   sparklineData?: number[];
   secondaryLabel?: string;
 }
