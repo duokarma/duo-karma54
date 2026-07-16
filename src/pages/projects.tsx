@@ -75,6 +75,7 @@ export function ProjectsPage() {
         startDate: new Date().toISOString().split("T")[0],
         dueDate: new Date(Date.now() + 30 * 24 * 60 * 60 * 1000).toISOString().split("T")[0],
         team: ["Hatim"],
+        priority: "medium",
       };
       const { error } = await supabase.from("projects").insert([newProject]);
       if (error) throw error;
