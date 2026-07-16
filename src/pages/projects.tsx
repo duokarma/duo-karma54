@@ -43,7 +43,6 @@ const projectSchema = z.object({
   name: z.string().min(2, "Name is required"),
   client: z.string().min(2, "Client is required"),
   budget: z.coerce.number().min(0, "Budget must be a number"),
-  priority: z.enum(["low", "medium", "high", "urgent"]),
   websiteLink: z.string().optional().or(z.literal("")),
   vercelLink: z.string().optional().or(z.literal("")),
   githubLink: z.string().optional().or(z.literal("")),
@@ -66,9 +65,8 @@ export function ProjectsPage() {
   const [addOpen, setAddOpen] = useState(false);
   const [selectedProject, setSelectedProject] = useState<Project | null>(null);
 
-  const { register, handleSubmit, reset, formState: { errors }, setValue } = useForm<ProjectFormValues>({
+  const { register, handleSubmit, reset, formState: { errors } } = useForm<ProjectFormValues>({
     resolver: zodResolver(projectSchema) as any,
-    defaultValues: { priority: "medium" }
   });
 
   const createMutation = useMutation({
@@ -133,7 +131,6 @@ export function ProjectsPage() {
       name: project.name,
       client: project.client,
       budget: project.budget,
-      priority: project.priority,
       websiteLink: project.websiteLink || "",
       vercelLink: project.vercelLink || "",
       githubLink: project.githubLink || "",
@@ -220,11 +217,7 @@ export function ProjectsPage() {
             >
               <Card className="h-full transition-transform hover:-translate-y-0.5">
                 <CardContent className="p-5">
-                  <div className="flex items-start justify-between gap-2">
-                    <div className="flex items-center gap-2">
-                      <span className={cn("h-2 w-2 rounded-full", priorityDot[project.priority])} />
-                      <p className="text-xs uppercase tracking-wide text-ink-faint">{project.priority}</p>
-                    </div>
+                  <div className="flex items-start justify-end gap-2">
                     <div className="flex items-center gap-2">
                       <DropdownMenu>
                         <DropdownMenuTrigger className="focus:outline-none">
@@ -323,7 +316,7 @@ export function ProjectsPage() {
         setAddOpen(open);
         if (!open) {
           setSelectedProject(null);
-          reset({ name: "", client: "", budget: 0, priority: "medium", websiteLink: "", vercelLink: "", githubLink: "", databaseLink: "" });
+          reset({ name: "", client: "", budget: 0, websiteLink: "", vercelLink: "", githubLink: "", databaseLink: "" });
         }
       }}>
         <DrawerContent>
@@ -353,20 +346,7 @@ export function ProjectsPage() {
               <Input placeholder="50000" type="number" {...register("budget")} />
               {errors.budget && <p className="mt-1 text-[10px] text-rose">{errors.budget.message}</p>}
             </div>
-            <div>
-              <label className="mb-1.5 block text-xs font-medium text-ink-dim">Priority</label>
-              <Select onValueChange={(val) => setValue("priority", val as any)} defaultValue="medium">
-                <SelectTrigger>
-                  <SelectValue placeholder="Select priority" />
-                </SelectTrigger>
-                <SelectContent>
-                  <SelectItem value="low">Low</SelectItem>
-                  <SelectItem value="medium">Medium</SelectItem>
-                  <SelectItem value="high">High</SelectItem>
-                  <SelectItem value="urgent">Urgent</SelectItem>
-                </SelectContent>
-              </Select>
-            </div>
+
             <div className="grid grid-cols-2 gap-4">
               <div>
                 <label className="mb-1.5 block text-xs font-medium text-ink-dim">Website Link</label>
