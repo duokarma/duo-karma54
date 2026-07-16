@@ -246,60 +246,27 @@ export function ProjectsPage() {
                       </DropdownMenu>
                     </div>
                   </div>
-                  <p className="mt-3 font-display text-base font-semibold text-ink">{project.name}</p>
-                  <p className="text-xs text-ink-faint">{project.client}</p>
+                  <p className="mt-3 font-display text-xl font-semibold text-ink">{project.name}</p>
+                  <p className="text-sm text-ink-faint">{project.client}</p>
 
                   {(project.websiteLink || project.vercelLink || project.githubLink || project.databaseLink) && (
-                    <div className="mt-3 flex flex-wrap gap-2">
+                    <div className="mt-4 flex flex-wrap gap-2">
                       {project.websiteLink && (
-                        <a href={project.websiteLink} target="_blank" rel="noopener noreferrer" className="text-[10px] text-electric hover:underline bg-electric/10 px-2 py-0.5 rounded-full">Website</a>
+                        <a href={project.websiteLink} target="_blank" rel="noopener noreferrer" className="text-xs text-electric hover:underline bg-electric/10 px-3 py-1 rounded-full">Website</a>
                       )}
                       {project.vercelLink && (
-                        <a href={project.vercelLink} target="_blank" rel="noopener noreferrer" className="text-[10px] text-electric hover:underline bg-electric/10 px-2 py-0.5 rounded-full">Vercel</a>
+                        <a href={project.vercelLink} target="_blank" rel="noopener noreferrer" className="text-xs text-electric hover:underline bg-electric/10 px-3 py-1 rounded-full">Vercel</a>
                       )}
                       {project.githubLink && (
-                        <a href={project.githubLink} target="_blank" rel="noopener noreferrer" className="text-[10px] text-electric hover:underline bg-electric/10 px-2 py-0.5 rounded-full">GitHub</a>
+                        <a href={project.githubLink} target="_blank" rel="noopener noreferrer" className="text-xs text-electric hover:underline bg-electric/10 px-3 py-1 rounded-full">GitHub</a>
                       )}
                       {project.databaseLink && (
-                        <a href={project.databaseLink} target="_blank" rel="noopener noreferrer" className="text-[10px] text-electric hover:underline bg-electric/10 px-2 py-0.5 rounded-full">Database</a>
+                        <a href={project.databaseLink} target="_blank" rel="noopener noreferrer" className="text-xs text-electric hover:underline bg-electric/10 px-3 py-1 rounded-full">Database</a>
                       )}
                     </div>
                   )}
 
-                  <div className="mt-4">
-                    <div className="flex items-center justify-between text-xs">
-                      <span className="text-ink-faint">Progress</span>
-                      <span className="tabular text-ink-dim">{project.progress}%</span>
-                    </div>
-                    <Progress value={project.progress} className="mt-1.5" />
-                  </div>
 
-                  <div className="mt-4 flex items-center justify-between text-xs text-ink-faint">
-                    <span className="tabular">
-                      {formatCurrency(project.spent, true)} / {formatCurrency(project.budget, true)}
-                    </span>
-                    <div className="flex items-center gap-1">
-                      <Calendar className="h-3.5 w-3.5" />
-                      {new Date(project.dueDate).toLocaleDateString("en-US", { month: "short", day: "numeric" })}
-                    </div>
-                  </div>
-
-                  <div className="mt-4 flex items-center justify-between">
-                    <div className="flex -space-x-2">
-                      {project.team.slice(0, 3).map((member) => (
-                        <Avatar key={member} seed={member} size="xs" className="ring-2 ring-graphite" />
-                      ))}
-                      {project.team.length > 3 && (
-                        <div className="flex h-6 w-6 items-center justify-center rounded-full bg-white/10 text-[10px] text-ink-faint ring-2 ring-graphite">
-                          +{project.team.length - 3}
-                        </div>
-                      )}
-                    </div>
-                    <div className="flex items-center gap-1 text-xs text-ink-faint">
-                      <Users className="h-3.5 w-3.5" />
-                      {project.team.length}
-                    </div>
-                  </div>
                 </CardContent>
               </Card>
             </motion.div>
