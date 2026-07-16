@@ -10,6 +10,7 @@ import { AppLayout } from "@/layouts/app-layout";
 import { PageLoader } from "@/components/shared/page-loader";
 import { AuthProvider } from "@/hooks/use-auth";
 import { ProtectedRoute } from "@/components/shared/protected-route";
+import { IntroVideo } from "@/components/shared/intro-video";
 
 const LoginPage = lazy(() => import("@/pages/login").then((m) => ({ default: m.LoginPage })));
 const DashboardPage = lazy(() => import("@/pages/dashboard").then((m) => ({ default: m.DashboardPage })));
@@ -52,6 +53,7 @@ function App() {
 
   return (
     <QueryClientProvider client={queryClient}>
+      <IntroVideo />
       <AuthProvider>
         <ThemeProvider>
           <TooltipProvider>
