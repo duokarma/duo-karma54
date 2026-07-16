@@ -242,6 +242,7 @@ export function ConversationFlow() {
   
   const inputRef = useRef<HTMLInputElement | HTMLTextAreaElement | null>(null);
   const chatEndRef = useRef<HTMLDivElement | null>(null);
+  const isInitialMount = useRef(true);
 
   const currentStep = STEPS[step];
   const themeColor = answers.businessType ? THEMES[answers.businessType] || THEMES.default : THEMES.default;
@@ -282,10 +283,11 @@ export function ConversationFlow() {
     const t = setTimeout(() => {
       setIsTyping(false);
       setTimeout(() => {
-        if (step > 0) {
+        if (step > 0 && !isInitialMount.current) {
           inputRef.current?.focus({ preventScroll: true });
           chatEndRef.current?.scrollIntoView({ behavior: 'smooth' });
         }
+        isInitialMount.current = false;
       }, 50);
     }, delay);
     return () => clearTimeout(t);
