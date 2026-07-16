@@ -1,126 +1,28 @@
-import { useState, useEffect, useRef } from 'react';
 import { AnimatedTextReveal } from './ui/AnimatedTextReveal';
 import { GridPattern } from './ui/GridPattern';
 
-const SPOTLIGHT_R = 260;
-const BG_IMAGE_1 = "https://images.higgs.ai/?default=1&output=webp&url=https%3A%2F%2Fd8j0ntlcm91z4.cloudfront.net%2Fuser_38xzZboKViGWJOttwIXH07lWA1P%2Fhf_20260609_195923_b0ba8ace-1d1d-4f2c-9a28-1ab84b330680.png&w=1280&q=85";
-const BG_IMAGE_2 = "https://images.higgs.ai/?default=1&output=webp&url=https%3A%2F%2Fd8j0ntlcm91z4.cloudfront.net%2Fuser_38xzZboKViGWJOttwIXH07lWA1P%2Fhf_20260609_201152_bba90a12-bf12-459f-91f0-51f237dbaf3b.png&w=1280&q=85";
-
-function RevealLayer({ image, cursorX, cursorY }: { image: string, cursorX: number, cursorY: number }) {
-  const canvasRef = useRef<HTMLCanvasElement>(null);
-  const revealRef = useRef<HTMLDivElement>(null);
-
-  useEffect(() => {
-    const canvas = canvasRef.current;
-    if (!canvas) return;
-
-    const resize = () => {
-      canvas.width = window.innerWidth;
-      canvas.height = window.innerHeight;
-    };
-    resize();
-    window.addEventListener('resize', resize);
-    return () => window.removeEventListener('resize', resize);
-  }, []);
-
-  useEffect(() => {
-    const canvas = canvasRef.current;
-    const reveal = revealRef.current;
-    if (!canvas || !reveal) return;
-
-    const ctx = canvas.getContext('2d');
-    if (!ctx) return;
-
-    ctx.clearRect(0, 0, canvas.width, canvas.height);
-
-    if (cursorX !== -999 && cursorY !== -999) {
-      const gradient = ctx.createRadialGradient(
-        cursorX, cursorY, 0,
-        cursorX, cursorY, SPOTLIGHT_R
-      );
-      gradient.addColorStop(0, 'rgba(255, 255, 255, 1)');
-      gradient.addColorStop(0.4, 'rgba(255, 255, 255, 1)');
-      gradient.addColorStop(0.6, 'rgba(255, 255, 255, 0.75)');
-      gradient.addColorStop(0.75, 'rgba(255, 255, 255, 0.4)');
-      gradient.addColorStop(0.88, 'rgba(255, 255, 255, 0.12)');
-      gradient.addColorStop(1, 'rgba(255, 255, 255, 0)');
-
-      ctx.fillStyle = gradient;
-      ctx.beginPath();
-      ctx.arc(cursorX, cursorY, SPOTLIGHT_R, 0, Math.PI * 2);
-      ctx.fill();
-
-      const maskImage = `url(${canvas.toDataURL()})`;
-      reveal.style.maskImage = maskImage;
-      reveal.style.webkitMaskImage = maskImage;
-      reveal.style.maskSize = '100% 100%';
-      reveal.style.webkitMaskSize = '100% 100%';
-    }
-  }, [cursorX, cursorY]);
-
-  return (
-    <>
-      <canvas ref={canvasRef} className="absolute inset-0 pointer-events-none" style={{ display: 'none' }} />
-      <div 
-        ref={revealRef}
-        className="absolute inset-0 bg-center bg-cover bg-no-repeat z-30 pointer-events-none"
-        style={{ backgroundImage: `url(${image})`, WebkitMaskRepeat: 'no-repeat', maskRepeat: 'no-repeat' }}
-      />
-    </>
-  );
-}
-
 export function Hero() {
-  const [cursorPos, setCursorPos] = useState({ x: -999, y: -999 });
-  const mouse = useRef({ x: -999, y: -999 });
-  const smooth = useRef({ x: -999, y: -999 });
-  const rafRef = useRef<number>(0);
-
-  useEffect(() => {
-    const handleMouseMove = (e: MouseEvent) => {
-      mouse.current = { x: e.clientX, y: e.clientY };
-      if (smooth.current.x === -999) {
-        smooth.current = { x: e.clientX, y: e.clientY };
-      }
-    };
-
-    window.addEventListener('mousemove', handleMouseMove);
-
-    const updateCursor = () => {
-      if (smooth.current.x !== -999) {
-        const dx = mouse.current.x - smooth.current.x;
-        const dy = mouse.current.y - smooth.current.y;
-        if (Math.abs(dx) > 0.1 || Math.abs(dy) > 0.1) {
-          smooth.current.x += dx * 0.1;
-          smooth.current.y += dy * 0.1;
-          setCursorPos({ x: smooth.current.x, y: smooth.current.y });
-        }
-      }
-      rafRef.current = requestAnimationFrame(updateCursor);
-    };
-    rafRef.current = requestAnimationFrame(updateCursor);
-
-    return () => {
-      window.removeEventListener('mousemove', handleMouseMove);
-      if (rafRef.current) cancelAnimationFrame(rafRef.current);
-    };
-  }, []);
-
   return (
     <div className="tracking-[-0.02em]" style={{ fontFamily: "'Inter', sans-serif" }}>
       <section className="relative w-full overflow-hidden bg-black" style={{ height: '100dvh' }}>
         
-        {/* Layer 1: Base Image (Zooming out) */}
-        <div 
-          className="absolute inset-0 bg-center bg-cover bg-no-repeat z-10 hero-zoom"
-          style={{ backgroundImage: `url(${BG_IMAGE_1})` }}
-        />
+        {/* Layer 1: Background Video (Zooming out on load) */}
+        <div className="absolute inset-0 z-10 hero-zoom bg-black">
+          <video 
+            src="/homepage.mp4"
+            autoPlay
+            loop
+            muted
+            playsInline
+            className="w-full h-full object-cover opacity-60 mix-blend-screen"
+          />
+          {/* Gradient overlays to blend the video smoothly into the dark theme */}
+          <div className="absolute inset-0 bg-gradient-to-t from-[#0c0b0a] via-transparent to-transparent opacity-100" />
+          <div className="absolute inset-0 bg-gradient-to-b from-black/50 via-transparent to-black/30" />
+        </div>
         
         {/* Layer 1.5: Grid Pattern */}
         <GridPattern />
-
-        {/* Layer 2: Reveal Layer */}
-        <RevealLayer image={BG_IMAGE_2} cursorX={cursorPos.x} cursorY={cursorPos.y} />
 
         {/* Layer 3: Heading */}
         <h1 className="absolute top-[14%] left-0 right-0 flex flex-col items-center text-center px-5 pointer-events-none z-50 text-white leading-[0.95] tracking-tight">
