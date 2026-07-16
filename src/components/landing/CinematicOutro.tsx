@@ -33,6 +33,7 @@ export function CinematicOutro() {
     >
       {/* Background Video Layer */}
       <motion.div
+        className="dk-video-mask"
         style={{
           position: 'absolute',
           inset: -150, // extend bounds significantly to allow for both scroll parallax and animated drift
@@ -156,9 +157,17 @@ export function CinematicOutro() {
       </div>
 
       <style>{`
+        .dk-video-mask {
+          -webkit-mask-image: radial-gradient(ellipse 60% 60% at 50% 50%, black 40%, transparent 100%);
+          mask-image: radial-gradient(ellipse 60% 60% at 50% 50%, black 40%, transparent 100%);
+        }
         @media (max-width: 640px) {
           .dk-cta-card {
             padding: 40px 24px !important;
+          }
+          .dk-video-mask {
+            -webkit-mask-image: radial-gradient(ellipse 80% 40% at 50% 50%, black 20%, transparent 100%);
+            mask-image: radial-gradient(ellipse 80% 40% at 50% 50%, black 20%, transparent 100%);
           }
         }
       `}</style>

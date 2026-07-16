@@ -88,9 +88,13 @@ export function Hero() {
 
     const updateCursor = () => {
       if (smooth.current.x !== -999) {
-        smooth.current.x += (mouse.current.x - smooth.current.x) * 0.1;
-        smooth.current.y += (mouse.current.y - smooth.current.y) * 0.1;
-        setCursorPos({ x: smooth.current.x, y: smooth.current.y });
+        const dx = mouse.current.x - smooth.current.x;
+        const dy = mouse.current.y - smooth.current.y;
+        if (Math.abs(dx) > 0.1 || Math.abs(dy) > 0.1) {
+          smooth.current.x += dx * 0.1;
+          smooth.current.y += dy * 0.1;
+          setCursorPos({ x: smooth.current.x, y: smooth.current.y });
+        }
       }
       rafRef.current = requestAnimationFrame(updateCursor);
     };
