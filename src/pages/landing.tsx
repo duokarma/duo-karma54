@@ -124,29 +124,7 @@ export function LandingPage() {
         }}
       />
 
-      {/* ⌘K hint badge — bottom right, desktop only */}
-      <button
-        onClick={() => setCmdOpen(true)}
-        aria-label="Open command palette"
-        title="Press ⌘K or Ctrl+K"
-        className="fixed bottom-8 right-6 z-[90] hidden md:flex items-center gap-2 px-3 py-1.5 rounded-full"
-        style={{
-          background: 'rgba(10,9,8,0.7)',
-          border: '1px solid rgba(201,168,118,0.18)',
-          backdropFilter: 'blur(16px)',
-          WebkitBackdropFilter: 'blur(16px)',
-          cursor: 'pointer',
-          fontFamily: "'IBM Plex Mono', monospace",
-          fontSize: 11,
-          color: COLORS.secondary,
-          letterSpacing: '0.06em',
-        }}
-      >
-        <svg width="12" height="12" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round">
-          <circle cx="11" cy="11" r="8" /><line x1="21" y1="21" x2="16.65" y2="16.65" />
-        </svg>
-        ⌘K
-      </button>
+      {/* ⌘K hint badge removed as requested */}
 
       <LoadingScreen done={ready} />
       <Cursor />
