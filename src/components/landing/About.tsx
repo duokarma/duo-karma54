@@ -17,7 +17,7 @@ const PRINCIPLES = [
   },
   {
     title: "Total Visibility",
-    description: "We hate black boxes as much as you do. We share what we're working on every week, give you early access to test things, and explain our technical choices in plain English."
+    description: "We hate black boxes as much as you do. We share what we're working on every week, give you early access to test things, and explain our technical choices clearly."
   }
 ];
 
