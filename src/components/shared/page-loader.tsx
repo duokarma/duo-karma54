@@ -1,8 +1,15 @@
+import { motion } from "framer-motion";
 import { Skeleton } from "@/components/ui/skeleton";
 
 export function PageLoader() {
   return (
-    <div className="space-y-6">
+    <motion.div 
+      className="space-y-6"
+      initial={{ opacity: 0 }}
+      animate={{ opacity: 1 }}
+      exit={{ opacity: 0 }}
+      transition={{ duration: 0.3 }}
+    >
       <div className="flex items-center justify-between">
         <div>
           <Skeleton className="h-7 w-48" />
@@ -16,6 +23,6 @@ export function PageLoader() {
         ))}
       </div>
       <Skeleton className="h-80 rounded-[var(--radius-card)]" />
-    </div>
+    </motion.div>
   );
 }
