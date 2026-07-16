@@ -17,7 +17,7 @@ const MODULES = [
 ];
 
 export function WhatWeBuild() {
-  const [active, setActive] = useState(0);
+  const [active, setActive] = useState<number | null>(0);
   return (
     <section style={{ padding: "140px 5%", background: COLORS.surface }} id="work">
       <Reveal>
@@ -35,71 +35,101 @@ export function WhatWeBuild() {
           Nine kinds of systems, one build quality.
         </h2>
       </Reveal>
-      <div style={{ display: "grid", gridTemplateColumns: "minmax(0,1fr) minmax(0,1fr)", gap: 50 }} className="dk-modules-grid">
+      <div style={{ display: "grid", gap: 50 }} className="dk-modules-grid">
         <div>
           {MODULES.map((m, i) => (
-            <div
-              key={m.name}
-              onMouseEnter={() => setActive(i)}
-              style={{
-                padding: "22px 0",
-                borderBottom: `1px solid ${COLORS.line}`,
-                cursor: "pointer",
-                display: "flex",
-                alignItems: "center",
-                justifyContent: "space-between",
-              }}
-            >
-              <span
+            <div key={m.name} style={{ borderBottom: `1px solid ${COLORS.line}` }}>
+              <div
+                onMouseEnter={() => setActive(i)}
+                onClick={() => setActive(active === i ? null : i)}
                 style={{
-                  fontFamily: "'Fraunces', serif",
-                  fontSize: 22,
-                  color: active === i ? COLORS.accent : COLORS.text,
-                  transition: "color 0.3s",
+                  padding: "22px 0",
+                  cursor: "pointer",
+                  display: "flex",
+                  alignItems: "center",
+                  justifyContent: "space-between",
                 }}
               >
-                {m.name}
-              </span>
-              <span
-                style={{
-                  fontFamily: "'IBM Plex Mono', monospace",
-                  fontSize: 12,
-                  color: COLORS.secondary,
-                }}
-              >
-                {String(i + 1).padStart(2, "0")}
-              </span>
+                <span
+                  style={{
+                    fontFamily: "'Fraunces', serif",
+                    fontSize: 22,
+                    color: active === i ? COLORS.accent : COLORS.text,
+                    transition: "color 0.3s",
+                  }}
+                >
+                  {m.name}
+                </span>
+                <span
+                  style={{
+                    fontFamily: "'IBM Plex Mono', monospace",
+                    fontSize: 12,
+                    color: COLORS.secondary,
+                  }}
+                >
+                  {String(i + 1).padStart(2, "0")}
+                </span>
+              </div>
+              
+              {/* Mobile Accordion Description */}
+              <AnimatePresence>
+                {active === i && (
+                  <motion.div
+                    initial={{ height: 0, opacity: 0 }}
+                    animate={{ height: "auto", opacity: 1 }}
+                    exit={{ height: 0, opacity: 0 }}
+                    transition={{ duration: 0.3 }}
+                    style={{ overflow: "hidden" }}
+                    className="mobile-description-panel"
+                  >
+                    <div style={{ paddingBottom: 22 }}>
+                      <div style={{ fontFamily: "'Inter', sans-serif", fontSize: 15, color: COLORS.secondary, lineHeight: 1.7 }}>
+                        {m.detail}
+                      </div>
+                    </div>
+                  </motion.div>
+                )}
+              </AnimatePresence>
             </div>
           ))}
         </div>
-        <div style={{ position: "relative", minHeight: 220 }}>
+
+        {/* Desktop Description Panel */}
+        <div style={{ position: "relative", minHeight: 220 }} className="desktop-description-panel">
           <AnimatePresence mode="wait">
-            <motion.div
-              key={active}
-              initial={{ opacity: 0, y: 14 }}
-              animate={{ opacity: 1, y: 0 }}
-              exit={{ opacity: 0, y: -14 }}
-              transition={{ duration: 0.4 }}
-              style={{
-                background: COLORS.surface2,
-                border: `1px solid ${COLORS.line}`,
-                borderRadius: 16,
-                padding: 32,
-              }}
-            >
-              <div style={{ fontFamily: "'Fraunces', serif", fontSize: 24, color: COLORS.accent, marginBottom: 14 }}>
-                {MODULES[active].name}
-              </div>
-              <div style={{ fontFamily: "'Inter', sans-serif", fontSize: 15, color: COLORS.secondary, lineHeight: 1.7 }}>
-                {MODULES[active].detail}
-              </div>
-            </motion.div>
+            {active !== null && (
+              <motion.div
+                key={active}
+                initial={{ opacity: 0, y: 14 }}
+                animate={{ opacity: 1, y: 0 }}
+                exit={{ opacity: 0, y: -14 }}
+                transition={{ duration: 0.4 }}
+                style={{
+                  background: COLORS.surface2,
+                  border: `1px solid ${COLORS.line}`,
+                  borderRadius: 16,
+                  padding: 32,
+                }}
+              >
+                <div style={{ fontFamily: "'Fraunces', serif", fontSize: 24, color: COLORS.accent, marginBottom: 14 }}>
+                  {MODULES[active].name}
+                </div>
+                <div style={{ fontFamily: "'Inter', sans-serif", fontSize: 15, color: COLORS.secondary, lineHeight: 1.7 }}>
+                  {MODULES[active].detail}
+                </div>
+              </motion.div>
+            )}
           </AnimatePresence>
         </div>
       </div>
       <style>{`
+        .dk-modules-grid { grid-template-columns: minmax(0,1fr) minmax(0,1fr); }
+        .mobile-description-panel { display: none; }
+        
         @media (max-width: 760px) {
-          .dk-modules-grid { grid-template-columns: 1fr !important; }
+          .dk-modules-grid { grid-template-columns: 1fr; gap: 0 !important; }
+          .desktop-description-panel { display: none; }
+          .mobile-description-panel { display: block; }
         }
       `}</style>
     </section>
