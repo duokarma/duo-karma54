@@ -103,8 +103,8 @@ export function Hero() {
   }, []);
 
   return (
-    <div className="min-h-screen bg-white tracking-[-0.02em]" style={{ fontFamily: "'Inter', sans-serif" }}>
-      <section className="relative w-full overflow-hidden h-screen bg-black" style={{ height: '100dvh' }}>
+    <div className="tracking-[-0.02em]" style={{ fontFamily: "'Inter', sans-serif" }}>
+      <section className="relative w-full overflow-hidden bg-black" style={{ height: '100dvh' }}>
         
         {/* Layer 1: Base Image (Zooming out) */}
         <div 
