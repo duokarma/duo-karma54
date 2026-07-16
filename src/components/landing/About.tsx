@@ -4,20 +4,20 @@ import { Reveal } from './ui/Reveal';
 
 const PRINCIPLES = [
   {
-    title: "Direct Partnership",
-    description: "You work directly with the engineers writing the code. No account managers, no miscommunication, no game of telephone."
+    title: "No Middlemen",
+    description: "You talk directly to the two people writing your code. There are no project managers or sales reps to pass messages through, so nothing gets lost in translation."
   },
   {
-    title: "Business-Driven",
-    description: "We don't just ship features; we solve operational bottlenecks. Every line of code is tied to efficiency, revenue, or scale."
+    title: "Business First",
+    description: "We care about how your company actually operates. Instead of blindly building features, we look for the bottlenecks in your daily workflow and build tools to fix them."
   },
   {
-    title: "Built to Last",
-    description: "We use enterprise-grade architecture. Your system is built to handle your growth for the next five years, without needing a rewrite."
+    title: "Built Properly",
+    description: "We take the time to set up a solid technical foundation. The goal is to build a system that easily handles your growth over the next few years without needing a painful rewrite."
   },
   {
-    title: "Absolute Transparency",
-    description: "No black boxes. You get weekly updates, staging links, and a clear view into exactly what we are building and why."
+    title: "Total Visibility",
+    description: "We hate black boxes as much as you do. We share what we're working on every week, give you early access to test things, and explain our technical choices in plain English."
   }
 ];
 
