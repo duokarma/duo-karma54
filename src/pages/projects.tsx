@@ -1,13 +1,11 @@
 import { useMemo, useState } from "react";
 import { motion } from "framer-motion";
-import { Plus, Search, FolderKanban, Calendar, Users, MoreVertical, Pencil, Trash2 } from "lucide-react";
+import { Plus, Search, FolderKanban, MoreVertical, Pencil, Trash2 } from "lucide-react";
 import { PageHeader } from "@/components/shared/page-header";
 import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
 import { Card, CardContent } from "@/components/ui/card";
 import { StatusBadge } from "@/components/shared/status-badge";
-import { Progress } from "@/components/ui/progress";
-import { Avatar } from "@/components/shared/avatar";
 import { EmptyState } from "@/components/shared/empty-state";
 import {
   Select,
@@ -37,7 +35,7 @@ import { zodResolver } from "@hookform/resolvers/zod";
 import * as z from "zod";
 import { supabase } from "@/lib/supabase";
 import type { Project } from "@/types";
-import { formatCurrency } from "@/lib/utils";
+
 
 const projectSchema = z.object({
   name: z.string().min(2, "Name is required"),
