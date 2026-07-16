@@ -149,10 +149,11 @@ export function Topbar() {
               className="relative h-7 w-7 transition-colors hover:bg-white/10 hover:text-white"
             >
             <Bell className="h-3.5 w-3.5" />
-            {hasNewNotifications && (
-              <span className="absolute right-1.5 top-1.5 h-1.5 w-1.5 rounded-full bg-[#EF4444]" />
-            )}
-          </Button>
+              {hasNewNotifications && (
+                <span className="absolute right-1.5 top-1.5 h-1.5 w-1.5 rounded-full bg-[#EF4444]" />
+              )}
+            </Button>
+          </motion.div>
           {notifOpen && <NotificationPanel onClose={() => setNotifOpen(false)} />}
         </div>
 
