@@ -157,7 +157,6 @@ export function DashboardPage() {
             <h1 className="text-lg font-semibold text-ink">
               {greetingByHour()}, {displayName} 👋
             </h1>
-            <p className="mt-0.5 text-xs text-ink-faint">{todayFormatted()}</p>
           </div>
 
           {/* Business health chips */}
@@ -280,19 +279,9 @@ export function DashboardPage() {
                   <div key={project.id} className="group">
                     <div className="flex items-center justify-between gap-3 mb-1.5">
                       <div className="min-w-0">
-                        <p className="truncate text-sm font-medium text-ink">{project.name}</p>
-                        <p className="text-xs text-ink-faint">{project.client}</p>
+                        <p className="truncate text-base font-medium text-ink">{project.name}</p>
+                        <p className="text-sm text-ink-faint">{project.client}</p>
                       </div>
-                      <div className="text-right shrink-0">
-                        <span className="text-xs font-medium tabular text-ink">{project.progress}%</span>
-                        <p className="text-[10px] text-ink-faint">{formatCurrency(project.budget)}</p>
-                      </div>
-                    </div>
-                    <div className="relative h-1 w-full rounded-full bg-[var(--color-edge)]">
-                      <div
-                        className="absolute left-0 top-0 h-1 rounded-full bg-[var(--color-accent)] transition-all"
-                        style={{ width: `${project.progress}%` }}
-                      />
                     </div>
                   </div>
                 ))}
@@ -369,7 +358,6 @@ export function DashboardPage() {
               <div className="space-y-2.5">
                 {recentClients.map((client) => (
                   <div key={client.id} className="flex items-center gap-3 rounded-[var(--radius-control)] p-1.5 transition-colors hover:bg-[var(--color-charcoal)]">
-                    <Avatar seed={client.avatarSeed} size="sm" />
                     <div className="min-w-0 flex-1">
                       <p className="truncate text-xs font-medium text-ink">{client.name}</p>
                       <p className="truncate text-[10px] text-ink-faint">{client.company}</p>
