@@ -95,31 +95,33 @@ export function WhatWeBuild() {
         </div>
 
         {/* Desktop Description Panel */}
-        <div style={{ position: "relative", minHeight: 220 }} className="desktop-description-panel">
-          <AnimatePresence mode="wait">
-            {active !== null && (
-              <motion.div
-                key={active}
-                initial={{ opacity: 0, y: 14 }}
-                animate={{ opacity: 1, y: 0 }}
-                exit={{ opacity: 0, y: -14 }}
-                transition={{ duration: 0.4 }}
-                style={{
-                  background: COLORS.surface2,
-                  border: `1px solid ${COLORS.line}`,
-                  borderRadius: 16,
-                  padding: 32,
-                }}
-              >
-                <div style={{ fontFamily: "'Fraunces', serif", fontSize: 24, color: COLORS.accent, marginBottom: 14 }}>
-                  {MODULES[active].name}
-                </div>
-                <div style={{ fontFamily: "'Inter', sans-serif", fontSize: 15, color: COLORS.secondary, lineHeight: 1.7 }}>
-                  {MODULES[active].detail}
-                </div>
-              </motion.div>
-            )}
-          </AnimatePresence>
+        <div style={{ position: "relative", height: "100%" }} className="desktop-description-panel">
+          <div style={{ position: "sticky", top: 180 }}>
+            <AnimatePresence mode="wait">
+              {active !== null && (
+                <motion.div
+                  key={active}
+                  initial={{ opacity: 0, y: 14 }}
+                  animate={{ opacity: 1, y: 0 }}
+                  exit={{ opacity: 0, y: -14 }}
+                  transition={{ duration: 0.4 }}
+                  style={{
+                    background: COLORS.surface2,
+                    border: `1px solid ${COLORS.line}`,
+                    borderRadius: 16,
+                    padding: 32,
+                  }}
+                >
+                  <div style={{ fontFamily: "'Fraunces', serif", fontSize: 24, color: COLORS.accent, marginBottom: 14 }}>
+                    {MODULES[active].name}
+                  </div>
+                  <div style={{ fontFamily: "'Inter', sans-serif", fontSize: 15, color: COLORS.secondary, lineHeight: 1.7 }}>
+                    {MODULES[active].detail}
+                  </div>
+                </motion.div>
+              )}
+            </AnimatePresence>
+          </div>
         </div>
       </div>
       <style>{`
