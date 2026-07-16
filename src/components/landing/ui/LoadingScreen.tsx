@@ -21,16 +21,7 @@ export function LoadingScreen({ done }: { done: boolean }) {
           transition={{ duration: 0.8, ease: 'easeInOut' }}
           className="fixed inset-0 z-[9999] bg-[#090B10] flex items-center justify-center overflow-hidden"
         >
-          {/* Constrain container to exactly 16:9 while fitting within screen bounds */}
-          <div 
-            className="relative overflow-hidden"
-            style={{
-              width: '100%',
-              height: '100%',
-              maxWidth: 'calc(100vh * (16 / 9))',
-              maxHeight: 'calc(100vw * (9 / 16))',
-            }}
-          >
+          <div className="relative w-full h-full overflow-hidden">
             <video
               ref={videoRef}
               src="/loading-video.mp4"
