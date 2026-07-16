@@ -11,7 +11,6 @@ interface KPICardProps {
   change: number;
   icon: LucideIcon;
   accent?: "blue" | "green" | "amber" | "red";
-  decimals?: number;
   sparklineData?: number[];
   secondaryLabel?: string;
 }
@@ -23,7 +22,7 @@ const accentMap = {
   red:   { text: "text-[#EF4444]", sparkColor: "#EF4444", bg: "bg-[rgba(239,68,68,0.1)]" },
 };
 
-import React, { memo } from "react";
+import { memo } from "react";
 
 export const KPICard = memo(function KPICard({
   label,
@@ -33,7 +32,6 @@ export const KPICard = memo(function KPICard({
   change,
   icon: Icon,
   accent = "blue",
-  decimals = 0,
   sparklineData = [],
   secondaryLabel = "vs last month",
 }: KPICardProps) {

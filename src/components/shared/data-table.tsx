@@ -1,4 +1,4 @@
-import React, { useMemo, useState, memo, type ReactNode } from "react";
+import { useMemo, useState, memo, type ReactNode } from "react";
 import { ChevronUp, ChevronDown, ChevronLeft, ChevronRight } from "lucide-react";
 import { cn } from "@/lib/utils";
 import { Button } from "@/components/ui/button";

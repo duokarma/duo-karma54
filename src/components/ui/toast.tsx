@@ -79,7 +79,7 @@ function ToastCard({
       drag={isFront ? "x" : false}
       dragConstraints={{ left: 0, right: 0 }}
       dragElastic={0.7}
-      onDragEnd={(e, { offset, velocity }) => {
+      onDragEnd={(_e, { offset, velocity }) => {
         if (Math.abs(offset.x) > 50 || Math.abs(velocity.x) > 500) {
           onDismiss(t.id);
         }
