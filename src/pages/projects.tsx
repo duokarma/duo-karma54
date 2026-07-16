@@ -37,7 +37,7 @@ import { zodResolver } from "@hookform/resolvers/zod";
 import * as z from "zod";
 import { supabase } from "@/lib/supabase";
 import type { Project } from "@/types";
-import { formatCurrency, cn } from "@/lib/utils";
+import { formatCurrency } from "@/lib/utils";
 
 const projectSchema = z.object({
   name: z.string().min(2, "Name is required"),
@@ -51,12 +51,7 @@ const projectSchema = z.object({
 
 type ProjectFormValues = z.infer<typeof projectSchema>;
 
-const priorityDot: Record<string, string> = {
-  low: "bg-ink-faint",
-  medium: "bg-electric",
-  high: "bg-amber",
-  urgent: "bg-rose",
-};
+
 
 export function ProjectsPage() {
   const queryClient = useQueryClient();
