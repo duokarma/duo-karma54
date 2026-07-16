@@ -28,7 +28,7 @@ export function LoadingScreen({ done }: { done: boolean }) {
             muted
             playsInline
             onEnded={handleVideoEnd}
-            className="w-full h-full object-cover"
+            className="w-full h-full object-contain"
           />
         </motion.div>
       )}
