@@ -14,14 +14,14 @@ import {
 } from 'lucide-react';
 
 const SERVICES = [
-  { name: 'Internal Tools', icon: Code2, description: 'We build the exact software your team needs to work faster, instead of forcing you to use clunky off-the-shelf apps.', bento: 'bento-1', size: 'large' },
+  { name: 'Internal Tools', icon: Code2, description: 'We build the exact software your team needs to work faster, instead of forcing you to use clunky off-the-shelf apps.', bento: 'bento-1', size: 'wide' },
   { name: 'Admin Dashboards', icon: LayoutDashboard, description: 'A single control panel where you can see exactly what\'s happening in your business and manage everything in one place.', bento: 'bento-2', size: 'wide' },
   { name: 'Custom Booking', icon: CalendarClock, description: 'Systems that let your customers schedule and pay for your services online, completely hands-free.', bento: 'bento-3', size: 'normal' },
   { name: 'Automating Busywork', icon: Zap, description: 'If you\'re copying and pasting data all day, we write scripts to do it for you automatically in the background.', bento: 'bento-4', size: 'normal' },
-  { name: 'Marketing Sites', icon: Globe, description: 'Fast, custom-built websites that look professional, load instantly, and actually convince people to contact you.', bento: 'bento-5', size: 'tall' },
+  { name: 'Marketing Sites', icon: Globe, description: 'Fast, custom-built websites that look professional, load instantly, and actually convince people to contact you.', bento: 'bento-5', size: 'normal' },
   { name: 'Cloud Infrastructure', icon: Cloud, description: 'We put your software on reliable servers so it stays online, and we handle all the maintenance.', bento: 'bento-6', size: 'normal' },
   { name: 'Database & Security', icon: Database, description: 'We set up secure, modern databases to store your business data safely, complete with proper user logins and backups.', bento: 'bento-7', size: 'wide' },
-  { name: 'Mobile Ready', icon: MonitorSmartphone, description: 'Everything we build works perfectly on your phone, so you can run your business while you\'re away from your desk.', bento: 'bento-8', size: 'wide-large' },
+  { name: 'Mobile Ready', icon: MonitorSmartphone, description: 'Everything we build works perfectly on your phone, so you can run your business while you\'re away from your desk.', bento: 'bento-8', size: 'wide' },
 ];
 
 export function Services() {
@@ -63,23 +63,23 @@ export function Services() {
         @media (min-width: 768px) {
           .dk-bento-grid {
             grid-template-columns: repeat(2, 1fr);
-            grid-auto-rows: minmax(240px, auto);
+            grid-auto-rows: minmax(220px, auto);
           }
         }
         @media (min-width: 1024px) {
           .dk-bento-grid {
             grid-template-columns: repeat(4, 1fr);
-            grid-auto-rows: 300px;
+            grid-auto-rows: minmax(220px, auto);
             gap: 24px;
           }
-          .bento-1 { grid-column: span 2; grid-row: span 2; }
-          .bento-2 { grid-column: span 2; grid-row: span 1; }
-          .bento-3 { grid-column: span 1; grid-row: span 1; }
-          .bento-4 { grid-column: span 1; grid-row: span 1; }
-          .bento-5 { grid-column: span 1; grid-row: span 2; }
-          .bento-6 { grid-column: span 1; grid-row: span 1; }
-          .bento-7 { grid-column: span 2; grid-row: span 1; }
-          .bento-8 { grid-column: span 3; grid-row: span 1; }
+          .bento-1 { grid-column: span 2; }
+          .bento-2 { grid-column: span 2; }
+          .bento-3 { grid-column: span 1; }
+          .bento-4 { grid-column: span 1; }
+          .bento-5 { grid-column: span 1; }
+          .bento-6 { grid-column: span 1; }
+          .bento-7 { grid-column: span 2; }
+          .bento-8 { grid-column: span 2; }
         }
       `}</style>
     </section>
