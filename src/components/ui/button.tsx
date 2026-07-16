@@ -3,6 +3,7 @@ import { Slot } from "@radix-ui/react-slot";
 import { cva, type VariantProps } from "class-variance-authority";
 import { cn } from "@/lib/utils";
 import { motion } from "framer-motion";
+import { MagneticWrapper } from "@/components/premium";
 
 const buttonVariants = cva(
   "inline-flex items-center justify-center gap-2 whitespace-nowrap rounded-[var(--radius-control)] text-sm font-medium transition-all duration-200 disabled:pointer-events-none disabled:opacity-40 [&_svg]:pointer-events-none [&_svg]:shrink-0",
@@ -42,17 +43,29 @@ export interface ButtonProps
 const MotionSlot = motion.create(Slot);
 
 const Button = React.forwardRef<HTMLButtonElement, ButtonProps>(
-  ({ className, variant, size, asChild = false, ...props }, ref) => {
+  ({ className, variant, size, asChild = false, children, ...props }, ref) => {
     const Comp = asChild ? MotionSlot : motion.button;
+
+    const content = asChild ? children : (
+      <>
+        <div className="absolute inset-0 bg-gradient-to-r from-transparent via-[rgba(255,255,255,0.15)] to-transparent skew-x-[-20deg] translate-x-[-150%] group-hover:translate-x-[150%] transition-transform duration-700 ease-in-out pointer-events-none" />
+        <span className="relative z-10 flex items-center gap-2">{children}</span>
+      </>
+    );
+
     return (
-      <Comp
-        className={cn(buttonVariants({ variant, size, className }), "relative overflow-hidden")}
-        ref={ref}
-        whileHover={{ scale: 1.02 }}
-        whileTap={{ scale: 0.97 }}
-        transition={{ type: "spring", stiffness: 400, damping: 25 }}
-        {...(props as any)}
-      />
+      <MagneticWrapper strength={0.15}>
+        <Comp
+          className={cn(buttonVariants({ variant, size, className }), "relative overflow-hidden group")}
+          ref={ref}
+          whileHover={{ scale: 1.02 }}
+          whileTap={{ scale: 0.97 }}
+          transition={{ type: "spring", stiffness: 400, damping: 25 }}
+          {...(props as any)}
+        >
+          {content}
+        </Comp>
+      </MagneticWrapper>
     );
   }
 );

@@ -20,7 +20,18 @@ function CustomTooltip({ active, payload, label }: any) {
   );
 }
 
-export function FinancialsAreaChart({ data, height = 280 }: { data: ChartPoint[]; height?: number }) {
+import React, { memo } from "react";
+import { ChartLoader } from "@/components/premium/chart-loader";
+
+export const FinancialsAreaChart = memo(function FinancialsAreaChart({ data, height = 280, isLoading }: { data: ChartPoint[]; height?: number; isLoading?: boolean }) {
+  if (isLoading) {
+    return (
+      <div style={{ height }} className="w-full">
+        <ChartLoader />
+      </div>
+    );
+  }
+
   return (
     <ResponsiveContainer width="100%" height={height}>
       <AreaChart data={data} margin={{ top: 6, right: 6, left: -10, bottom: 0 }}>
@@ -74,4 +85,4 @@ export function FinancialsAreaChart({ data, height = 280 }: { data: ChartPoint[]
       </AreaChart>
     </ResponsiveContainer>
   );
-}
+});

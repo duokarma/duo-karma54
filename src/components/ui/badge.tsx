@@ -29,6 +29,8 @@ export interface BadgeProps
   dot?: boolean;
 }
 
+import { motion } from "framer-motion";
+
 function Badge({ className, variant, dot, children, ...props }: BadgeProps) {
   const dotColors: Record<string, string> = {
     success: "#10B981",
@@ -41,7 +43,13 @@ function Badge({ className, variant, dot, children, ...props }: BadgeProps) {
   const dotColor = variant ? dotColors[variant] : undefined;
 
   return (
-    <span className={cn(badgeVariants({ variant }), className)} {...props}>
+    <motion.span 
+      className={cn(badgeVariants({ variant }), className)}
+      whileHover={{ scale: 1.05 }}
+      whileTap={{ scale: 0.95 }}
+      transition={{ type: "spring", stiffness: 400, damping: 15 }}
+      {...(props as any)}
+    >
       {dot && (
         <span
           className="h-1.5 w-1.5 rounded-full"
@@ -49,7 +57,7 @@ function Badge({ className, variant, dot, children, ...props }: BadgeProps) {
         />
       )}
       {children}
-    </span>
+    </motion.span>
   );
 }
 

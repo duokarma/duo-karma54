@@ -4,6 +4,8 @@ import { ScrollProgress } from "@/components/shared/scroll-progress";
 import { Sidebar } from "@/components/layout/sidebar";
 import { Topbar } from "@/components/layout/topbar";
 import { CommandPalette } from "@/components/layout/command-palette";
+import { WidgetsPanel } from "@/components/layout/widgets-panel";
+import { AnimatedNoise, SoftAurora, FloatingParticles } from "@/components/premium/ambient-effects";
 import { useSidebar } from "@/hooks/use-sidebar";
 import { cn } from "@/lib/utils";
 
@@ -23,6 +25,10 @@ export function AppLayout() {
           className="w-full h-full object-cover pointer-events-none opacity-50"
           src="https://d8j0ntlcm91z4.cloudfront.net/user_38xzZboKViGWJOttwIXH07lWA1P/hf_20260508_064122_c4750c0e-7476-4b44-94a2-a85a65c63bf2.mp4" 
         />
+        {/* Ambient Effects Overlay */}
+        <SoftAurora />
+        <FloatingParticles />
+        <AnimatedNoise />
       </div>
 
       <div className="relative z-10">
@@ -53,6 +59,7 @@ export function AppLayout() {
       </div>
 
       <CommandPalette />
+      <WidgetsPanel />
     </div>
   );
 }

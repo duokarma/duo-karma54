@@ -1,3 +1,4 @@
+import { useMemo } from "react";
 import { motion } from "framer-motion";
 import {
   IndianRupee,
@@ -88,8 +89,8 @@ export function DashboardPage() {
     },
   });
 
-  const revenueSparkline  = monthlyFinancials.slice(-7).map((d) => d.revenue);
-  const profitSparkline   = monthlyFinancials.slice(-7).map((d) => d.profit);
+  const revenueSparkline = useMemo(() => monthlyFinancials.slice(-7).map((d) => d.revenue), [monthlyFinancials]);
+  const profitSparkline = useMemo(() => monthlyFinancials.slice(-7).map((d) => d.profit), [monthlyFinancials]);
 
   const { data: projects = [] } = useQuery({
     queryKey: ["projects"],
@@ -125,24 +126,22 @@ export function DashboardPage() {
     },
   });
 
-  const activeProjects = projects.filter((p) => p.status === "in-progress");
-  const topActiveProjects = activeProjects.slice(0, 5);
-  const recentClients  = [...clients]
-    .sort((a, b) => b.joinedDate.localeCompare(a.joinedDate))
-    .slice(0, 5);
+  const activeProjects = useMemo(() => projects.filter((p) => p.status === "in-progress"), [projects]);
+  const topActiveProjects = useMemo(() => activeProjects.slice(0, 5), [activeProjects]);
+  const recentClients = useMemo(() => [...clients].sort((a, b) => b.joinedDate.localeCompare(a.joinedDate)).slice(0, 5), [clients]);
 
   const displayName = "Admin";
 
-  const totalRevenue = clients.reduce((sum, c) => sum + (c.amountPaid || 0), 0);
+  const totalRevenue = useMemo(() => clients.reduce((sum, c) => sum + (c.amountPaid || 0), 0), [clients]);
   const netProfit = totalRevenue * 0.42; 
-  const activeClientsCount = clients.filter(c => c.status === "active").length;
-  const dueClientsCount = clients.filter(c => (c.totalValue || 0) > (c.amountPaid || 0)).length;
-  const tasksDueToday = tasks.filter(t => new Date(t.dueDate).toDateString() === new Date().toDateString()).length;
+  const activeClientsCount = useMemo(() => clients.filter(c => c.status === "active").length, [clients]);
+  const dueClientsCount = useMemo(() => clients.filter(c => (c.totalValue || 0) > (c.amountPaid || 0)).length, [clients]);
+  const tasksDueToday = useMemo(() => tasks.filter(t => new Date(t.dueDate).toDateString() === new Date().toDateString()).length, [tasks]);
 
-  const invoiceStatusBreakdown = [
+  const invoiceStatusBreakdown = useMemo(() => [
     { label: "Active", value: clients.filter(c => c.status === "active").length, color: "#10B981" },
     { label: "Inactive", value: clients.filter(c => c.status === "inactive").length, color: "var(--color-ink-faint)" },
-  ].filter(s => s.value > 0);
+  ].filter(s => s.value > 0), [clients]);
 
   return (
     <div className="space-y-5">
@@ -218,7 +217,12 @@ export function DashboardPage() {
       </div>
 
       {/* ── Charts Row ── */}
-      <div className="grid grid-cols-1 gap-3 lg:grid-cols-3">
+      <motion.div 
+        initial={{ opacity: 0, y: 10 }}
+        whileInView={{ opacity: 1, y: 0 }}
+        viewport={{ once: true, margin: "-40px" }}
+        className="grid grid-cols-1 gap-3 lg:grid-cols-3"
+      >
         <Card className="lg:col-span-2">
           <CardHeader className="flex-row items-center justify-between space-y-0">
             <div>
@@ -244,10 +248,15 @@ export function DashboardPage() {
             <InvoiceDonutChart data={invoiceStatusBreakdown} />
           </CardContent>
         </Card>
-      </div>
+      </motion.div>
 
       {/* ── Projects + Profit Trend ── */}
-      <div className="grid grid-cols-1 gap-3 lg:grid-cols-3">
+      <motion.div 
+        initial={{ opacity: 0, y: 10 }}
+        whileInView={{ opacity: 1, y: 0 }}
+        viewport={{ once: true, margin: "-40px" }}
+        className="grid grid-cols-1 gap-3 lg:grid-cols-3"
+      >
         <Card className="lg:col-span-2">
           <CardHeader className="flex-row items-center justify-between space-y-0">
             <CardTitle>Active Projects</CardTitle>
@@ -301,10 +310,15 @@ export function DashboardPage() {
             <ProfitLineChart data={monthlyFinancials} height={200} />
           </CardContent>
         </Card>
-      </div>
+      </motion.div>
 
       {/* ── Activity + Clients + Quick Actions ── */}
-      <div className="grid grid-cols-1 gap-3 lg:grid-cols-3">
+      <motion.div 
+        initial={{ opacity: 0, y: 10 }}
+        whileInView={{ opacity: 1, y: 0 }}
+        viewport={{ once: true, margin: "-40px" }}
+        className="grid grid-cols-1 gap-3 lg:grid-cols-3"
+      >
         {/* Activity Feed */}
         <Card>
           <CardHeader className="flex-row items-center justify-between space-y-0">
@@ -403,7 +417,7 @@ export function DashboardPage() {
             </div>
           </CardContent>
         </Card>
-      </div>
+      </motion.div>
     </div>
   );
 }

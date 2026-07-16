@@ -1,7 +1,9 @@
-import { useMemo, useState, type ReactNode } from "react";
+import React, { useMemo, useState, memo, type ReactNode } from "react";
 import { ChevronUp, ChevronDown, ChevronLeft, ChevronRight } from "lucide-react";
 import { cn } from "@/lib/utils";
 import { Button } from "@/components/ui/button";
+import { TableSkeleton } from "@/components/premium/table-skeleton";
+import { motion, AnimatePresence } from "framer-motion";
 
 export interface Column<T> {
   key: string;
@@ -18,9 +20,10 @@ interface DataTableProps<T> {
   pageSize?: number;
   rowKey: (row: T) => string;
   onRowClick?: (row: T) => void;
+  isLoading?: boolean;
 }
 
-export function DataTable<T>({ columns, data, pageSize = 8, rowKey, onRowClick }: DataTableProps<T>) {
+const DataTableInner = <T,>({ columns, data, pageSize = 8, rowKey, onRowClick, isLoading }: DataTableProps<T>) => {
   const [sortKey, setSortKey] = useState<string | null>(null);
   const [sortDir, setSortDir] = useState<"asc" | "desc">("asc");
   const [page, setPage] = useState(0);
@@ -55,12 +58,16 @@ export function DataTable<T>({ columns, data, pageSize = 8, rowKey, onRowClick }
     }
   }
 
+  if (isLoading) {
+    return <TableSkeleton columns={columns.length} rows={pageSize} />;
+  }
+
   return (
-    <div className="overflow-hidden rounded-[var(--radius-card)] border border-edge">
-      <div className="overflow-x-auto">
+    <div className="overflow-hidden rounded-[var(--radius-card)] border border-edge bg-graphite/40">
+      <div className="overflow-x-auto relative">
         <table className="w-full text-sm">
-          <thead className="sticky top-0 z-10 bg-graphite-soft/95 backdrop-blur-sm">
-            <tr className="border-b border-edge">
+          <thead className="sticky top-0 z-10 bg-graphite-soft/95 backdrop-blur-md shadow-sm border-b border-edge">
+            <tr>
               {columns.map((col) => (
                 <th
                   key={col.key}
@@ -102,16 +109,21 @@ export function DataTable<T>({ columns, data, pageSize = 8, rowKey, onRowClick }
               ))}
             </tr>
           </thead>
-          <tbody>
-            {paginated.map((row) => (
-              <tr
-                key={rowKey(row)}
-                onClick={() => onRowClick?.(row)}
-                className={cn(
-                  "border-b border-edge/60 last:border-0 transition-colors hover:bg-white/[0.03]",
-                  onRowClick && "cursor-pointer"
-                )}
-              >
+          <tbody className="divide-y divide-edge/60">
+            <AnimatePresence initial={false}>
+              {paginated.map((row, i) => (
+                <motion.tr
+                  initial={{ opacity: 0, y: 5 }}
+                  animate={{ opacity: 1, y: 0 }}
+                  exit={{ opacity: 0 }}
+                  transition={{ duration: 0.2, delay: i * 0.03 }}
+                  key={rowKey(row)}
+                  onClick={() => onRowClick?.(row)}
+                  className={cn(
+                    "group transition-all hover:bg-white/[0.04] relative hover:z-10",
+                    onRowClick && "cursor-pointer"
+                  )}
+                >
                 {columns.map((col) => (
                   <td
                     key={col.key}
@@ -124,8 +136,9 @@ export function DataTable<T>({ columns, data, pageSize = 8, rowKey, onRowClick }
                     {col.render(row)}
                   </td>
                 ))}
-              </tr>
-            ))}
+                </motion.tr>
+              ))}
+            </AnimatePresence>
           </tbody>
         </table>
       </div>
@@ -160,3 +173,5 @@ export function DataTable<T>({ columns, data, pageSize = 8, rowKey, onRowClick }
     </div>
   );
 }
+
+export const DataTable = memo(DataTableInner) as typeof DataTableInner;

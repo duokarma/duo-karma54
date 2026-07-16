@@ -29,8 +29,8 @@ export function Sidebar() {
 
       <motion.aside
         initial={false}
-        animate={{ width: collapsed ? 60 : 240 }}
-        transition={{ type: "spring", stiffness: 340, damping: 34 }}
+        animate={{ width: collapsed ? 64 : 240 }}
+        transition={{ type: "spring", stiffness: 400, damping: 40 }}
         className={cn(
           "fixed left-0 top-0 bottom-0 z-50 flex flex-col overflow-hidden",
           "bg-void/40 backdrop-blur-2xl border-r border-white/10 shadow-[4px_0_24px_rgba(0,0,0,0.5)]",
@@ -45,6 +45,7 @@ export function Sidebar() {
         )}>
           <button
             onClick={() => navigate("/admin")}
+            aria-label="Go to Admin Dashboard"
             className="flex h-7 w-7 shrink-0 items-center justify-center overflow-hidden rounded-md"
           >
             <img src="/logo.jpeg" alt="DuoKarma" className="h-full w-full object-cover" />
@@ -66,6 +67,7 @@ export function Sidebar() {
         <div className={cn("px-2.5 py-2.5", collapsed && "px-1.5")}>
           <button
             onClick={() => setOpen(true)}
+            aria-label="Search command palette"
             className={cn(
               "flex w-full items-center gap-2 rounded-[var(--radius-control)] border border-[var(--color-edge)] bg-[var(--color-charcoal)] px-2.5 py-1.5 text-xs text-ink-faint transition-colors hover:border-[var(--color-edge-hover)] hover:text-ink-dim",
               collapsed && "justify-center px-0 py-1.5"
@@ -99,6 +101,7 @@ export function Sidebar() {
                       to={item.path}
                       end={item.path === "/admin"}
                       onClick={() => setMobileOpen(false)}
+                      aria-label={item.label}
                       className={({ isActive }) =>
                         cn(
                           "group relative flex items-center gap-2.5 rounded-[var(--radius-control)] px-2.5 py-1.5 text-sm transition-colors duration-150",
@@ -111,16 +114,25 @@ export function Sidebar() {
                     >
                       {({ isActive }) => (
                         <>
-                          {/* Left accent bar */}
+                          {/* Left accent bar with glow */}
                           {isActive && !collapsed && (
-                            <span className="absolute left-0 top-1/2 h-4 w-0.5 -translate-y-1/2 rounded-r-full bg-[var(--color-accent)]" />
+                            <motion.span 
+                              layoutId="sidebar-active-indicator"
+                              className="absolute left-0 top-1/2 h-5 w-1 -translate-y-1/2 rounded-r-full bg-[var(--color-accent)] shadow-[0_0_8px_var(--color-accent)]" 
+                            />
                           )}
-                          <item.icon
-                            className={cn(
-                              "h-[15px] w-[15px] shrink-0",
-                              isActive ? "text-white" : "text-ink/70 group-hover:text-ink/90"
-                            )}
-                          />
+                          <motion.div
+                            whileHover={{ scale: 1.1, rotate: -2 }}
+                            whileTap={{ scale: 0.95 }}
+                            transition={{ type: "spring", stiffness: 400, damping: 25 }}
+                          >
+                            <item.icon
+                              className={cn(
+                                "h-[15px] w-[15px] shrink-0",
+                                isActive ? "text-white drop-shadow-[0_0_4px_rgba(255,255,255,0.5)]" : "text-ink/70 group-hover:text-ink/90"
+                              )}
+                            />
+                          </motion.div>
                           {!collapsed && (
                             <span className={cn("truncate text-[13px]", isActive && "font-medium text-ink")}>
                               {item.label}
@@ -149,6 +161,7 @@ export function Sidebar() {
               <button
                 onClick={signOut}
                 title="Sign out"
+                aria-label="Sign out"
                 className="rounded-md p-1 text-ink-faint transition-colors hover:bg-[var(--color-charcoal)] hover:text-ink"
               >
                 <LogOut className="h-3.5 w-3.5" />
@@ -159,6 +172,7 @@ export function Sidebar() {
           {/* Collapse toggle */}
           <button
             onClick={toggleCollapsed}
+            aria-label={collapsed ? "Expand sidebar" : "Collapse sidebar"}
             className={cn(
               "flex w-full items-center gap-2 px-3 py-2.5 text-xs text-ink-faint transition-colors hover:bg-[var(--color-charcoal)] hover:text-ink-dim",
               collapsed ? "justify-center" : "border-t border-[var(--color-edge)]"

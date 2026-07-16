@@ -12,7 +12,17 @@ function CustomTooltip({ active, payload, label }: any) {
   );
 }
 
-export function ProfitLineChart({ data, height = 240 }: { data: ChartPoint[]; height?: number }) {
+import { ChartLoader } from "@/components/premium/chart-loader";
+
+export function ProfitLineChart({ data, height = 240, isLoading }: { data: ChartPoint[]; height?: number; isLoading?: boolean }) {
+  if (isLoading) {
+    return (
+      <div style={{ height }} className="w-full">
+        <ChartLoader />
+      </div>
+    );
+  }
+
   return (
     <ResponsiveContainer width="100%" height={height}>
       <LineChart data={data} margin={{ top: 6, right: 6, left: -10, bottom: 0 }}>

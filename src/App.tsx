@@ -1,4 +1,5 @@
 import { BrowserRouter, Routes, Route } from "react-router-dom";
+import { MotionConfig } from "framer-motion";
 import { QueryClient, QueryClientProvider } from "@tanstack/react-query";
 import { Suspense, lazy, useEffect } from "react";
 import { ThemeProvider } from "@/hooks/use-theme";
@@ -56,8 +57,9 @@ function App() {
         <ThemeProvider>
           <TooltipProvider>
             <ToastProvider>
-              <BrowserRouter>
-                <CommandPaletteProvider>
+              <MotionConfig reducedMotion="user">
+                <BrowserRouter>
+                  <CommandPaletteProvider>
                   <SidebarProvider>
                     <Suspense fallback={<PageLoader />}>
                       <Routes>
@@ -84,7 +86,8 @@ function App() {
                     </Suspense>
                   </SidebarProvider>
                 </CommandPaletteProvider>
-              </BrowserRouter>
+                </BrowserRouter>
+              </MotionConfig>
             </ToastProvider>
           </TooltipProvider>
         </ThemeProvider>

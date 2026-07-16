@@ -1,5 +1,6 @@
 import { useLocation, Link } from "react-router-dom";
-import { Bell, Menu, ChevronRight, Search, LogOut } from "lucide-react";
+import { Bell, Menu, ChevronRight, Search, LogOut, LayoutGrid } from "lucide-react";
+import { motion, AnimatePresence } from "framer-motion";
 import { useSidebar } from "@/hooks/use-sidebar";
 import { useCommandPalette } from "@/hooks/use-command-palette";
 import { navItems } from "@/lib/nav-config";
@@ -70,6 +71,11 @@ export function Topbar() {
     }
   };
 
+  const handleOpenWidgets = () => {
+    // We will emit an event or use context, but for now we can just dispatch a custom event
+    window.dispatchEvent(new CustomEvent("toggle-widgets-panel"));
+  };
+
   return (
     <header className="sticky top-0 z-30 flex h-11 items-center gap-3 border-b border-[var(--color-edge)] bg-[var(--color-void)] px-4">
       {/* Mobile menu */}
@@ -81,16 +87,25 @@ export function Topbar() {
       </button>
 
       {/* Breadcrumb */}
-      <div className="flex items-center gap-1.5 text-xs text-ink-faint">
+      <div className="flex items-center gap-1.5 text-xs text-ink-faint h-full overflow-hidden">
         <Link to="/admin" className="hover:opacity-80 transition-opacity">
           <img src="/logo.jpeg" alt="DuoKarma" className="h-5 w-auto object-contain" />
         </Link>
-        {currentItem && currentItem.path !== "/admin" && (
-          <>
-            <ChevronRight className="h-3 w-3" />
-            <span className="text-ink-dim">{currentItem.label}</span>
-          </>
-        )}
+        <AnimatePresence mode="popLayout">
+          {currentItem && currentItem.path !== "/admin" && (
+            <motion.div
+              key={currentItem.path}
+              initial={{ opacity: 0, x: -10 }}
+              animate={{ opacity: 1, x: 0 }}
+              exit={{ opacity: 0, x: 10 }}
+              transition={{ type: "spring", stiffness: 400, damping: 25 }}
+              className="flex items-center gap-1.5"
+            >
+              <ChevronRight className="h-3 w-3" />
+              <span className="text-ink-dim font-medium">{currentItem.label}</span>
+            </motion.div>
+          )}
+        </AnimatePresence>
       </div>
 
       {/* Right actions */}
@@ -99,25 +114,40 @@ export function Topbar() {
         <span className="hidden text-xs text-ink-faint sm:block mr-2">{formatDate()}</span>
 
         {/* Search */}
-        <button
+        <motion.button
+          whileHover={{ scale: 1.02 }}
+          whileTap={{ scale: 0.98 }}
           onClick={() => setOpen(true)}
-          className="flex items-center gap-1.5 rounded-md border border-[var(--color-edge)] bg-[var(--color-charcoal)] px-2.5 py-1 text-xs text-ink-faint transition-colors hover:border-[var(--color-edge-hover)] hover:text-ink-dim"
+          className="flex items-center gap-1.5 rounded-md border border-[var(--color-edge)] bg-[var(--color-charcoal)] px-2.5 py-1 text-xs text-ink-faint transition-colors hover:border-[var(--color-edge-hover)] hover:text-ink-dim shadow-sm"
         >
           <Search className="h-3 w-3" />
           <span className="hidden sm:block">Search</span>
           <kbd className="hidden rounded border border-[var(--color-edge)] bg-[var(--color-void)] px-1 text-[10px] sm:block">⌘K</kbd>
-        </button>
+        </motion.button>
 
-
-        {/* Notifications */}
-        <div className="relative" ref={notifRef}>
+        {/* Widgets Panel Trigger */}
+        <motion.div whileHover={{ scale: 1.1 }} whileTap={{ scale: 0.95 }}>
           <Button
             variant="ghost"
             size="icon"
-            onClick={handleOpenNotifications}
-            aria-label="Notifications"
-            className="relative h-7 w-7"
+            onClick={handleOpenWidgets}
+            aria-label="Widgets"
+            className="h-7 w-7 transition-colors hover:bg-white/10 hover:text-white"
           >
+            <LayoutGrid className="h-3.5 w-3.5" />
+          </Button>
+        </motion.div>
+
+        {/* Notifications */}
+        <div className="relative" ref={notifRef}>
+          <motion.div whileHover={{ scale: 1.1 }} whileTap={{ scale: 0.95 }}>
+            <Button
+              variant="ghost"
+              size="icon"
+              onClick={handleOpenNotifications}
+              aria-label="Notifications"
+              className="relative h-7 w-7 transition-colors hover:bg-white/10 hover:text-white"
+            >
             <Bell className="h-3.5 w-3.5" />
             {hasNewNotifications && (
               <span className="absolute right-1.5 top-1.5 h-1.5 w-1.5 rounded-full bg-[#EF4444]" />
@@ -131,12 +161,16 @@ export function Topbar() {
         {/* User dropdown */}
         <DropdownMenu>
           <DropdownMenuTrigger asChild>
-            <button className="flex items-center gap-1.5 rounded-md px-2 py-1 text-xs text-ink-faint transition-colors hover:bg-[var(--color-charcoal)] hover:text-ink-dim focus:outline-none">
+            <motion.button 
+              whileHover={{ scale: 1.05 }}
+              whileTap={{ scale: 0.95 }}
+              className="flex items-center gap-1.5 rounded-md px-2 py-1 text-xs text-ink-faint transition-colors hover:bg-[var(--color-charcoal)] hover:text-ink-dim focus:outline-none"
+            >
               <span className="hidden sm:block">"Admin"</span>
-              <div className="h-5 w-5 rounded-full bg-[var(--color-accent)] flex items-center justify-center text-[10px] font-semibold text-white">
+              <div className="h-5 w-5 rounded-full bg-[var(--color-accent)] flex items-center justify-center text-[10px] font-semibold text-white shadow-sm ring-1 ring-white/10">
                 "A"
               </div>
-            </button>
+            </motion.button>
           </DropdownMenuTrigger>
           <DropdownMenuContent align="end" className="w-52">
             <DropdownMenuLabel className="font-normal">

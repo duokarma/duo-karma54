@@ -7,6 +7,7 @@ import { Input } from "@/components/ui/input";
 import { Card, CardContent } from "@/components/ui/card";
 import { StatusBadge } from "@/components/shared/status-badge";
 import { EmptyState } from "@/components/shared/empty-state";
+import { TiltCard, GlowBorder, AnimatedBadge } from "@/components/premium";
 import {
   Select,
   SelectContent,
@@ -209,8 +210,10 @@ export function ProjectsPage() {
               animate={{ opacity: 1, y: 0 }}
               transition={{ delay: i * 0.05 }}
             >
-              <Card className="h-full transition-transform hover:-translate-y-0.5">
-                <CardContent className="p-5">
+              <TiltCard className="h-full">
+                <GlowBorder color={["rgba(37,99,235,0.4)", "rgba(16,185,129,0.4)"]} className="h-full w-full rounded-[var(--radius-card)]">
+                  <Card className="h-full border-none shadow-none bg-[var(--color-card)] relative z-10">
+                    <CardContent className="p-5">
                   <div className="flex items-start justify-end gap-2">
                     <div className="flex items-center gap-2">
                       <DropdownMenu>
@@ -250,24 +253,33 @@ export function ProjectsPage() {
                   {(project.websiteLink || project.vercelLink || project.githubLink || project.databaseLink) && (
                     <div className="mt-4 flex flex-wrap gap-2">
                       {project.websiteLink && (
-                        <a href={project.websiteLink} target="_blank" rel="noopener noreferrer" className="text-xs text-electric hover:underline bg-electric/10 px-3 py-1 rounded-full">Website</a>
+                        <a href={project.websiteLink} target="_blank" rel="noopener noreferrer">
+                          <AnimatedBadge variant="default" className="bg-electric/10 text-electric hover:bg-electric/20 cursor-pointer">Website</AnimatedBadge>
+                        </a>
                       )}
                       {project.vercelLink && (
-                        <a href={project.vercelLink} target="_blank" rel="noopener noreferrer" className="text-xs text-electric hover:underline bg-electric/10 px-3 py-1 rounded-full">Vercel</a>
+                        <a href={project.vercelLink} target="_blank" rel="noopener noreferrer">
+                          <AnimatedBadge variant="default" className="bg-electric/10 text-electric hover:bg-electric/20 cursor-pointer">Vercel</AnimatedBadge>
+                        </a>
                       )}
                       {project.githubLink && (
-                        <a href={project.githubLink} target="_blank" rel="noopener noreferrer" className="text-xs text-electric hover:underline bg-electric/10 px-3 py-1 rounded-full">GitHub</a>
+                        <a href={project.githubLink} target="_blank" rel="noopener noreferrer">
+                          <AnimatedBadge variant="default" className="bg-electric/10 text-electric hover:bg-electric/20 cursor-pointer">GitHub</AnimatedBadge>
+                        </a>
                       )}
                       {project.databaseLink && (
-                        <a href={project.databaseLink} target="_blank" rel="noopener noreferrer" className="text-xs text-electric hover:underline bg-electric/10 px-3 py-1 rounded-full">Database</a>
+                        <a href={project.databaseLink} target="_blank" rel="noopener noreferrer">
+                          <AnimatedBadge variant="default" className="bg-electric/10 text-electric hover:bg-electric/20 cursor-pointer">Database</AnimatedBadge>
+                        </a>
                       )}
                     </div>
                   )}
 
-
                 </CardContent>
               </Card>
-            </motion.div>
+            </GlowBorder>
+          </TiltCard>
+        </motion.div>
           ))}
         </div>
       )}

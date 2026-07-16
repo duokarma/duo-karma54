@@ -18,7 +18,7 @@ const Progress = React.forwardRef<React.ElementRef<typeof ProgressPrimitive.Root
       <motion.div
         initial={{ width: 0 }}
         animate={{ width: `${value}%` }}
-        transition={{ duration: 0.7, ease: "easeOut" }}
+        transition={{ type: "spring", stiffness: 100, damping: 15 }}
         className={cn(
           "h-full rounded-full bg-gradient-to-r from-electric to-violet",
           indicatorClassName
