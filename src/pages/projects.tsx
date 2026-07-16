@@ -211,7 +211,7 @@ export function ProjectsPage() {
               transition={{ delay: i * 0.05 }}
             >
               <TiltCard className="h-full">
-                <GlowBorder color={["rgba(37,99,235,0.4)", "rgba(16,185,129,0.4)"]} className="h-full w-full rounded-[var(--radius-card)]">
+                <GlowBorder color="rgba(37,99,235,0.4)" className="h-full w-full rounded-[var(--radius-card)]">
                   <Card className="h-full border-none shadow-none bg-[var(--color-card)] relative z-10">
                     <CardContent className="p-5">
                   <div className="flex items-start justify-end gap-2">

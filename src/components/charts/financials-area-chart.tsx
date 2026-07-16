@@ -20,7 +20,7 @@ function CustomTooltip({ active, payload, label }: any) {
   );
 }
 
-import React, { memo } from "react";
+import { memo } from "react";
 import { ChartLoader } from "@/components/premium/chart-loader";
 
 export const FinancialsAreaChart = memo(function FinancialsAreaChart({ data, height = 280, isLoading }: { data: ChartPoint[]; height?: number; isLoading?: boolean }) {
