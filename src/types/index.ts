@@ -83,6 +83,10 @@ export interface Project {
   dueDate: string;
   team: string[];
   priority: "low" | "medium" | "high" | "urgent";
+  websiteLink?: string;
+  vercelLink?: string;
+  githubLink?: string;
+  databaseLink?: string;
 }
 
 export interface InvoiceLineItem {

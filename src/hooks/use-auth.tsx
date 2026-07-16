@@ -22,42 +22,7 @@ export function AuthProvider({ children }: { children: React.ReactNode }) {
     setIsLoading(false);
   }, []);
 
-  // Idle timeout and visibility listener (auto-logout)
-  useEffect(() => {
-    if (!isAuthenticated) return;
 
-    let timeoutId: NodeJS.Timeout;
-
-    const resetTimer = () => {
-      clearTimeout(timeoutId);
-      // 5 minutes of inactivity logs you out
-      timeoutId = setTimeout(() => {
-        signOut();
-      }, 5 * 60 * 1000);
-    };
-
-    const handleVisibilityChange = () => {
-      if (document.visibilityState === "hidden") {
-        // Log out immediately if the user leaves the page/tab
-        signOut();
-      }
-    };
-
-    window.addEventListener("mousemove", resetTimer);
-    window.addEventListener("keypress", resetTimer);
-    window.addEventListener("touchstart", resetTimer);
-    document.addEventListener("visibilitychange", handleVisibilityChange);
-
-    resetTimer();
-
-    return () => {
-      clearTimeout(timeoutId);
-      window.removeEventListener("mousemove", resetTimer);
-      window.removeEventListener("keypress", resetTimer);
-      window.removeEventListener("touchstart", resetTimer);
-      document.removeEventListener("visibilitychange", handleVisibilityChange);
-    };
-  }, [isAuthenticated]);
 
   const signIn = () => {
     sessionStorage.setItem("duokarma_auth", "true");

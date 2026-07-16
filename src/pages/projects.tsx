@@ -37,23 +37,21 @@ import { zodResolver } from "@hookform/resolvers/zod";
 import * as z from "zod";
 import { supabase } from "@/lib/supabase";
 import type { Project } from "@/types";
-import { formatCurrency, cn } from "@/lib/utils";
+import { formatCurrency } from "@/lib/utils";
 
 const projectSchema = z.object({
   name: z.string().min(2, "Name is required"),
   client: z.string().min(2, "Client is required"),
   budget: z.coerce.number().min(0, "Budget must be a number"),
-  priority: z.enum(["low", "medium", "high", "urgent"]),
+  websiteLink: z.string().optional().or(z.literal("")),
+  vercelLink: z.string().optional().or(z.literal("")),
+  githubLink: z.string().optional().or(z.literal("")),
+  databaseLink: z.string().optional().or(z.literal("")),
 });
 
 type ProjectFormValues = z.infer<typeof projectSchema>;
 
-const priorityDot: Record<string, string> = {
-  low: "bg-ink-faint",
-  medium: "bg-electric",
-  high: "bg-amber",
-  urgent: "bg-rose",
-};
+
 
 export function ProjectsPage() {
   const queryClient = useQueryClient();
@@ -62,9 +60,8 @@ export function ProjectsPage() {
   const [addOpen, setAddOpen] = useState(false);
   const [selectedProject, setSelectedProject] = useState<Project | null>(null);
 
-  const { register, handleSubmit, reset, formState: { errors }, setValue } = useForm<ProjectFormValues>({
+  const { register, handleSubmit, reset, formState: { errors } } = useForm<ProjectFormValues>({
     resolver: zodResolver(projectSchema) as any,
-    defaultValues: { priority: "medium" }
   });
 
   const createMutation = useMutation({
@@ -78,6 +75,7 @@ export function ProjectsPage() {
         startDate: new Date().toISOString().split("T")[0],
         dueDate: new Date(Date.now() + 30 * 24 * 60 * 60 * 1000).toISOString().split("T")[0],
         team: ["Hatim"],
+        priority: "medium",
       };
       const { error } = await supabase.from("projects").insert([newProject]);
       if (error) throw error;
@@ -129,7 +127,10 @@ export function ProjectsPage() {
       name: project.name,
       client: project.client,
       budget: project.budget,
-      priority: project.priority,
+      websiteLink: project.websiteLink || "",
+      vercelLink: project.vercelLink || "",
+      githubLink: project.githubLink || "",
+      databaseLink: project.databaseLink || "",
     });
     setAddOpen(true);
   };
@@ -212,11 +213,7 @@ export function ProjectsPage() {
             >
               <Card className="h-full transition-transform hover:-translate-y-0.5">
                 <CardContent className="p-5">
-                  <div className="flex items-start justify-between gap-2">
-                    <div className="flex items-center gap-2">
-                      <span className={cn("h-2 w-2 rounded-full", priorityDot[project.priority])} />
-                      <p className="text-xs uppercase tracking-wide text-ink-faint">{project.priority}</p>
-                    </div>
+                  <div className="flex items-start justify-end gap-2">
                     <div className="flex items-center gap-2">
                       <DropdownMenu>
                         <DropdownMenuTrigger className="focus:outline-none">
@@ -251,6 +248,23 @@ export function ProjectsPage() {
                   </div>
                   <p className="mt-3 font-display text-base font-semibold text-ink">{project.name}</p>
                   <p className="text-xs text-ink-faint">{project.client}</p>
+
+                  {(project.websiteLink || project.vercelLink || project.githubLink || project.databaseLink) && (
+                    <div className="mt-3 flex flex-wrap gap-2">
+                      {project.websiteLink && (
+                        <a href={project.websiteLink} target="_blank" rel="noopener noreferrer" className="text-[10px] text-electric hover:underline bg-electric/10 px-2 py-0.5 rounded-full">Website</a>
+                      )}
+                      {project.vercelLink && (
+                        <a href={project.vercelLink} target="_blank" rel="noopener noreferrer" className="text-[10px] text-electric hover:underline bg-electric/10 px-2 py-0.5 rounded-full">Vercel</a>
+                      )}
+                      {project.githubLink && (
+                        <a href={project.githubLink} target="_blank" rel="noopener noreferrer" className="text-[10px] text-electric hover:underline bg-electric/10 px-2 py-0.5 rounded-full">GitHub</a>
+                      )}
+                      {project.databaseLink && (
+                        <a href={project.databaseLink} target="_blank" rel="noopener noreferrer" className="text-[10px] text-electric hover:underline bg-electric/10 px-2 py-0.5 rounded-full">Database</a>
+                      )}
+                    </div>
+                  )}
 
                   <div className="mt-4">
                     <div className="flex items-center justify-between text-xs">
@@ -298,7 +312,7 @@ export function ProjectsPage() {
         setAddOpen(open);
         if (!open) {
           setSelectedProject(null);
-          reset({ name: "", client: "", budget: 0, priority: "medium" });
+          reset({ name: "", client: "", budget: 0, websiteLink: "", vercelLink: "", githubLink: "", databaseLink: "" });
         }
       }}>
         <DrawerContent>
@@ -328,19 +342,24 @@ export function ProjectsPage() {
               <Input placeholder="50000" type="number" {...register("budget")} />
               {errors.budget && <p className="mt-1 text-[10px] text-rose">{errors.budget.message}</p>}
             </div>
-            <div>
-              <label className="mb-1.5 block text-xs font-medium text-ink-dim">Priority</label>
-              <Select onValueChange={(val) => setValue("priority", val as any)} defaultValue="medium">
-                <SelectTrigger>
-                  <SelectValue placeholder="Select priority" />
-                </SelectTrigger>
-                <SelectContent>
-                  <SelectItem value="low">Low</SelectItem>
-                  <SelectItem value="medium">Medium</SelectItem>
-                  <SelectItem value="high">High</SelectItem>
-                  <SelectItem value="urgent">Urgent</SelectItem>
-                </SelectContent>
-              </Select>
+
+            <div className="grid grid-cols-2 gap-4">
+              <div>
+                <label className="mb-1.5 block text-xs font-medium text-ink-dim">Website Link</label>
+                <Input placeholder="https://..." {...register("websiteLink")} />
+              </div>
+              <div>
+                <label className="mb-1.5 block text-xs font-medium text-ink-dim">Vercel Link</label>
+                <Input placeholder="https://..." {...register("vercelLink")} />
+              </div>
+              <div>
+                <label className="mb-1.5 block text-xs font-medium text-ink-dim">GitHub Link</label>
+                <Input placeholder="https://..." {...register("githubLink")} />
+              </div>
+              <div>
+                <label className="mb-1.5 block text-xs font-medium text-ink-dim">Database Link</label>
+                <Input placeholder="https://..." {...register("databaseLink")} />
+              </div>
             </div>
             <Button className="w-full" type="submit" disabled={createMutation.isPending || editMutation.isPending}>
               {createMutation.isPending || editMutation.isPending ? "Saving..." : selectedProject ? "Save Changes" : "Create Project"}
