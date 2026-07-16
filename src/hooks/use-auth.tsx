@@ -13,9 +13,9 @@ export function AuthProvider({ children }: { children: React.ReactNode }) {
   const [isAuthenticated, setIsAuthenticated] = useState<boolean>(false);
   const [isLoading, setIsLoading] = useState(true);
 
-  // Check session storage on mount
+  // Check local storage on mount
   useEffect(() => {
-    const authStatus = sessionStorage.getItem("duokarma_auth");
+    const authStatus = localStorage.getItem("duokarma_auth");
     if (authStatus === "true") {
       setIsAuthenticated(true);
     }
@@ -25,12 +25,12 @@ export function AuthProvider({ children }: { children: React.ReactNode }) {
 
 
   const signIn = () => {
-    sessionStorage.setItem("duokarma_auth", "true");
+    localStorage.setItem("duokarma_auth", "true");
     setIsAuthenticated(true);
   };
 
   const signOut = () => {
-    sessionStorage.removeItem("duokarma_auth");
+    localStorage.removeItem("duokarma_auth");
     setIsAuthenticated(false);
   };
 

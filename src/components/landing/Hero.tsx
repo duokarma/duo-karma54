@@ -1,6 +1,7 @@
 import { useState, useEffect, useRef } from 'react';
 import { AnimatedTextReveal } from './ui/AnimatedTextReveal';
 import { GridPattern } from './ui/GridPattern';
+import { MagneticWrapper } from '@/components/premium/magnetic-wrapper';
 
 const SPOTLIGHT_R = 260;
 const BG_IMAGE_1 = "https://images.higgs.ai/?default=1&output=webp&url=https%3A%2F%2Fd8j0ntlcm91z4.cloudfront.net%2Fuser_38xzZboKViGWJOttwIXH07lWA1P%2Fhf_20260609_195923_b0ba8ace-1d1d-4f2c-9a28-1ab84b330680.png&w=1280&q=85";
@@ -148,14 +149,17 @@ export function Hero() {
           <p className="text-xs sm:text-sm text-white/80 leading-relaxed">
             We engineer scalable, intuitive platforms that transform complex operations into streamlined workflows. Discover how intelligent automation and purposeful design drive measurable business growth.
           </p>
-          <button 
-            className="bg-[#e8702a] hover:bg-[#d2611f] text-white text-sm font-medium px-7 py-3 rounded-full transition-all hover:scale-[1.03] active:scale-95 hover:shadow-lg hover:shadow-[#e8702a]/30"
-            onClick={() => {
-              document.getElementById('work')?.scrollIntoView({ behavior: 'smooth' });
-            }}
-          >
-            Start Building
-          </button>
+          <MagneticWrapper>
+            <button 
+              className="bg-[#e8702a] hover:bg-[#d2611f] text-white text-sm font-medium px-7 py-3 rounded-full transition-all hover:scale-[1.03] active:scale-95 hover:shadow-lg hover:shadow-[#e8702a]/30 relative overflow-hidden group"
+              onClick={() => {
+                document.getElementById('work')?.scrollIntoView({ behavior: 'smooth' });
+              }}
+            >
+              <span className="relative z-10">Start Building</span>
+              <div className="absolute inset-0 bg-white/20 translate-y-full group-hover:translate-y-0 transition-transform duration-300 ease-out" />
+            </button>
+          </MagneticWrapper>
         </div>
       </section>
     </div>

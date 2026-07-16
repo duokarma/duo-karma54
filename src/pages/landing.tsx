@@ -15,6 +15,7 @@ import { LoadingScreen } from '@/components/landing/ui/LoadingScreen';
 import { COLORS, FONT_IMPORT } from '@/components/landing/ui/theme';
 import { BottomDock } from '@/components/landing/BottomDock';
 import { CommandPalette } from '@/components/landing/CommandPalette';
+import { AnimatedNoise, SoftAurora, FloatingParticles } from '@/components/premium/ambient-effects';
 
 export function LandingPage() {
   const [ready, setReady] = useState(false);
@@ -78,6 +79,12 @@ export function LandingPage() {
           * { animation-duration: 0.01ms !important; transition-duration: 0.01ms !important; }
         }
       `}</style>
+
+      <div className="fixed inset-0 z-0 pointer-events-none opacity-40">
+        <SoftAurora />
+        <FloatingParticles />
+        <AnimatedNoise />
+      </div>
 
       {/* Noise texture overlay — very subtle */}
       <div
