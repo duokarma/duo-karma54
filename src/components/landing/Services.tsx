@@ -14,14 +14,14 @@ import {
 } from 'lucide-react';
 
 const SERVICES = [
-  { name: 'Custom Software', icon: Code2, description: 'Bespoke applications built around your exact workflow and business logic.' },
-  { name: 'Admin Dashboards', icon: LayoutDashboard, description: 'Real-time control panels for operations, analytics, and team management.' },
-  { name: 'Booking Platforms', icon: CalendarClock, description: 'Availability-aware booking engines with instant confirmation and payments.' },
-  { name: 'Business Automation', icon: Zap, description: 'Eliminate repetitive tasks with intelligent, event-driven workflows.' },
-  { name: 'Business Websites', icon: Globe, description: 'Premium, high-performance public-facing sites that convert visitors.' },
-  { name: 'Cloud Deployment', icon: Cloud, description: 'Zero-downtime releases with CDN, SSL, load balancing, and monitoring.' },
-  { name: 'Supabase Integration', icon: Database, description: 'Real-time databases, secure auth, and edge functions — production-ready.' },
-  { name: 'Responsive Design', icon: MonitorSmartphone, description: 'Fluid layouts ensuring every screen and device looks pixel-perfect.' },
+  { name: 'Internal Tools', icon: Code2, description: 'We build the exact software your team needs to work faster, instead of forcing you to use clunky off-the-shelf apps.' },
+  { name: 'Admin Dashboards', icon: LayoutDashboard, description: 'A single control panel where you can see exactly what\'s happening in your business and manage everything in one place.' },
+  { name: 'Custom Booking', icon: CalendarClock, description: 'Systems that let your customers schedule and pay for your services online, completely hands-free for you.' },
+  { name: 'Automating Busywork', icon: Zap, description: 'If you\'re copying and pasting data all day, we write scripts to do it for you automatically in the background.' },
+  { name: 'Marketing Sites', icon: Globe, description: 'Fast, custom-built websites that look professional, load instantly, and actually convince people to contact you.' },
+  { name: 'Cloud Infrastructure', icon: Cloud, description: 'We put your software on reliable servers so it stays online when you get busy, and we handle all the maintenance.' },
+  { name: 'Database & Security', icon: Database, description: 'We set up secure, modern databases to store your business data safely, complete with proper user logins and backups.' },
+  { name: 'Mobile Ready', icon: MonitorSmartphone, description: 'Everything we build works perfectly on your phone, so you can run your business while you\'re away from your desk.' },
 ];
 
 export function Services() {
