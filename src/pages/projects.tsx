@@ -44,6 +44,10 @@ const projectSchema = z.object({
   client: z.string().min(2, "Client is required"),
   budget: z.coerce.number().min(0, "Budget must be a number"),
   priority: z.enum(["low", "medium", "high", "urgent"]),
+  websiteLink: z.string().optional().or(z.literal("")),
+  vercelLink: z.string().optional().or(z.literal("")),
+  githubLink: z.string().optional().or(z.literal("")),
+  databaseLink: z.string().optional().or(z.literal("")),
 });
 
 type ProjectFormValues = z.infer<typeof projectSchema>;
@@ -130,6 +134,10 @@ export function ProjectsPage() {
       client: project.client,
       budget: project.budget,
       priority: project.priority,
+      websiteLink: project.websiteLink || "",
+      vercelLink: project.vercelLink || "",
+      githubLink: project.githubLink || "",
+      databaseLink: project.databaseLink || "",
     });
     setAddOpen(true);
   };
@@ -252,6 +260,23 @@ export function ProjectsPage() {
                   <p className="mt-3 font-display text-base font-semibold text-ink">{project.name}</p>
                   <p className="text-xs text-ink-faint">{project.client}</p>
 
+                  {(project.websiteLink || project.vercelLink || project.githubLink || project.databaseLink) && (
+                    <div className="mt-3 flex flex-wrap gap-2">
+                      {project.websiteLink && (
+                        <a href={project.websiteLink} target="_blank" rel="noopener noreferrer" className="text-[10px] text-electric hover:underline bg-electric/10 px-2 py-0.5 rounded-full">Website</a>
+                      )}
+                      {project.vercelLink && (
+                        <a href={project.vercelLink} target="_blank" rel="noopener noreferrer" className="text-[10px] text-electric hover:underline bg-electric/10 px-2 py-0.5 rounded-full">Vercel</a>
+                      )}
+                      {project.githubLink && (
+                        <a href={project.githubLink} target="_blank" rel="noopener noreferrer" className="text-[10px] text-electric hover:underline bg-electric/10 px-2 py-0.5 rounded-full">GitHub</a>
+                      )}
+                      {project.databaseLink && (
+                        <a href={project.databaseLink} target="_blank" rel="noopener noreferrer" className="text-[10px] text-electric hover:underline bg-electric/10 px-2 py-0.5 rounded-full">Database</a>
+                      )}
+                    </div>
+                  )}
+
                   <div className="mt-4">
                     <div className="flex items-center justify-between text-xs">
                       <span className="text-ink-faint">Progress</span>
@@ -298,7 +323,7 @@ export function ProjectsPage() {
         setAddOpen(open);
         if (!open) {
           setSelectedProject(null);
-          reset({ name: "", client: "", budget: 0, priority: "medium" });
+          reset({ name: "", client: "", budget: 0, priority: "medium", websiteLink: "", vercelLink: "", githubLink: "", databaseLink: "" });
         }
       }}>
         <DrawerContent>
@@ -341,6 +366,24 @@ export function ProjectsPage() {
                   <SelectItem value="urgent">Urgent</SelectItem>
                 </SelectContent>
               </Select>
+            </div>
+            <div className="grid grid-cols-2 gap-4">
+              <div>
+                <label className="mb-1.5 block text-xs font-medium text-ink-dim">Website Link</label>
+                <Input placeholder="https://..." {...register("websiteLink")} />
+              </div>
+              <div>
+                <label className="mb-1.5 block text-xs font-medium text-ink-dim">Vercel Link</label>
+                <Input placeholder="https://..." {...register("vercelLink")} />
+              </div>
+              <div>
+                <label className="mb-1.5 block text-xs font-medium text-ink-dim">GitHub Link</label>
+                <Input placeholder="https://..." {...register("githubLink")} />
+              </div>
+              <div>
+                <label className="mb-1.5 block text-xs font-medium text-ink-dim">Database Link</label>
+                <Input placeholder="https://..." {...register("databaseLink")} />
+              </div>
             </div>
             <Button className="w-full" type="submit" disabled={createMutation.isPending || editMutation.isPending}>
               {createMutation.isPending || editMutation.isPending ? "Saving..." : selectedProject ? "Save Changes" : "Create Project"}
