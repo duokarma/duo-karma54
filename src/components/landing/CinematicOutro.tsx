@@ -1,10 +1,6 @@
 import { useRef } from 'react';
 import { m as motion, useScroll, useTransform } from 'framer-motion';
 import { COLORS } from './ui/theme';
-import { LazyVideo } from '@/components/shared/LazyVideo';
-
-const VIDEO_URL =
-  'https://d8j0ntlcm91z4.cloudfront.net/user_38xzZboKViGWJOttwIXH07lWA1P/hf_20260619_191346_9d19d66e-86a4-47f7-8dc6-712c1788c3b2.mp4';
 
 export function CinematicOutro() {
   const containerRef = useRef<HTMLDivElement>(null);
@@ -32,7 +28,7 @@ export function CinematicOutro() {
         overflow: 'hidden',
       }}
     >
-      {/* Background Video Layer */}
+      {/* Background Image Layer */}
       <motion.div
         className="dk-video-mask"
         style={{
@@ -41,13 +37,9 @@ export function CinematicOutro() {
           y,
         }}
       >
-        <LazyVideo
-          src={VIDEO_URL}
-          autoPlay
-          muted
-          loop
-          playsInline
-          preload="none"
+        <img
+          src="/start.png"
+          alt=""
           style={{
             width: '100%',
             height: '100%',
