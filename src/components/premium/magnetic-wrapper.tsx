@@ -1,5 +1,5 @@
 import React, { useRef } from "react";
-import { motion, useMotionValue, useSpring, type HTMLMotionProps } from "framer-motion";
+import { m as motion, useMotionValue, useSpring, type HTMLMotionProps } from "framer-motion";
 
 interface MagneticWrapperProps extends HTMLMotionProps<"div"> {
   children: React.ReactNode;

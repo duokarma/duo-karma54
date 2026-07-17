@@ -1,5 +1,5 @@
 import React, { useRef } from "react";
-import { motion, useMotionValue, useSpring, useTransform, type HTMLMotionProps } from "framer-motion";
+import { m as motion, useMotionValue, useSpring, useTransform, type HTMLMotionProps } from "framer-motion";
 import { cn } from "@/lib/utils";
 
 interface TiltCardProps extends HTMLMotionProps<"div"> {

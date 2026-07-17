@@ -1,5 +1,5 @@
 import { useState, useEffect, useRef } from 'react';
-import { motion } from 'framer-motion';
+import { m as motion } from 'framer-motion';
 import { COLORS } from './ui/theme';
 import { Reveal } from './ui/Reveal';
 import { TiltCard } from '@/components/premium/tilt-card';

@@ -1,7 +1,7 @@
 import { useState, useEffect } from "react";
 import { Clock, CheckSquare, Activity, Pin, ArrowUpRight } from "lucide-react";
 import { Link } from "react-router-dom";
-import { motion } from "framer-motion";
+import { m as motion } from "framer-motion";
 
 
 export function LiveClock() {

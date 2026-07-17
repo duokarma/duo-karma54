@@ -1,4 +1,4 @@
-import { motion, useMotionTemplate, useMotionValue } from 'framer-motion';
+import { m as motion, useMotionTemplate, useMotionValue } from 'framer-motion';
 import { COLORS } from './ui/theme';
 import { Eyebrow } from './ui/Eyebrow';
 import { Reveal } from './ui/Reveal';

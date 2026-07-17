@@ -1,5 +1,5 @@
 import React from 'react';
-import { motion } from 'framer-motion';
+import { m as motion } from 'framer-motion';
 
 export function Reveal({ children, delay = 0, y = 24, className = '', style = {} }: { children: React.ReactNode, delay?: number, y?: number, className?: string, style?: React.CSSProperties }) {
   return (

@@ -1,4 +1,4 @@
-import { motion } from "framer-motion";
+import { m as motion } from "framer-motion";
 import { Skeleton } from "@/components/ui/skeleton";
 
 export function PageLoader() {

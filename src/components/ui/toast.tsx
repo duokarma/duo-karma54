@@ -1,6 +1,6 @@
 import * as React from "react";
 import { CheckCircle2, XCircle, Info, X } from "lucide-react";
-import { motion, AnimatePresence, useMotionValue, useTransform } from "framer-motion";
+import { m as motion, AnimatePresence, useMotionValue, useTransform } from "framer-motion";
 import { cn } from "@/lib/utils";
 
 type ToastVariant = "success" | "error" | "info";

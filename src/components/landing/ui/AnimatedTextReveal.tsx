@@ -1,4 +1,4 @@
-import { motion, type Variants } from "framer-motion";
+import { m as motion, type Variants } from "framer-motion";
 
 interface AnimatedTextRevealProps {
   text: string;

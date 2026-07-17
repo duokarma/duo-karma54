@@ -1,5 +1,5 @@
 import { useState, useEffect } from 'react';
-import { motion, useSpring } from 'framer-motion';
+import { m as motion, useSpring } from 'framer-motion';
 import { COLORS } from './theme';
 
 const CURSOR_LABELS: Record<string, string> = {

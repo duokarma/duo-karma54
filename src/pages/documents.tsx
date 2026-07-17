@@ -1,5 +1,5 @@
 import { useMemo, useState, useRef } from "react";
-import { motion, AnimatePresence } from "framer-motion";
+import { m as motion, AnimatePresence } from "framer-motion";
 import { Plus, Search, FileText, Sheet, Image as ImageIcon, File, FolderOpen, MoreVertical, Pencil, Trash2, Link as LinkIcon, Eye, Download } from "lucide-react";
 import { PageHeader } from "@/components/shared/page-header";
 import { Button } from "@/components/ui/button";

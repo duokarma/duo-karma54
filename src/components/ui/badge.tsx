@@ -29,7 +29,7 @@ export interface BadgeProps
   dot?: boolean;
 }
 
-import { motion } from "framer-motion";
+import { m as motion } from "framer-motion";
 
 function Badge({ className, variant, dot, children, ...props }: BadgeProps) {
   const dotColors: Record<string, string> = {

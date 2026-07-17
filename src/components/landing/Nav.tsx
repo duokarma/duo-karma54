@@ -1,5 +1,5 @@
 import { useState } from 'react';
-import { motion, useScroll, useMotionValueEvent } from 'framer-motion';
+import { m as motion, useScroll, useMotionValueEvent } from 'framer-motion';
 
 const LINKS = ['Work', 'Services', 'Process', 'Contact'];
 

@@ -1,5 +1,5 @@
 import { useEffect, useRef } from 'react';
-import { motion, useMotionValue, useTransform, animate } from 'framer-motion';
+import { m as motion, useMotionValue, useTransform, animate } from 'framer-motion';
 import { COLORS } from './ui/theme';
 
 interface Project {

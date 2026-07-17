@@ -1,5 +1,5 @@
 import React, { useRef, useState } from 'react';
-import { motion } from 'framer-motion';
+import { m as motion } from 'framer-motion';
 import { COLORS } from './theme';
 
 export function MagneticButton({ children, primary = false, onClick }: { children: React.ReactNode, primary?: boolean, onClick?: () => void }) {

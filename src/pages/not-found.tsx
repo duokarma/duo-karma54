@@ -1,5 +1,5 @@
 import { Link } from "react-router-dom";
-import { motion } from "framer-motion";
+import { m as motion } from "framer-motion";
 import { ArrowLeft, Compass } from "lucide-react";
 import { Button } from "@/components/ui/button";
 import { CrystalScene } from "@/components/three/crystal-scene";

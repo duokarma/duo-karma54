@@ -1,6 +1,6 @@
 import { useLocation, Link } from "react-router-dom";
 import { Bell, Menu, ChevronRight, Search, LogOut, LayoutGrid } from "lucide-react";
-import { motion, AnimatePresence } from "framer-motion";
+import { m as motion, AnimatePresence } from "framer-motion";
 import { useSidebar } from "@/hooks/use-sidebar";
 import { useCommandPalette } from "@/hooks/use-command-palette";
 import { navItems } from "@/lib/nav-config";

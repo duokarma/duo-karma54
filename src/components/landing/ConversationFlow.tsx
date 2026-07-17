@@ -1,5 +1,5 @@
 import { useState, useEffect, useRef } from 'react';
-import { motion, AnimatePresence } from 'framer-motion';
+import { m as motion, AnimatePresence } from 'framer-motion';
 import { ArrowLeft, ArrowRight, Check, Calendar, MessageCircle, Mail } from 'lucide-react';
 import { supabase } from '@/lib/supabase';
 import { COLORS } from './ui/theme';
