@@ -1,6 +1,7 @@
 import { useRef } from 'react';
 import { motion, useScroll, useTransform } from 'framer-motion';
 import { COLORS } from './ui/theme';
+import { LazyVideo } from '@/components/shared/LazyVideo';
 
 const VIDEO_URL =
   'https://d8j0ntlcm91z4.cloudfront.net/user_38xzZboKViGWJOttwIXH07lWA1P/hf_20260619_191346_9d19d66e-86a4-47f7-8dc6-712c1788c3b2.mp4';
@@ -40,11 +41,13 @@ export function CinematicOutro() {
           y,
         }}
       >
-        <motion.video
+        <LazyVideo
+          src={VIDEO_URL}
           autoPlay
           muted
           loop
           playsInline
+          preload="none"
           style={{
             width: '100%',
             height: '100%',
@@ -52,9 +55,7 @@ export function CinematicOutro() {
             objectPosition: 'center',
             opacity: 0.7, 
           }}
-        >
-          <source src={VIDEO_URL} type="video/mp4" />
-        </motion.video>
+        />
       </motion.div>
 
       {/* Gradients and Overlays for depth and blending */}

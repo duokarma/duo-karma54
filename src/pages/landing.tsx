@@ -1,31 +1,44 @@
-import { useState, useEffect, useRef } from 'react';
+import React, { useState, useEffect, useRef, Suspense } from 'react';
 import { Nav } from '@/components/landing/Nav';
 import { Hero } from '@/components/landing/Hero';
-import { About } from '@/components/landing/About';
-import { WhatWeBuild } from '@/components/landing/WhatWeBuild';
-import { Showcase } from '@/components/landing/Showcase';
-import { Services } from '@/components/landing/Services';
-import { Process } from '@/components/landing/Process';
-import { Stats } from '@/components/landing/Stats';
-import { CinematicOutro } from '@/components/landing/CinematicOutro';
-import { Contact } from '@/components/landing/Contact';
-import { Footer } from '@/components/landing/Footer';
 import { Cursor } from '@/components/landing/ui/Cursor';
 import { LoadingScreen } from '@/components/landing/ui/LoadingScreen';
 import { COLORS, FONT_IMPORT } from '@/components/landing/ui/theme';
 import { BottomDock } from '@/components/landing/BottomDock';
 import { CommandPalette } from '@/components/landing/CommandPalette';
-import { AnimatedNoise, SoftAurora, FloatingParticles } from '@/components/premium/ambient-effects';
+
+// Lazy load below-the-fold components
+const About = React.lazy(() => import('@/components/landing/About').then(m => ({ default: m.About })));
+const WhatWeBuild = React.lazy(() => import('@/components/landing/WhatWeBuild').then(m => ({ default: m.WhatWeBuild })));
+const Showcase = React.lazy(() => import('@/components/landing/Showcase').then(m => ({ default: m.Showcase })));
+const Services = React.lazy(() => import('@/components/landing/Services').then(m => ({ default: m.Services })));
+const Process = React.lazy(() => import('@/components/landing/Process').then(m => ({ default: m.Process })));
+const Stats = React.lazy(() => import('@/components/landing/Stats').then(m => ({ default: m.Stats })));
+const CinematicOutro = React.lazy(() => import('@/components/landing/CinematicOutro').then(m => ({ default: m.CinematicOutro })));
+const Contact = React.lazy(() => import('@/components/landing/Contact').then(m => ({ default: m.Contact })));
+const Footer = React.lazy(() => import('@/components/landing/Footer').then(m => ({ default: m.Footer })));
+const AmbientEffects = React.lazy(() => import('@/components/premium/ambient-effects').then(m => ({ 
+  default: () => (
+    <>
+      <m.SoftAurora />
+      <m.FloatingParticles />
+      <m.AnimatedNoise />
+    </>
+  )
+})));
 
 export function LandingPage() {
   const [ready, setReady] = useState(false);
   const [cmdOpen, setCmdOpen] = useState(false);
-  const [mouseLight, setMouseLight] = useState({ x: -999, y: -999 });
+  
+  // Use a ref for the glow element to bypass React rendering at 60fps
+  const glowRef = useRef<HTMLDivElement>(null);
   const lightRef = useRef({ x: -999, y: -999 });
+  const smoothRef = useRef({ x: -999, y: -999 });
   const rafRef = useRef<number>(0);
 
   useEffect(() => {
-    // Safety fallback — animation self-dismisses at ~6.2s
+    // Safety fallback
     const t = setTimeout(() => setReady(true), 8000);
     return () => clearTimeout(t);
   }, []);
@@ -42,24 +55,35 @@ export function LandingPage() {
     return () => window.removeEventListener('keydown', onKey);
   }, []);
 
-  // Smooth mouse light tracking
+  // Smooth mouse light tracking using direct DOM mutation (Zero React Renders!)
   useEffect(() => {
     const onMove = (e: MouseEvent) => {
       lightRef.current = { x: e.clientX, y: e.clientY };
     };
     window.addEventListener('mousemove', onMove);
+    
     const tick = () => {
-      setMouseLight((prev) => {
-        const dx = lightRef.current.x - prev.x;
-        const dy = lightRef.current.y - prev.y;
-        if (Math.abs(dx) < 0.1 && Math.abs(dy) < 0.1) return prev;
-        return {
-          x: prev.x + dx * 0.06,
-          y: prev.y + dy * 0.06,
-        };
-      });
+      const target = lightRef.current;
+      const smooth = smoothRef.current;
+      const glowEl = glowRef.current;
+      
+      if (glowEl && target.x !== -999) {
+        if (smooth.x === -999) {
+          smooth.x = target.x;
+          smooth.y = target.y;
+        } else {
+          const dx = target.x - smooth.x;
+          const dy = target.y - smooth.y;
+          smooth.x += dx * 0.06;
+          smooth.y += dy * 0.06;
+        }
+        
+        glowEl.style.background = `radial-gradient(500px circle at ${smooth.x}px ${smooth.y}px, rgba(201,168,118,0.055) 0%, transparent 70%)`;
+      }
+      
       rafRef.current = requestAnimationFrame(tick);
     };
+    
     rafRef.current = requestAnimationFrame(tick);
     return () => {
       window.removeEventListener('mousemove', onMove);
@@ -80,13 +104,16 @@ export function LandingPage() {
         }
       `}</style>
 
-      <div className="fixed inset-0 z-0 pointer-events-none opacity-40">
-        <SoftAurora />
-        <FloatingParticles />
-        <AnimatedNoise />
-      </div>
+      {/* Defer ambient effects until ready to prevent blocking the hero video/loading */}
+      {ready && (
+        <Suspense fallback={null}>
+          <div className="fixed inset-0 z-0 pointer-events-none opacity-40">
+            <AmbientEffects />
+          </div>
+        </Suspense>
+      )}
 
-      {/* Noise texture overlay — very subtle */}
+      {/* Noise texture overlay */}
       <div
         aria-hidden="true"
         style={{
@@ -114,24 +141,17 @@ export function LandingPage() {
         }}
       />
 
-      {/* Mouse light — champagne radial glow */}
+      {/* Mouse light — mutated directly via ref */}
       <div
+        ref={glowRef}
         aria-hidden="true"
         style={{
           position: 'fixed',
-          top: 0,
-          left: 0,
-          width: '100%',
-          height: '100%',
+          inset: 0,
           pointerEvents: 'none',
           zIndex: 2,
-          background: mouseLight.x > 0
-            ? `radial-gradient(500px circle at ${mouseLight.x}px ${mouseLight.y}px, rgba(201,168,118,0.055) 0%, transparent 70%)`
-            : 'none',
         }}
       />
-
-      {/* ⌘K hint badge removed as requested */}
 
       <LoadingScreen done={ready} />
       <Cursor />
@@ -139,16 +159,20 @@ export function LandingPage() {
       <BottomDock />
       <CommandPalette open={cmdOpen} onClose={() => setCmdOpen(false)} />
 
-      <Hero />
-      <About />
-      <WhatWeBuild />
-      <Showcase />
-      <Services />
-      <Process />
-      <Stats />
-      <CinematicOutro />
-      <Contact />
-      <Footer />
+      <Hero ready={ready} />
+      
+      {/* Lazy loaded sections */}
+      <Suspense fallback={<div className="h-[200px]" />}>
+        <About />
+        <WhatWeBuild />
+        <Showcase />
+        <Services />
+        <Process />
+        <Stats />
+        <CinematicOutro />
+        <Contact />
+        <Footer />
+      </Suspense>
     </div>
   );
 }

@@ -1,21 +1,22 @@
 import { AnimatedTextReveal } from './ui/AnimatedTextReveal';
 import { GridPattern } from './ui/GridPattern';
 import { MagneticWrapper } from '@/components/premium/magnetic-wrapper';
+import { LazyVideo } from '@/components/shared/LazyVideo';
 
-export function Hero() {
+export function Hero({ ready = true }: { ready?: boolean }) {
   return (
     <div className="tracking-[-0.02em]" style={{ fontFamily: "'Inter', sans-serif" }}>
       <section className="relative w-full overflow-hidden bg-black" style={{ height: '100dvh' }}>
         
         {/* Layer 1: Background Video (Zooming out on load) */}
         <div className="absolute inset-0 z-10 hero-zoom bg-black">
-          <video 
+          <LazyVideo 
             src="/homepage.mp4"
-            autoPlay
+            autoPlay={ready}
             loop
             muted
             playsInline
-            preload="auto"
+            preload="metadata"
             className="w-full h-full object-cover opacity-50"
             style={{ filter: 'contrast(1.1) brightness(0.9)' }}
           />
