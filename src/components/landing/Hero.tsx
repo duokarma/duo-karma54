@@ -45,7 +45,7 @@ export function Hero({ ready = true }: { ready?: boolean }) {
         {/* Layer 4: Bottom-left paragraph */}
         <div className="hidden sm:block absolute bottom-14 left-10 md:left-14 max-w-[260px] z-50 hero-anim hero-fade" style={{ animationDelay: '0.7s' }}>
           <p className="text-sm text-white/80 leading-relaxed">
-            Every line of code records a chapter of your business, from early spreadsheets to automated workflows, layered securely in the cloud.
+            We partner with visionary brands to build robust, scalable digital solutions that transform complex challenges into your competitive advantage.
           </p>
         </div>
 
