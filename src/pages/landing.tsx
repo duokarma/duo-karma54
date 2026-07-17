@@ -92,7 +92,7 @@ export function LandingPage() {
   }, []);
 
   return (
-    <div style={{ background: COLORS.bg, minHeight: '100vh', position: 'relative', overflowX: 'hidden' }}>
+    <main style={{ background: COLORS.bg, minHeight: '100vh', position: 'relative', overflowX: 'hidden' }}>
       <style>{FONT_IMPORT}</style>
       <style>{`
         * { box-sizing: border-box; }
@@ -173,6 +173,6 @@ export function LandingPage() {
         <Contact />
         <Footer />
       </Suspense>
-    </div>
+    </main>
   );
 }

@@ -89,7 +89,7 @@ function DockItem({ item, active, onClick }: { item: typeof DOCK_ITEMS[0]; activ
     <motion.button
       onClick={onClick}
       whileTap={{ scale: 0.88 }}
-      className="relative flex flex-col items-center gap-1 px-4 py-2 rounded-full transition-all"
+      className="relative flex flex-col items-center gap-1 px-4 py-2 rounded-full transition-all focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-[#C9A876]"
       aria-label={item.label}
       style={{ minWidth: 56 }}
     >

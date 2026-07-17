@@ -149,7 +149,7 @@ function SuccessScreen({ name, theme }: { name: string; theme: string }) {
     <motion.div
       initial={{ opacity: 0, scale: 0.96 }}
       animate={{ opacity: 1, scale: 1 }}
-      transition={{ duration: 0.4, ease: 'easeOut' }}
+      transition={{ duration: 0.4, ease: [0.16, 1, 0.3, 1] }}
       style={{ textAlign: 'center', padding: '40px 20px' }}
     >
       <motion.div
@@ -510,7 +510,7 @@ export function ConversationFlow() {
                 key={step + '-input'}
                 initial={{ opacity: 0, y: 15 }}
                 animate={{ opacity: 1, y: 0 }}
-                transition={{ duration: 0.3, ease: 'easeOut' }}
+                transition={{ duration: 0.3, ease: [0.16, 1, 0.3, 1] }}
                 style={{ display: 'flex', flexDirection: 'column', gap: 16 }}
               >
                 {currentStep.type === 'intro' ? (

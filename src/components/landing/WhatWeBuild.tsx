@@ -87,7 +87,7 @@ export function WhatWeBuild() {
                   initial={{ opacity: 0, y: "-50%", x: 14 }}
                   animate={{ opacity: 1, y: "-50%", x: 0 }}
                   exit={{ opacity: 0, y: "-50%", x: 14 }}
-                  transition={{ duration: 0.3, ease: "easeOut" }}
+                  transition={{ duration: 0.3, ease: [0.16, 1, 0.3, 1] }}
                   className="desktop-description-panel"
                   style={{
                     position: "absolute",
