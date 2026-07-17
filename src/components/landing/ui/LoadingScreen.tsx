@@ -37,6 +37,7 @@ export function LoadingScreen({ done }: { done: boolean }) {
               autoPlay
               muted
               playsInline
+              preload="auto"
               onEnded={handleVideoEnd}
               className="w-full h-full object-cover"
               style={{ transform: 'scale(1.07)' }} // Slight zoom to crop out the watermark at the edge
