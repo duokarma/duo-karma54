@@ -40,13 +40,7 @@ export function CinematicOutro() {
         <img
           src="/start.png"
           alt=""
-          style={{
-            width: '100%',
-            height: '100%',
-            objectFit: 'cover',
-            objectPosition: 'center',
-            opacity: 0.7, 
-          }}
+          className="dk-outro-bg"
         />
       </motion.div>
 
@@ -154,7 +148,17 @@ export function CinematicOutro() {
           -webkit-mask-image: radial-gradient(ellipse 60% 60% at 50% 50%, black 40%, transparent 100%);
           mask-image: radial-gradient(ellipse 60% 60% at 50% 50%, black 40%, transparent 100%);
         }
+        .dk-outro-bg {
+          width: 100%;
+          height: 100%;
+          object-fit: cover;
+          object-position: center;
+          opacity: 0.7;
+        }
         @media (max-width: 640px) {
+          .dk-outro-bg {
+            object-fit: contain;
+          }
           .dk-cta-card {
             padding: 40px 24px !important;
           }
