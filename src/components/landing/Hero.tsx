@@ -1,6 +1,5 @@
 import { AnimatedTextReveal } from './ui/AnimatedTextReveal';
 import { GridPattern } from './ui/GridPattern';
-import { CrystalScene } from '../three/crystal-scene';
 import { MagneticWrapper } from '@/components/premium/magnetic-wrapper';
 
 const SPOTLIGHT_R = 260;
@@ -77,12 +76,22 @@ export function Hero() {
     <div className="tracking-[-0.02em]" style={{ fontFamily: "'Inter', sans-serif" }}>
       <section className="relative w-full overflow-hidden bg-black" style={{ height: '100dvh' }}>
         
-        {/* Layer 1: Background Crystal Scene */}
+        {/* Layer 1: Background Video (Zooming out on load) */}
         <div className="absolute inset-0 z-10 hero-zoom bg-black">
-          <CrystalScene className="w-full h-full opacity-60 mix-blend-screen" />
-          {/* Gradient overlays to blend smoothly into the dark theme */}
+          <video 
+            src="/homepage.mp4"
+            autoPlay
+            loop
+            muted
+            playsInline
+            className="w-full h-full object-cover opacity-60 mix-blend-screen"
+          />
+          {/* Gradient overlays to blend the video smoothly into the dark theme */}
           <div className="absolute inset-0 bg-gradient-to-t from-[#0c0b0a] via-transparent to-transparent opacity-100 pointer-events-none" />
-          <div className="absolute inset-0 bg-gradient-to-b from-black/50 via-transparent to-black/30 pointer-events-none" />
+          <div className="absolute inset-0 bg-gradient-to-b from-[#0c0b0a] via-transparent to-transparent opacity-100 pointer-events-none" />
+          <div className="absolute inset-0 bg-gradient-to-l from-[#0c0b0a] via-transparent to-transparent opacity-100 pointer-events-none" />
+          <div className="absolute inset-0 bg-gradient-to-r from-[#0c0b0a] via-transparent to-transparent opacity-100 pointer-events-none" />
+          <div className="absolute inset-0 bg-[radial-gradient(circle_at_center,transparent_40%,#0c0b0a_100%)] pointer-events-none opacity-80" />
         </div>
         
         {/* Layer 1.5: Grid Pattern */}
