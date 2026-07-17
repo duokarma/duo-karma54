@@ -1,24 +1,18 @@
 import { AnimatedTextReveal } from './ui/AnimatedTextReveal';
 import { GridPattern } from './ui/GridPattern';
+import { CrystalScene } from '../three/crystal-scene';
 
 export function Hero() {
   return (
     <div className="tracking-[-0.02em]" style={{ fontFamily: "'Inter', sans-serif" }}>
       <section className="relative w-full overflow-hidden bg-black" style={{ height: '100dvh' }}>
         
-        {/* Layer 1: Background Video (Zooming out on load) */}
+        {/* Layer 1: Background Crystal Scene */}
         <div className="absolute inset-0 z-10 hero-zoom bg-black">
-          <video 
-            src="/homepage.mp4"
-            autoPlay
-            loop
-            muted
-            playsInline
-            className="w-full h-full object-cover opacity-60 mix-blend-screen"
-          />
-          {/* Gradient overlays to blend the video smoothly into the dark theme */}
-          <div className="absolute inset-0 bg-gradient-to-t from-[#0c0b0a] via-transparent to-transparent opacity-100" />
-          <div className="absolute inset-0 bg-gradient-to-b from-black/50 via-transparent to-black/30" />
+          <CrystalScene className="w-full h-full opacity-60 mix-blend-screen" />
+          {/* Gradient overlays to blend smoothly into the dark theme */}
+          <div className="absolute inset-0 bg-gradient-to-t from-[#0c0b0a] via-transparent to-transparent opacity-100 pointer-events-none" />
+          <div className="absolute inset-0 bg-gradient-to-b from-black/50 via-transparent to-black/30 pointer-events-none" />
         </div>
         
         {/* Layer 1.5: Grid Pattern */}
