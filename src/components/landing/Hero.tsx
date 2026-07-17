@@ -2,75 +2,6 @@ import { AnimatedTextReveal } from './ui/AnimatedTextReveal';
 import { GridPattern } from './ui/GridPattern';
 import { MagneticWrapper } from '@/components/premium/magnetic-wrapper';
 
-const SPOTLIGHT_R = 260;
-const BG_IMAGE_1 = "https://images.higgs.ai/?default=1&output=webp&url=https%3A%2F%2Fd8j0ntlcm91z4.cloudfront.net%2Fuser_38xzZboKViGWJOttwIXH07lWA1P%2Fhf_20260609_195923_b0ba8ace-1d1d-4f2c-9a28-1ab84b330680.png&w=1280&q=85";
-const BG_IMAGE_2 = "https://images.higgs.ai/?default=1&output=webp&url=https%3A%2F%2Fd8j0ntlcm91z4.cloudfront.net%2Fuser_38xzZboKViGWJOttwIXH07lWA1P%2Fhf_20260609_201152_bba90a12-bf12-459f-91f0-51f237dbaf3b.png&w=1280&q=85";
-
-function RevealLayer({ image, cursorX, cursorY }: { image: string, cursorX: number, cursorY: number }) {
-  const canvasRef = useRef<HTMLCanvasElement>(null);
-  const revealRef = useRef<HTMLDivElement>(null);
-
-  useEffect(() => {
-    const canvas = canvasRef.current;
-    if (!canvas) return;
-
-    const resize = () => {
-      canvas.width = window.innerWidth;
-      canvas.height = window.innerHeight;
-    };
-    resize();
-    window.addEventListener('resize', resize);
-    return () => window.removeEventListener('resize', resize);
-  }, []);
-
-  useEffect(() => {
-    const canvas = canvasRef.current;
-    const reveal = revealRef.current;
-    if (!canvas || !reveal) return;
-
-    const ctx = canvas.getContext('2d');
-    if (!ctx) return;
-
-    ctx.clearRect(0, 0, canvas.width, canvas.height);
-
-    if (cursorX !== -999 && cursorY !== -999) {
-      const gradient = ctx.createRadialGradient(
-        cursorX, cursorY, 0,
-        cursorX, cursorY, SPOTLIGHT_R
-      );
-      gradient.addColorStop(0, 'rgba(255, 255, 255, 1)');
-      gradient.addColorStop(0.4, 'rgba(255, 255, 255, 1)');
-      gradient.addColorStop(0.6, 'rgba(255, 255, 255, 0.75)');
-      gradient.addColorStop(0.75, 'rgba(255, 255, 255, 0.4)');
-      gradient.addColorStop(0.88, 'rgba(255, 255, 255, 0.12)');
-      gradient.addColorStop(1, 'rgba(255, 255, 255, 0)');
-
-      ctx.fillStyle = gradient;
-      ctx.beginPath();
-      ctx.arc(cursorX, cursorY, SPOTLIGHT_R, 0, Math.PI * 2);
-      ctx.fill();
-
-      const maskImage = `url(${canvas.toDataURL()})`;
-      reveal.style.maskImage = maskImage;
-      reveal.style.webkitMaskImage = maskImage;
-      reveal.style.maskSize = '100% 100%';
-      reveal.style.webkitMaskSize = '100% 100%';
-    }
-  }, [cursorX, cursorY]);
-
-  return (
-    <>
-      <canvas ref={canvasRef} className="absolute inset-0 pointer-events-none" style={{ display: 'none' }} />
-      <div 
-        ref={revealRef}
-        className="absolute inset-0 bg-center bg-cover bg-no-repeat z-30 pointer-events-none"
-        style={{ backgroundImage: `url(${image})`, WebkitMaskRepeat: 'no-repeat', maskRepeat: 'no-repeat' }}
-      />
-    </>
-  );
-}
-
-
 export function Hero() {
   return (
     <div className="tracking-[-0.02em]" style={{ fontFamily: "'Inter', sans-serif" }}>
@@ -84,14 +15,12 @@ export function Hero() {
             loop
             muted
             playsInline
-            className="w-full h-full object-cover opacity-60 mix-blend-screen"
+            className="w-full h-full object-cover opacity-50"
+            style={{ filter: 'contrast(1.1) brightness(0.9)' }}
           />
-          {/* Gradient overlays to blend the video smoothly into the dark theme */}
-          <div className="absolute inset-0 bg-gradient-to-t from-[#0c0b0a] via-transparent to-transparent opacity-100 pointer-events-none" />
-          <div className="absolute inset-0 bg-gradient-to-b from-[#0c0b0a] via-transparent to-transparent opacity-100 pointer-events-none" />
-          <div className="absolute inset-0 bg-gradient-to-l from-[#0c0b0a] via-transparent to-transparent opacity-100 pointer-events-none" />
-          <div className="absolute inset-0 bg-gradient-to-r from-[#0c0b0a] via-transparent to-transparent opacity-100 pointer-events-none" />
-          <div className="absolute inset-0 bg-[radial-gradient(circle_at_center,transparent_40%,#0c0b0a_100%)] pointer-events-none opacity-80" />
+          {/* Simple, clean gradients to blend edges without obscuring the main video */}
+          <div className="absolute inset-x-0 bottom-0 h-[40vh] bg-gradient-to-t from-[#010101] to-transparent pointer-events-none" />
+          <div className="absolute inset-0 bg-black/20 pointer-events-none" />
         </div>
         
         {/* Layer 1.5: Grid Pattern */}
