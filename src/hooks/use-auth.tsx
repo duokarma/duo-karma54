@@ -13,7 +13,7 @@ export function AuthProvider({ children }: { children: React.ReactNode }) {
   const [isAuthenticated, setIsAuthenticated] = useState<boolean>(false);
   const [isLoading, setIsLoading] = useState(true);
 
-  // Check session storage on mount
+  // Check local storage on mount
   useEffect(() => {
     const authStatus = localStorage.getItem("duokarma_auth");
     if (authStatus === "true") {

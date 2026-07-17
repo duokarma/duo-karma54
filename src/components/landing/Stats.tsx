@@ -2,6 +2,7 @@ import { useState, useEffect, useRef } from 'react';
 import { motion } from 'framer-motion';
 import { COLORS } from './ui/theme';
 import { Reveal } from './ui/Reveal';
+import { TiltCard } from '@/components/premium/tilt-card';
 
 // Rolling digit component — each digit rolls independently
 function RollingDigit({ digit, delay = 0 }: { digit: string; delay?: number }) {
@@ -128,32 +129,34 @@ export function Stats() {
       >
         {STATS.map((s, i) => (
           <Reveal key={s.label} delay={i * 0.08}>
-            <div>
-              <RollingCounter to={s.to} suffix={s.suffix} delay={i * 0.1} />
-              <div
-                style={{
-                  fontFamily: "'Inter', sans-serif",
-                  fontSize: 14,
-                  fontWeight: 600,
-                  color: COLORS.text,
-                  marginTop: 12,
-                  marginBottom: 6,
-                }}
-              >
-                {s.label}
+            <TiltCard>
+              <div className="p-6 rounded-2xl transition-all duration-300 hover:bg-white/5">
+                <RollingCounter to={s.to} suffix={s.suffix} delay={i * 0.1} />
+                <div
+                  style={{
+                    fontFamily: "'Inter', sans-serif",
+                    fontSize: 14,
+                    fontWeight: 600,
+                    color: COLORS.text,
+                    marginTop: 12,
+                    marginBottom: 6,
+                  }}
+                >
+                  {s.label}
+                </div>
+                <div
+                  style={{
+                    fontFamily: "'Inter', sans-serif",
+                    fontSize: 13,
+                    color: COLORS.secondary,
+                    lineHeight: 1.6,
+                    maxWidth: 220,
+                  }}
+                >
+                  {s.description}
+                </div>
               </div>
-              <div
-                style={{
-                  fontFamily: "'Inter', sans-serif",
-                  fontSize: 13,
-                  color: COLORS.secondary,
-                  lineHeight: 1.6,
-                  maxWidth: 220,
-                }}
-              >
-                {s.description}
-              </div>
-            </div>
+            </TiltCard>
           </Reveal>
         ))}
       </div>
