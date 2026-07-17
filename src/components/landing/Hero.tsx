@@ -1,5 +1,5 @@
 import { AnimatedTextReveal } from './ui/AnimatedTextReveal';
-import { GridPattern } from './ui/GridPattern';
+
 import { MagneticWrapper } from '@/components/premium/magnetic-wrapper';
 import { LazyVideo } from '@/components/shared/LazyVideo';
 
@@ -25,9 +25,7 @@ export function Hero({ ready = true }: { ready?: boolean }) {
           <div className="absolute inset-0 bg-black/20 pointer-events-none" />
         </div>
         
-        {/* Layer 1.5: Grid Pattern */}
-        <GridPattern />
-
+        {/* Layer 1.5: Grid Pattern removed */}
         {/* Layer 3: Heading */}
         <h1 className="absolute top-[14%] left-0 right-0 flex flex-col items-center text-center px-5 pointer-events-none z-50 text-white leading-[0.95] tracking-tight">
           <AnimatedTextReveal 
