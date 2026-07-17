@@ -79,7 +79,7 @@ export function Hero() {
         {/* Layer 1: Background Video (Zooming out on load) */}
         <div className="absolute inset-0 z-10 hero-zoom bg-black">
           <video 
-            src="/homepage.mp4"
+            src={`/homepage.mp4?v=${Date.now()}`}
             autoPlay
             loop
             muted
