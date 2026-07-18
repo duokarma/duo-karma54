@@ -9,9 +9,6 @@ import { AuthProvider } from "@/hooks/use-auth";
 const LandingPage = lazy(() =>
   import("@/pages/landing").then((m) => ({ default: m.LandingPage }))
 );
-const NotFoundPage = lazy(() =>
-  import("@/pages/not-found").then((m) => ({ default: m.NotFoundPage }))
-);
 
 // ── Dashboard shell (separate async chunk) ────────────────────────────────
 // This single dynamic import carries: QueryClient, react-query, Radix providers,
@@ -57,13 +54,9 @@ function App() {
                 <Route path="/" element={<LandingPage />} />
 
                 {/* ── Dashboard shell (lazy chunk) ── */}
-                {/* /login and /admin/* are handled by DashboardShell internally */}
-                <Route path="/login" element={<DashboardShell />} />
-                <Route path="/admin" element={<DashboardShell />} />
-                <Route path="/admin/*" element={<DashboardShell />} />
-
-                {/* ── 404 ── */}
-                <Route path="*" element={<NotFoundPage />} />
+                {/* We use a wildcard route so all other paths delegate to the shell,
+                    which contains its own routing logic for /login, /admin, and 404s */}
+                <Route path="/*" element={<DashboardShell />} />
               </Routes>
             </Suspense>
           </BrowserRouter>

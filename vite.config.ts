@@ -9,6 +9,21 @@ export default defineConfig({
   plugins: [
     react(),
     tailwindcss(),
+    {
+      name: 'configure-response-headers',
+      configureServer(server) {
+        server.middlewares.use((req, res, next) => {
+          if (req.url) {
+            // Provide a dummy base to properly parse the path
+            const url = new URL(req.url, 'http://localhost');
+            if (url.pathname.endsWith('.ts') || url.pathname.endsWith('.tsx')) {
+              res.setHeader('Content-Type', 'application/javascript');
+            }
+          }
+          next();
+        });
+      }
+    },
     // Generates dist/stats.html — open it in a browser after `npm run build`
     // to see the treemap of every module. `open: false` so it doesn't pop up
     // automatically during CI builds.

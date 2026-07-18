@@ -72,6 +72,10 @@ const queryClient = new QueryClient({
   },
 });
 
+const NotFoundPage = lazy(() =>
+  import("@/pages/not-found").then((m) => ({ default: m.NotFoundPage }))
+);
+
 /**
  * Inner component that actually renders the route tree.
  * Wrapped by DashboardShell which provides all required contexts.
@@ -105,6 +109,10 @@ function DashboardRoutes() {
         },
       ],
     },
+    {
+      path: "*",
+      element: <NotFoundPage />
+    }
   ]);
   return element;
 }
