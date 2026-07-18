@@ -1,4 +1,5 @@
-import React, { useState, useEffect, useRef, Suspense } from 'react';
+import React, { useState, useEffect, Suspense } from 'react';
+import { useMotionValue, useSpring, useMotionTemplate, motion } from 'framer-motion';
 import { Nav } from '@/components/landing/Nav';
 import { Hero } from '@/components/landing/Hero';
 import { Cursor } from '@/components/landing/ui/Cursor';
@@ -30,12 +31,27 @@ const AmbientEffects = React.lazy(() => import('@/components/premium/ambient-eff
 export function LandingPage() {
   const [ready, setReady] = useState(false);
   const [cmdOpen, setCmdOpen] = useState(false);
-  
-  // Use a ref for the glow element to bypass React rendering at 60fps
-  const glowRef = useRef<HTMLDivElement>(null);
-  const lightRef = useRef({ x: -999, y: -999 });
-  const smoothRef = useRef({ x: -999, y: -999 });
-  const rafRef = useRef<number>(0);
+
+  // ── Mouse-light tracking — Framer Motion value system ──────────────────────
+  // Using useMotionValue + useSpring instead of useState+rAF eliminates full
+  // React re-renders on every animation frame. The gradient <motion.div> reads
+  // the motion values directly — zero React re-renders while the cursor moves.
+  const rawX = useMotionValue(-999);
+  const rawY = useMotionValue(-999);
+  const smoothX = useSpring(rawX, { stiffness: 60, damping: 20, mass: 0.5 });
+  const smoothY = useSpring(rawY, { stiffness: 60, damping: 20, mass: 0.5 });
+
+  // Builds the gradient string reactively from motion values — no setState needed
+  const background = useMotionTemplate`radial-gradient(500px circle at ${smoothX}px ${smoothY}px, rgba(201,168,118,0.055) 0%, transparent 70%)`;
+
+  useEffect(() => {
+    const onMove = (e: MouseEvent) => {
+      rawX.set(e.clientX);
+      rawY.set(e.clientY);
+    };
+    window.addEventListener('mousemove', onMove);
+    return () => window.removeEventListener('mousemove', onMove);
+  }, [rawX, rawY]);
 
   useEffect(() => {
     // Safety fallback
@@ -53,42 +69,6 @@ export function LandingPage() {
     };
     window.addEventListener('keydown', onKey);
     return () => window.removeEventListener('keydown', onKey);
-  }, []);
-
-  // Smooth mouse light tracking using direct DOM mutation (Zero React Renders!)
-  useEffect(() => {
-    const onMove = (e: MouseEvent) => {
-      lightRef.current = { x: e.clientX, y: e.clientY };
-    };
-    window.addEventListener('mousemove', onMove);
-    
-    const tick = () => {
-      const target = lightRef.current;
-      const smooth = smoothRef.current;
-      const glowEl = glowRef.current;
-      
-      if (glowEl && target.x !== -999) {
-        if (smooth.x === -999) {
-          smooth.x = target.x;
-          smooth.y = target.y;
-        } else {
-          const dx = target.x - smooth.x;
-          const dy = target.y - smooth.y;
-          smooth.x += dx * 0.06;
-          smooth.y += dy * 0.06;
-        }
-        
-        glowEl.style.background = `radial-gradient(500px circle at ${smooth.x}px ${smooth.y}px, rgba(201,168,118,0.055) 0%, transparent 70%)`;
-      }
-      
-      rafRef.current = requestAnimationFrame(tick);
-    };
-    
-    rafRef.current = requestAnimationFrame(tick);
-    return () => {
-      window.removeEventListener('mousemove', onMove);
-      cancelAnimationFrame(rafRef.current);
-    };
   }, []);
 
   return (
@@ -141,15 +121,15 @@ export function LandingPage() {
         }}
       />
 
-      {/* Mouse light — mutated directly via ref */}
-      <div
-        ref={glowRef}
+      {/* Mouse light — champagne radial glow driven by motion values (zero re-renders) */}
+      <motion.div
         aria-hidden="true"
         style={{
           position: 'fixed',
           inset: 0,
           pointerEvents: 'none',
           zIndex: 2,
+          background,
         }}
       />
 

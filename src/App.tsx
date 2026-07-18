@@ -1,44 +1,41 @@
 import { BrowserRouter, Routes, Route } from "react-router-dom";
-import { MotionConfig } from "framer-motion";
-import { QueryClient, QueryClientProvider } from "@tanstack/react-query";
 import { Suspense, lazy, useEffect } from "react";
+import { MotionConfig } from "framer-motion";
 import { ThemeProvider } from "@/hooks/use-theme";
-import { SidebarProvider } from "@/hooks/use-sidebar";
-import { CommandPaletteProvider } from "@/hooks/use-command-palette";
-import { ToastProvider } from "@/components/ui/toast";
-import { TooltipProvider } from "@/components/ui/tooltip";
-import { AppLayout } from "@/layouts/app-layout";
 import { PageLoader } from "@/components/shared/page-loader";
 import { AuthProvider } from "@/hooks/use-auth";
-import { ProtectedRoute } from "@/components/shared/protected-route";
 
-const LoginPage = lazy(() => import("@/pages/login").then((m) => ({ default: m.LoginPage })));
-const DashboardPage = lazy(() => import("@/pages/dashboard").then((m) => ({ default: m.DashboardPage })));
-const ClientsPage = lazy(() => import("@/pages/clients").then((m) => ({ default: m.ClientsPage })));
-const LeadsPage = lazy(() => import("@/pages/leads").then((m) => ({ default: m.LeadsPage })));
-const ProjectsPage = lazy(() => import("@/pages/projects").then((m) => ({ default: m.ProjectsPage })));
-const RevenuePage = lazy(() => import("@/pages/revenue").then((m) => ({ default: m.RevenuePage })));
-const ExpensesPage = lazy(() => import("@/pages/expenses").then((m) => ({ default: m.ExpensesPage })));
-const ProfitPage = lazy(() => import("@/pages/profit").then((m) => ({ default: m.ProfitPage })));
-const TasksPage = lazy(() => import("@/pages/tasks").then((m) => ({ default: m.TasksPage })));
-const CalendarPage = lazy(() => import("@/pages/calendar").then((m) => ({ default: m.CalendarPage })));
-const DocumentsPage = lazy(() => import("@/pages/documents").then((m) => ({ default: m.DocumentsPage })));
-const ReportsPage = lazy(() => import("@/pages/reports").then((m) => ({ default: m.ReportsPage })));
-const AnalyticsPage = lazy(() => import("@/pages/analytics").then((m) => ({ default: m.AnalyticsPage })));
-const NotFoundPage = lazy(() => import("@/pages/not-found").then((m) => ({ default: m.NotFoundPage })));
+// ── Marketing pages (marketing chunk — no dashboard deps) ──────────────────
+const LandingPage = lazy(() =>
+  import("@/pages/landing").then((m) => ({ default: m.LandingPage }))
+);
+const NotFoundPage = lazy(() =>
+  import("@/pages/not-found").then((m) => ({ default: m.NotFoundPage }))
+);
 
-const LandingPage = lazy(() => import("@/pages/landing").then((m) => ({ default: m.LandingPage })));
+// ── Dashboard shell (separate async chunk) ────────────────────────────────
+// This single dynamic import carries: QueryClient, react-query, Radix providers,
+// cmdk, ToastProvider, TooltipProvider, SidebarProvider, CommandPaletteProvider,
+// AppLayout, and all dashboard + login page chunks.
+// Marketing visitors at "/" NEVER download this chunk.
+const DashboardShell = lazy(() =>
+  import("@/components/shared/dashboard-shell").then((m) => ({
+    default: m.DashboardShell,
+  }))
+);
 
-// The crystal scene (three.js + drei) is used on Login, Dashboard, and 404 — it's the single
-// heaviest chunk in the app. Prefetching it during idle time avoids a visible skeleton on
-// whichever of those three routes the user lands on first, without blocking initial paint.
+// Prefetch the crystal scene (three.js + drei) during idle time.
+// It's used on Login and Dashboard — prefetching avoids a skeleton flash
+// on first navigation, without blocking marketing page first paint.
 function usePrefetchCrystalScene() {
   useEffect(() => {
     const prefetch = () => {
       import("@/components/three/crystal-scene");
     };
     if ("requestIdleCallback" in window) {
-      const id = (window as any).requestIdleCallback(prefetch, { timeout: 2000 });
+      const id = (window as any).requestIdleCallback(prefetch, {
+        timeout: 2000,
+      });
       return () => (window as any).cancelIdleCallback?.(id);
     }
     const timer = setTimeout(prefetch, 300);
@@ -46,53 +43,33 @@ function usePrefetchCrystalScene() {
   }, []);
 }
 
-const queryClient = new QueryClient();
-
 function App() {
   usePrefetchCrystalScene();
 
   return (
-    <QueryClientProvider client={queryClient}>
-      <AuthProvider>
-        <ThemeProvider>
-          <TooltipProvider>
-            <ToastProvider>
-              <MotionConfig reducedMotion="user">
-                <BrowserRouter>
-                  <CommandPaletteProvider>
-                  <SidebarProvider>
-                    <Suspense fallback={<PageLoader />}>
-                      <Routes>
-                        <Route path="/" element={<LandingPage />} />
-                        <Route path="/login" element={<LoginPage />} />
-                        <Route path="/admin" element={<ProtectedRoute />}>
-                          <Route element={<AppLayout />}>
-                            <Route index element={<DashboardPage />} />
-                            <Route path="clients" element={<ClientsPage />} />
-                            <Route path="leads" element={<LeadsPage />} />
-                            <Route path="projects" element={<ProjectsPage />} />
-                            <Route path="revenue" element={<RevenuePage />} />
-                            <Route path="expenses" element={<ExpensesPage />} />
-                            <Route path="profit" element={<ProfitPage />} />
-                            <Route path="tasks" element={<TasksPage />} />
-                            <Route path="calendar" element={<CalendarPage />} />
-                            <Route path="documents" element={<DocumentsPage />} />
-                            <Route path="reports" element={<ReportsPage />} />
-                            <Route path="analytics" element={<AnalyticsPage />} />
-                          </Route>
-                        </Route>
-                        <Route path="*" element={<NotFoundPage />} />
-                      </Routes>
-                    </Suspense>
-                  </SidebarProvider>
-                </CommandPaletteProvider>
-                </BrowserRouter>
-              </MotionConfig>
-            </ToastProvider>
-          </TooltipProvider>
-        </ThemeProvider>
-      </AuthProvider>
-    </QueryClientProvider>
+    <AuthProvider>
+      <ThemeProvider>
+        <MotionConfig reducedMotion="user">
+          <BrowserRouter>
+            <Suspense fallback={<PageLoader />}>
+              <Routes>
+                {/* ── Public marketing route ── */}
+                <Route path="/" element={<LandingPage />} />
+
+                {/* ── Dashboard shell (lazy chunk) ── */}
+                {/* /login and /admin/* are handled by DashboardShell internally */}
+                <Route path="/login" element={<DashboardShell />} />
+                <Route path="/admin" element={<DashboardShell />} />
+                <Route path="/admin/*" element={<DashboardShell />} />
+
+                {/* ── 404 ── */}
+                <Route path="*" element={<NotFoundPage />} />
+              </Routes>
+            </Suspense>
+          </BrowserRouter>
+        </MotionConfig>
+      </ThemeProvider>
+    </AuthProvider>
   );
 }
 

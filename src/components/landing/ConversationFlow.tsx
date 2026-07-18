@@ -1,8 +1,9 @@
 import { useState, useEffect, useRef } from 'react';
 import { m as motion, AnimatePresence } from 'framer-motion';
 import { ArrowLeft, ArrowRight, Check, Calendar, MessageCircle, Mail } from 'lucide-react';
-import { supabase } from '@/lib/supabase';
 import { COLORS } from './ui/theme';
+// supabase is lazy-imported inside handleSubmit so @supabase/supabase-js
+// stays out of the marketing page's static parse.
 
 // ─── Lead Scoring ────────────────────────────────────────────────────────────
 function computeLeadScore(answers: Partial<Answers>): number {
@@ -352,6 +353,10 @@ export function ConversationFlow() {
     setIsSubmitting(true);
     setSubmitError(null);
     try {
+      // Lazy-load the supabase client only at submit time so the
+      // @supabase/supabase-js module isn't in the marketing page's parse chain.
+      const { supabase } = await import('@/lib/supabase');
+
       const since = new Date(Date.now() - 86_400_000).toISOString();
       const { data: existing } = await supabase
         .from('website_inquiries')

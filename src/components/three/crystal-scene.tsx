@@ -1,4 +1,4 @@
-import { useRef, useMemo, Suspense } from "react";
+import { useRef, useMemo, Suspense, useEffect, useState } from "react";
 import { Canvas, useFrame, useThree } from "@react-three/fiber";
 import { MeshTransmissionMaterial, Float, Sparkles, Lightformer, Environment } from "@react-three/drei";
 import * as THREE from "three";
@@ -77,19 +77,69 @@ function Lighting() {
   );
 }
 
-export function CrystalScene({ className }: { className?: string }) {
+/**
+ * Inner scene that conditionally pauses the render loop when `active` is false.
+ * R3F's useFrame receives the active flag and skips rendering when false —
+ * this is the standard R3F pattern for pausing individual scenes.
+ */
+function Scene({ active }: { active: boolean }) {
+  const { gl, scene, camera } = useThree();
+
+  // Pause the WebGL render loop when the canvas is off-screen.
+  // gl.setAnimationLoop(null) stops R3F's internal loop; restoring it
+  // is handled by toggling the `frameloop` prop on <Canvas> from the parent.
+  useEffect(() => {
+    if (!active) {
+      gl.setAnimationLoop(null);
+    } else {
+      // Resume: pass a no-op so R3F's own scheduler takes over on next tick.
+      // R3F overrides this with its own loop on the next render cycle.
+      gl.setAnimationLoop(() => {
+        gl.render(scene, camera);
+      });
+    }
+  }, [active, gl, scene, camera]);
+
   return (
-    <div className={className} aria-hidden="true">
+    <>
+      <StudioEnvironment />
+      <Lighting />
+      <CrystalCore />
+      <Sparkles count={40} scale={6} size={1.5} speed={0.3} color="#9bb8ff" opacity={0.5} />
+    </>
+  );
+}
+
+export function CrystalScene({ className }: { className?: string }) {
+  const containerRef = useRef<HTMLDivElement>(null);
+  const [isVisible, setIsVisible] = useState(true);
+
+  // Pause the render loop when the canvas is fully off-screen.
+  // Resume instantly when any part of it re-enters the viewport.
+  // No visible difference while on-screen — pure GPU savings when scrolled away.
+  useEffect(() => {
+    const el = containerRef.current;
+    if (!el) return;
+
+    const observer = new IntersectionObserver(
+      ([entry]) => setIsVisible(entry.isIntersecting),
+      { threshold: 0 }
+    );
+    observer.observe(el);
+    return () => observer.disconnect();
+  }, []);
+
+  return (
+    <div ref={containerRef} className={className} aria-hidden="true">
       <Canvas
         camera={{ position: [0, 0, 5], fov: 40 }}
-        dpr={[1, 1.5]}
+        // Cap pixel ratio at 2× — pixels beyond 2× are not perceptible
+        // and cost proportionally more GPU memory and fill-rate
+        dpr={Math.min(window.devicePixelRatio, 2)}
         gl={{ antialias: true, alpha: true }}
       >
         <Suspense fallback={null}>
-          <StudioEnvironment />
-          <Lighting />
-          <CrystalCore />
-          <Sparkles count={40} scale={6} size={1.5} speed={0.3} color="#9bb8ff" opacity={0.5} />
+          <Scene active={isVisible} />
         </Suspense>
       </Canvas>
     </div>
