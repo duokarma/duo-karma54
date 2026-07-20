@@ -5,13 +5,17 @@ const APPLE_EASE = [0.22, 1, 0.36, 1] as [number, number, number, number];
 // Delays in seconds
 const TIMINGS = {
   line1: 1.0,
-  node1: 2.0,
-  line2: 2.5,
-  node2: 3.5,
-  line3: 4.0,
-  node3: 5.0,
-  shimmer: 6.5,
-  finalText: 7.5,
+  node1: 1.7,
+  line2: 1.7,
+  node2: 2.4,
+  line3: 2.4,
+  node3: 3.1,
+  line4: 3.1,
+  node4: 3.8,
+  line5: 3.8,
+  node5: 4.5,
+  shimmer: 6.0,
+  finalText: 7.0,
 };
 
 const drawLine = (drawDelay: number, shimmerDelay: number) => {
@@ -55,7 +59,7 @@ export function GlobalPresence() {
     <motion.section
       initial="hidden"
       whileInView="visible"
-      viewport={{ once: true, amount: 0.15 }}
+      viewport={{ once: true, amount: 0.1 }}
       className="relative w-full bg-[#050505] min-h-screen flex items-center justify-center overflow-hidden font-sans py-24 md:py-0"
     >
       {/* Background Environment */}
@@ -74,7 +78,7 @@ export function GlobalPresence() {
       </div>
 
       {/* MOBILE LAYOUT (< 768px) */}
-      <div className="md:hidden relative w-full max-w-[400px] aspect-[4/12] mx-auto z-10">
+      <div className="md:hidden relative w-full max-w-[400px] mx-auto z-10" style={{ aspectRatio: '4/13.5' }}>
         <MobileAnimation />
       </div>
     </motion.section>
@@ -86,39 +90,58 @@ function DesktopAnimation() {
     <>
       <svg viewBox="0 0 1200 800" className="absolute inset-0 w-full h-full pointer-events-none">
         {/* Animated Lines */}
-        <motion.path d="M 600,400 C 450,400 350,250 300,250" fill="none" stroke="#C8A45C" className="opacity-80" variants={drawLine(TIMINGS.line1, TIMINGS.shimmer)} />
-        <motion.path d="M 600,400 C 750,400 850,250 900,250" fill="none" stroke="#C8A45C" className="opacity-80" variants={drawLine(TIMINGS.line2, TIMINGS.shimmer)} />
-        <motion.path d="M 600,400 C 450,450 450,630 600,680" fill="none" stroke="#C8A45C" className="opacity-80" variants={drawLine(TIMINGS.line3, TIMINGS.shimmer)} />
+        <motion.path d="M 600,400 C 450,400 350,250 250,250" fill="none" stroke="#C8A45C" className="opacity-80" variants={drawLine(TIMINGS.line1, TIMINGS.shimmer)} />
+        <motion.path d="M 600,400 C 750,400 850,250 950,250" fill="none" stroke="#C8A45C" className="opacity-80" variants={drawLine(TIMINGS.line2, TIMINGS.shimmer)} />
+        <motion.path d="M 600,400 C 450,400 300,550 200,550" fill="none" stroke="#C8A45C" className="opacity-80" variants={drawLine(TIMINGS.line3, TIMINGS.shimmer)} />
+        <motion.path d="M 600,400 C 750,400 900,550 1000,550" fill="none" stroke="#C8A45C" className="opacity-80" variants={drawLine(TIMINGS.line4, TIMINGS.shimmer)} />
+        <motion.path d="M 600,400 C 750,450 750,650 600,700" fill="none" stroke="#C8A45C" className="opacity-80" variants={drawLine(TIMINGS.line5, TIMINGS.shimmer)} />
 
         {/* Nodes */}
         <g>
-          <motion.circle cx="300" cy="250" r="3.5" fill="#C8A45C" variants={nodeVariants(TIMINGS.node1)} />
-          <motion.circle cx="300" cy="250" r="3.5" fill="none" stroke="#C8A45C" strokeWidth="1" variants={pulseVariants(TIMINGS.node1)} />
+          <motion.circle cx="250" cy="250" r="3.5" fill="#C8A45C" variants={nodeVariants(TIMINGS.node1)} />
+          <motion.circle cx="250" cy="250" r="3.5" fill="none" stroke="#C8A45C" strokeWidth="1" variants={pulseVariants(TIMINGS.node1)} />
         </g>
         <g>
-          <motion.circle cx="900" cy="250" r="3.5" fill="#C8A45C" variants={nodeVariants(TIMINGS.node2)} />
-          <motion.circle cx="900" cy="250" r="3.5" fill="none" stroke="#C8A45C" strokeWidth="1" variants={pulseVariants(TIMINGS.node2)} />
+          <motion.circle cx="950" cy="250" r="3.5" fill="#C8A45C" variants={nodeVariants(TIMINGS.node2)} />
+          <motion.circle cx="950" cy="250" r="3.5" fill="none" stroke="#C8A45C" strokeWidth="1" variants={pulseVariants(TIMINGS.node2)} />
         </g>
         <g>
-          <motion.circle cx="600" cy="680" r="3.5" fill="#C8A45C" variants={nodeVariants(TIMINGS.node3)} />
-          <motion.circle cx="600" cy="680" r="3.5" fill="none" stroke="#C8A45C" strokeWidth="1" variants={pulseVariants(TIMINGS.node3)} />
+          <motion.circle cx="200" cy="550" r="3.5" fill="#C8A45C" variants={nodeVariants(TIMINGS.node3)} />
+          <motion.circle cx="200" cy="550" r="3.5" fill="none" stroke="#C8A45C" strokeWidth="1" variants={pulseVariants(TIMINGS.node3)} />
+        </g>
+        <g>
+          <motion.circle cx="1000" cy="550" r="3.5" fill="#C8A45C" variants={nodeVariants(TIMINGS.node4)} />
+          <motion.circle cx="1000" cy="550" r="3.5" fill="none" stroke="#C8A45C" strokeWidth="1" variants={pulseVariants(TIMINGS.node4)} />
+        </g>
+        <g>
+          <motion.circle cx="600" cy="700" r="3.5" fill="#C8A45C" variants={nodeVariants(TIMINGS.node5)} />
+          <motion.circle cx="600" cy="700" r="3.5" fill="none" stroke="#C8A45C" strokeWidth="1" variants={pulseVariants(TIMINGS.node5)} />
         </g>
       </svg>
 
       {/* HTML Overlays */}
       <LogoOverlay className="absolute left-[50%] top-[50%] -translate-x-1/2 -translate-y-1/2" />
       
-      {/* India */}
-      <motion.div variants={fadeUp(TIMINGS.node1)} className="absolute left-[25%] top-[31.25%] -translate-x-1/2 -translate-y-[135%] flex flex-col items-center whitespace-nowrap">
+      {/* 1. USA */}
+      <motion.div variants={fadeUp(TIMINGS.node1)} className="absolute left-[20.8%] top-[31.25%] -translate-x-1/2 -translate-y-[135%] flex flex-col items-center whitespace-nowrap">
         <div className="flex items-center gap-3 mb-1">
-          <span className="text-xl">🇮🇳</span>
-          <span className="text-[20px] font-medium tracking-[0.15em] text-[#F5F5F5]">INDIA</span>
+          <span className="text-xl">🇺🇸</span>
+          <span className="text-[20px] font-medium tracking-[0.15em] text-[#F5F5F5]">USA</span>
         </div>
-        <p className="text-[#A1A1AA] font-light text-[15px] tracking-wide">Engineering Digital Products</p>
+        <p className="text-[#A1A1AA] font-light text-[15px] tracking-wide">Enterprise Innovation</p>
       </motion.div>
 
-      {/* Kuwait */}
-      <motion.div variants={fadeUp(TIMINGS.node2)} className="absolute left-[75%] top-[31.25%] -translate-x-1/2 -translate-y-[135%] flex flex-col items-center whitespace-nowrap">
+      {/* 2. Dubai */}
+      <motion.div variants={fadeUp(TIMINGS.node2)} className="absolute left-[79.1%] top-[31.25%] -translate-x-1/2 -translate-y-[135%] flex flex-col items-center whitespace-nowrap">
+        <div className="flex items-center gap-3 mb-1">
+          <span className="text-xl">🇦🇪</span>
+          <span className="text-[20px] font-medium tracking-[0.15em] text-[#F5F5F5]">DUBAI</span>
+        </div>
+        <p className="text-[#A1A1AA] font-light text-[15px] tracking-wide">Digital Transformation</p>
+      </motion.div>
+
+      {/* 3. Kuwait */}
+      <motion.div variants={fadeUp(TIMINGS.node3)} className="absolute left-[16.6%] top-[68.75%] -translate-x-1/2 pt-6 flex flex-col items-center whitespace-nowrap">
         <div className="flex items-center gap-3 mb-1">
           <span className="text-xl">🇰🇼</span>
           <span className="text-[20px] font-medium tracking-[0.15em] text-[#F5F5F5]">KUWAIT</span>
@@ -126,8 +149,17 @@ function DesktopAnimation() {
         <p className="text-[#A1A1AA] font-light text-[15px] tracking-wide">Business Automation</p>
       </motion.div>
 
-      {/* Australia */}
-      <motion.div variants={fadeUp(TIMINGS.node3)} className="absolute left-[50%] top-[85%] -translate-x-1/2 pt-8 flex flex-col items-center whitespace-nowrap">
+      {/* 4. India */}
+      <motion.div variants={fadeUp(TIMINGS.node4)} className="absolute left-[83.3%] top-[68.75%] -translate-x-1/2 pt-6 flex flex-col items-center whitespace-nowrap">
+        <div className="flex items-center gap-3 mb-1">
+          <span className="text-xl">🇮🇳</span>
+          <span className="text-[20px] font-medium tracking-[0.15em] text-[#F5F5F5]">INDIA</span>
+        </div>
+        <p className="text-[#A1A1AA] font-light text-[15px] tracking-wide">Engineering Digital Products</p>
+      </motion.div>
+
+      {/* 5. Australia */}
+      <motion.div variants={fadeUp(TIMINGS.node5)} className="absolute left-[50%] top-[87.5%] -translate-x-1/2 pt-8 flex flex-col items-center whitespace-nowrap">
         <div className="flex items-center gap-3 mb-1">
           <span className="text-xl">🇦🇺</span>
           <span className="text-[20px] font-medium tracking-[0.15em] text-[#F5F5F5]">AUSTRALIA</span>
@@ -148,41 +180,60 @@ function DesktopAnimation() {
 function MobileAnimation() {
   return (
     <>
-      <svg viewBox="0 0 400 1200" className="absolute inset-0 w-full h-full pointer-events-none">
+      <svg viewBox="0 0 400 1350" className="absolute inset-0 w-full h-full pointer-events-none">
         {/* Animated S-Curves */}
-        <motion.path d="M 200,150 C 260,220 140,280 200,350" fill="none" stroke="#C8A45C" className="opacity-80" variants={drawLine(TIMINGS.line1, TIMINGS.shimmer)} />
-        <motion.path d="M 200,450 C 140,520 260,580 200,650" fill="none" stroke="#C8A45C" className="opacity-80" variants={drawLine(TIMINGS.line2, TIMINGS.shimmer)} />
-        <motion.path d="M 200,750 C 260,820 140,880 200,950" fill="none" stroke="#C8A45C" className="opacity-80" variants={drawLine(TIMINGS.line3, TIMINGS.shimmer)} />
+        <motion.path d="M 200,150 C 250,180 150,220 200,250" fill="none" stroke="#C8A45C" className="opacity-80" variants={drawLine(TIMINGS.line1, TIMINGS.shimmer)} />
+        <motion.path d="M 200,350 C 150,380 250,420 200,450" fill="none" stroke="#C8A45C" className="opacity-80" variants={drawLine(TIMINGS.line2, TIMINGS.shimmer)} />
+        <motion.path d="M 200,550 C 250,580 150,620 200,650" fill="none" stroke="#C8A45C" className="opacity-80" variants={drawLine(TIMINGS.line3, TIMINGS.shimmer)} />
+        <motion.path d="M 200,750 C 150,780 250,820 200,850" fill="none" stroke="#C8A45C" className="opacity-80" variants={drawLine(TIMINGS.line4, TIMINGS.shimmer)} />
+        <motion.path d="M 200,950 C 250,980 150,1020 200,1050" fill="none" stroke="#C8A45C" className="opacity-80" variants={drawLine(TIMINGS.line5, TIMINGS.shimmer)} />
 
         {/* Nodes */}
         <g>
-          <motion.circle cx="200" cy="350" r="3.5" fill="#C8A45C" variants={nodeVariants(TIMINGS.node1)} />
-          <motion.circle cx="200" cy="350" r="3.5" fill="none" stroke="#C8A45C" strokeWidth="1" variants={pulseVariants(TIMINGS.node1)} />
+          <motion.circle cx="200" cy="250" r="3.5" fill="#C8A45C" variants={nodeVariants(TIMINGS.node1)} />
+          <motion.circle cx="200" cy="250" r="3.5" fill="none" stroke="#C8A45C" strokeWidth="1" variants={pulseVariants(TIMINGS.node1)} />
         </g>
         <g>
-          <motion.circle cx="200" cy="650" r="3.5" fill="#C8A45C" variants={nodeVariants(TIMINGS.node2)} />
-          <motion.circle cx="200" cy="650" r="3.5" fill="none" stroke="#C8A45C" strokeWidth="1" variants={pulseVariants(TIMINGS.node2)} />
+          <motion.circle cx="200" cy="450" r="3.5" fill="#C8A45C" variants={nodeVariants(TIMINGS.node2)} />
+          <motion.circle cx="200" cy="450" r="3.5" fill="none" stroke="#C8A45C" strokeWidth="1" variants={pulseVariants(TIMINGS.node2)} />
         </g>
         <g>
-          <motion.circle cx="200" cy="950" r="3.5" fill="#C8A45C" variants={nodeVariants(TIMINGS.node3)} />
-          <motion.circle cx="200" cy="950" r="3.5" fill="none" stroke="#C8A45C" strokeWidth="1" variants={pulseVariants(TIMINGS.node3)} />
+          <motion.circle cx="200" cy="650" r="3.5" fill="#C8A45C" variants={nodeVariants(TIMINGS.node3)} />
+          <motion.circle cx="200" cy="650" r="3.5" fill="none" stroke="#C8A45C" strokeWidth="1" variants={pulseVariants(TIMINGS.node3)} />
+        </g>
+        <g>
+          <motion.circle cx="200" cy="850" r="3.5" fill="#C8A45C" variants={nodeVariants(TIMINGS.node4)} />
+          <motion.circle cx="200" cy="850" r="3.5" fill="none" stroke="#C8A45C" strokeWidth="1" variants={pulseVariants(TIMINGS.node4)} />
+        </g>
+        <g>
+          <motion.circle cx="200" cy="1050" r="3.5" fill="#C8A45C" variants={nodeVariants(TIMINGS.node5)} />
+          <motion.circle cx="200" cy="1050" r="3.5" fill="none" stroke="#C8A45C" strokeWidth="1" variants={pulseVariants(TIMINGS.node5)} />
         </g>
       </svg>
 
       {/* HTML Overlays */}
-      <LogoOverlay className="absolute left-[50%] top-[12.5%] -translate-x-1/2 -translate-y-1/2 scale-[0.9]" />
+      <LogoOverlay className="absolute left-[50%] top-[11.11%] -translate-x-1/2 -translate-y-1/2 scale-[0.85]" />
 
-      {/* India */}
-      <motion.div variants={fadeUp(TIMINGS.node1)} className="absolute left-[50%] top-[31.6%] -translate-x-1/2 flex flex-col items-center whitespace-nowrap text-center pt-2">
+      {/* 1. USA */}
+      <motion.div variants={fadeUp(TIMINGS.node1)} className="absolute left-[50%] top-[20.74%] -translate-x-1/2 flex flex-col items-center whitespace-nowrap text-center pt-2">
         <div className="flex items-center gap-2 mb-1">
-          <span className="text-xl">🇮🇳</span>
-          <span className="text-[18px] font-medium tracking-[0.15em] text-[#F5F5F5]">INDIA</span>
+          <span className="text-xl">🇺🇸</span>
+          <span className="text-[18px] font-medium tracking-[0.15em] text-[#F5F5F5]">USA</span>
         </div>
-        <p className="text-[#A1A1AA] font-light text-[13px] tracking-wide">Engineering Digital Products</p>
+        <p className="text-[#A1A1AA] font-light text-[13px] tracking-wide">Enterprise Innovation</p>
       </motion.div>
 
-      {/* Kuwait */}
-      <motion.div variants={fadeUp(TIMINGS.node2)} className="absolute left-[50%] top-[56.6%] -translate-x-1/2 flex flex-col items-center whitespace-nowrap text-center pt-2">
+      {/* 2. Dubai */}
+      <motion.div variants={fadeUp(TIMINGS.node2)} className="absolute left-[50%] top-[35.55%] -translate-x-1/2 flex flex-col items-center whitespace-nowrap text-center pt-2">
+        <div className="flex items-center gap-2 mb-1">
+          <span className="text-xl">🇦🇪</span>
+          <span className="text-[18px] font-medium tracking-[0.15em] text-[#F5F5F5]">DUBAI</span>
+        </div>
+        <p className="text-[#A1A1AA] font-light text-[13px] tracking-wide">Digital Transformation</p>
+      </motion.div>
+
+      {/* 3. Kuwait */}
+      <motion.div variants={fadeUp(TIMINGS.node3)} className="absolute left-[50%] top-[50.37%] -translate-x-1/2 flex flex-col items-center whitespace-nowrap text-center pt-2">
         <div className="flex items-center gap-2 mb-1">
           <span className="text-xl">🇰🇼</span>
           <span className="text-[18px] font-medium tracking-[0.15em] text-[#F5F5F5]">KUWAIT</span>
@@ -190,8 +241,17 @@ function MobileAnimation() {
         <p className="text-[#A1A1AA] font-light text-[13px] tracking-wide">Business Automation</p>
       </motion.div>
 
-      {/* Australia */}
-      <motion.div variants={fadeUp(TIMINGS.node3)} className="absolute left-[50%] top-[81.6%] -translate-x-1/2 flex flex-col items-center whitespace-nowrap text-center pt-2">
+      {/* 4. India */}
+      <motion.div variants={fadeUp(TIMINGS.node4)} className="absolute left-[50%] top-[65.18%] -translate-x-1/2 flex flex-col items-center whitespace-nowrap text-center pt-2">
+        <div className="flex items-center gap-2 mb-1">
+          <span className="text-xl">🇮🇳</span>
+          <span className="text-[18px] font-medium tracking-[0.15em] text-[#F5F5F5]">INDIA</span>
+        </div>
+        <p className="text-[#A1A1AA] font-light text-[13px] tracking-wide">Engineering Digital Products</p>
+      </motion.div>
+
+      {/* 5. Australia */}
+      <motion.div variants={fadeUp(TIMINGS.node5)} className="absolute left-[50%] top-[80.0%] -translate-x-1/2 flex flex-col items-center whitespace-nowrap text-center pt-2">
         <div className="flex items-center gap-2 mb-1">
           <span className="text-xl">🇦🇺</span>
           <span className="text-[18px] font-medium tracking-[0.15em] text-[#F5F5F5]">AUSTRALIA</span>
@@ -200,7 +260,7 @@ function MobileAnimation() {
       </motion.div>
 
       {/* Final Story Text */}
-      <motion.div variants={fadeUp(TIMINGS.finalText)} className="absolute left-[50%] top-[91.6%] -translate-x-1/2 flex flex-col items-center whitespace-nowrap w-full">
+      <motion.div variants={fadeUp(TIMINGS.finalText)} className="absolute left-[50%] top-[90.37%] -translate-x-1/2 flex flex-col items-center whitespace-nowrap w-full">
         <p className="text-[15px] font-light tracking-[0.1em] text-[#F5F5F5] opacity-90 text-center">
           Building software beyond borders.
         </p>
