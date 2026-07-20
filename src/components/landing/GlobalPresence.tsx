@@ -24,8 +24,8 @@ const drawLine = (drawDelay: number, shimmerDelay: number) => {
       strokeWidth: [1, 1, 1, 2, 1],
       transition: {
         pathLength: { duration: 1.8, delay: drawDelay, ease: APPLE_EASE },
-        opacity: { duration, times: [0, 0.1, 0.85, 0.92, 1], delay: drawDelay, ease: 'easeInOut' },
-        strokeWidth: { duration, times: [0, 0.1, 0.85, 0.92, 1], delay: drawDelay, ease: 'easeInOut' },
+        opacity: { duration, times: [0, 0.1, 0.85, 0.92, 1], delay: drawDelay, ease: 'easeInOut' as any },
+        strokeWidth: { duration, times: [0, 0.1, 0.85, 0.92, 1], delay: drawDelay, ease: 'easeInOut' as any },
       },
     },
   };
@@ -46,7 +46,7 @@ const pulseVariants = (delay: number) => ({
   visible: {
     scale: [0.1, 2.5],
     opacity: [0, 0.5, 0],
-    transition: { duration: 3.5, delay, repeat: Infinity, ease: 'easeOut' },
+    transition: { duration: 3.5, delay, repeat: Infinity, ease: 'easeOut' as any },
   },
 });
 
