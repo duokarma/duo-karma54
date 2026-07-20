@@ -1,134 +1,236 @@
 import { m as motion } from 'framer-motion';
 
-const LOCATIONS = [
-  {
-    country: 'INDIA',
-    description: 'Custom software engineered for ambitious businesses.',
-    capabilities: ['Enterprise Software', 'AI Automation', 'Custom Web Applications'],
-  },
-  {
-    country: 'KUWAIT',
-    description: 'Helping businesses automate operations with intelligent software.',
-    capabilities: ['Business Automation', 'CRM Systems', 'AI Integration'],
-  },
-  {
-    country: 'AUSTRALIA',
-    description: 'Building scalable SaaS platforms and cloud products.',
-    capabilities: ['SaaS Development', 'Cloud Applications', 'Product Engineering'],
-  },
-];
+const APPLE_EASE = [0.22, 1, 0.36, 1] as [number, number, number, number];
 
-const containerVariants = {
-  hidden: { opacity: 0 },
-  visible: {
-    opacity: 1,
-    transition: {
-      staggerChildren: 0.12,
-      delayChildren: 0.2,
+// Delays in seconds
+const TIMINGS = {
+  line1: 1.0,
+  node1: 2.0,
+  line2: 2.5,
+  node2: 3.5,
+  line3: 4.0,
+  node3: 5.0,
+  shimmer: 6.5,
+  finalText: 7.5,
+};
+
+const drawLine = (drawDelay: number, shimmerDelay: number) => {
+  const duration = shimmerDelay - drawDelay + 1.5;
+  return {
+    hidden: { pathLength: 0, opacity: 0 },
+    visible: {
+      pathLength: 1,
+      opacity: [0, 1, 1, 0.3, 1],
+      strokeWidth: [1, 1, 1, 2, 1],
+      transition: {
+        pathLength: { duration: 1.8, delay: drawDelay, ease: APPLE_EASE },
+        opacity: { duration, times: [0, 0.1, 0.85, 0.92, 1], delay: drawDelay, ease: 'easeInOut' },
+        strokeWidth: { duration, times: [0, 0.1, 0.85, 0.92, 1], delay: drawDelay, ease: 'easeInOut' },
+      },
     },
-  },
+  };
 };
 
-const blockVariants = {
-  hidden: { opacity: 0, y: 40 },
-  visible: { 
-    opacity: 1, 
-    y: 0,
-    transition: { 
-      duration: 0.9, 
-      ease: [0.16, 1, 0.3, 1] as [number, number, number, number]
-    }
+const fadeUp = (delay: number) => ({
+  hidden: { opacity: 0, y: 15 },
+  visible: { opacity: 1, y: 0, transition: { duration: 1.2, delay, ease: APPLE_EASE } },
+});
+
+const nodeVariants = (delay: number) => ({
+  hidden: { scale: 0, opacity: 0 },
+  visible: { scale: 1, opacity: 1, transition: { duration: 0.8, delay, ease: APPLE_EASE } },
+});
+
+const pulseVariants = (delay: number) => ({
+  hidden: { scale: 0.1, opacity: 0 },
+  visible: {
+    scale: [0.1, 2.5],
+    opacity: [0, 0.5, 0],
+    transition: { duration: 3.5, delay, repeat: Infinity, ease: 'easeOut' },
   },
-};
+});
 
 export function GlobalPresence() {
   return (
-    <section className="relative w-full bg-[#050505] py-32 md:py-48 overflow-hidden font-sans">
-      {/* Background environment: Deep matte black, navy gradient, gold ambient, soft noise */}
+    <motion.section
+      initial="hidden"
+      whileInView="visible"
+      viewport={{ once: true, amount: 0.15 }}
+      className="relative w-full bg-[#050505] min-h-screen flex items-center justify-center overflow-hidden font-sans py-24 md:py-0"
+    >
+      {/* Background Environment */}
       <div className="absolute inset-0 pointer-events-none z-0">
-        <div className="absolute inset-0 bg-[radial-gradient(ellipse_at_50%_0%,rgba(15,23,42,0.5),transparent_70%)]" />
-        <div className="absolute inset-0 bg-[radial-gradient(circle_at_50%_100%,rgba(200,164,92,0.025),transparent_60%)]" />
-        <div 
+        <div className="absolute inset-0 bg-[radial-gradient(ellipse_at_50%_50%,rgba(15,23,42,0.6),transparent_70%)]" />
+        <div className="absolute inset-0 bg-[radial-gradient(circle_at_50%_50%,rgba(200,164,92,0.02),transparent_60%)]" />
+        <div
           className="absolute inset-0 opacity-[0.025] mix-blend-overlay"
-          style={{ backgroundImage: `url("data:image/svg+xml,%3Csvg viewBox='0 0 256 256' xmlns='http://www.w3.org/2000/svg'%3E%3Cfilter id='noise'%3E%3CfeTurbulence type='fractalNoise' baseFrequency='0.85' numOctaves='4' stitchTiles='stitch'/%3E%3C/filter%3E%3Crect width='100%25' height='100%25' filter='url(%23noise)'/%3E%3C/svg%3E")` }} 
+          style={{ backgroundImage: `url("data:image/svg+xml,%3Csvg viewBox='0 0 256 256' xmlns='http://www.w3.org/2000/svg'%3E%3Cfilter id='noise'%3E%3CfeTurbulence type='fractalNoise' baseFrequency='0.85' numOctaves='4' stitchTiles='stitch'/%3E%3C/filter%3E%3Crect width='100%25' height='100%25' filter='url(%23noise)'/%3E%3C/svg%3E")` }}
         />
       </div>
 
-      <div className="relative z-10 w-full max-w-[1400px] px-6 md:px-12 lg:px-20 mx-auto">
-        {/* Editorial Section Header */}
-        <motion.div 
-          initial={{ opacity: 0, y: 40 }}
-          whileInView={{ opacity: 1, y: 0 }}
-          viewport={{ once: true, margin: "-100px" }}
-          transition={{ duration: 1.2, ease: [0.16, 1, 0.3, 1] }}
-          className="max-w-4xl mb-32 md:mb-40"
-        >
-          <h2 className="text-[11px] sm:text-xs font-semibold tracking-[0.25em] text-[#A1A1AA] mb-8 uppercase">
-            Global Presence
-          </h2>
-          <p className="text-4xl md:text-6xl lg:text-[72px] font-medium tracking-tight text-[#F5F5F5] leading-[1.05] mb-10">
-            Engineering software beyond borders.
-          </p>
-          <p className="text-lg md:text-[22px] text-[#A1A1AA] max-w-2xl font-light tracking-wide leading-relaxed">
-            Building world-class software for businesses across India, Kuwait and Australia.
-          </p>
-        </motion.div>
-
-        {/* 3-Column Content Blocks (No Cards) */}
-        <motion.div 
-          variants={containerVariants}
-          initial="hidden"
-          whileInView="visible"
-          viewport={{ once: true, margin: "-100px" }}
-          className="grid grid-cols-1 md:grid-cols-3 gap-20 md:gap-12 lg:gap-24"
-        >
-          {LOCATIONS.map((loc) => (
-            <LocationBlock key={loc.country} location={loc} />
-          ))}
-        </motion.div>
+      {/* DESKTOP LAYOUT (>= 768px) */}
+      <div className="hidden md:block relative w-full max-w-[1200px] aspect-[12/8] mx-auto z-10">
+        <DesktopAnimation />
       </div>
-    </section>
+
+      {/* MOBILE LAYOUT (< 768px) */}
+      <div className="md:hidden relative w-full max-w-[400px] aspect-[4/12] mx-auto z-10">
+        <MobileAnimation />
+      </div>
+    </motion.section>
   );
 }
 
-function LocationBlock({ location }: { location: typeof LOCATIONS[0] }) {
+function DesktopAnimation() {
+  return (
+    <>
+      <svg viewBox="0 0 1200 800" className="absolute inset-0 w-full h-full pointer-events-none">
+        {/* Animated Lines */}
+        <motion.path d="M 600,400 C 450,400 350,250 300,250" fill="none" stroke="#C8A45C" className="opacity-80" variants={drawLine(TIMINGS.line1, TIMINGS.shimmer)} />
+        <motion.path d="M 600,400 C 750,400 850,250 900,250" fill="none" stroke="#C8A45C" className="opacity-80" variants={drawLine(TIMINGS.line2, TIMINGS.shimmer)} />
+        <motion.path d="M 600,400 C 450,450 450,630 600,680" fill="none" stroke="#C8A45C" className="opacity-80" variants={drawLine(TIMINGS.line3, TIMINGS.shimmer)} />
+
+        {/* Nodes */}
+        <g>
+          <motion.circle cx="300" cy="250" r="3.5" fill="#C8A45C" variants={nodeVariants(TIMINGS.node1)} />
+          <motion.circle cx="300" cy="250" r="3.5" fill="none" stroke="#C8A45C" strokeWidth="1" variants={pulseVariants(TIMINGS.node1)} />
+        </g>
+        <g>
+          <motion.circle cx="900" cy="250" r="3.5" fill="#C8A45C" variants={nodeVariants(TIMINGS.node2)} />
+          <motion.circle cx="900" cy="250" r="3.5" fill="none" stroke="#C8A45C" strokeWidth="1" variants={pulseVariants(TIMINGS.node2)} />
+        </g>
+        <g>
+          <motion.circle cx="600" cy="680" r="3.5" fill="#C8A45C" variants={nodeVariants(TIMINGS.node3)} />
+          <motion.circle cx="600" cy="680" r="3.5" fill="none" stroke="#C8A45C" strokeWidth="1" variants={pulseVariants(TIMINGS.node3)} />
+        </g>
+      </svg>
+
+      {/* HTML Overlays */}
+      <LogoOverlay className="absolute left-[50%] top-[50%] -translate-x-1/2 -translate-y-1/2" />
+      
+      {/* India */}
+      <motion.div variants={fadeUp(TIMINGS.node1)} className="absolute left-[25%] top-[31.25%] -translate-x-1/2 -translate-y-[135%] flex flex-col items-center whitespace-nowrap">
+        <div className="flex items-center gap-3 mb-1">
+          <span className="text-xl">🇮🇳</span>
+          <span className="text-[20px] font-medium tracking-[0.15em] text-[#F5F5F5]">INDIA</span>
+        </div>
+        <p className="text-[#A1A1AA] font-light text-[15px] tracking-wide">Engineering Digital Products</p>
+      </motion.div>
+
+      {/* Kuwait */}
+      <motion.div variants={fadeUp(TIMINGS.node2)} className="absolute left-[75%] top-[31.25%] -translate-x-1/2 -translate-y-[135%] flex flex-col items-center whitespace-nowrap">
+        <div className="flex items-center gap-3 mb-1">
+          <span className="text-xl">🇰🇼</span>
+          <span className="text-[20px] font-medium tracking-[0.15em] text-[#F5F5F5]">KUWAIT</span>
+        </div>
+        <p className="text-[#A1A1AA] font-light text-[15px] tracking-wide">Business Automation</p>
+      </motion.div>
+
+      {/* Australia */}
+      <motion.div variants={fadeUp(TIMINGS.node3)} className="absolute left-[50%] top-[85%] -translate-x-1/2 pt-8 flex flex-col items-center whitespace-nowrap">
+        <div className="flex items-center gap-3 mb-1">
+          <span className="text-xl">🇦🇺</span>
+          <span className="text-[20px] font-medium tracking-[0.15em] text-[#F5F5F5]">AUSTRALIA</span>
+        </div>
+        <p className="text-[#A1A1AA] font-light text-[15px] tracking-wide">Scalable SaaS Solutions</p>
+      </motion.div>
+
+      {/* Final Story Text */}
+      <motion.div variants={fadeUp(TIMINGS.finalText)} className="absolute left-[50%] top-[66.25%] -translate-x-1/2 flex flex-col items-center whitespace-nowrap">
+        <p className="text-[22px] font-light tracking-[0.1em] text-[#F5F5F5] opacity-90">
+          Building software beyond borders.
+        </p>
+      </motion.div>
+    </>
+  );
+}
+
+function MobileAnimation() {
+  return (
+    <>
+      <svg viewBox="0 0 400 1200" className="absolute inset-0 w-full h-full pointer-events-none">
+        {/* Animated S-Curves */}
+        <motion.path d="M 200,150 C 260,220 140,280 200,350" fill="none" stroke="#C8A45C" className="opacity-80" variants={drawLine(TIMINGS.line1, TIMINGS.shimmer)} />
+        <motion.path d="M 200,450 C 140,520 260,580 200,650" fill="none" stroke="#C8A45C" className="opacity-80" variants={drawLine(TIMINGS.line2, TIMINGS.shimmer)} />
+        <motion.path d="M 200,750 C 260,820 140,880 200,950" fill="none" stroke="#C8A45C" className="opacity-80" variants={drawLine(TIMINGS.line3, TIMINGS.shimmer)} />
+
+        {/* Nodes */}
+        <g>
+          <motion.circle cx="200" cy="350" r="3.5" fill="#C8A45C" variants={nodeVariants(TIMINGS.node1)} />
+          <motion.circle cx="200" cy="350" r="3.5" fill="none" stroke="#C8A45C" strokeWidth="1" variants={pulseVariants(TIMINGS.node1)} />
+        </g>
+        <g>
+          <motion.circle cx="200" cy="650" r="3.5" fill="#C8A45C" variants={nodeVariants(TIMINGS.node2)} />
+          <motion.circle cx="200" cy="650" r="3.5" fill="none" stroke="#C8A45C" strokeWidth="1" variants={pulseVariants(TIMINGS.node2)} />
+        </g>
+        <g>
+          <motion.circle cx="200" cy="950" r="3.5" fill="#C8A45C" variants={nodeVariants(TIMINGS.node3)} />
+          <motion.circle cx="200" cy="950" r="3.5" fill="none" stroke="#C8A45C" strokeWidth="1" variants={pulseVariants(TIMINGS.node3)} />
+        </g>
+      </svg>
+
+      {/* HTML Overlays */}
+      <LogoOverlay className="absolute left-[50%] top-[12.5%] -translate-x-1/2 -translate-y-1/2 scale-[0.9]" />
+
+      {/* India */}
+      <motion.div variants={fadeUp(TIMINGS.node1)} className="absolute left-[50%] top-[31.6%] -translate-x-1/2 flex flex-col items-center whitespace-nowrap text-center pt-2">
+        <div className="flex items-center gap-2 mb-1">
+          <span className="text-xl">🇮🇳</span>
+          <span className="text-[18px] font-medium tracking-[0.15em] text-[#F5F5F5]">INDIA</span>
+        </div>
+        <p className="text-[#A1A1AA] font-light text-[13px] tracking-wide">Engineering Digital Products</p>
+      </motion.div>
+
+      {/* Kuwait */}
+      <motion.div variants={fadeUp(TIMINGS.node2)} className="absolute left-[50%] top-[56.6%] -translate-x-1/2 flex flex-col items-center whitespace-nowrap text-center pt-2">
+        <div className="flex items-center gap-2 mb-1">
+          <span className="text-xl">🇰🇼</span>
+          <span className="text-[18px] font-medium tracking-[0.15em] text-[#F5F5F5]">KUWAIT</span>
+        </div>
+        <p className="text-[#A1A1AA] font-light text-[13px] tracking-wide">Business Automation</p>
+      </motion.div>
+
+      {/* Australia */}
+      <motion.div variants={fadeUp(TIMINGS.node3)} className="absolute left-[50%] top-[81.6%] -translate-x-1/2 flex flex-col items-center whitespace-nowrap text-center pt-2">
+        <div className="flex items-center gap-2 mb-1">
+          <span className="text-xl">🇦🇺</span>
+          <span className="text-[18px] font-medium tracking-[0.15em] text-[#F5F5F5]">AUSTRALIA</span>
+        </div>
+        <p className="text-[#A1A1AA] font-light text-[13px] tracking-wide">Scalable SaaS Solutions</p>
+      </motion.div>
+
+      {/* Final Story Text */}
+      <motion.div variants={fadeUp(TIMINGS.finalText)} className="absolute left-[50%] top-[91.6%] -translate-x-1/2 flex flex-col items-center whitespace-nowrap w-full">
+        <p className="text-[15px] font-light tracking-[0.1em] text-[#F5F5F5] opacity-90 text-center">
+          Building software beyond borders.
+        </p>
+      </motion.div>
+    </>
+  );
+}
+
+function LogoOverlay({ className = "" }: { className?: string }) {
   return (
     <motion.div
-      variants={blockVariants}
-      className="group relative flex flex-col cursor-default"
+      variants={{
+        hidden: { scale: 1 },
+        visible: { scale: 0.8, transition: { duration: 1.8, ease: APPLE_EASE } }
+      }}
+      className={`z-20 flex items-center justify-center ${className}`}
     >
-      <div className="mb-8">
-        <div className="inline-block relative">
-          <h3 className="text-[40px] lg:text-[48px] font-medium text-[#F5F5F5] tracking-tight transition-transform duration-700 ease-out group-hover:scale-[1.03] origin-left">
-            {location.country}
-          </h3>
-          {/* Thin gold line animating under title on hover */}
-          <div className="absolute -bottom-2 left-0 h-[1px] bg-[#C8A45C] w-0 group-hover:w-full transition-all duration-700 ease-[0.16,1,0.3,1] opacity-70" />
+      <div className="relative flex items-center justify-center">
+        {/* Soft champagne gold glow */}
+        <motion.div 
+          variants={{
+            hidden: { opacity: 0, scale: 0.8 },
+            visible: { opacity: 1, scale: 1.25, transition: { duration: 2.5, delay: 0.5, ease: APPLE_EASE } }
+          }}
+          className="absolute inset-0 bg-[#C8A45C] blur-[40px] opacity-[0.22] rounded-full"
+        />
+        {/* Logo Image container */}
+        <div className="relative z-10 w-[100px] h-[100px] rounded-full border border-white/[0.08] shadow-[0_0_50px_rgba(0,0,0,0.9)] overflow-hidden bg-[#050505]">
+          <img src="/logo.jpeg" alt="DuoKarma" className="w-full h-full object-cover scale-[1.05]" />
         </div>
-      </div>
-
-      {/* Small Gold Divider */}
-      <div className="w-8 h-px bg-[rgba(200,164,92,0.4)] mb-8 transition-all duration-700 ease-out group-hover:w-16" />
-
-      {/* Description */}
-      <p className="text-[18px] text-[#A1A1AA] font-light leading-relaxed mb-16 transition-transform duration-700 ease-out group-hover:-translate-y-1">
-        {location.description}
-      </p>
-
-      {/* Capabilities */}
-      <div className="mt-auto">
-        <ul className="space-y-5">
-          {location.capabilities.map((cap, i) => (
-            <li key={i} className="flex items-center text-[16px] text-[#E2E8F0] tracking-tight font-light transition-colors duration-500 group-hover:text-[#F5F5F5]">
-              {/* Tiny pulsing champagne-gold indicator */}
-              <div className="relative w-1.5 h-1.5 mr-6 flex-shrink-0 flex items-center justify-center">
-                <span className="absolute w-full h-full rounded-full bg-[#C8A45C] opacity-80" />
-                <span className="absolute w-2.5 h-2.5 rounded-full bg-[#C8A45C] opacity-30 animate-[ping_4s_ease-in-out_infinite]" />
-              </div>
-              {cap}
-            </li>
-          ))}
-        </ul>
       </div>
     </motion.div>
   );
