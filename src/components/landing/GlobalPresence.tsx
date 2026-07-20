@@ -1,4 +1,3 @@
-import React from 'react';
 import { m as motion } from 'framer-motion';
 
 const LOCATIONS = [
@@ -37,7 +36,7 @@ const cardVariants = {
     y: 0,
     transition: { 
       duration: 0.8, 
-      ease: [0.16, 1, 0.3, 1] 
+      ease: [0.16, 1, 0.3, 1] as [number, number, number, number]
     }
   },
 };
@@ -79,7 +78,7 @@ export function GlobalPresence() {
           viewport={{ once: true, margin: "-100px" }}
           className="flex flex-wrap justify-center gap-6"
         >
-          {LOCATIONS.map((loc, index) => (
+          {LOCATIONS.map((loc) => (
             <LocationCard key={loc.country} location={loc} />
           ))}
         </motion.div>
