@@ -13,6 +13,7 @@ const About = React.lazy(() => import('@/components/landing/About').then(m => ({
 const WhatWeBuild = React.lazy(() => import('@/components/landing/WhatWeBuild').then(m => ({ default: m.WhatWeBuild })));
 const Showcase = React.lazy(() => import('@/components/landing/Showcase').then(m => ({ default: m.Showcase })));
 const Services = React.lazy(() => import('@/components/landing/Services').then(m => ({ default: m.Services })));
+const GlobalPresence = React.lazy(() => import('@/components/landing/GlobalPresence').then(m => ({ default: m.GlobalPresence })));
 const Process = React.lazy(() => import('@/components/landing/Process').then(m => ({ default: m.Process })));
 const Stats = React.lazy(() => import('@/components/landing/Stats').then(m => ({ default: m.Stats })));
 const CinematicOutro = React.lazy(() => import('@/components/landing/CinematicOutro').then(m => ({ default: m.CinematicOutro })));
@@ -147,6 +148,7 @@ export function LandingPage() {
         <WhatWeBuild />
         <Showcase />
         <Services />
+        <GlobalPresence />
         <Process />
         <Stats />
         <CinematicOutro />

@@ -9,6 +9,17 @@ export function LoadingScreen({ done }: { done: boolean }) {
     if (done) setShouldHide(true);
   }, [done]);
 
+  useEffect(() => {
+    if (!shouldHide) {
+      document.body.style.overflow = 'hidden';
+    } else {
+      document.body.style.overflow = '';
+    }
+    return () => {
+      document.body.style.overflow = '';
+    };
+  }, [shouldHide]);
+
   const handleVideoEnd = () => {
     setShouldHide(true);
   };
