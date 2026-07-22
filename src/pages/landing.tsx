@@ -125,7 +125,7 @@ export function LandingPage() {
       <BottomDock />
       <CommandPalette open={cmdOpen} onClose={() => setCmdOpen(false)} />
 
-      <Hero ready={ready} />
+      <Hero />
       
       {/* Lazy loaded sections */}
       <Suspense fallback={<div className="h-[200px]" />}>

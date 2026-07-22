@@ -1,7 +1,7 @@
 import { AnimatedTextReveal } from './ui/AnimatedTextReveal';
 import { MagneticWrapper } from '@/components/premium/magnetic-wrapper';
 
-export function Hero({ ready = true }: { ready?: boolean }) {
+export function Hero() {
   return (
     <div className="tracking-[-0.02em]" style={{ fontFamily: "'Inter', sans-serif" }}>
       <section className="relative w-full overflow-hidden bg-black" style={{ height: '100dvh' }}>
