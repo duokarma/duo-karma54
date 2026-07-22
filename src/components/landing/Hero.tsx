@@ -12,7 +12,7 @@ export function Hero({ ready = true }: { ready?: boolean }) {
         <div className="absolute inset-0 z-10 hero-zoom bg-black">
           <LazyVideo 
             src="/homepage.mp4"
-            autoPlay={ready}
+            autoPlay={true}
             loop
             muted
             playsInline

@@ -55,8 +55,8 @@ export function LandingPage() {
   }, [rawX, rawY]);
 
   useEffect(() => {
-    // Safety fallback
-    const t = setTimeout(() => setReady(true), 8000);
+    // Trigger ready state when the loader finishes (1.8s)
+    const t = setTimeout(() => setReady(true), 1800);
     return () => clearTimeout(t);
   }, []);
 
