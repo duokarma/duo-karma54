@@ -1,7 +1,5 @@
 import { AnimatedTextReveal } from './ui/AnimatedTextReveal';
-
 import { MagneticWrapper } from '@/components/premium/magnetic-wrapper';
-import { LazyVideo } from '@/components/shared/LazyVideo';
 
 export function Hero({ ready = true }: { ready?: boolean }) {
   return (
@@ -10,13 +8,12 @@ export function Hero({ ready = true }: { ready?: boolean }) {
         
         {/* Layer 1: Background Video (Zooming out on load) */}
         <div className="absolute inset-0 z-10 hero-zoom bg-black">
-          <LazyVideo 
+          <video 
             src="/homepage.mp4"
-            autoPlay={true}
+            autoPlay
             loop
             muted
             playsInline
-            preload="metadata"
             className="w-full h-full object-cover opacity-50"
             style={{ filter: 'contrast(1.1) brightness(0.9)' }}
           />
