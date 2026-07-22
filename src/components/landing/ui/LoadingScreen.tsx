@@ -28,7 +28,14 @@ export function LoadingScreen({ done }: { done: boolean }) {
     }
   }, [stage]);
 
-  const canExit = done && stage >= 2;
+  const [autoExit, setAutoExit] = useState(false);
+  useEffect(() => {
+    // Automatically exit after 1.8 seconds if `done` hasn't fired yet
+    const t = setTimeout(() => setAutoExit(true), 1800);
+    return () => clearTimeout(t);
+  }, []);
+
+  const canExit = (done || autoExit) && stage >= 2;
 
   useEffect(() => {
     if (canExit && stage === 2) {
