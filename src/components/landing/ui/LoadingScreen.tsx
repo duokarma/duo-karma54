@@ -40,12 +40,17 @@ export function LoadingScreen({ done }: { done: boolean }) {
   useEffect(() => {
     if (canExit && stage === 2) {
       setStage(3); // Start shimmer
+    }
+  }, [canExit, stage]);
+
+  useEffect(() => {
+    if (stage === 3) {
       const t1 = setTimeout(() => {
         setStage(4); // Start exit fade
       }, 400); // Shimmer duration
       return () => clearTimeout(t1);
     }
-  }, [canExit, stage]);
+  }, [stage]);
 
   useEffect(() => {
     if (stage === 4) {
