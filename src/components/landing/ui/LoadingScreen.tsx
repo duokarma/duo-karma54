@@ -1,7 +1,7 @@
 import { m as motion, AnimatePresence } from 'framer-motion';
 import { useState, useEffect } from 'react';
 
-const easeOutExpo = [0.19, 1, 0.22, 1];
+const easeOutExpo = [0.19, 1, 0.22, 1] as [number, number, number, number];
 
 export function LoadingScreen({ done }: { done: boolean }) {
   const [stage, setStage] = useState(0); 
