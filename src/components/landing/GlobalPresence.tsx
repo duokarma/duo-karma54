@@ -130,35 +130,8 @@ function DesktopAnimation() {
       {/* HTML Overlays */}
       <LogoOverlay className="absolute left-[50%] top-[50%] -translate-x-1/2 -translate-y-1/2" />
       
-      {/* 1. USA */}
+      {/* 1. India */}
       <motion.div variants={fadeUp(TIMINGS.node1)} className="absolute left-[20.8%] top-[31.25%] -translate-x-1/2 -translate-y-[135%] flex flex-col items-center whitespace-nowrap">
-        <div className="flex items-center gap-3 mb-1">
-          <img src="https://flagcdn.com/us.svg" alt="USA" className="w-5 object-contain rounded-[2px] opacity-90 shadow-sm" />
-          <span className="text-[20px] font-medium tracking-[0.15em] text-[#F5F5F5]">USA</span>
-        </div>
-        <p className="text-[#A1A1AA] font-light text-[15px] tracking-wide">Enterprise Innovation</p>
-      </motion.div>
-
-      {/* 2. Dubai */}
-      <motion.div variants={fadeUp(TIMINGS.node2)} className="absolute left-[79.1%] top-[31.25%] -translate-x-1/2 -translate-y-[135%] flex flex-col items-center whitespace-nowrap">
-        <div className="flex items-center gap-3 mb-1">
-          <img src="https://flagcdn.com/ae.svg" alt="Dubai" className="w-5 object-contain rounded-[2px] opacity-90 shadow-sm" />
-          <span className="text-[20px] font-medium tracking-[0.15em] text-[#F5F5F5]">DUBAI</span>
-        </div>
-        <p className="text-[#A1A1AA] font-light text-[15px] tracking-wide">Digital Transformation</p>
-      </motion.div>
-
-      {/* 3. Kuwait */}
-      <motion.div variants={fadeUp(TIMINGS.node3)} className="absolute left-[16.6%] top-[68.75%] -translate-x-1/2 pt-6 flex flex-col items-center whitespace-nowrap">
-        <div className="flex items-center gap-3 mb-1">
-          <img src="https://flagcdn.com/kw.svg" alt="Kuwait" className="w-5 object-contain rounded-[2px] opacity-90 shadow-sm" />
-          <span className="text-[20px] font-medium tracking-[0.15em] text-[#F5F5F5]">KUWAIT</span>
-        </div>
-        <p className="text-[#A1A1AA] font-light text-[15px] tracking-wide">Business Automation</p>
-      </motion.div>
-
-      {/* 4. India */}
-      <motion.div variants={fadeUp(TIMINGS.node4)} className="absolute left-[83.3%] top-[68.75%] -translate-x-1/2 pt-6 flex flex-col items-center whitespace-nowrap">
         <div className="flex items-center gap-3 mb-1">
           <img src="https://flagcdn.com/in.svg" alt="India" className="w-5 object-contain rounded-[2px] opacity-90 shadow-sm" />
           <span className="text-[20px] font-medium tracking-[0.15em] text-[#F5F5F5]">INDIA</span>
@@ -166,13 +139,40 @@ function DesktopAnimation() {
         <p className="text-[#A1A1AA] font-light text-[15px] tracking-wide">Engineering Digital Products</p>
       </motion.div>
 
-      {/* 5. Australia */}
-      <motion.div variants={fadeUp(TIMINGS.node5)} className="absolute left-[50%] top-[87.5%] -translate-x-1/2 pt-8 flex flex-col items-center whitespace-nowrap">
+      {/* 2. Kuwait */}
+      <motion.div variants={fadeUp(TIMINGS.node2)} className="absolute left-[79.1%] top-[31.25%] -translate-x-1/2 -translate-y-[135%] flex flex-col items-center whitespace-nowrap">
+        <div className="flex items-center gap-3 mb-1">
+          <img src="https://flagcdn.com/kw.svg" alt="Kuwait" className="w-5 object-contain rounded-[2px] opacity-90 shadow-sm" />
+          <span className="text-[20px] font-medium tracking-[0.15em] text-[#F5F5F5]">KUWAIT</span>
+        </div>
+        <p className="text-[#A1A1AA] font-light text-[15px] tracking-wide">Business Automation</p>
+      </motion.div>
+
+      {/* 3. Australia */}
+      <motion.div variants={fadeUp(TIMINGS.node3)} className="absolute left-[16.6%] top-[68.75%] -translate-x-1/2 pt-6 flex flex-col items-center whitespace-nowrap">
         <div className="flex items-center gap-3 mb-1">
           <img src="https://flagcdn.com/au.svg" alt="Australia" className="w-5 object-contain rounded-[2px] opacity-90 shadow-sm" />
           <span className="text-[20px] font-medium tracking-[0.15em] text-[#F5F5F5]">AUSTRALIA</span>
         </div>
         <p className="text-[#A1A1AA] font-light text-[15px] tracking-wide">Scalable SaaS Solutions</p>
+      </motion.div>
+
+      {/* 4. Dubai */}
+      <motion.div variants={fadeUp(TIMINGS.node4)} className="absolute left-[83.3%] top-[68.75%] -translate-x-1/2 pt-6 flex flex-col items-center whitespace-nowrap">
+        <div className="flex items-center gap-3 mb-1">
+          <img src="https://flagcdn.com/ae.svg" alt="Dubai" className="w-5 object-contain rounded-[2px] opacity-90 shadow-sm" />
+          <span className="text-[20px] font-medium tracking-[0.15em] text-[#F5F5F5]">DUBAI</span>
+        </div>
+        <p className="text-[#A1A1AA] font-light text-[15px] tracking-wide">Digital Transformation</p>
+      </motion.div>
+
+      {/* 5. USA */}
+      <motion.div variants={fadeUp(TIMINGS.node5)} className="absolute left-[50%] top-[87.5%] -translate-x-1/2 pt-8 flex flex-col items-center whitespace-nowrap">
+        <div className="flex items-center gap-3 mb-1">
+          <img src="https://flagcdn.com/us.svg" alt="USA" className="w-5 object-contain rounded-[2px] opacity-90 shadow-sm" />
+          <span className="text-[20px] font-medium tracking-[0.15em] text-[#F5F5F5]">USA</span>
+        </div>
+        <p className="text-[#A1A1AA] font-light text-[15px] tracking-wide">Enterprise Innovation</p>
       </motion.div>
     </>
   );
@@ -215,35 +215,8 @@ function MobileAnimation() {
       {/* HTML Overlays */}
       <LogoOverlay className="absolute left-[50%] top-[8.0%] -translate-x-1/2 -translate-y-1/2 scale-[0.85]" />
 
-      {/* 1. USA */}
+      {/* 1. India */}
       <motion.div variants={fadeUp(TIMINGS.node1)} className="absolute left-[50%] top-[22.4%] -translate-x-1/2 flex flex-col items-center whitespace-nowrap text-center pt-1">
-        <div className="flex items-center gap-2 mb-1">
-          <img src="https://flagcdn.com/us.svg" alt="USA" className="w-5 object-contain rounded-[2px] opacity-90 shadow-sm" />
-          <span className="text-[18px] font-medium tracking-[0.15em] text-[#F5F5F5]">USA</span>
-        </div>
-        <p className="text-[#A1A1AA] font-light text-[13px] tracking-wide">Enterprise Innovation</p>
-      </motion.div>
-
-      {/* 2. Dubai */}
-      <motion.div variants={fadeUp(TIMINGS.node2)} className="absolute left-[50%] top-[38.4%] -translate-x-1/2 flex flex-col items-center whitespace-nowrap text-center pt-1">
-        <div className="flex items-center gap-2 mb-1">
-          <img src="https://flagcdn.com/ae.svg" alt="Dubai" className="w-5 object-contain rounded-[2px] opacity-90 shadow-sm" />
-          <span className="text-[18px] font-medium tracking-[0.15em] text-[#F5F5F5]">DUBAI</span>
-        </div>
-        <p className="text-[#A1A1AA] font-light text-[13px] tracking-wide">Digital Transformation</p>
-      </motion.div>
-
-      {/* 3. Kuwait */}
-      <motion.div variants={fadeUp(TIMINGS.node3)} className="absolute left-[50%] top-[54.4%] -translate-x-1/2 flex flex-col items-center whitespace-nowrap text-center pt-1">
-        <div className="flex items-center gap-2 mb-1">
-          <img src="https://flagcdn.com/kw.svg" alt="Kuwait" className="w-5 object-contain rounded-[2px] opacity-90 shadow-sm" />
-          <span className="text-[18px] font-medium tracking-[0.15em] text-[#F5F5F5]">KUWAIT</span>
-        </div>
-        <p className="text-[#A1A1AA] font-light text-[13px] tracking-wide">Business Automation</p>
-      </motion.div>
-
-      {/* 4. India */}
-      <motion.div variants={fadeUp(TIMINGS.node4)} className="absolute left-[50%] top-[70.4%] -translate-x-1/2 flex flex-col items-center whitespace-nowrap text-center pt-1">
         <div className="flex items-center gap-2 mb-1">
           <img src="https://flagcdn.com/in.svg" alt="India" className="w-5 object-contain rounded-[2px] opacity-90 shadow-sm" />
           <span className="text-[18px] font-medium tracking-[0.15em] text-[#F5F5F5]">INDIA</span>
@@ -251,13 +224,40 @@ function MobileAnimation() {
         <p className="text-[#A1A1AA] font-light text-[13px] tracking-wide">Engineering Digital Products</p>
       </motion.div>
 
-      {/* 5. Australia */}
-      <motion.div variants={fadeUp(TIMINGS.node5)} className="absolute left-[50%] top-[86.4%] -translate-x-1/2 flex flex-col items-center whitespace-nowrap text-center pt-1">
+      {/* 2. Kuwait */}
+      <motion.div variants={fadeUp(TIMINGS.node2)} className="absolute left-[50%] top-[38.4%] -translate-x-1/2 flex flex-col items-center whitespace-nowrap text-center pt-1">
+        <div className="flex items-center gap-2 mb-1">
+          <img src="https://flagcdn.com/kw.svg" alt="Kuwait" className="w-5 object-contain rounded-[2px] opacity-90 shadow-sm" />
+          <span className="text-[18px] font-medium tracking-[0.15em] text-[#F5F5F5]">KUWAIT</span>
+        </div>
+        <p className="text-[#A1A1AA] font-light text-[13px] tracking-wide">Business Automation</p>
+      </motion.div>
+
+      {/* 3. Australia */}
+      <motion.div variants={fadeUp(TIMINGS.node3)} className="absolute left-[50%] top-[54.4%] -translate-x-1/2 flex flex-col items-center whitespace-nowrap text-center pt-1">
         <div className="flex items-center gap-2 mb-1">
           <img src="https://flagcdn.com/au.svg" alt="Australia" className="w-5 object-contain rounded-[2px] opacity-90 shadow-sm" />
           <span className="text-[18px] font-medium tracking-[0.15em] text-[#F5F5F5]">AUSTRALIA</span>
         </div>
         <p className="text-[#A1A1AA] font-light text-[13px] tracking-wide">Scalable SaaS Solutions</p>
+      </motion.div>
+
+      {/* 4. Dubai */}
+      <motion.div variants={fadeUp(TIMINGS.node4)} className="absolute left-[50%] top-[70.4%] -translate-x-1/2 flex flex-col items-center whitespace-nowrap text-center pt-1">
+        <div className="flex items-center gap-2 mb-1">
+          <img src="https://flagcdn.com/ae.svg" alt="Dubai" className="w-5 object-contain rounded-[2px] opacity-90 shadow-sm" />
+          <span className="text-[18px] font-medium tracking-[0.15em] text-[#F5F5F5]">DUBAI</span>
+        </div>
+        <p className="text-[#A1A1AA] font-light text-[13px] tracking-wide">Digital Transformation</p>
+      </motion.div>
+
+      {/* 5. USA */}
+      <motion.div variants={fadeUp(TIMINGS.node5)} className="absolute left-[50%] top-[86.4%] -translate-x-1/2 flex flex-col items-center whitespace-nowrap text-center pt-1">
+        <div className="flex items-center gap-2 mb-1">
+          <img src="https://flagcdn.com/us.svg" alt="USA" className="w-5 object-contain rounded-[2px] opacity-90 shadow-sm" />
+          <span className="text-[18px] font-medium tracking-[0.15em] text-[#F5F5F5]">USA</span>
+        </div>
+        <p className="text-[#A1A1AA] font-light text-[13px] tracking-wide">Enterprise Innovation</p>
       </motion.div>
 
       {/* Final Story Text */}
