@@ -19,15 +19,7 @@ const Stats = React.lazy(() => import('@/components/landing/Stats').then(m => ({
 const CinematicOutro = React.lazy(() => import('@/components/landing/CinematicOutro').then(m => ({ default: m.CinematicOutro })));
 const Contact = React.lazy(() => import('@/components/landing/Contact').then(m => ({ default: m.Contact })));
 const Footer = React.lazy(() => import('@/components/landing/Footer').then(m => ({ default: m.Footer })));
-const AmbientEffects = React.lazy(() => import('@/components/premium/ambient-effects').then(m => ({ 
-  default: () => (
-    <>
-      <m.SoftAurora />
-      <m.FloatingParticles />
-      <m.AnimatedNoise />
-    </>
-  )
-})));
+// AmbientEffects removed to improve performance and remove particle effects
 
 export function LandingPage() {
   const [ready, setReady] = useState(false);
@@ -85,14 +77,7 @@ export function LandingPage() {
         }
       `}</style>
 
-      {/* Defer ambient effects until ready to prevent blocking the hero video/loading */}
-      {ready && (
-        <Suspense fallback={null}>
-          <div className="fixed inset-0 z-0 pointer-events-none opacity-40">
-            <AmbientEffects />
-          </div>
-        </Suspense>
-      )}
+      {/* Ambient effects removed for performance */}
 
       {/* Noise texture overlay */}
       <div
