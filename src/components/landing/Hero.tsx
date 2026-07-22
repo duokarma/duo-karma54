@@ -1,7 +1,23 @@
+import React, { useEffect, useRef } from 'react';
 import { AnimatedTextReveal } from './ui/AnimatedTextReveal';
 import { MagneticWrapper } from '@/components/premium/magnetic-wrapper';
 
-export function Hero() {
+export const Hero = React.memo(function Hero() {
+  const videoRef = useRef<HTMLVideoElement>(null);
+
+  useEffect(() => {
+    // Explicitly enforce muted state (required for Safari autoplay policies)
+    // React sometimes doesn't sync the muted property to the DOM node correctly.
+    if (videoRef.current) {
+      videoRef.current.defaultMuted = true;
+      videoRef.current.muted = true;
+      
+      // Force play to ensure playback continues even if browser attempts to suspend
+      // the video while the loader overlay is present.
+      videoRef.current.play().catch(() => {});
+    }
+  }, []);
+
   return (
     <div className="tracking-[-0.02em]" style={{ fontFamily: "'Inter', sans-serif" }}>
       <section className="relative w-full overflow-hidden bg-black" style={{ height: '100dvh' }}>
@@ -9,6 +25,7 @@ export function Hero() {
         {/* Layer 1: Background Video (Zooming out on load) */}
         <div className="absolute inset-0 z-10 hero-zoom bg-black">
           <video 
+            ref={videoRef}
             src="/homepage.mp4"
             autoPlay
             loop
@@ -64,4 +81,4 @@ export function Hero() {
       </section>
     </div>
   );
-}
+});

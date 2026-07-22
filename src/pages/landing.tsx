@@ -47,8 +47,8 @@ export function LandingPage() {
   }, [rawX, rawY]);
 
   useEffect(() => {
-    // Trigger ready state when the loader finishes (1.8s)
-    const t = setTimeout(() => setReady(true), 1800);
+    // Trigger ready state when the loader finishes (2.4s to match AI OS boot animation)
+    const t = setTimeout(() => setReady(true), 2400);
     return () => clearTimeout(t);
   }, []);
 
