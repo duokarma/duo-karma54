@@ -70,7 +70,7 @@ export function CommandPalette() {
                   ESC
                 </kbd>
               </div>
-              <Command.List className="max-h-96 overflow-y-auto p-2 scrollbar-thin scrollbar-thumb-white/10 scrollbar-track-transparent">
+              <Command.List className="max-h-[60vh] sm:max-h-96 overflow-y-auto p-2 scrollbar-thin scrollbar-thumb-white/10 scrollbar-track-transparent">
                 <Command.Empty className="py-12">
                   <motion.div
                     initial={{ opacity: 0, scale: 0.95 }}

@@ -80,7 +80,7 @@ export function Topbar() {
   };
 
   return (
-    <header className="sticky top-0 z-30 flex h-11 items-center gap-3 border-b border-[var(--color-edge)] bg-[var(--color-void)] px-4">
+    <header className="sticky top-0 z-30 flex h-11 items-center gap-1.5 sm:gap-3 border-b border-[var(--color-edge)] bg-[var(--color-void)] px-2.5 sm:px-4 max-w-full">
       {/* Mobile menu */}
       <button
         onClick={() => setMobileOpen(true)}

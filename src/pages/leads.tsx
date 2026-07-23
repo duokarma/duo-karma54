@@ -426,7 +426,7 @@ export function LeadsPage() {
                   <DialogTitle>{selectedLead ? "Edit Lead" : "Add New Lead"}</DialogTitle>
                 </DialogHeader>
                 <form onSubmit={handleSubmit} className="space-y-4 pt-4">
-                  <div className="grid grid-cols-2 gap-4">
+                  <div className="grid grid-cols-1 sm:grid-cols-2 gap-3 sm:gap-4">
                     <div className="space-y-2">
                       <Label htmlFor="name">Contact Name</Label>
                       <Input id="name" required value={formData.name} onChange={(e) => setFormData({...formData, name: e.target.value})} />

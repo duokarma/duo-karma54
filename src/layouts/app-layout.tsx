@@ -14,7 +14,7 @@ export function AppLayout() {
   const location = useLocation();
 
   return (
-    <div className="relative min-h-screen bg-[#0c0c0c] text-[var(--color-ink)]">
+    <div className="relative min-h-screen max-w-full overflow-x-hidden bg-[#0c0c0c] text-[var(--color-ink)]">
       {/* Global Background Video for Aura styling */}
       <div className="fixed inset-0 z-0 pointer-events-none">
         <video 
@@ -31,18 +31,18 @@ export function AppLayout() {
         <AnimatedNoise />
       </div>
 
-      <div className="relative z-10">
+      <div className="relative z-10 max-w-full overflow-x-hidden">
       <Sidebar />
 
       <div
         className={cn(
-          "transition-[padding] duration-300",
+          "transition-[padding] duration-300 max-w-full overflow-x-hidden",
           collapsed ? "lg:pl-[60px]" : "lg:pl-[240px]"
         )}
       >
         <Topbar />
         <ScrollProgress />
-        <main className="px-5 py-5">
+        <main className="px-3.5 sm:px-5 py-3.5 sm:py-5 max-w-full overflow-x-hidden">
           <AnimatePresence mode="wait">
             <motion.div
               key={location.pathname}

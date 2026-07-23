@@ -320,7 +320,7 @@ export function ProjectsPage() {
               {errors.budget && <p className="mt-1 text-[10px] text-rose">{errors.budget.message}</p>}
             </div>
 
-            <div className="grid grid-cols-2 gap-4">
+            <div className="grid grid-cols-1 sm:grid-cols-2 gap-3 sm:gap-4">
               <div>
                 <label className="mb-1.5 block text-xs font-medium text-ink-dim">Website Link</label>
                 <Input placeholder="https://..." {...register("websiteLink")} />
