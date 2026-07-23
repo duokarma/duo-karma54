@@ -1,6 +1,7 @@
 import { m as motion } from "framer-motion";
 import { CreditCard, FolderKanban, Target, FileText, Users, CheckSquare, Smartphone, BellRing, Check } from "lucide-react";
 import { useQuery } from "@tanstack/react-query";
+import { useNavigate } from "react-router-dom";
 import { supabase } from "@/lib/supabase";
 import type { Activity } from "@/types";
 import { usePushNotifications } from "@/hooks/use-push-notifications";
@@ -25,7 +26,10 @@ const typeIconColor: Record<string, string> = {
 };
 
 function timeAgo(timestamp: string): string {
-  const diff = Date.now() - new Date(timestamp).getTime();
+  if (!timestamp) return "Just now";
+  const time = new Date(timestamp).getTime();
+  if (isNaN(time)) return "Just now";
+  const diff = Date.now() - time;
   const mins = Math.floor(diff / 60000);
   if (mins < 1) return "Just now";
   if (mins < 60) return `${mins}m ago`;
@@ -34,15 +38,34 @@ function timeAgo(timestamp: string): string {
   return `${Math.floor(hours / 24)}d ago`;
 }
 
+function getRouteForActivity(type: string): string {
+  switch (type) {
+    case "lead":
+      return "/admin/leads";
+    case "payment":
+    case "invoice":
+      return "/admin/revenue";
+    case "project":
+      return "/admin/projects";
+    case "client":
+      return "/admin/clients";
+    case "task":
+      return "/admin/tasks";
+    default:
+      return "/admin/leads";
+  }
+}
+
 export function NotificationPanel({ onClose }: { onClose: () => void }) {
+  const navigate = useNavigate();
   const { isEnabled, enableNotifications, isSupported } = usePushNotifications();
 
-  const { data: activities = [], isLoading } = useQuery({
+  const { data: activities = [], isLoading, isError } = useQuery({
     queryKey: ["activities"],
     queryFn: async () => {
       const { data, error } = await supabase.from("activities").select("*").order("timestamp", { ascending: false }).limit(10);
       if (error) throw error;
-      return data as Activity[];
+      return (data as Activity[]) || [];
     },
   });
 
@@ -52,6 +75,11 @@ export function NotificationPanel({ onClose }: { onClose: () => void }) {
       body: "Instant phone alerts are working perfectly! You will get notified when website bookings come in.",
       url: "/admin/leads",
     });
+  };
+
+  const handleItemClick = (type: string) => {
+    onClose();
+    navigate(getRouteForActivity(type));
   };
 
   return (
@@ -94,7 +122,7 @@ export function NotificationPanel({ onClose }: { onClose: () => void }) {
               </div>
               <button
                 onClick={enableNotifications}
-                className="mt-1 flex w-full items-center justify-center gap-2 rounded-md bg-[var(--color-accent)] px-3 py-1.5 text-xs font-medium text-white transition-opacity hover:opacity-90 shadow-sm"
+                className="mt-1 flex w-full items-center justify-center gap-2 rounded-md bg-[var(--color-accent)] px-3 py-1.5 text-xs font-medium text-white transition-opacity hover:opacity-90 shadow-sm cursor-pointer"
               >
                 <BellRing className="h-3.5 w-3.5" />
                 Enable Phone Alerts
@@ -108,7 +136,7 @@ export function NotificationPanel({ onClose }: { onClose: () => void }) {
               </div>
               <button
                 onClick={handleTestNotification}
-                className="shrink-0 rounded border border-[var(--color-edge)] bg-[var(--color-void)] px-2 py-1 text-[11px] font-medium text-ink-dim transition-colors hover:text-white"
+                className="shrink-0 rounded border border-[var(--color-edge)] bg-[var(--color-void)] px-2 py-1 text-[11px] font-medium text-ink-dim transition-colors hover:text-white cursor-pointer"
               >
                 Test Alert
               </button>
@@ -120,17 +148,17 @@ export function NotificationPanel({ onClose }: { onClose: () => void }) {
       {/* Activity List */}
       <div className="max-h-64 sm:max-h-72 overflow-y-auto">
         {isLoading ? (
-          <div className="p-4 text-center text-xs sm:text-sm text-ink-dim">Loading...</div>
-        ) : activities.length === 0 ? (
+          <div className="p-4 text-center text-xs sm:text-sm text-ink-dim">Loading notifications...</div>
+        ) : isError || activities.length === 0 ? (
           <div className="p-4 text-center text-xs sm:text-sm text-ink-dim">No notifications</div>
         ) : (
           activities.map((activity) => {
             const Icon = typeIcon[activity.type] || CheckSquare;
             return (
               <button
-                key={activity.id}
-                onClick={onClose}
-                className="flex w-full items-start gap-3 px-3.5 py-2.5 text-left transition-colors hover:bg-[var(--color-charcoal)]"
+                key={activity.id || Math.random()}
+                onClick={() => handleItemClick(activity.type)}
+                className="flex w-full items-start gap-3 px-3.5 py-2.5 text-left transition-colors hover:bg-[var(--color-charcoal)] cursor-pointer"
               >
                 <div className="flex h-7 w-7 shrink-0 items-center justify-center rounded-md border border-[var(--color-edge)] bg-[var(--color-void)]">
                   <Icon className={`h-3.5 w-3.5 ${typeIconColor[activity.type] || "text-ink-faint"}`} />
@@ -138,7 +166,7 @@ export function NotificationPanel({ onClose }: { onClose: () => void }) {
                 <div className="flex-1 min-w-0">
                   <p className="text-xs text-ink leading-snug break-words">{activity.message}</p>
                   <div className="mt-0.5 flex items-center gap-1.5">
-                    <span className="text-[10px] text-ink-faint truncate max-w-[120px]">{activity.actor}</span>
+                    <span className="text-[10px] text-ink-faint truncate max-w-[120px]">{activity.actor || "System"}</span>
                     <span className="text-[10px] text-ink-faint">·</span>
                     <span className="text-[10px] text-ink-faint shrink-0">{timeAgo(activity.timestamp)}</span>
                   </div>
@@ -150,8 +178,11 @@ export function NotificationPanel({ onClose }: { onClose: () => void }) {
       </div>
 
       <button
-        onClick={onClose}
-        className="w-full border-t border-[var(--color-edge)] py-2 text-xs font-medium text-[var(--color-accent)] transition-colors hover:bg-[var(--color-charcoal)]"
+        onClick={() => {
+          onClose();
+          navigate("/admin/leads");
+        }}
+        className="w-full border-t border-[var(--color-edge)] py-2 text-xs font-medium text-[var(--color-accent)] transition-colors hover:bg-[var(--color-charcoal)] cursor-pointer"
       >
         View all activity
       </button>
