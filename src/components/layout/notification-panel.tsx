@@ -60,16 +60,16 @@ export function NotificationPanel({ onClose }: { onClose: () => void }) {
       animate={{ opacity: 1, y: 0, scale: 1 }}
       exit={{ opacity: 0, y: -6, scale: 0.98 }}
       transition={{ duration: 0.15 }}
-      className="absolute right-0 top-9 z-50 w-84 rounded-[var(--radius-card)] border border-[var(--color-edge)] bg-[var(--color-card)] shadow-[var(--shadow-dropdown)] overflow-hidden"
+      className="absolute -right-12 sm:right-0 top-9 z-50 w-[calc(100vw-2rem)] max-w-[340px] sm:w-84 rounded-[var(--radius-card)] border border-[var(--color-edge)] bg-[var(--color-card)] shadow-[var(--shadow-dropdown)] overflow-hidden"
     >
       {/* Header */}
-      <div className="flex items-center justify-between border-b border-[var(--color-edge)] px-4 py-3">
-        <div className="flex items-center gap-2">
-          <p className="text-sm font-medium text-ink">Notifications</p>
+      <div className="flex items-center justify-between border-b border-[var(--color-edge)] px-3.5 py-2.5">
+        <div className="flex items-center gap-1.5">
+          <p className="text-xs sm:text-sm font-medium text-ink">Notifications</p>
           {isEnabled && (
-            <span className="flex items-center gap-1 rounded-full bg-[#10B981]/15 px-2 py-0.5 text-[10px] font-semibold text-[#10B981]">
+            <span className="flex items-center gap-1 rounded-full bg-[#10B981]/15 px-1.5 py-0.5 text-[9px] sm:text-[10px] font-semibold text-[#10B981]">
               <span className="h-1.5 w-1.5 rounded-full bg-[#10B981] animate-pulse" />
-              Phone Alerts Active
+              Active
             </span>
           )}
         </div>
@@ -87,7 +87,7 @@ export function NotificationPanel({ onClose }: { onClose: () => void }) {
                 <div className="flex h-7 w-7 shrink-0 items-center justify-center rounded-lg bg-[var(--color-accent)]/15 text-[var(--color-accent)]">
                   <Smartphone className="h-4 w-4" />
                 </div>
-                <div className="flex-1">
+                <div className="flex-1 min-w-0">
                   <p className="text-xs font-semibold text-ink">Get Notifications on Phone</p>
                   <p className="text-[11px] text-ink-dim leading-tight">Receive instant alerts when someone submits a booking on your website.</p>
                 </div>
@@ -101,14 +101,14 @@ export function NotificationPanel({ onClose }: { onClose: () => void }) {
               </button>
             </div>
           ) : (
-            <div className="flex items-center justify-between text-xs">
-              <div className="flex items-center gap-2 text-[#10B981]">
-                <Check className="h-3.5 w-3.5" />
-                <span className="font-medium text-ink-dim">Phone Alerts Enabled</span>
+            <div className="flex items-center justify-between text-xs gap-2">
+              <div className="flex items-center gap-1.5 text-[#10B981] min-w-0">
+                <Check className="h-3.5 w-3.5 shrink-0" />
+                <span className="font-medium text-ink-dim truncate text-[11px] sm:text-xs">Phone Alerts Enabled</span>
               </div>
               <button
                 onClick={handleTestNotification}
-                className="rounded border border-[var(--color-edge)] bg-[var(--color-void)] px-2 py-1 text-[11px] font-medium text-ink-dim transition-colors hover:text-white"
+                className="shrink-0 rounded border border-[var(--color-edge)] bg-[var(--color-void)] px-2 py-1 text-[11px] font-medium text-ink-dim transition-colors hover:text-white"
               >
                 Test Alert
               </button>
@@ -118,11 +118,11 @@ export function NotificationPanel({ onClose }: { onClose: () => void }) {
       )}
 
       {/* Activity List */}
-      <div className="max-h-72 overflow-y-auto">
+      <div className="max-h-64 sm:max-h-72 overflow-y-auto">
         {isLoading ? (
-          <div className="p-4 text-center text-sm text-ink-dim">Loading...</div>
+          <div className="p-4 text-center text-xs sm:text-sm text-ink-dim">Loading...</div>
         ) : activities.length === 0 ? (
-          <div className="p-4 text-center text-sm text-ink-dim">No notifications</div>
+          <div className="p-4 text-center text-xs sm:text-sm text-ink-dim">No notifications</div>
         ) : (
           activities.map((activity) => {
             const Icon = typeIcon[activity.type] || CheckSquare;
@@ -130,17 +130,17 @@ export function NotificationPanel({ onClose }: { onClose: () => void }) {
               <button
                 key={activity.id}
                 onClick={onClose}
-                className="flex w-full items-start gap-3 px-4 py-2.5 text-left transition-colors hover:bg-[var(--color-charcoal)]"
+                className="flex w-full items-start gap-3 px-3.5 py-2.5 text-left transition-colors hover:bg-[var(--color-charcoal)]"
               >
                 <div className="flex h-7 w-7 shrink-0 items-center justify-center rounded-md border border-[var(--color-edge)] bg-[var(--color-void)]">
                   <Icon className={`h-3.5 w-3.5 ${typeIconColor[activity.type] || "text-ink-faint"}`} />
                 </div>
                 <div className="flex-1 min-w-0">
-                  <p className="text-xs text-ink leading-snug">{activity.message}</p>
+                  <p className="text-xs text-ink leading-snug break-words">{activity.message}</p>
                   <div className="mt-0.5 flex items-center gap-1.5">
-                    <span className="text-[10px] text-ink-faint">{activity.actor}</span>
+                    <span className="text-[10px] text-ink-faint truncate max-w-[120px]">{activity.actor}</span>
                     <span className="text-[10px] text-ink-faint">·</span>
-                    <span className="text-[10px] text-ink-faint">{timeAgo(activity.timestamp)}</span>
+                    <span className="text-[10px] text-ink-faint shrink-0">{timeAgo(activity.timestamp)}</span>
                   </div>
                 </div>
               </button>
@@ -151,7 +151,7 @@ export function NotificationPanel({ onClose }: { onClose: () => void }) {
 
       <button
         onClick={onClose}
-        className="w-full border-t border-[var(--color-edge)] py-2.5 text-xs font-medium text-[var(--color-accent)] transition-colors hover:bg-[var(--color-charcoal)]"
+        className="w-full border-t border-[var(--color-edge)] py-2 text-xs font-medium text-[var(--color-accent)] transition-colors hover:bg-[var(--color-charcoal)]"
       >
         View all activity
       </button>
