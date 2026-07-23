@@ -19,6 +19,8 @@ import {
 import { useQuery } from "@tanstack/react-query";
 import { supabase } from "@/lib/supabase";
 
+import { usePushNotifications } from "@/hooks/use-push-notifications";
+
 function formatDate(): string {
   return new Date().toLocaleDateString("en-US", {
     weekday: "short",
@@ -28,6 +30,7 @@ function formatDate(): string {
 }
 
 export function Topbar() {
+  usePushNotifications();
   const location = useLocation();
   const { setMobileOpen } = useSidebar();
   const { setOpen } = useCommandPalette();

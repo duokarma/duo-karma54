@@ -460,3 +460,22 @@ DROP POLICY IF EXISTS "Allow anon update access on website_inquiries" ON website
 CREATE POLICY "Allow anon update access on website_inquiries" ON website_inquiries FOR UPDATE USING (true);
 DROP POLICY IF EXISTS "Allow anon delete access on website_inquiries" ON website_inquiries;
 CREATE POLICY "Allow anon delete access on website_inquiries" ON website_inquiries FOR DELETE USING (true);
+
+-- ============================================================
+-- Push Subscriptions Table for Mobile Phone & Web Push Alerts
+-- ============================================================
+CREATE TABLE IF NOT EXISTS push_subscriptions (
+  id TEXT PRIMARY KEY,
+  user_agent TEXT,
+  permission TEXT NOT NULL DEFAULT 'granted',
+  created_at TIMESTAMPTZ NOT NULL DEFAULT now()
+);
+
+ALTER TABLE push_subscriptions ENABLE ROW LEVEL SECURITY;
+DROP POLICY IF EXISTS "Allow anon read access on push_subscriptions" ON push_subscriptions;
+CREATE POLICY "Allow anon read access on push_subscriptions" ON push_subscriptions FOR SELECT USING (true);
+DROP POLICY IF EXISTS "Allow anon insert access on push_subscriptions" ON push_subscriptions;
+CREATE POLICY "Allow anon insert access on push_subscriptions" ON push_subscriptions FOR INSERT WITH CHECK (true);
+DROP POLICY IF EXISTS "Allow anon update access on push_subscriptions" ON push_subscriptions;
+CREATE POLICY "Allow anon update access on push_subscriptions" ON push_subscriptions FOR UPDATE USING (true);
+
