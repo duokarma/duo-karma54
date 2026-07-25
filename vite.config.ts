@@ -50,30 +50,31 @@ Guidelines:
 - Keep responses clear, professional, concise, and structured with clean formatting or short bullet points.
 - Be helpful and energetic. Avoid overly verbose explanations.`;
 
-                  const models = ['gemini-2.5-flash', 'gemini-2.0-flash', 'gemini-1.5-flash-latest'];
+                  const { GoogleGenAI } = await import('@google/genai');
+                  const ai = new GoogleGenAI({ apiKey });
+                  const models = ['gemini-2.5-flash', 'gemini-2.0-flash'];
                   let text = '';
                   let success = false;
                   let lastErr = '';
 
                   for (const m of models) {
-                    const apiUrl = `https://generativelanguage.googleapis.com/v1beta/models/${m}:generateContent?key=${apiKey}`;
-                    const apiRes = await fetch(apiUrl, {
-                      method: 'POST',
-                      headers: { 'Content-Type': 'application/json' },
-                      body: JSON.stringify({
-                        system_instruction: { parts: [{ text: systemPrompt }] },
-                        contents: contents,
-                        generationConfig: { temperature: 0.7, maxOutputTokens: 1000 }
-                      })
-                    });
-
-                    if (apiRes.ok) {
-                      const data: any = await apiRes.json();
-                      text = data.candidates?.[0]?.content?.parts?.[0]?.text || 'No response generated.';
-                      success = true;
-                      break;
-                    } else {
-                      lastErr = await apiRes.text();
+                    try {
+                      const response = await ai.models.generateContent({
+                        model: m,
+                        contents,
+                        config: {
+                          systemInstruction: systemPrompt,
+                          temperature: 0.7,
+                          maxOutputTokens: 1000,
+                        },
+                      });
+                      if (response.text) {
+                        text = response.text;
+                        success = true;
+                        break;
+                      }
+                    } catch (err: any) {
+                      lastErr = err.message || String(err);
                     }
                   }
 

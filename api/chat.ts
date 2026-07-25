@@ -1,4 +1,4 @@
-import type { VercelRequest, VercelResponse } from '@vercel/node';
+import { GoogleGenAI } from '@google/genai';
 
 const SYSTEM_INSTRUCTION = `You are DuoKarma Assistant, an expert AI business consultant for DuoKarma Business Hub.
 DuoKarma specializes in building custom digital solutions, high-converting websites, admin management software, automated booking systems, CRM systems, and AI workflows for businesses (Salons, Medical Clinics, Gyms, Restaurants, Farmhouses, and Service Enterprises).
@@ -13,8 +13,6 @@ Your Objectives:
 Guidelines:
 - Keep responses clear, professional, concise, and structured with clean formatting or short bullet points.
 - Be helpful and energetic. Avoid overly verbose explanations.`;
-
-const MODELS = ['gemini-2.5-flash', 'gemini-2.0-flash', 'gemini-1.5-flash-latest'];
 
 export default async function handler(req: any, res: any) {
   if (req.method === 'OPTIONS') {
@@ -34,6 +32,7 @@ export default async function handler(req: any, res: any) {
       return res.status(500).json({ error: 'GEMINI_API_KEY is not configured in server environment.' });
     }
 
+    const ai = new GoogleGenAI({ apiKey });
     const { messages = [] } = req.body || {};
 
     const contents = messages.map((m: any) => ({
@@ -41,31 +40,37 @@ export default async function handler(req: any, res: any) {
       parts: [{ text: m.content || m.text || '' }]
     }));
 
-    let lastError = 'No response generated.';
+    const models = ['gemini-2.5-flash', 'gemini-2.0-flash'];
+    let text = '';
+    let success = false;
+    let lastErr = '';
 
-    for (const model of MODELS) {
-      const apiUrl = `https://generativelanguage.googleapis.com/v1beta/models/${model}:generateContent?key=${apiKey}`;
-      const response = await fetch(apiUrl, {
-        method: 'POST',
-        headers: { 'Content-Type': 'application/json' },
-        body: JSON.stringify({
-          system_instruction: { parts: [{ text: SYSTEM_INSTRUCTION }] },
-          contents: contents,
-          generationConfig: { temperature: 0.7, maxOutputTokens: 1000 }
-        })
-      });
-
-      if (response.ok) {
-        const data = await response.json();
-        const text = data.candidates?.[0]?.content?.parts?.[0]?.text || 'No response generated.';
-        return res.status(200).json({ text });
-      } else {
-        const errText = await response.text();
-        lastError = errText;
+    for (const model of models) {
+      try {
+        const response = await ai.models.generateContent({
+          model,
+          contents,
+          config: {
+            systemInstruction: SYSTEM_INSTRUCTION,
+            temperature: 0.7,
+            maxOutputTokens: 1000,
+          },
+        });
+        if (response.text) {
+          text = response.text;
+          success = true;
+          break;
+        }
+      } catch (err: any) {
+        lastErr = err.message || String(err);
       }
     }
 
-    return res.status(500).json({ error: lastError });
+    if (success) {
+      return res.status(200).json({ text });
+    } else {
+      return res.status(500).json({ error: lastErr || 'Failed to generate response' });
+    }
   } catch (error: any) {
     console.error('Gemini API Error:', error);
     return res.status(500).json({ error: error.message || 'Internal server error' });
