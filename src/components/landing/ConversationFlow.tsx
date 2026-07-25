@@ -17,6 +17,14 @@ const SUGGESTED_PROMPTS = [
   '⚡ Custom Web App Development',
 ];
 
+// Render basic markdown: **bold**, *italic*, newlines → <br>
+function renderMarkdown(text: string): string {
+  return text
+    .replace(/\*\*(.+?)\*\*/g, '<strong>$1</strong>')
+    .replace(/\*(.+?)\*/g, '<em>$1</em>')
+    .replace(/\n/g, '<br/>');
+}
+
 function TypingDots({ color }: { color: string }) {
   return (
     <div style={{ display: 'flex', gap: 6, alignItems: 'center', padding: '6px 4px' }}>
@@ -297,21 +305,21 @@ export function ConversationFlow() {
                   </div>
                 )}
 
-                <div style={{
-                  maxWidth: '82%',
-                  padding: '14px 18px',
-                  borderRadius: m.role === 'user' ? '18px 18px 4px 18px' : '4px 18px 18px 18px',
-                  background: m.role === 'user' ? themeColor : COLORS.surface2,
-                  color: m.role === 'user' ? '#15130F' : COLORS.text,
-                  border: m.role === 'user' ? 'none' : `1px solid ${COLORS.line}`,
-                  fontFamily: "'Inter', sans-serif",
-                  fontSize: 14,
-                  lineHeight: 1.6,
-                  whiteSpace: 'pre-wrap',
-                  fontWeight: m.role === 'user' ? 500 : 400,
-                }}>
-                  {m.text}
-                </div>
+                <div
+                  style={{
+                    maxWidth: '82%',
+                    padding: '14px 18px',
+                    borderRadius: m.role === 'user' ? '18px 18px 4px 18px' : '4px 18px 18px 18px',
+                    background: m.role === 'user' ? themeColor : COLORS.surface2,
+                    color: m.role === 'user' ? '#15130F' : COLORS.text,
+                    border: m.role === 'user' ? 'none' : `1px solid ${COLORS.line}`,
+                    fontFamily: "'Inter', sans-serif",
+                    fontSize: 14,
+                    lineHeight: 1.6,
+                    fontWeight: m.role === 'user' ? 500 : 400,
+                  }}
+                  dangerouslySetInnerHTML={{ __html: renderMarkdown(m.text) }}
+                />
               </div>
             ))}
 
