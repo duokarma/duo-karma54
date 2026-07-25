@@ -40,7 +40,7 @@ export default async function handler(req: any, res: any) {
       parts: [{ text: m.content || m.text || '' }]
     }));
 
-    const models = ['gemini-2.5-flash', 'gemini-2.0-flash'];
+    const models = ['gemini-2.5-flash', 'gemini-2.0-flash', 'gemini-1.5-flash', 'gemini-1.5-flash-8b'];
     let text = '';
     let success = false;
     let lastErr = '';
