@@ -14,6 +14,12 @@ Guidelines:
 - Keep responses clear, professional, concise, and structured with clean formatting or short bullet points.
 - Be helpful and energetic. Avoid overly verbose explanations.`;
 
+// Only use models confirmed to exist in the v1beta API
+const MODELS = ['gemini-2.5-flash', 'gemini-2.0-flash', 'gemini-1.5-flash'];
+
+const RATE_LIMIT_MESSAGE =
+  "I'm getting a lot of questions right now and need a short breather! 🙂 Please try again in **30–60 seconds** — I'll be right back.\n\nIn the meantime, feel free to **book a strategy call** or **send us a WhatsApp message** using the buttons on the right!";
+
 export default async function handler(req: any, res: any) {
   if (req.method === 'OPTIONS') {
     res.setHeader('Access-Control-Allow-Origin', '*');
@@ -40,12 +46,11 @@ export default async function handler(req: any, res: any) {
       parts: [{ text: m.content || m.text || '' }]
     }));
 
-    const models = ['gemini-2.5-flash', 'gemini-2.0-flash', 'gemini-1.5-flash', 'gemini-1.5-flash-8b'];
     let text = '';
     let success = false;
-    let lastErr = '';
+    let isRateLimit = false;
 
-    for (const model of models) {
+    for (const model of MODELS) {
       try {
         const response = await ai.models.generateContent({
           model,
@@ -62,17 +67,26 @@ export default async function handler(req: any, res: any) {
           break;
         }
       } catch (err: any) {
-        lastErr = err.message || String(err);
+        const msg = err.message || String(err);
+        // Detect rate limit / quota exhaustion — return friendly message instead of raw error
+        if (msg.includes('429') || msg.includes('RESOURCE_EXHAUSTED') || msg.includes('quota')) {
+          isRateLimit = true;
+          // Don't break — try next model
+        }
+        // If model doesn't exist (404 / NOT_FOUND), skip silently
       }
     }
 
     if (success) {
       return res.status(200).json({ text });
+    } else if (isRateLimit) {
+      // Return 200 with friendly message so the UI shows it as a chat message
+      return res.status(200).json({ text: RATE_LIMIT_MESSAGE });
     } else {
-      return res.status(500).json({ error: lastErr || 'Failed to generate response' });
+      return res.status(200).json({ text: "Sorry, I'm having trouble connecting right now. Please try again in a moment or reach us via WhatsApp!" });
     }
   } catch (error: any) {
     console.error('Gemini API Error:', error);
-    return res.status(500).json({ error: error.message || 'Internal server error' });
+    return res.status(200).json({ text: "Something went wrong on my end. Please try again shortly!" });
   }
 }

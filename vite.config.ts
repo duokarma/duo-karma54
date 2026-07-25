@@ -52,10 +52,10 @@ Guidelines:
 
                   const { GoogleGenAI } = await import('@google/genai');
                   const ai = new GoogleGenAI({ apiKey });
-                  const models = ['gemini-2.5-flash', 'gemini-2.0-flash', 'gemini-1.5-flash', 'gemini-1.5-flash-8b'];
+                  const models = ['gemini-2.5-flash', 'gemini-2.0-flash', 'gemini-1.5-flash'];
                   let text = '';
                   let success = false;
-                  let lastErr = '';
+                  let isRateLimit = false;
 
                   for (const m of models) {
                     try {
@@ -74,17 +74,30 @@ Guidelines:
                         break;
                       }
                     } catch (err: any) {
-                      lastErr = err.message || String(err);
+                      const msg = err.message || String(err);
+                      if (msg.includes('429') || msg.includes('RESOURCE_EXHAUSTED') || msg.includes('quota')) {
+                        isRateLimit = true;
+                      }
                     }
                   }
 
-                  res.statusCode = success ? 200 : 500;
+                  if (success) {
+                    text = text;
+                  } else if (isRateLimit) {
+                    text = "I'm getting a lot of questions right now and need a short breather! 🙂 Please try again in **30–60 seconds** — I'll be right back.\n\nIn the meantime, feel free to **book a strategy call** or **send us a WhatsApp message** using the buttons on the right!";
+                    success = true;
+                  } else {
+                    text = "Sorry, I'm having trouble connecting right now. Please try again in a moment or reach us via WhatsApp!";
+                    success = true;
+                  }
+
+                  res.statusCode = 200;
                   res.setHeader('Content-Type', 'application/json');
-                  res.end(JSON.stringify({ text: success ? text : undefined, error: success ? undefined : lastErr }));
+                  res.end(JSON.stringify({ text }));
                 } catch (e: any) {
-                  res.statusCode = 500;
+                  res.statusCode = 200;
                   res.setHeader('Content-Type', 'application/json');
-                  res.end(JSON.stringify({ error: e.message }));
+                  res.end(JSON.stringify({ text: "Something went wrong on my end. Please try again shortly!" }));
                 }
               });
               return;
