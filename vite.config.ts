@@ -12,10 +12,81 @@ export default defineConfig({
     {
       name: 'configure-response-headers',
       configureServer(server) {
-        server.middlewares.use((req, res, next) => {
+        server.middlewares.use(async (req, res, next) => {
           if (req.url) {
-            // Provide a dummy base to properly parse the path
             const url = new URL(req.url, 'http://localhost');
+            if (url.pathname === '/api/chat' && req.method === 'POST') {
+              let body = '';
+              req.on('data', (chunk) => { body += chunk; });
+              req.on('end', async () => {
+                try {
+                  const dotenv = await import('dotenv');
+                  dotenv.config({ path: path.resolve(__dirname, '.env.local') });
+                  const apiKey = process.env.GEMINI_API_KEY;
+                  if (!apiKey) {
+                    res.statusCode = 500;
+                    res.setHeader('Content-Type', 'application/json');
+                    res.end(JSON.stringify({ error: 'GEMINI_API_KEY is not configured in .env.local' }));
+                    return;
+                  }
+                  const parsed = JSON.parse(body || '{}');
+                  const messages = parsed.messages || [];
+                  const contents = messages.map((m: any) => ({
+                    role: m.role === 'assistant' ? 'model' : 'user',
+                    parts: [{ text: m.content || m.text || '' }]
+                  }));
+
+                  const systemPrompt = `You are DuoKarma Assistant, an expert AI business consultant for DuoKarma Business Hub.
+DuoKarma specializes in building custom digital solutions, high-converting websites, admin management software, automated booking systems, CRM systems, and AI workflows for businesses (Salons, Medical Clinics, Gyms, Restaurants, Farmhouses, and Service Enterprises).
+
+Your Objectives:
+1. Warmly greet users and act as a knowledgeable, friendly software consultant.
+2. Ask about their business type, goals, key operational challenges, or features they are looking for.
+3. Recommend tailored digital solutions (e.g. for Salons: appointment booking + staff management + billing; for Clinics: patient records + secure billing + reminders).
+4. Provide estimated project timelines (e.g. 1-3 weeks for standard systems, 3-6 weeks for enterprise platforms).
+5. Gently encourage them to book a free 20-min strategy call or request a custom proposal.
+
+Guidelines:
+- Keep responses clear, professional, concise, and structured with clean formatting or short bullet points.
+- Be helpful and energetic. Avoid overly verbose explanations.`;
+
+                  const apiUrl = `https://generativelanguage.googleapis.com/v1beta/models/gemini-2.5-flash:generateContent?key=${apiKey}`;
+                  let apiRes = await fetch(apiUrl, {
+                    method: 'POST',
+                    headers: { 'Content-Type': 'application/json' },
+                    body: JSON.stringify({
+                      system_instruction: { parts: [{ text: systemPrompt }] },
+                      contents: contents,
+                      generationConfig: { temperature: 0.7, maxOutputTokens: 1000 }
+                    })
+                  });
+
+                  if (!apiRes.ok) {
+                    const fallbackUrl = `https://generativelanguage.googleapis.com/v1beta/models/gemini-1.5-flash:generateContent?key=${apiKey}`;
+                    apiRes = await fetch(fallbackUrl, {
+                      method: 'POST',
+                      headers: { 'Content-Type': 'application/json' },
+                      body: JSON.stringify({
+                        system_instruction: { parts: [{ text: systemPrompt }] },
+                        contents: contents,
+                        generationConfig: { temperature: 0.7, maxOutputTokens: 1000 }
+                      })
+                    });
+                  }
+
+                  const data: any = await apiRes.json();
+                  const text = data.candidates?.[0]?.content?.parts?.[0]?.text || data.error?.message || 'No response generated.';
+                  res.statusCode = apiRes.ok ? 200 : 500;
+                  res.setHeader('Content-Type', 'application/json');
+                  res.end(JSON.stringify({ text, error: apiRes.ok ? undefined : data.error?.message }));
+                } catch (e: any) {
+                  res.statusCode = 500;
+                  res.setHeader('Content-Type', 'application/json');
+                  res.end(JSON.stringify({ error: e.message }));
+                }
+              });
+              return;
+            }
             if (url.pathname.endsWith('.ts') || url.pathname.endsWith('.tsx')) {
               res.setHeader('Content-Type', 'application/javascript');
             }
