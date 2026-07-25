@@ -50,20 +50,14 @@ Guidelines:
 - Keep responses clear, professional, concise, and structured with clean formatting or short bullet points.
 - Be helpful and energetic. Avoid overly verbose explanations.`;
 
-                  const apiUrl = `https://generativelanguage.googleapis.com/v1beta/models/gemini-2.5-flash:generateContent?key=${apiKey}`;
-                  let apiRes = await fetch(apiUrl, {
-                    method: 'POST',
-                    headers: { 'Content-Type': 'application/json' },
-                    body: JSON.stringify({
-                      system_instruction: { parts: [{ text: systemPrompt }] },
-                      contents: contents,
-                      generationConfig: { temperature: 0.7, maxOutputTokens: 1000 }
-                    })
-                  });
+                  const models = ['gemini-2.5-flash', 'gemini-2.0-flash', 'gemini-1.5-flash-latest'];
+                  let text = '';
+                  let success = false;
+                  let lastErr = '';
 
-                  if (!apiRes.ok) {
-                    const fallbackUrl = `https://generativelanguage.googleapis.com/v1beta/models/gemini-1.5-flash:generateContent?key=${apiKey}`;
-                    apiRes = await fetch(fallbackUrl, {
+                  for (const m of models) {
+                    const apiUrl = `https://generativelanguage.googleapis.com/v1beta/models/${m}:generateContent?key=${apiKey}`;
+                    const apiRes = await fetch(apiUrl, {
                       method: 'POST',
                       headers: { 'Content-Type': 'application/json' },
                       body: JSON.stringify({
@@ -72,13 +66,20 @@ Guidelines:
                         generationConfig: { temperature: 0.7, maxOutputTokens: 1000 }
                       })
                     });
+
+                    if (apiRes.ok) {
+                      const data: any = await apiRes.json();
+                      text = data.candidates?.[0]?.content?.parts?.[0]?.text || 'No response generated.';
+                      success = true;
+                      break;
+                    } else {
+                      lastErr = await apiRes.text();
+                    }
                   }
 
-                  const data: any = await apiRes.json();
-                  const text = data.candidates?.[0]?.content?.parts?.[0]?.text || data.error?.message || 'No response generated.';
-                  res.statusCode = apiRes.ok ? 200 : 500;
+                  res.statusCode = success ? 200 : 500;
                   res.setHeader('Content-Type', 'application/json');
-                  res.end(JSON.stringify({ text, error: apiRes.ok ? undefined : data.error?.message }));
+                  res.end(JSON.stringify({ text: success ? text : undefined, error: success ? undefined : lastErr }));
                 } catch (e: any) {
                   res.statusCode = 500;
                   res.setHeader('Content-Type', 'application/json');

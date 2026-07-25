@@ -1,5 +1,6 @@
-import { useRef } from 'react';
+import { useRef, useState, useEffect } from 'react';
 import { m as motion, useScroll, useTransform } from 'framer-motion';
+import { ChevronLeft, ChevronRight } from 'lucide-react';
 import { COLORS } from './ui/theme';
 import { Eyebrow } from './ui/Eyebrow';
 import { Reveal } from './ui/Reveal';
@@ -88,13 +89,61 @@ export function Process() {
   const { scrollXProgress } = useScroll({ container: scrollRef });
   const progressWidth = useTransform(scrollXProgress, [0, 1], ['0%', '100%']);
 
+  // PC Mouse Wheel horizontal scroll support
+  useEffect(() => {
+    const el = scrollRef.current;
+    if (!el) return;
+
+    const onWheel = (e: WheelEvent) => {
+      // If user scrolls vertically over horizontal container, convert to smooth horizontal scroll
+      if (Math.abs(e.deltaY) > 0) {
+        e.preventDefault();
+        el.scrollBy({
+          left: e.deltaY * 2.2,
+          behavior: 'smooth',
+        });
+      }
+    };
+
+    el.addEventListener('wheel', onWheel, { passive: false });
+    return () => el.removeEventListener('wheel', onWheel);
+  }, []);
+
+  // PC Mouse Drag-to-scroll support
+  const [isMouseDown, setIsMouseDown] = useState(false);
+  const [startX, setStartX] = useState(0);
+  const [scrollLeftState, setScrollLeftState] = useState(0);
+
+  const handleMouseDown = (e: React.MouseEvent) => {
+    if (!scrollRef.current) return;
+    setIsMouseDown(true);
+    setStartX(e.pageX - scrollRef.current.offsetLeft);
+    setScrollLeftState(scrollRef.current.scrollLeft);
+  };
+
+  const handleMouseLeaveOrUp = () => {
+    setIsMouseDown(false);
+  };
+
+  const handleMouseMove = (e: React.MouseEvent) => {
+    if (!isMouseDown || !scrollRef.current) return;
+    e.preventDefault();
+    const x = e.pageX - scrollRef.current.offsetLeft;
+    const walk = (x - startX) * 2;
+    scrollRef.current.scrollLeft = scrollLeftState - walk;
+  };
+
+  const scrollByAmount = (amount: number) => {
+    scrollRef.current?.scrollBy({ left: amount, behavior: 'smooth' });
+  };
+
   return (
     <section
       id="process"
       style={{
         background: COLORS.bg,
         position: 'relative',
-        padding: '120px 0', // Natural document flow, no sticky height hacks
+        padding: '120px 0',
       }}
     >
       <div style={{ padding: '0 5%' }}>
@@ -114,7 +163,7 @@ export function Process() {
           </h2>
         </Reveal>
 
-        {/* Progress bar mapped directly to the native scroll container */}
+        {/* Progress bar */}
         <div
           style={{
             height: 1,
@@ -136,10 +185,14 @@ export function Process() {
         </div>
       </div>
 
-      {/* Native Horizontal Scroll Container for 120fps zero-lag performance */}
+      {/* Horizontal Scroll Container with Mouse Wheel & Drag Support */}
       <div
         ref={scrollRef}
         className="hide-scrollbar"
+        onMouseDown={handleMouseDown}
+        onMouseLeave={handleMouseLeaveOrUp}
+        onMouseUp={handleMouseLeaveOrUp}
+        onMouseMove={handleMouseMove}
         style={{
           display: 'flex',
           gap: 24,
@@ -147,9 +200,11 @@ export function Process() {
           padding: '0 5%',
           paddingBottom: 40,
           WebkitOverflowScrolling: 'touch',
-          scrollSnapType: 'x mandatory',
-          scrollbarWidth: 'none', // Firefox
-          msOverflowStyle: 'none', // IE/Edge
+          scrollSnapType: isMouseDown ? 'none' : 'x mandatory',
+          scrollbarWidth: 'none',
+          msOverflowStyle: 'none',
+          cursor: isMouseDown ? 'grabbing' : 'grab',
+          userSelect: 'none',
         }}
       >
         <style>
@@ -164,17 +219,62 @@ export function Process() {
         ))}
       </div>
 
-      <div style={{ padding: '0 5%' }}>
+      <div style={{ padding: '0 5%', display: 'flex', alignItems: 'center', justifyContent: 'space-between' }}>
         <div
           style={{
             fontFamily: "'IBM Plex Mono', monospace",
             fontSize: 12,
             color: COLORS.secondary,
             letterSpacing: '0.08em',
-            marginTop: 10,
           }}
         >
-          Swipe to progress →
+          Use mouse wheel, drag, or arrows to progress →
+        </div>
+
+        {/* Arrow Navigation Controls */}
+        <div style={{ display: 'flex', gap: 10 }}>
+          <button
+            onClick={() => scrollByAmount(-320)}
+            aria-label="Scroll left"
+            style={{
+              width: 40,
+              height: 40,
+              borderRadius: '50%',
+              border: `1px solid ${COLORS.line}`,
+              background: COLORS.surface,
+              color: COLORS.text,
+              display: 'flex',
+              alignItems: 'center',
+              justifyContent: 'center',
+              cursor: 'pointer',
+              transition: 'all 0.2s',
+            }}
+            onMouseOver={(e) => { e.currentTarget.style.borderColor = COLORS.accent; }}
+            onMouseOut={(e) => { e.currentTarget.style.borderColor = COLORS.line; }}
+          >
+            <ChevronLeft size={20} />
+          </button>
+          <button
+            onClick={() => scrollByAmount(320)}
+            aria-label="Scroll right"
+            style={{
+              width: 40,
+              height: 40,
+              borderRadius: '50%',
+              border: `1px solid ${COLORS.line}`,
+              background: COLORS.surface,
+              color: COLORS.text,
+              display: 'flex',
+              alignItems: 'center',
+              justifyContent: 'center',
+              cursor: 'pointer',
+              transition: 'all 0.2s',
+            }}
+            onMouseOver={(e) => { e.currentTarget.style.borderColor = COLORS.accent; }}
+            onMouseOut={(e) => { e.currentTarget.style.borderColor = COLORS.line; }}
+          >
+            <ChevronRight size={20} />
+          </button>
         </div>
       </div>
     </section>

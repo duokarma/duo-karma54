@@ -14,6 +14,8 @@ Guidelines:
 - Keep responses clear, professional, concise, and structured with clean formatting or short bullet points.
 - Be helpful and energetic. Avoid overly verbose explanations.`;
 
+const MODELS = ['gemini-2.5-flash', 'gemini-2.0-flash', 'gemini-1.5-flash-latest'];
+
 export default async function handler(req: any, res: any) {
   if (req.method === 'OPTIONS') {
     res.setHeader('Access-Control-Allow-Origin', '*');
@@ -34,34 +36,16 @@ export default async function handler(req: any, res: any) {
 
     const { messages = [] } = req.body || {};
 
-    // Standardize contents array for Gemini API
     const contents = messages.map((m: any) => ({
       role: m.role === 'assistant' ? 'model' : 'user',
       parts: [{ text: m.content || m.text || '' }]
     }));
 
-    const apiUrl = `https://generativelanguage.googleapis.com/v1beta/models/gemini-2.5-flash:generateContent?key=${apiKey}`;
+    let lastError = 'No response generated.';
 
-    const response = await fetch(apiUrl, {
-      method: 'POST',
-      headers: { 'Content-Type': 'application/json' },
-      body: JSON.stringify({
-        system_instruction: {
-          parts: [{ text: SYSTEM_INSTRUCTION }]
-        },
-        contents: contents,
-        generationConfig: {
-          temperature: 0.7,
-          maxOutputTokens: 1000
-        }
-      })
-    });
-
-    if (!response.ok) {
-      const errorText = await response.text();
-      // Fallback to gemini-1.5-flash if 2.5-flash model name varies by region
-      const fallbackUrl = `https://generativelanguage.googleapis.com/v1beta/models/gemini-1.5-flash:generateContent?key=${apiKey}`;
-      const fallbackRes = await fetch(fallbackUrl, {
+    for (const model of MODELS) {
+      const apiUrl = `https://generativelanguage.googleapis.com/v1beta/models/${model}:generateContent?key=${apiKey}`;
+      const response = await fetch(apiUrl, {
         method: 'POST',
         headers: { 'Content-Type': 'application/json' },
         body: JSON.stringify({
@@ -71,19 +55,17 @@ export default async function handler(req: any, res: any) {
         })
       });
 
-      if (!fallbackRes.ok) {
-        const fallbackErr = await fallbackRes.text();
-        return res.status(fallbackRes.status).json({ error: fallbackErr || errorText });
+      if (response.ok) {
+        const data = await response.json();
+        const text = data.candidates?.[0]?.content?.parts?.[0]?.text || 'No response generated.';
+        return res.status(200).json({ text });
+      } else {
+        const errText = await response.text();
+        lastError = errText;
       }
-
-      const fallbackData = await fallbackRes.json();
-      const text = fallbackData.candidates?.[0]?.content?.parts?.[0]?.text || 'No response generated.';
-      return res.status(200).json({ text });
     }
 
-    const data = await response.json();
-    const text = data.candidates?.[0]?.content?.parts?.[0]?.text || 'No response generated.';
-    return res.status(200).json({ text });
+    return res.status(500).json({ error: lastError });
   } catch (error: any) {
     console.error('Gemini API Error:', error);
     return res.status(500).json({ error: error.message || 'Internal server error' });
