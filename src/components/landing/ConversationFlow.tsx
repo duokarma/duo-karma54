@@ -50,8 +50,8 @@ const AI_INIT_MESSAGE: Message = {
 
 const LEAD_BOT_QUESTIONS: Record<LeadStep, string> = {
   name: "👋 Welcome! I'm here to help you get a **custom proposal**.\n\nLet's start — **what's your name?**",
-  email: "Great, {name}! 📧 What's your **work email address?** We'll send the proposal there.",
-  phone: "Perfect! 📱 What's your **WhatsApp / phone number?** _(Type 'skip' to skip this)_",
+  email: "Great, {name}! 📧 What's your **work email address?** _(Type 'skip' to skip this)_",
+  phone: "Perfect! 📱 What's your **WhatsApp / phone number?** We'll use this to contact you.",
   business: "Thanks! Now, **what type of business do you run?**",
   project: "Awesome! 💡 Finally — **briefly describe what you need**, or what your biggest challenge is right now.",
   done: "🎉 **Thank you, {name}!** We've received your request and will send a tailored proposal to **{email}** within 24 hours.\n\nYou can also book a free 20-min strategy call using the button below!",
@@ -173,7 +173,7 @@ export function ConversationFlow() {
         ]);
       }, 400);
     } else if (leadStep === 'email') {
-      newData.email = text;
+      newData.email = text.toLowerCase() === 'skip' ? '' : text;
       setLeadData(newData);
       setLeadStep('phone');
       setTimeout(() => {
@@ -183,7 +183,7 @@ export function ConversationFlow() {
         ]);
       }, 400);
     } else if (leadStep === 'phone') {
-      newData.phone = text.toLowerCase() === 'skip' ? '' : text;
+      newData.phone = text;
       setLeadData(newData);
       setLeadStep('business');
       setTimeout(() => {
@@ -508,8 +508,8 @@ export function ConversationFlow() {
                       onChange={(e) => setLeadInput(e.target.value)}
                       placeholder={
                         leadStep === 'name' ? 'Your name...' :
-                        leadStep === 'email' ? 'your@email.com...' :
-                        leadStep === 'phone' ? '+91 ... (or type skip)' :
+                        leadStep === 'email' ? 'your@email.com... (or type skip)' :
+                        leadStep === 'phone' ? '+91 ...' :
                         leadStep === 'business' ? 'Or type your business type...' :
                         'Describe your project...'
                       }
