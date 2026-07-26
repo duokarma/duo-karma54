@@ -1,4 +1,4 @@
-import React, { useState, useEffect, useRef } from 'react';
+﻿import React, { useState, useEffect, useRef } from 'react';
 import { m as motion } from 'framer-motion';
 import { Send, Sparkles, Calendar, MessageCircle, Mail, Check, RefreshCw, Bot } from 'lucide-react';
 import { COLORS } from './ui/theme';
@@ -151,31 +151,26 @@ export function ConversationFlow() {
     <>
       <style>{`
         .conv-layout-grid {
-          display: grid;
-          grid-template-columns: 1fr 340px;
-          gap: 28px;
-          align-items: start;
-          box-sizing: border-box;
+          display: flex;
+          flex-direction: column;
+          gap: 24px;
           width: 100%;
+          box-sizing: border-box;
         }
-        @media (max-width: 1100px) {
-          .conv-layout-grid {
+        .conv-bottom-row {
+          display: grid;
+          grid-template-columns: 1fr 1fr;
+          gap: 20px;
+          width: 100%;
+          box-sizing: border-box;
+        }
+        @media (max-width: 700px) {
+          .conv-bottom-row {
             grid-template-columns: 1fr;
           }
         }
         .conv-right-panel {
-          display: flex;
-          flex-direction: column;
-          gap: 20px;
-          width: 340px;
-          min-width: 340px;
-          box-sizing: border-box;
-        }
-        @media (max-width: 1100px) {
-          .conv-right-panel {
-            width: 100%;
-            min-width: 0;
-          }
+          display: contents;
         }
         .conv-right-panel input,
         .conv-right-panel select,
@@ -468,40 +463,48 @@ export function ConversationFlow() {
 
         </div>
 
-        {/* ── Right: Action & Booking Pane ── */}
-        <div className="conv-right-panel">
+        {/* ── Bottom Row: Proposal card + Contact card side by side ── */}
+        <div style={{
+          display: 'grid',
+          gridTemplateColumns: 'repeat(auto-fit, minmax(280px, 1fr))',
+          gap: 20,
+          width: '100%',
+          boxSizing: 'border-box',
+        }}>
 
           {/* ── Get a Proposal Card ── */}
-          <div className="conv-right-card" style={{ background: COLORS.surface, border: `1px solid ${COLORS.line}` }}>
-            <div style={{ marginBottom: 4 }}>
-              <span style={{
-                fontFamily: "'IBM Plex Mono', monospace",
-                fontSize: 10,
-                fontWeight: 600,
-                letterSpacing: '0.1em',
-                textTransform: 'uppercase',
-                color: themeColor,
-                background: `${themeColor}18`,
-                padding: '3px 10px',
-                borderRadius: 20,
-              }}>Free Consultation</span>
-            </div>
+          <div style={{
+            background: COLORS.surface,
+            border: `1px solid ${COLORS.line}`,
+            borderRadius: 20,
+            padding: '28px 24px',
+            boxSizing: 'border-box',
+          }}>
+            <span style={{
+              fontFamily: "'IBM Plex Mono', monospace",
+              fontSize: 10,
+              fontWeight: 600,
+              letterSpacing: '0.1em',
+              textTransform: 'uppercase' as const,
+              color: themeColor,
+              background: `${themeColor}18`,
+              padding: '3px 10px',
+              borderRadius: 20,
+            }}>Free Consultation</span>
             <div style={{
               fontFamily: "'Fraunces', serif",
               fontSize: 22,
               fontWeight: 400,
               color: COLORS.text,
-              margin: '12px 0 8px',
+              margin: '12px 0 6px',
               lineHeight: 1.25,
-            }}>
-              Get a Custom Proposal
-            </div>
+            }}>Get a Custom Proposal</div>
             <p style={{
               fontFamily: "'Inter', sans-serif",
               fontSize: 13,
               lineHeight: 1.6,
               color: COLORS.secondary,
-              margin: '0 0 22px',
+              margin: '0 0 20px',
             }}>
               Share your details and we'll send a tailored software proposal within 24 hours.
             </p>
@@ -533,47 +536,50 @@ export function ConversationFlow() {
             ) : (
               <form onSubmit={handleLeadSubmit} style={{ display: 'flex', flexDirection: 'column', gap: 14 }}>
                 <div>
-                  <div className="conv-field-label" style={{ color: COLORS.secondary }}>Your Name</div>
+                  <div style={{ fontFamily: "'Inter', sans-serif", fontSize: 11, fontWeight: 600, letterSpacing: '0.08em', textTransform: 'uppercase', color: COLORS.secondary, marginBottom: 6, opacity: 0.6 }}>Your Name</div>
                   <input
-                    className="conv-input"
                     type="text"
                     placeholder="e.g. Rahul Sharma"
                     required
                     value={leadForm.name}
                     onChange={(e) => setLeadForm({ ...leadForm, name: e.target.value })}
                     style={{
-                      background: COLORS.bg,
-                      border: `1px solid ${COLORS.line}`,
-                      color: COLORS.text,
+                      width: '100%', boxSizing: 'border-box',
+                      padding: '13px 16px', borderRadius: 12,
+                      background: COLORS.bg, border: `1px solid ${COLORS.line}`,
+                      color: COLORS.text, fontSize: 14,
+                      fontFamily: "'Inter', sans-serif", outline: 'none',
                     }}
                   />
                 </div>
                 <div>
-                  <div className="conv-field-label" style={{ color: COLORS.secondary }}>Work Email</div>
+                  <div style={{ fontFamily: "'Inter', sans-serif", fontSize: 11, fontWeight: 600, letterSpacing: '0.08em', textTransform: 'uppercase', color: COLORS.secondary, marginBottom: 6, opacity: 0.6 }}>Work Email</div>
                   <input
-                    className="conv-input"
                     type="email"
                     placeholder="you@company.com"
                     required
                     value={leadForm.email}
                     onChange={(e) => setLeadForm({ ...leadForm, email: e.target.value })}
                     style={{
-                      background: COLORS.bg,
-                      border: `1px solid ${COLORS.line}`,
-                      color: COLORS.text,
+                      width: '100%', boxSizing: 'border-box',
+                      padding: '13px 16px', borderRadius: 12,
+                      background: COLORS.bg, border: `1px solid ${COLORS.line}`,
+                      color: COLORS.text, fontSize: 14,
+                      fontFamily: "'Inter', sans-serif", outline: 'none',
                     }}
                   />
                 </div>
                 <div>
-                  <div className="conv-field-label" style={{ color: COLORS.secondary }}>Business Type</div>
+                  <div style={{ fontFamily: "'Inter', sans-serif", fontSize: 11, fontWeight: 600, letterSpacing: '0.08em', textTransform: 'uppercase', color: COLORS.secondary, marginBottom: 6, opacity: 0.6 }}>Business Type</div>
                   <select
-                    className="conv-input"
                     value={leadForm.businessType}
                     onChange={(e) => setLeadForm({ ...leadForm, businessType: e.target.value })}
                     style={{
-                      background: COLORS.bg,
-                      border: `1px solid ${COLORS.line}`,
-                      color: COLORS.text,
+                      width: '100%', boxSizing: 'border-box',
+                      padding: '13px 16px', borderRadius: 12,
+                      background: COLORS.bg, border: `1px solid ${COLORS.line}`,
+                      color: COLORS.text, fontSize: 14,
+                      fontFamily: "'Inter', sans-serif", outline: 'none',
                     }}
                   >
                     <option value="Salon">💈 Salon / Beauty Parlour</option>
@@ -588,19 +594,13 @@ export function ConversationFlow() {
                   type="submit"
                   disabled={isSubmittingLead}
                   style={{
-                    padding: '15px',
-                    borderRadius: 14,
-                    border: 'none',
-                    background: themeColor,
-                    color: '#15130F',
-                    fontFamily: "'Inter', sans-serif",
-                    fontSize: 14,
-                    fontWeight: 700,
+                    width: '100%', boxSizing: 'border-box',
+                    padding: '15px', borderRadius: 14, border: 'none',
+                    background: themeColor, color: '#15130F',
+                    fontFamily: "'Inter', sans-serif", fontSize: 14, fontWeight: 700,
                     cursor: isSubmittingLead ? 'not-allowed' : 'pointer',
-                    marginTop: 2,
-                    letterSpacing: '0.01em',
                     opacity: isSubmittingLead ? 0.7 : 1,
-                    transition: 'opacity 0.2s',
+                    transition: 'opacity 0.2s', marginTop: 2,
                   }}
                 >
                   {isSubmittingLead ? 'Sending...' : '→  Request Free Proposal'}
@@ -609,111 +609,98 @@ export function ConversationFlow() {
             )}
           </div>
 
-          {/* ── Strategy Call Card ── */}
-          <div className="conv-right-card" style={{ background: COLORS.surface, border: `1px solid ${COLORS.line}` }}>
+          {/* ── Contact Card ── */}
+          <div style={{
+            background: COLORS.surface,
+            border: `1px solid ${COLORS.line}`,
+            borderRadius: 20,
+            padding: '28px 24px',
+            boxSizing: 'border-box',
+            display: 'flex',
+            flexDirection: 'column',
+            gap: 12,
+          }}>
             <div style={{
               fontFamily: "'Fraunces', serif",
-              fontSize: 19,
+              fontSize: 22,
               fontWeight: 400,
               color: COLORS.text,
-              marginBottom: 6,
-              lineHeight: 1.3,
-            }}>
-              Prefer a quick call?
-            </div>
+              marginBottom: 2,
+              lineHeight: 1.25,
+            }}>Prefer a quick call?</div>
             <p style={{
               fontFamily: "'Inter', sans-serif",
               fontSize: 13,
               color: COLORS.secondary,
               lineHeight: 1.6,
-              margin: '0 0 18px',
+              margin: '0 0 6px',
             }}>
               Book a free 20-min strategy session — no pressure, just clarity.
             </p>
 
-            {/* Google Meet CTA */}
             <a
               href="https://calendar.app.google/ycwYzWhqVRR6ZB3R9"
               target="_blank"
               rel="noopener noreferrer"
               style={{
-                display: 'flex',
-                alignItems: 'center',
-                gap: 14,
-                padding: '16px 18px',
-                borderRadius: 14,
+                display: 'flex', alignItems: 'center', gap: 14,
+                padding: '16px 18px', borderRadius: 14,
                 background: `${themeColor}12`,
                 border: `1.5px solid ${themeColor}50`,
                 textDecoration: 'none',
-                marginBottom: 10,
-                transition: 'background 0.2s',
               }}
             >
               <div style={{
-                width: 38, height: 38, flexShrink: 0,
-                borderRadius: 10,
+                width: 38, height: 38, flexShrink: 0, borderRadius: 10,
                 background: `${themeColor}25`,
                 display: 'flex', alignItems: 'center', justifyContent: 'center',
               }}>
                 <Calendar size={18} color={themeColor} />
               </div>
               <div>
-                <div style={{
-                  fontFamily: "'IBM Plex Mono', monospace",
-                  fontSize: 10,
-                  color: themeColor,
-                  letterSpacing: '0.08em',
-                  textTransform: 'uppercase',
-                  marginBottom: 3,
-                }}>Google Meet</div>
-                <div style={{
-                  fontFamily: "'Inter', sans-serif",
-                  fontSize: 14,
-                  fontWeight: 600,
-                  color: COLORS.text,
-                }}>Schedule Strategy Call</div>
+                <div style={{ fontFamily: "'IBM Plex Mono', monospace", fontSize: 10, color: themeColor, letterSpacing: '0.08em', textTransform: 'uppercase', marginBottom: 3 }}>Google Meet</div>
+                <div style={{ fontFamily: "'Inter', sans-serif", fontSize: 14, fontWeight: 600, color: COLORS.text }}>Schedule Strategy Call</div>
               </div>
             </a>
 
-            {/* WhatsApp */}
             <a
               href="https://wa.me/919313846266"
               target="_blank"
               rel="noopener noreferrer"
-              className="conv-cta-btn"
               style={{
+                display: 'flex', alignItems: 'center', gap: 12,
+                padding: '14px 18px', borderRadius: 14,
                 border: `1px solid ${COLORS.line}`,
-                background: COLORS.bg,
-                color: COLORS.text,
-                marginBottom: 8,
+                background: COLORS.bg, color: COLORS.text,
+                textDecoration: 'none',
               }}
             >
               <MessageCircle size={17} color='#25D366' />
               <div>
-                <div style={{ fontSize: 13, fontWeight: 600 }}>WhatsApp</div>
-                <div style={{ fontSize: 11, color: COLORS.secondary, marginTop: 1 }}>+91 93138 46266</div>
+                <div style={{ fontFamily: "'Inter', sans-serif", fontSize: 13, fontWeight: 600 }}>WhatsApp</div>
+                <div style={{ fontFamily: "'Inter', sans-serif", fontSize: 11, color: COLORS.secondary, marginTop: 1 }}>+91 93138 46266</div>
               </div>
             </a>
 
-            {/* Email */}
             <a
               href="mailto:duokarma54@gmail.com"
-              className="conv-cta-btn"
               style={{
+                display: 'flex', alignItems: 'center', gap: 12,
+                padding: '14px 18px', borderRadius: 14,
                 border: `1px solid ${COLORS.line}`,
-                background: COLORS.bg,
-                color: COLORS.text,
+                background: COLORS.bg, color: COLORS.text,
+                textDecoration: 'none',
               }}
             >
               <Mail size={17} color={COLORS.secondary} />
               <div>
-                <div style={{ fontSize: 13, fontWeight: 600 }}>Email Us</div>
-                <div style={{ fontSize: 11, color: COLORS.secondary, marginTop: 1 }}>duokarma54@gmail.com</div>
+                <div style={{ fontFamily: "'Inter', sans-serif", fontSize: 13, fontWeight: 600 }}>Email Us</div>
+                <div style={{ fontFamily: "'Inter', sans-serif", fontSize: 11, color: COLORS.secondary, marginTop: 1 }}>duokarma54@gmail.com</div>
               </div>
             </a>
           </div>
 
-        </div>
+        </div>{/* close bottom row */}
 
       </div>
     </>
