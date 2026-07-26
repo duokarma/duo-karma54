@@ -66,7 +66,7 @@ export default async function handler(req: any, res: any) {
         'Content-Type': 'application/json',
       },
       body: JSON.stringify({
-        model: 'llama-3.3-70b',
+        model: 'gpt-oss-120b',
         messages: chatMessages,
         temperature: 0.3,
         max_tokens: 800,
