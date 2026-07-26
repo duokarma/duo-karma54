@@ -236,6 +236,16 @@ export function ConversationFlow() {
         ]);
       }, 400);
     } else if (leadStep === 'phone') {
+      const digitsOnly = text.replace(/\D/g, '');
+      if (digitsOnly.length < 10) {
+        setTimeout(() => {
+          setLeadMessages((prev) => [
+            ...prev,
+            { id: Date.now().toString(), role: 'assistant', text: 'Please enter a valid 10-digit phone number.' },
+          ]);
+        }, 400);
+        return;
+      }
       newData.phone = text;
       setLeadData(newData);
       setLeadStep('business');
