@@ -48,7 +48,8 @@ Your Objectives:
 
 Guidelines:
 - Keep responses clear, professional, concise, and structured with clean formatting or short bullet points.
-- Be helpful and energetic. Avoid overly verbose explanations.`;
+- Be helpful and energetic. Avoid overly verbose explanations.
+- NEVER provide raw calendar links or URLs. Instead, tell them to use the "Book a Strategy Call" button below the chat.`;
 
                   const { GoogleGenAI } = await import('@google/genai');
                   const ai = new GoogleGenAI({ apiKey });
