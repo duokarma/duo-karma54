@@ -7,7 +7,7 @@ interface AnimatedTextRevealProps {
 }
 
 export function AnimatedTextReveal({ text, className = "", delayOffset = 0 }: AnimatedTextRevealProps) {
-  const characters = text.split("");
+
 
   const containerVariants: Variants = {
     hidden: { opacity: 0 },
