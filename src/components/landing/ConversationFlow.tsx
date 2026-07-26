@@ -83,6 +83,21 @@ function TypingDots({ color }: { color: string }) {
 
 // ── Main Component ─────────────────────────────────────────────────────────────
 
+const ChatGlobalStyles = React.memo(() => (
+  <style>{`
+    .dk-scroll::-webkit-scrollbar { width: 4px; }
+    .dk-scroll::-webkit-scrollbar-thumb { background: rgba(255,255,255,0.1); border-radius: 4px; }
+    .dk-input { background: transparent; border: none; outline: none; flex: 1; min-width: 0; font-family: 'Inter', sans-serif; font-size: 14px; color: ${COLORS.text}; }
+    .dk-input::placeholder { color: ${COLORS.secondary}; opacity: 0.6; }
+    .dk-send-btn { width: 40px; height: 40px; border-radius: 12px; border: none; background: ${COLORS.accent || '#F4C073'}; color: #15130F; cursor: pointer; display: flex; align-items: center; justify-content: center; flex-shrink: 0; transition: opacity 0.2s; }
+    .dk-send-btn:disabled { opacity: 0.4; cursor: not-allowed; }
+    .prompt-chip { padding: 7px 14px; border-radius: 20px; border: 1px solid ${COLORS.line}; background: ${COLORS.surface}; color: ${COLORS.secondary}; font-family: 'Inter', sans-serif; font-size: 12px; cursor: pointer; white-space: nowrap; transition: border-color 0.2s, color 0.2s; }
+    .prompt-chip:hover { border-color: ${COLORS.accent || '#F4C073'}; color: ${COLORS.accent || '#F4C073'}; }
+    .biz-chip { padding: 8px 14px; border-radius: 20px; border: 1px solid ${COLORS.line}; background: ${COLORS.bg}; color: ${COLORS.text}; font-family: 'Inter', sans-serif; font-size: 13px; cursor: pointer; transition: all 0.2s; white-space: nowrap; }
+    .biz-chip:hover { border-color: ${COLORS.accent || '#F4C073'}; background: ${COLORS.accent || '#F4C073'}20; color: ${COLORS.accent || '#F4C073'}; }
+  `}</style>
+));
+
 export function ConversationFlow() {
   const themeColor = COLORS.accent || '#F4C073';
 
@@ -330,18 +345,7 @@ export function ConversationFlow() {
 
   return (
     <>
-      <style>{`
-        .dk-scroll::-webkit-scrollbar { width: 4px; }
-        .dk-scroll::-webkit-scrollbar-thumb { background: rgba(255,255,255,0.1); border-radius: 4px; }
-        .dk-input { background: transparent; border: none; outline: none; flex: 1; font-family: 'Inter', sans-serif; font-size: 14px; color: ${COLORS.text}; }
-        .dk-input::placeholder { color: ${COLORS.secondary}; opacity: 0.6; }
-        .dk-send-btn { width: 40px; height: 40px; border-radius: 12px; border: none; background: ${themeColor}; color: #15130F; cursor: pointer; display: flex; align-items: center; justify-content: center; flex-shrink: 0; transition: opacity 0.2s; }
-        .dk-send-btn:disabled { opacity: 0.4; cursor: not-allowed; }
-        .prompt-chip { padding: 7px 14px; border-radius: 20px; border: 1px solid ${COLORS.line}; background: ${COLORS.surface}; color: ${COLORS.secondary}; font-family: 'Inter', sans-serif; font-size: 12px; cursor: pointer; white-space: nowrap; transition: border-color 0.2s, color 0.2s; }
-        .prompt-chip:hover { border-color: ${themeColor}; color: ${themeColor}; }
-        .biz-chip { padding: 8px 14px; border-radius: 20px; border: 1px solid ${COLORS.line}; background: ${COLORS.bg}; color: ${COLORS.text}; font-family: 'Inter', sans-serif; font-size: 13px; cursor: pointer; transition: all 0.2s; white-space: nowrap; }
-        .biz-chip:hover { border-color: ${themeColor}; background: ${themeColor}20; color: ${themeColor}; }
-      `}</style>
+      <ChatGlobalStyles />
 
       {/* ── Main Chat Card ── */}
       <div style={{
@@ -432,6 +436,7 @@ export function ConversationFlow() {
                   background: COLORS.bg,
                   border: `1px solid ${COLORS.line}`,
                   borderRadius: 14, padding: '10px 16px', gap: 8,
+                  minWidth: 0,
                 }}>
                   <input
                     className="dk-input"
@@ -503,6 +508,7 @@ export function ConversationFlow() {
                     background: COLORS.bg,
                     border: `1px solid ${COLORS.line}`,
                     borderRadius: 14, padding: '10px 16px', gap: 8,
+                    minWidth: 0,
                   }}>
                     <input
                       className="dk-input"
@@ -535,6 +541,7 @@ export function ConversationFlow() {
         width: '100%',
         boxSizing: 'border-box',
         marginTop: 16,
+        paddingBottom: 120,
       }}>
         {/* Strategy Call */}
         <a
