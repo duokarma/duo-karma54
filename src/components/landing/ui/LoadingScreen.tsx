@@ -3,7 +3,7 @@ import { useState, useEffect } from 'react';
 
 const easeOutExpo = [0.19, 1, 0.22, 1] as [number, number, number, number];
 
-export function LoadingScreen({ done }: { done: boolean }) {
+export function LoadingScreen({}: { done?: boolean }) {
   const [isExiting, setIsExiting] = useState(false);
   const [isUnmounted, setIsUnmounted] = useState(false);
 
