@@ -152,13 +152,13 @@ export function ConversationFlow() {
       <style>{`
         .conv-layout-grid {
           display: grid;
-          grid-template-columns: 1fr minmax(0, 320px);
-          gap: 24px;
+          grid-template-columns: 1fr 340px;
+          gap: 28px;
           align-items: start;
           box-sizing: border-box;
           width: 100%;
         }
-        @media (max-width: 960px) {
+        @media (max-width: 1100px) {
           .conv-layout-grid {
             grid-template-columns: 1fr;
           }
@@ -167,30 +167,67 @@ export function ConversationFlow() {
           display: flex;
           flex-direction: column;
           gap: 20px;
-          min-width: 0;
-          width: 100%;
+          width: 340px;
+          min-width: 340px;
           box-sizing: border-box;
+        }
+        @media (max-width: 1100px) {
+          .conv-right-panel {
+            width: 100%;
+            min-width: 0;
+          }
         }
         .conv-right-panel input,
         .conv-right-panel select,
-        .conv-right-panel button,
-        .conv-right-panel a {
+        .conv-right-panel button {
           box-sizing: border-box;
           width: 100%;
+          display: block;
         }
         .conv-right-card {
-          background: var(--surface);
           border-radius: 20px;
-          padding: 24px;
-          min-width: 0;
+          padding: 28px 24px;
           box-sizing: border-box;
           overflow: hidden;
         }
-        .chat-scroll-area::-webkit-scrollbar {
-          width: 6px;
+        .conv-field-label {
+          font-family: 'Inter', sans-serif;
+          font-size: 11px;
+          font-weight: 600;
+          letter-spacing: 0.08em;
+          text-transform: uppercase;
+          margin-bottom: 6px;
+          opacity: 0.55;
         }
+        .conv-input {
+          width: 100%;
+          box-sizing: border-box;
+          padding: 13px 16px;
+          border-radius: 12px;
+          font-size: 14px;
+          font-family: 'Inter', sans-serif;
+          outline: none;
+          transition: border-color 0.2s;
+        }
+        .conv-cta-btn {
+          display: flex;
+          align-items: center;
+          gap: 10px;
+          width: 100%;
+          box-sizing: border-box;
+          padding: 14px 18px;
+          border-radius: 14px;
+          font-family: 'Inter', sans-serif;
+          font-size: 14px;
+          font-weight: 500;
+          text-decoration: none;
+          cursor: pointer;
+          transition: opacity 0.18s;
+        }
+        .conv-cta-btn:hover { opacity: 0.82; }
+        .chat-scroll-area::-webkit-scrollbar { width: 5px; }
         .chat-scroll-area::-webkit-scrollbar-thumb {
-          background: rgba(255, 255, 255, 0.15);
+          background: rgba(255,255,255,0.12);
           border-radius: 4px;
         }
       `}</style>
@@ -433,177 +470,247 @@ export function ConversationFlow() {
 
         {/* ── Right: Action & Booking Pane ── */}
         <div className="conv-right-panel">
-          
-          {/* Quick Lead Form Card */}
+
+          {/* ── Get a Proposal Card ── */}
           <div className="conv-right-card" style={{ background: COLORS.surface, border: `1px solid ${COLORS.line}` }}>
-            <div style={{ fontFamily: "'Fraunces', serif", fontSize: 20, color: COLORS.text, marginBottom: 8 }}>
-              Get a Proposal
+            <div style={{ marginBottom: 4 }}>
+              <span style={{
+                fontFamily: "'IBM Plex Mono', monospace",
+                fontSize: 10,
+                fontWeight: 600,
+                letterSpacing: '0.1em',
+                textTransform: 'uppercase',
+                color: themeColor,
+                background: `${themeColor}18`,
+                padding: '3px 10px',
+                borderRadius: 20,
+              }}>Free Consultation</span>
             </div>
-            <p style={{ fontFamily: "'Inter', sans-serif", fontSize: 13, color: COLORS.secondary, marginBottom: 18 }}>
-              Ready to turn your idea into custom software? Share your details and we'll send a customized proposal.
+            <div style={{
+              fontFamily: "'Fraunces', serif",
+              fontSize: 22,
+              fontWeight: 400,
+              color: COLORS.text,
+              margin: '12px 0 8px',
+              lineHeight: 1.25,
+            }}>
+              Get a Custom Proposal
+            </div>
+            <p style={{
+              fontFamily: "'Inter', sans-serif",
+              fontSize: 13,
+              lineHeight: 1.6,
+              color: COLORS.secondary,
+              margin: '0 0 22px',
+            }}>
+              Share your details and we'll send a tailored software proposal within 24 hours.
             </p>
 
             {leadSubmitted ? (
-              <div style={{ background: `${themeColor}15`, border: `1px solid ${themeColor}`, borderRadius: 14, padding: 18, textAlign: 'center' }}>
-                <Check size={28} color={themeColor} style={{ margin: '0 auto 8px' }} />
-                <div style={{ fontFamily: "'Inter', sans-serif", fontSize: 15, fontWeight: 600, color: COLORS.text }}>
-                  Request Received!
+              <div style={{
+                background: `${themeColor}15`,
+                border: `1px solid ${themeColor}40`,
+                borderRadius: 16,
+                padding: '22px 18px',
+                textAlign: 'center',
+              }}>
+                <div style={{
+                  width: 44, height: 44,
+                  borderRadius: '50%',
+                  background: `${themeColor}25`,
+                  display: 'flex', alignItems: 'center', justifyContent: 'center',
+                  margin: '0 auto 12px',
+                }}>
+                  <Check size={22} color={themeColor} />
                 </div>
-                <div style={{ fontFamily: "'Inter', sans-serif", fontSize: 13, color: COLORS.secondary, marginTop: 4 }}>
-                  We will get back to you within 24 hours.
+                <div style={{ fontFamily: "'Inter', sans-serif", fontSize: 15, fontWeight: 600, color: COLORS.text, marginBottom: 4 }}>
+                  Proposal Request Sent!
+                </div>
+                <div style={{ fontFamily: "'Inter', sans-serif", fontSize: 13, color: COLORS.secondary }}>
+                  We'll get back to you within 24 hours.
                 </div>
               </div>
             ) : (
-              <form onSubmit={handleLeadSubmit} style={{ display: 'flex', flexDirection: 'column', gap: 12 }}>
-                <input
-                  type="text"
-                  placeholder="Your Name"
-                  required
-                  value={leadForm.name}
-                  onChange={(e) => setLeadForm({ ...leadForm, name: e.target.value })}
-                  style={{
-                    padding: '12px 14px',
-                    borderRadius: 10,
-                    background: COLORS.bg,
-                    border: `1px solid ${COLORS.line}`,
-                    color: COLORS.text,
-                    fontSize: 14,
-                    outline: 'none',
-                  }}
-                />
-                <input
-                  type="email"
-                  placeholder="Work Email"
-                  required
-                  value={leadForm.email}
-                  onChange={(e) => setLeadForm({ ...leadForm, email: e.target.value })}
-                  style={{
-                    padding: '12px 14px',
-                    borderRadius: 10,
-                    background: COLORS.bg,
-                    border: `1px solid ${COLORS.line}`,
-                    color: COLORS.text,
-                    fontSize: 14,
-                    outline: 'none',
-                  }}
-                />
-                <select
-                  value={leadForm.businessType}
-                  onChange={(e) => setLeadForm({ ...leadForm, businessType: e.target.value })}
-                  style={{
-                    padding: '12px 14px',
-                    borderRadius: 10,
-                    background: COLORS.bg,
-                    border: `1px solid ${COLORS.line}`,
-                    color: COLORS.text,
-                    fontSize: 14,
-                    outline: 'none',
-                  }}
-                >
-                  <option value="Salon">Salon</option>
-                  <option value="Clinic">Medical Clinic</option>
-                  <option value="Gym">Gym / Fitness</option>
-                  <option value="Restaurant">Restaurant</option>
-                  <option value="Farmhouse">Farmhouse</option>
-                  <option value="Enterprise">Other Enterprise</option>
-                </select>
+              <form onSubmit={handleLeadSubmit} style={{ display: 'flex', flexDirection: 'column', gap: 14 }}>
+                <div>
+                  <div className="conv-field-label" style={{ color: COLORS.secondary }}>Your Name</div>
+                  <input
+                    className="conv-input"
+                    type="text"
+                    placeholder="e.g. Rahul Sharma"
+                    required
+                    value={leadForm.name}
+                    onChange={(e) => setLeadForm({ ...leadForm, name: e.target.value })}
+                    style={{
+                      background: COLORS.bg,
+                      border: `1px solid ${COLORS.line}`,
+                      color: COLORS.text,
+                    }}
+                  />
+                </div>
+                <div>
+                  <div className="conv-field-label" style={{ color: COLORS.secondary }}>Work Email</div>
+                  <input
+                    className="conv-input"
+                    type="email"
+                    placeholder="you@company.com"
+                    required
+                    value={leadForm.email}
+                    onChange={(e) => setLeadForm({ ...leadForm, email: e.target.value })}
+                    style={{
+                      background: COLORS.bg,
+                      border: `1px solid ${COLORS.line}`,
+                      color: COLORS.text,
+                    }}
+                  />
+                </div>
+                <div>
+                  <div className="conv-field-label" style={{ color: COLORS.secondary }}>Business Type</div>
+                  <select
+                    className="conv-input"
+                    value={leadForm.businessType}
+                    onChange={(e) => setLeadForm({ ...leadForm, businessType: e.target.value })}
+                    style={{
+                      background: COLORS.bg,
+                      border: `1px solid ${COLORS.line}`,
+                      color: COLORS.text,
+                    }}
+                  >
+                    <option value="Salon">💈 Salon / Beauty Parlour</option>
+                    <option value="Clinic">🏥 Medical Clinic</option>
+                    <option value="Gym">🏋️ Gym / Fitness Studio</option>
+                    <option value="Restaurant">🍽️ Restaurant / Cafe</option>
+                    <option value="Farmhouse">🌿 Farmhouse / Event Venue</option>
+                    <option value="Enterprise">⚡ Other Business</option>
+                  </select>
+                </div>
                 <button
                   type="submit"
                   disabled={isSubmittingLead}
                   style={{
-                    padding: '14px',
-                    borderRadius: 12,
+                    padding: '15px',
+                    borderRadius: 14,
                     border: 'none',
                     background: themeColor,
                     color: '#15130F',
                     fontFamily: "'Inter', sans-serif",
                     fontSize: 14,
-                    fontWeight: 600,
-                    cursor: 'pointer',
-                    marginTop: 4,
+                    fontWeight: 700,
+                    cursor: isSubmittingLead ? 'not-allowed' : 'pointer',
+                    marginTop: 2,
+                    letterSpacing: '0.01em',
+                    opacity: isSubmittingLead ? 0.7 : 1,
+                    transition: 'opacity 0.2s',
                   }}
                 >
-                  {isSubmittingLead ? 'Sending...' : 'Request Detailed Proposal'}
+                  {isSubmittingLead ? 'Sending...' : '→  Request Free Proposal'}
                 </button>
               </form>
             )}
           </div>
 
-          {/* Instant Call CTA */}
+          {/* ── Strategy Call Card ── */}
           <div className="conv-right-card" style={{ background: COLORS.surface, border: `1px solid ${COLORS.line}` }}>
-            <div style={{ fontFamily: "'Inter', sans-serif", fontSize: 16, fontWeight: 600, color: COLORS.text, marginBottom: 16 }}>
-              Prefer a 1-on-1 strategy call?
+            <div style={{
+              fontFamily: "'Fraunces', serif",
+              fontSize: 19,
+              fontWeight: 400,
+              color: COLORS.text,
+              marginBottom: 6,
+              lineHeight: 1.3,
+            }}>
+              Prefer a quick call?
             </div>
+            <p style={{
+              fontFamily: "'Inter', sans-serif",
+              fontSize: 13,
+              color: COLORS.secondary,
+              lineHeight: 1.6,
+              margin: '0 0 18px',
+            }}>
+              Book a free 20-min strategy session — no pressure, just clarity.
+            </p>
 
+            {/* Google Meet CTA */}
             <a
               href="https://calendar.app.google/ycwYzWhqVRR6ZB3R9"
               target="_blank"
               rel="noopener noreferrer"
               style={{
-                display: 'block',
-                padding: '16px 20px',
-                borderRadius: 16,
-                background: COLORS.bg,
-                border: `1.5px solid ${themeColor}`,
+                display: 'flex',
+                alignItems: 'center',
+                gap: 14,
+                padding: '16px 18px',
+                borderRadius: 14,
+                background: `${themeColor}12`,
+                border: `1.5px solid ${themeColor}50`,
                 textDecoration: 'none',
-                marginBottom: 12,
+                marginBottom: 10,
+                transition: 'background 0.2s',
               }}
             >
-              <div style={{ display: 'flex', alignItems: 'center', gap: 10, marginBottom: 4 }}>
+              <div style={{
+                width: 38, height: 38, flexShrink: 0,
+                borderRadius: 10,
+                background: `${themeColor}25`,
+                display: 'flex', alignItems: 'center', justifyContent: 'center',
+              }}>
                 <Calendar size={18} color={themeColor} />
-                <span style={{ fontFamily: "'IBM Plex Mono', monospace", fontSize: 11, color: themeColor, letterSpacing: '0.05em' }}>
-                  GOOGLE MEET
-                </span>
               </div>
-              <div style={{ fontFamily: "'Inter', sans-serif", fontSize: 14, fontWeight: 600, color: COLORS.text }}>
-                Schedule Strategy Call
+              <div>
+                <div style={{
+                  fontFamily: "'IBM Plex Mono', monospace",
+                  fontSize: 10,
+                  color: themeColor,
+                  letterSpacing: '0.08em',
+                  textTransform: 'uppercase',
+                  marginBottom: 3,
+                }}>Google Meet</div>
+                <div style={{
+                  fontFamily: "'Inter', sans-serif",
+                  fontSize: 14,
+                  fontWeight: 600,
+                  color: COLORS.text,
+                }}>Schedule Strategy Call</div>
               </div>
             </a>
 
-            <div style={{ display: 'grid', gridTemplateColumns: '1fr 1fr', gap: 10 }}>
-              <a
-                href="https://wa.me/919313846266"
-                target="_blank"
-                rel="noopener noreferrer"
-                style={{
-                  display: 'flex',
-                  alignItems: 'center',
-                  justifyContent: 'center',
-                  gap: 6,
-                  padding: '12px',
-                  borderRadius: 10,
-                  border: `1px solid ${COLORS.line}`,
-                  background: COLORS.bg,
-                  color: COLORS.text,
-                  fontFamily: "'Inter', sans-serif",
-                  fontSize: 13,
-                  textDecoration: 'none',
-                }}
-              >
-                <MessageCircle size={15} color={COLORS.secondary} /> WhatsApp
-              </a>
-              <a
-                href="https://mail.google.com/mail/?view=cm&fs=1&to=duokarma54@gmail.com"
-                target="_blank"
-                rel="noopener noreferrer"
-                style={{
-                  display: 'flex',
-                  alignItems: 'center',
-                  justifyContent: 'center',
-                  gap: 6,
-                  padding: '12px',
-                  borderRadius: 10,
-                  border: `1px solid ${COLORS.line}`,
-                  background: COLORS.bg,
-                  color: COLORS.text,
-                  fontFamily: "'Inter', sans-serif",
-                  fontSize: 13,
-                  textDecoration: 'none',
-                }}
-              >
-                <Mail size={15} color={COLORS.secondary} /> Email
-              </a>
-            </div>
+            {/* WhatsApp */}
+            <a
+              href="https://wa.me/919313846266"
+              target="_blank"
+              rel="noopener noreferrer"
+              className="conv-cta-btn"
+              style={{
+                border: `1px solid ${COLORS.line}`,
+                background: COLORS.bg,
+                color: COLORS.text,
+                marginBottom: 8,
+              }}
+            >
+              <MessageCircle size={17} color='#25D366' />
+              <div>
+                <div style={{ fontSize: 13, fontWeight: 600 }}>WhatsApp</div>
+                <div style={{ fontSize: 11, color: COLORS.secondary, marginTop: 1 }}>+91 93138 46266</div>
+              </div>
+            </a>
+
+            {/* Email */}
+            <a
+              href="mailto:duokarma54@gmail.com"
+              className="conv-cta-btn"
+              style={{
+                border: `1px solid ${COLORS.line}`,
+                background: COLORS.bg,
+                color: COLORS.text,
+              }}
+            >
+              <Mail size={17} color={COLORS.secondary} />
+              <div>
+                <div style={{ fontSize: 13, fontWeight: 600 }}>Email Us</div>
+                <div style={{ fontSize: 11, color: COLORS.secondary, marginTop: 1 }}>duokarma54@gmail.com</div>
+              </div>
+            </a>
           </div>
 
         </div>
