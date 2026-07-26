@@ -373,7 +373,7 @@ export function ConversationFlow() {
               </div>
               <div style={{ display: 'flex', alignItems: 'center', gap: 5 }}>
                 <span style={{ width: 6, height: 6, borderRadius: '50%', background: '#4ADE80', display: 'inline-block' }} />
-                <span style={{ fontFamily: "'Inter', sans-serif", fontSize: 11, color: COLORS.secondary }}>Online · Powered by Cerebras</span>
+                <span style={{ fontFamily: "'Inter', sans-serif", fontSize: 11, color: COLORS.secondary }}>Online · Powered by Groq</span>
               </div>
             </div>
           </div>

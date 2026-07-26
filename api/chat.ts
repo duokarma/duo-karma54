@@ -44,9 +44,9 @@ export default async function handler(req: any, res: any) {
   }
 
   try {
-    const apiKey = process.env.CEREBRAS_API_KEY;
+    const apiKey = process.env.GROQ_API_KEY;
     if (!apiKey) {
-      return res.status(500).json({ error: 'CEREBRAS_API_KEY is not configured on the server.' });
+      return res.status(500).json({ error: 'GROQ_API_KEY is not configured on the server.' });
     }
 
     const { messages = [] } = req.body || {};
@@ -59,14 +59,14 @@ export default async function handler(req: any, res: any) {
       })),
     ];
 
-    const response = await fetch('https://api.cerebras.ai/v1/chat/completions', {
+    const response = await fetch('https://api.groq.com/openai/v1/chat/completions', {
       method: 'POST',
       headers: {
         'Authorization': `Bearer ${apiKey}`,
         'Content-Type': 'application/json',
       },
       body: JSON.stringify({
-        model: 'gpt-oss-120b',
+        model: 'llama3-70b-8192',
         messages: chatMessages,
         temperature: 0.3,
         max_tokens: 800,
@@ -79,7 +79,7 @@ export default async function handler(req: any, res: any) {
 
     if (!response.ok) {
       const errText = await response.text();
-      console.error('Cerebras API error:', response.status, errText);
+      console.error('Groq API error:', response.status, errText);
       return res.status(200).json({ text: "Sorry, I'm having trouble connecting right now. Please try again in a moment!" });
     }
 
