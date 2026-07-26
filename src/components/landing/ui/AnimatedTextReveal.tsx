@@ -40,14 +40,18 @@ export function AnimatedTextReveal({ text, className = "", delayOffset = 0 }: An
       initial="hidden"
       animate="visible"
     >
-      {characters.map((char, index) => (
-        <motion.span
-          key={index}
-          variants={childVariants}
-          className="inline-block whitespace-pre"
-        >
-          {char}
-        </motion.span>
+      {text.split(" ").map((word, wordIndex) => (
+        <span key={wordIndex} className="inline-block whitespace-nowrap mr-[0.25em]">
+          {word.split("").map((char, charIndex) => (
+            <motion.span
+              key={charIndex}
+              variants={childVariants}
+              className="inline-block"
+            >
+              {char}
+            </motion.span>
+          ))}
+        </span>
       ))}
     </motion.span>
   );

@@ -44,12 +44,12 @@ export const Hero = React.memo(function Hero() {
         <h1 className="absolute top-[15%] sm:top-[20%] left-6 sm:left-10 md:left-14 right-6 sm:right-auto flex flex-col items-start text-left pointer-events-none z-50 text-white leading-[1.05] tracking-tight">
           <AnimatedTextReveal 
             text="We build software" 
-            className="block font-sans font-semibold text-5xl sm:text-6xl md:text-7xl lg:text-[5.5rem]" 
+            className="block font-sans font-semibold text-4xl sm:text-6xl md:text-7xl lg:text-[5.5rem]" 
             delayOffset={0.25} 
           />
           <AnimatedTextReveal 
             text="businesses actually use." 
-            className="block font-sans font-light text-4xl sm:text-5xl md:text-6xl lg:text-[4.5rem] mt-2 sm:mt-3 text-white/80" 
+            className="block font-sans font-light text-3xl sm:text-5xl md:text-6xl lg:text-[4.5rem] mt-2 sm:mt-3 text-white/80" 
             delayOffset={0.7} 
           />
         </h1>
