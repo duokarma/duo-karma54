@@ -357,6 +357,8 @@ export function ConversationFlow() {
           display: 'flex',
           alignItems: 'center',
           justifyContent: 'space-between',
+          flexWrap: 'wrap',
+          gap: 12,
           padding: '18px 20px 0',
         }}>
           <div style={{ display: 'flex', alignItems: 'center', gap: 10 }}>
@@ -532,6 +534,7 @@ export function ConversationFlow() {
         gap: 16,
         width: '100%',
         boxSizing: 'border-box',
+        marginTop: 16,
       }}>
         {/* Strategy Call */}
         <a
