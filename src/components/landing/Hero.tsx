@@ -23,21 +23,17 @@ export const Hero = React.memo(function Hero() {
       <section className="relative w-full overflow-hidden bg-black" style={{ height: '100dvh' }}>
         
         {/* Layer 1: Background Video (Zooming out on load) */}
-        <div className="absolute inset-0 z-10 hero-zoom bg-black flex items-center justify-center">
+        <div className="absolute inset-0 z-10 hero-zoom bg-black">
           <video 
             ref={videoRef}
-            src="/homepage-new.mp4"
+            src="/homepage.mp4"
             autoPlay
             loop
             muted
             playsInline
-            className="w-full h-full object-contain md:object-cover opacity-60"
+            className="w-full h-full object-cover opacity-50"
             style={{ filter: 'contrast(1.1) brightness(0.9)' }}
           />
-          {/* Top and Bottom blending gradients for mobile (horizontal video masking) */}
-          <div className="absolute inset-x-0 top-0 h-[35vh] bg-gradient-to-b from-black via-black/80 to-transparent pointer-events-none md:hidden" />
-          <div className="absolute inset-x-0 bottom-0 h-[35vh] bg-gradient-to-t from-black via-black/80 to-transparent pointer-events-none md:hidden" />
-          
           {/* Simple, clean gradients to blend edges without obscuring the main video */}
           <div className="absolute inset-x-0 bottom-0 h-[40vh] bg-gradient-to-t from-[#010101] to-transparent pointer-events-none" />
           <div className="absolute inset-0 bg-black/20 pointer-events-none" />
