@@ -83,6 +83,44 @@ function TypingDots({ color }: { color: string }) {
 
 // ── Main Component ─────────────────────────────────────────────────────────────
 
+const ChatBubble = ({ msg, accentColor }: { msg: Message; accentColor: string }) => (
+  <motion.div
+    initial={{ opacity: 0, y: 8 }}
+    animate={{ opacity: 1, y: 0 }}
+    style={{
+      display: 'flex',
+      flexDirection: msg.role === 'user' ? 'row-reverse' : 'row',
+      alignItems: 'flex-end',
+      gap: 10,
+      marginBottom: 16,
+    }}
+  >
+    {msg.role === 'assistant' && (
+      <div style={{
+        width: 30, height: 30, borderRadius: '50%', flexShrink: 0,
+        background: `${accentColor}20`,
+        display: 'flex', alignItems: 'center', justifyContent: 'center',
+      }}>
+        <Bot size={14} color={accentColor} />
+      </div>
+    )}
+    <div
+      style={{
+        maxWidth: '80%',
+        padding: '12px 16px',
+        borderRadius: msg.role === 'user' ? '18px 18px 4px 18px' : '4px 18px 18px 18px',
+        background: msg.role === 'user' ? accentColor : COLORS.surface,
+        border: msg.role === 'user' ? 'none' : `1px solid ${COLORS.line}`,
+        color: msg.role === 'user' ? '#15130F' : COLORS.text,
+        fontFamily: "'Inter', sans-serif",
+        fontSize: 14,
+        lineHeight: 1.6,
+      }}
+      dangerouslySetInnerHTML={{ __html: renderMarkdown(msg.text) }}
+    />
+  </motion.div>
+);
+
 const ChatGlobalStyles = React.memo(() => (
   <style>{`
     .dk-scroll::-webkit-scrollbar { width: 4px; }
@@ -263,46 +301,6 @@ export function ConversationFlow() {
     setLeadSubmitting(false);
     setLeadInput('');
   };
-
-  // ── Shared chat bubble ───────────────────────────────────────────────────────
-
-  const ChatBubble = ({ msg, accentColor }: { msg: Message; accentColor: string }) => (
-    <motion.div
-      initial={{ opacity: 0, y: 8 }}
-      animate={{ opacity: 1, y: 0 }}
-      style={{
-        display: 'flex',
-        flexDirection: msg.role === 'user' ? 'row-reverse' : 'row',
-        alignItems: 'flex-end',
-        gap: 10,
-        marginBottom: 16,
-      }}
-    >
-      {msg.role === 'assistant' && (
-        <div style={{
-          width: 30, height: 30, borderRadius: '50%', flexShrink: 0,
-          background: `${accentColor}20`,
-          display: 'flex', alignItems: 'center', justifyContent: 'center',
-        }}>
-          <Bot size={14} color={accentColor} />
-        </div>
-      )}
-      <div
-        style={{
-          maxWidth: '80%',
-          padding: '12px 16px',
-          borderRadius: msg.role === 'user' ? '18px 18px 4px 18px' : '4px 18px 18px 18px',
-          background: msg.role === 'user' ? accentColor : COLORS.surface,
-          border: msg.role === 'user' ? 'none' : `1px solid ${COLORS.line}`,
-          color: msg.role === 'user' ? '#15130F' : COLORS.text,
-          fontFamily: "'Inter', sans-serif",
-          fontSize: 14,
-          lineHeight: 1.6,
-        }}
-        dangerouslySetInnerHTML={{ __html: renderMarkdown(msg.text) }}
-      />
-    </motion.div>
-  );
 
   // ── Styles ───────────────────────────────────────────────────────────────────
 
