@@ -152,12 +152,39 @@ export function ConversationFlow() {
       <style>{`
         .conv-layout-grid {
           display: grid;
-          grid-template-columns: 1fr 340px;
+          grid-template-columns: 1fr minmax(0, 320px);
+          gap: 24px;
+          align-items: start;
+          box-sizing: border-box;
+          width: 100%;
         }
-        @media (max-width: 900px) {
+        @media (max-width: 960px) {
           .conv-layout-grid {
             grid-template-columns: 1fr;
           }
+        }
+        .conv-right-panel {
+          display: flex;
+          flex-direction: column;
+          gap: 20px;
+          min-width: 0;
+          width: 100%;
+          box-sizing: border-box;
+        }
+        .conv-right-panel input,
+        .conv-right-panel select,
+        .conv-right-panel button,
+        .conv-right-panel a {
+          box-sizing: border-box;
+          width: 100%;
+        }
+        .conv-right-card {
+          background: var(--surface);
+          border-radius: 20px;
+          padding: 24px;
+          min-width: 0;
+          box-sizing: border-box;
+          overflow: hidden;
         }
         .chat-scroll-area::-webkit-scrollbar {
           width: 6px;
@@ -167,7 +194,7 @@ export function ConversationFlow() {
           border-radius: 4px;
         }
       `}</style>
-      <div className="conv-layout-grid" style={{ gap: 32, alignItems: 'start' }}>
+      <div className="conv-layout-grid">
         
         {/* ── Left: Gemini AI Interactive Chat ── */}
         <div style={{
@@ -405,10 +432,10 @@ export function ConversationFlow() {
         </div>
 
         {/* ── Right: Action & Booking Pane ── */}
-        <div style={{ display: 'flex', flexDirection: 'column', gap: 24 }}>
+        <div className="conv-right-panel">
           
           {/* Quick Lead Form Card */}
-          <div style={{ background: COLORS.surface, border: `1px solid ${COLORS.line}`, borderRadius: 24, padding: 28 }}>
+          <div className="conv-right-card" style={{ background: COLORS.surface, border: `1px solid ${COLORS.line}` }}>
             <div style={{ fontFamily: "'Fraunces', serif", fontSize: 20, color: COLORS.text, marginBottom: 8 }}>
               Get a Proposal
             </div>
@@ -503,7 +530,7 @@ export function ConversationFlow() {
           </div>
 
           {/* Instant Call CTA */}
-          <div style={{ background: COLORS.surface, border: `1px solid ${COLORS.line}`, borderRadius: 24, padding: 28 }}>
+          <div className="conv-right-card" style={{ background: COLORS.surface, border: `1px solid ${COLORS.line}` }}>
             <div style={{ fontFamily: "'Inter', sans-serif", fontSize: 16, fontWeight: 600, color: COLORS.text, marginBottom: 16 }}>
               Prefer a 1-on-1 strategy call?
             </div>

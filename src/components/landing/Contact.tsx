@@ -5,7 +5,7 @@ import { ConversationFlow } from './ConversationFlow';
 
 export function Contact() {
   return (
-    <section style={{ padding: "120px 5% 100px", background: COLORS.bg }} id="contact">
+    <section style={{ padding: "120px 4% 100px", background: COLORS.bg }} id="contact">
       <Reveal>
         <div style={{ textAlign: 'center', marginBottom: 60 }}>
           <Eyebrow>Contact</Eyebrow>
@@ -35,7 +35,7 @@ export function Contact() {
         </div>
       </Reveal>
 
-      <div style={{ maxWidth: 1100, margin: '0 auto' }}>
+      <div style={{ maxWidth: 1280, margin: '0 auto', width: '100%', boxSizing: 'border-box' }}>
         <Reveal delay={0.1}>
           <ConversationFlow />
         </Reveal>
