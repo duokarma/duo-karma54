@@ -1,5 +1,5 @@
 import { BrowserRouter, Routes, Route } from "react-router-dom";
-import { Suspense, lazy, useEffect } from "react";
+import { Suspense, lazy } from "react";
 import { MotionConfig } from "framer-motion";
 import { ThemeProvider } from "@/hooks/use-theme";
 import { PageLoader } from "@/components/shared/page-loader";
