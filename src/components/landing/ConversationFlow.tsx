@@ -1,13 +1,29 @@
-﻿import React, { useState, useEffect, useRef } from 'react';
-import { m as motion } from 'framer-motion';
-import { Send, Sparkles, Calendar, MessageCircle, Mail, Check, RefreshCw, Bot } from 'lucide-react';
+import React, { useState, useRef, useEffect } from 'react';
+import { m as motion, AnimatePresence } from 'framer-motion';
+import { Send, Bot, MessageCircle, Mail, Calendar, RefreshCw, Sparkles, ClipboardList, ChevronRight } from 'lucide-react';
 import { COLORS } from './ui/theme';
+
+// ── Types ──────────────────────────────────────────────────────────────────────
 
 interface Message {
   id: string;
   role: 'user' | 'assistant';
   text: string;
 }
+
+type ActiveTab = 'ai' | 'lead';
+
+type LeadStep = 'name' | 'email' | 'phone' | 'business' | 'project' | 'done';
+
+interface LeadData {
+  name: string;
+  email: string;
+  phone: string;
+  businessType: string;
+  project: string;
+}
+
+// ── Constants ──────────────────────────────────────────────────────────────────
 
 const SUGGESTED_PROMPTS = [
   '💈 Salon Booking System',
@@ -17,7 +33,32 @@ const SUGGESTED_PROMPTS = [
   '⚡ Custom Web App Development',
 ];
 
-// Render basic markdown: **bold**, *italic*, newlines → <br>
+const BUSINESS_OPTIONS = [
+  { value: 'Salon', label: '💈 Salon / Beauty' },
+  { value: 'Clinic', label: '🏥 Medical Clinic' },
+  { value: 'Gym', label: '🏋️ Gym / Fitness' },
+  { value: 'Restaurant', label: '🍽️ Restaurant / Cafe' },
+  { value: 'Farmhouse', label: '🌿 Farmhouse / Venue' },
+  { value: 'Other', label: '⚡ Other Business' },
+];
+
+const AI_INIT_MESSAGE: Message = {
+  id: 'ai-init',
+  role: 'assistant',
+  text: "👋 Hi! I'm the **DuoKarma AI Assistant**.\n\nI can answer questions about our services, pricing, timelines, or help you figure out what software fits your business best.\n\nWhat would you like to know?",
+};
+
+const LEAD_BOT_QUESTIONS: Record<LeadStep, string> = {
+  name: "👋 Welcome! I'm here to help you get a **custom proposal**.\n\nLet's start — **what's your name?**",
+  email: "Great, {name}! 📧 What's your **work email address?** We'll send the proposal there.",
+  phone: "Perfect! 📱 What's your **WhatsApp / phone number?** _(Type 'skip' to skip this)_",
+  business: "Thanks! Now, **what type of business do you run?**",
+  project: "Awesome! 💡 Finally — **briefly describe what you need**, or what your biggest challenge is right now.",
+  done: "🎉 **Thank you, {name}!** We've received your request and will send a tailored proposal to **{email}** within 24 hours.\n\nYou can also book a free 20-min strategy call using the button below!",
+};
+
+// ── Helpers ────────────────────────────────────────────────────────────────────
+
 function renderMarkdown(text: string): string {
   return text
     .replace(/\*\*(.+?)\*\*/g, '<strong>$1</strong>')
@@ -27,11 +68,11 @@ function renderMarkdown(text: string): string {
 
 function TypingDots({ color }: { color: string }) {
   return (
-    <div style={{ display: 'flex', gap: 6, alignItems: 'center', padding: '6px 4px' }}>
+    <div style={{ display: 'flex', gap: 5, alignItems: 'center', padding: '4px 2px' }}>
       {[0, 1, 2].map((i) => (
         <motion.span
           key={i}
-          style={{ width: 7, height: 7, borderRadius: '50%', background: color, display: 'block' }}
+          style={{ width: 6, height: 6, borderRadius: '50%', background: color, display: 'block' }}
           animate={{ opacity: [0.3, 1, 0.3], scale: [0.8, 1.2, 0.8] }}
           transition={{ duration: 0.9, delay: i * 0.15, repeat: Infinity }}
         />
@@ -40,668 +81,543 @@ function TypingDots({ color }: { color: string }) {
   );
 }
 
-export function ConversationFlow() {
-  const [messages, setMessages] = useState<Message[]>([
-    {
-      id: 'init-1',
-      role: 'assistant',
-      text: "👋 Hi! I'm the **DuoKarma Gemini AI Assistant**.\n\nI can help you explore custom software, automated booking systems, admin dashboards, or answer any questions about your upcoming project.\n\nWhat type of business do you run, or how can I help you today?",
-    },
-  ]);
-  const [input, setInput] = useState('');
-  const [isTyping, setIsTyping] = useState(false);
-  
-  // Lead Form state
-  const [leadForm, setLeadForm] = useState({ name: '', email: '', phone: '', businessType: 'Salon' });
-  const [isSubmittingLead, setIsSubmittingLead] = useState(false);
-  const [leadSubmitted, setLeadSubmitted] = useState(false);
+// ── Main Component ─────────────────────────────────────────────────────────────
 
-  const chatEndRef = useRef<HTMLDivElement | null>(null);
+export function ConversationFlow() {
   const themeColor = COLORS.accent || '#F4C073';
 
-  useEffect(() => {
-    chatEndRef.current?.scrollIntoView({ behavior: 'smooth' });
-  }, [messages, isTyping]);
+  // AI Chat state
+  const [aiMessages, setAiMessages] = useState<Message[]>([AI_INIT_MESSAGE]);
+  const [aiInput, setAiInput] = useState('');
+  const [aiTyping, setAiTyping] = useState(false);
 
-  const handleSend = async (textToSend?: string) => {
-    const query = (textToSend || input).trim();
-    if (!query || isTyping) return;
+  // Lead Bot state
+  const [leadMessages, setLeadMessages] = useState<Message[]>([
+    { id: 'lead-init', role: 'assistant', text: LEAD_BOT_QUESTIONS.name },
+  ]);
+  const [leadInput, setLeadInput] = useState('');
+  const [leadStep, setLeadStep] = useState<LeadStep>('name');
+  const [leadData, setLeadData] = useState<LeadData>({ name: '', email: '', phone: '', businessType: '', project: '' });
+  const [leadSubmitting, setLeadSubmitting] = useState(false);
+  const [leadDone, setLeadDone] = useState(false);
 
-    const userMsg: Message = {
-      id: Date.now().toString(),
-      role: 'user',
-      text: query,
-    };
+  // Tab
+  const [activeTab, setActiveTab] = useState<ActiveTab>('ai');
 
-    const newMessages = [...messages, userMsg];
-    setMessages(newMessages);
-    if (!textToSend) setInput('');
-    setIsTyping(true);
+  const aiEndRef = useRef<HTMLDivElement | null>(null);
+  const leadEndRef = useRef<HTMLDivElement | null>(null);
+
+  useEffect(() => { aiEndRef.current?.scrollIntoView({ behavior: 'smooth' }); }, [aiMessages, aiTyping]);
+  useEffect(() => { leadEndRef.current?.scrollIntoView({ behavior: 'smooth' }); }, [leadMessages]);
+
+  // ── AI Chat handler ──────────────────────────────────────────────────────────
+
+  const sendAiMessage = async (textToSend?: string) => {
+    const query = (textToSend || aiInput).trim();
+    if (!query || aiTyping) return;
+
+    const userMsg: Message = { id: Date.now().toString(), role: 'user', text: query };
+    const newMessages = [...aiMessages, userMsg];
+    setAiMessages(newMessages);
+    if (!textToSend) setAiInput('');
+    setAiTyping(true);
 
     try {
       const response = await fetch('/api/chat', {
         method: 'POST',
         headers: { 'Content-Type': 'application/json' },
         body: JSON.stringify({
-          messages: newMessages.map((m) => ({
-            role: m.role,
-            content: m.text,
-          })),
+          messages: newMessages.map((m) => ({ role: m.role, content: m.text })),
         }),
       });
-
       const data = await response.json();
-      
-      const botMsg: Message = {
-        id: (Date.now() + 1).toString(),
-        role: 'assistant',
-        text: data.text || data.error || 'Sorry, I had trouble processing that request. Please try again!',
-      };
-
-      setMessages((prev) => [...prev, botMsg]);
-    } catch (err: any) {
-      setMessages((prev) => [
+      setAiMessages((prev) => [
         ...prev,
         {
           id: (Date.now() + 1).toString(),
           role: 'assistant',
-          text: 'Oops! Unable to connect to Gemini AI right now. Please check your connection or try again.',
+          text: data.text || "Sorry, I had trouble with that. Please try again!",
         },
       ]);
+    } catch {
+      setAiMessages((prev) => [
+        ...prev,
+        { id: (Date.now() + 1).toString(), role: 'assistant', text: "Connection issue — please try again!" },
+      ]);
     } finally {
-      setIsTyping(false);
+      setAiTyping(false);
     }
   };
 
-  const handleLeadSubmit = async (e: React.FormEvent) => {
-    e.preventDefault();
-    if (!leadForm.name || !leadForm.email) return;
+  // ── Lead Bot handler ─────────────────────────────────────────────────────────
 
-    setIsSubmittingLead(true);
-    try {
-      const { supabase } = await import('@/lib/supabase');
-      await supabase.from('website_inquiries').insert({
-        name: leadForm.name,
-        email: leadForm.email,
-        phone: leadForm.phone,
-        business_type: leadForm.businessType,
-        source: 'Gemini AI Assistant',
-        status: 'new',
-        lead_score: 50,
-      });
-      setLeadSubmitted(true);
-    } catch (err) {
-      console.error(err);
-    } finally {
-      setIsSubmittingLead(false);
+  const sendLeadMessage = async (textOverride?: string) => {
+    if (leadDone || leadStep === 'done') return;
+    const text = (textOverride || leadInput).trim();
+    if (!text) return;
+
+    const userMsg: Message = { id: Date.now().toString(), role: 'user', text };
+    setLeadMessages((prev) => [...prev, userMsg]);
+    setLeadInput('');
+
+    const newData = { ...leadData };
+
+    if (leadStep === 'name') {
+      newData.name = text;
+      setLeadData(newData);
+      setLeadStep('email');
+      setTimeout(() => {
+        setLeadMessages((prev) => [
+          ...prev,
+          { id: Date.now().toString(), role: 'assistant', text: LEAD_BOT_QUESTIONS.email.replace('{name}', text) },
+        ]);
+      }, 400);
+    } else if (leadStep === 'email') {
+      newData.email = text;
+      setLeadData(newData);
+      setLeadStep('phone');
+      setTimeout(() => {
+        setLeadMessages((prev) => [
+          ...prev,
+          { id: Date.now().toString(), role: 'assistant', text: LEAD_BOT_QUESTIONS.phone },
+        ]);
+      }, 400);
+    } else if (leadStep === 'phone') {
+      newData.phone = text.toLowerCase() === 'skip' ? '' : text;
+      setLeadData(newData);
+      setLeadStep('business');
+      setTimeout(() => {
+        setLeadMessages((prev) => [
+          ...prev,
+          { id: Date.now().toString(), role: 'assistant', text: LEAD_BOT_QUESTIONS.business },
+        ]);
+      }, 400);
+    } else if (leadStep === 'business') {
+      newData.businessType = text;
+      setLeadData(newData);
+      setLeadStep('project');
+      setTimeout(() => {
+        setLeadMessages((prev) => [
+          ...prev,
+          { id: Date.now().toString(), role: 'assistant', text: LEAD_BOT_QUESTIONS.project },
+        ]);
+      }, 400);
+    } else if (leadStep === 'project') {
+      newData.project = text;
+      setLeadData(newData);
+      setLeadStep('done');
+      setLeadSubmitting(true);
+
+      // Save to Supabase website_inquiries
+      try {
+        const { supabase } = await import('@/lib/supabase');
+        await supabase.from('website_inquiries').insert({
+          name: newData.name,
+          email: newData.email,
+          phone: newData.phone,
+          business_type: newData.businessType,
+          message: newData.project,
+          source: 'DuoKarma AI Assistant',
+          status: 'new',
+          lead_score: 70,
+        });
+      } catch (err) {
+        console.error('Failed to save inquiry:', err);
+      } finally {
+        setLeadSubmitting(false);
+        setLeadDone(true);
+        setLeadMessages((prev) => [
+          ...prev,
+          {
+            id: Date.now().toString(),
+            role: 'assistant',
+            text: LEAD_BOT_QUESTIONS.done
+              .replace('{name}', newData.name)
+              .replace('{email}', newData.email),
+          },
+        ]);
+      }
     }
   };
 
-  const resetChat = () => {
-    setMessages([
-      {
-        id: 'init-1',
-        role: 'assistant',
-        text: "👋 Hi! I'm the **DuoKarma Gemini AI Assistant**.\n\nI can help you explore custom software, automated booking systems, admin dashboards, or answer any questions about your upcoming project.\n\nWhat type of business do you run, or how can I help you today?",
-      },
-    ]);
+  const resetLeadBot = () => {
+    setLeadMessages([{ id: 'lead-init', role: 'assistant', text: LEAD_BOT_QUESTIONS.name }]);
+    setLeadStep('name');
+    setLeadData({ name: '', email: '', phone: '', businessType: '', project: '' });
+    setLeadDone(false);
+    setLeadSubmitting(false);
+    setLeadInput('');
   };
+
+  // ── Shared chat bubble ───────────────────────────────────────────────────────
+
+  const ChatBubble = ({ msg, accentColor }: { msg: Message; accentColor: string }) => (
+    <motion.div
+      initial={{ opacity: 0, y: 8 }}
+      animate={{ opacity: 1, y: 0 }}
+      style={{
+        display: 'flex',
+        flexDirection: msg.role === 'user' ? 'row-reverse' : 'row',
+        alignItems: 'flex-end',
+        gap: 10,
+        marginBottom: 16,
+      }}
+    >
+      {msg.role === 'assistant' && (
+        <div style={{
+          width: 30, height: 30, borderRadius: '50%', flexShrink: 0,
+          background: `${accentColor}20`,
+          display: 'flex', alignItems: 'center', justifyContent: 'center',
+        }}>
+          <Bot size={14} color={accentColor} />
+        </div>
+      )}
+      <div
+        style={{
+          maxWidth: '80%',
+          padding: '12px 16px',
+          borderRadius: msg.role === 'user' ? '18px 18px 4px 18px' : '4px 18px 18px 18px',
+          background: msg.role === 'user' ? accentColor : COLORS.surface,
+          border: msg.role === 'user' ? 'none' : `1px solid ${COLORS.line}`,
+          color: msg.role === 'user' ? '#15130F' : COLORS.text,
+          fontFamily: "'Inter', sans-serif",
+          fontSize: 14,
+          lineHeight: 1.6,
+        }}
+        dangerouslySetInnerHTML={{ __html: renderMarkdown(msg.text) }}
+      />
+    </motion.div>
+  );
+
+  // ── Styles ───────────────────────────────────────────────────────────────────
+
+  const tabStyle = (active: boolean): React.CSSProperties => ({
+    flex: 1,
+    padding: '12px 20px',
+    border: 'none',
+    borderRadius: 14,
+    cursor: 'pointer',
+    fontFamily: "'Inter', sans-serif",
+    fontSize: 14,
+    fontWeight: 600,
+    transition: 'all 0.2s',
+    background: active ? themeColor : 'transparent',
+    color: active ? '#15130F' : COLORS.secondary,
+    display: 'flex',
+    alignItems: 'center',
+    justifyContent: 'center',
+    gap: 8,
+  });
+
+  const chatAreaStyle: React.CSSProperties = {
+    height: 340,
+    overflowY: 'auto',
+    padding: '20px 20px 4px',
+    display: 'flex',
+    flexDirection: 'column',
+    scrollBehavior: 'smooth',
+  };
+
+  const inputRowStyle: React.CSSProperties = {
+    display: 'flex',
+    gap: 10,
+    padding: '16px 20px',
+    borderTop: `1px solid ${COLORS.line}`,
+    alignItems: 'center',
+  };
+
+  // ── Render ───────────────────────────────────────────────────────────────────
 
   return (
     <>
       <style>{`
-        .conv-layout-grid {
-          display: flex;
-          flex-direction: column;
-          gap: 24px;
-          width: 100%;
-          box-sizing: border-box;
-        }
-        .conv-bottom-row {
-          display: grid;
-          grid-template-columns: 1fr 1fr;
-          gap: 20px;
-          width: 100%;
-          box-sizing: border-box;
-        }
-        @media (max-width: 700px) {
-          .conv-bottom-row {
-            grid-template-columns: 1fr;
-          }
-        }
-        .conv-right-panel {
-          display: contents;
-        }
-        .conv-right-panel input,
-        .conv-right-panel select,
-        .conv-right-panel button {
-          box-sizing: border-box;
-          width: 100%;
-          display: block;
-        }
-        .conv-right-card {
-          border-radius: 20px;
-          padding: 28px 24px;
-          box-sizing: border-box;
-          overflow: hidden;
-        }
-        .conv-field-label {
-          font-family: 'Inter', sans-serif;
-          font-size: 11px;
-          font-weight: 600;
-          letter-spacing: 0.08em;
-          text-transform: uppercase;
-          margin-bottom: 6px;
-          opacity: 0.55;
-        }
-        .conv-input {
-          width: 100%;
-          box-sizing: border-box;
-          padding: 13px 16px;
-          border-radius: 12px;
-          font-size: 14px;
-          font-family: 'Inter', sans-serif;
-          outline: none;
-          transition: border-color 0.2s;
-        }
-        .conv-cta-btn {
-          display: flex;
-          align-items: center;
-          gap: 10px;
-          width: 100%;
-          box-sizing: border-box;
-          padding: 14px 18px;
-          border-radius: 14px;
-          font-family: 'Inter', sans-serif;
-          font-size: 14px;
-          font-weight: 500;
-          text-decoration: none;
-          cursor: pointer;
-          transition: opacity 0.18s;
-        }
-        .conv-cta-btn:hover { opacity: 0.82; }
-        .chat-scroll-area::-webkit-scrollbar { width: 5px; }
-        .chat-scroll-area::-webkit-scrollbar-thumb {
-          background: rgba(255,255,255,0.12);
-          border-radius: 4px;
-        }
+        .dk-scroll::-webkit-scrollbar { width: 4px; }
+        .dk-scroll::-webkit-scrollbar-thumb { background: rgba(255,255,255,0.1); border-radius: 4px; }
+        .dk-input { background: transparent; border: none; outline: none; flex: 1; font-family: 'Inter', sans-serif; font-size: 14px; color: ${COLORS.text}; }
+        .dk-input::placeholder { color: ${COLORS.secondary}; opacity: 0.6; }
+        .dk-send-btn { width: 40px; height: 40px; border-radius: 12px; border: none; background: ${themeColor}; color: #15130F; cursor: pointer; display: flex; align-items: center; justify-content: center; flex-shrink: 0; transition: opacity 0.2s; }
+        .dk-send-btn:disabled { opacity: 0.4; cursor: not-allowed; }
+        .prompt-chip { padding: 7px 14px; border-radius: 20px; border: 1px solid ${COLORS.line}; background: ${COLORS.surface}; color: ${COLORS.secondary}; font-family: 'Inter', sans-serif; font-size: 12px; cursor: pointer; white-space: nowrap; transition: border-color 0.2s, color 0.2s; }
+        .prompt-chip:hover { border-color: ${themeColor}; color: ${themeColor}; }
+        .biz-chip { padding: 8px 14px; border-radius: 20px; border: 1px solid ${COLORS.line}; background: ${COLORS.bg}; color: ${COLORS.text}; font-family: 'Inter', sans-serif; font-size: 13px; cursor: pointer; transition: all 0.2s; white-space: nowrap; }
+        .biz-chip:hover { border-color: ${themeColor}; background: ${themeColor}20; color: ${themeColor}; }
       `}</style>
-      <div className="conv-layout-grid">
-        
-        {/* ── Left: Gemini AI Interactive Chat ── */}
+
+      {/* ── Main Chat Card ── */}
+      <div style={{
+        background: COLORS.surface,
+        border: `1px solid ${COLORS.line}`,
+        borderRadius: 24,
+        overflow: 'hidden',
+        width: '100%',
+        boxSizing: 'border-box',
+      }}>
+        {/* Header */}
         <div style={{
-          background: COLORS.surface,
-          border: `1px solid ${COLORS.line}`,
-          borderRadius: 24,
-          padding: '28px 28px 32px',
-          minHeight: 620,
           display: 'flex',
-          flexDirection: 'column'
+          alignItems: 'center',
+          justifyContent: 'space-between',
+          padding: '18px 20px 0',
         }}>
-          
-          {/* AI Header */}
-          <div style={{
-            display: 'flex',
-            alignItems: 'center',
-            justifyContent: 'space-between',
-            marginBottom: 20,
-            paddingBottom: 16,
-            borderBottom: `1px solid ${COLORS.line}`
-          }}>
-            <div style={{ display: 'flex', alignItems: 'center', gap: 12 }}>
-              <div style={{
-                width: 38,
-                height: 38,
-                borderRadius: '50%',
-                background: `${themeColor}20`,
-                border: `1px solid ${themeColor}50`,
-                display: 'flex',
-                alignItems: 'center',
-                justifyContent: 'center',
-                color: themeColor
-              }}>
-                <Sparkles size={20} />
+          <div style={{ display: 'flex', alignItems: 'center', gap: 10 }}>
+            <div style={{
+              width: 36, height: 36, borderRadius: 10,
+              background: `${themeColor}20`,
+              display: 'flex', alignItems: 'center', justifyContent: 'center',
+            }}>
+              <Sparkles size={18} color={themeColor} />
+            </div>
+            <div>
+              <div style={{ fontFamily: "'Inter', sans-serif", fontSize: 15, fontWeight: 700, color: COLORS.text }}>
+                DuoKarma AI Assistant
               </div>
-              <div>
-                <div style={{ fontFamily: "'Fraunces', serif", fontSize: 18, color: COLORS.text, display: 'flex', alignItems: 'center', gap: 8 }}>
-                  DuoKarma AI Assistant
-                  <span style={{ fontSize: 11, background: `${themeColor}25`, color: themeColor, padding: '2px 8px', borderRadius: 10, fontFamily: "'IBM Plex Mono', monospace" }}>
-                    Gemini 2.5
-                  </span>
-                </div>
-                <div style={{ fontFamily: "'Inter', sans-serif", fontSize: 12, color: COLORS.secondary }}>
-                  Online • Real-time AI Software Consultant
-                </div>
+              <div style={{ display: 'flex', alignItems: 'center', gap: 5 }}>
+                <span style={{ width: 6, height: 6, borderRadius: '50%', background: '#4ADE80', display: 'inline-block' }} />
+                <span style={{ fontFamily: "'Inter', sans-serif", fontSize: 11, color: COLORS.secondary }}>Online · Powered by Cerebras</span>
               </div>
             </div>
+          </div>
 
-            <button
-              onClick={resetChat}
-              title="Reset Chat"
-              style={{
-                background: 'transparent',
-                border: `1px solid ${COLORS.line}`,
-                borderRadius: 10,
-                padding: '8px',
-                color: COLORS.secondary,
-                cursor: 'pointer',
-                display: 'flex',
-                alignItems: 'center',
-                gap: 6,
-                fontSize: 12,
-                fontFamily: "'Inter', sans-serif",
-              }}
-            >
-              <RefreshCw size={14} /> Clear
+          {/* Tab Switcher */}
+          <div style={{
+            display: 'flex',
+            background: COLORS.bg,
+            borderRadius: 16,
+            padding: 4,
+            gap: 4,
+          }}>
+            <button style={tabStyle(activeTab === 'ai')} onClick={() => setActiveTab('ai')}>
+              <Bot size={14} />
+              AI Chat
+            </button>
+            <button style={tabStyle(activeTab === 'lead')} onClick={() => setActiveTab('lead')}>
+              <ClipboardList size={14} />
+              Get a Quote
             </button>
           </div>
-
-          {/* Quick Prompts Carousel */}
-          <div style={{ display: 'flex', gap: 8, overflowX: 'auto', paddingBottom: 12, marginBottom: 12 }}>
-            {SUGGESTED_PROMPTS.map((prompt, i) => (
-              <button
-                key={i}
-                onClick={() => handleSend(prompt)}
-                style={{
-                  whiteSpace: 'nowrap',
-                  padding: '8px 14px',
-                  borderRadius: 20,
-                  border: `1px solid ${COLORS.line}`,
-                  background: COLORS.bg,
-                  color: COLORS.text,
-                  fontFamily: "'Inter', sans-serif",
-                  fontSize: 13,
-                  cursor: 'pointer',
-                  transition: 'all 0.2s',
-                }}
-                onMouseOver={(e) => {
-                  e.currentTarget.style.borderColor = themeColor;
-                  e.currentTarget.style.color = themeColor;
-                }}
-                onMouseOut={(e) => {
-                  e.currentTarget.style.borderColor = COLORS.line;
-                  e.currentTarget.style.color = COLORS.text;
-                }}
-              >
-                {prompt}
-              </button>
-            ))}
-          </div>
-
-          {/* Chat Messages */}
-          <div className="chat-scroll-area" style={{
-            flex: 1,
-            overflowY: 'auto',
-            maxHeight: 400,
-            paddingRight: 8,
-            display: 'flex',
-            flexDirection: 'column',
-            gap: 16
-          }}>
-            {messages.map((m) => (
-              <div
-                key={m.id}
-                style={{
-                  display: 'flex',
-                  justifyContent: m.role === 'user' ? 'flex-end' : 'flex-start',
-                  gap: 10,
-                }}
-              >
-                {m.role === 'assistant' && (
-                  <div style={{
-                    width: 32,
-                    height: 32,
-                    borderRadius: '50%',
-                    background: `${themeColor}20`,
-                    display: 'flex',
-                    alignItems: 'center',
-                    justifyContent: 'center',
-                    flexShrink: 0,
-                    color: themeColor,
-                    marginTop: 4
-                  }}>
-                    <Bot size={18} />
-                  </div>
-                )}
-
-                <div
-                  style={{
-                    maxWidth: '82%',
-                    padding: '14px 18px',
-                    borderRadius: m.role === 'user' ? '18px 18px 4px 18px' : '4px 18px 18px 18px',
-                    background: m.role === 'user' ? themeColor : COLORS.surface2,
-                    color: m.role === 'user' ? '#15130F' : COLORS.text,
-                    border: m.role === 'user' ? 'none' : `1px solid ${COLORS.line}`,
-                    fontFamily: "'Inter', sans-serif",
-                    fontSize: 14,
-                    lineHeight: 1.6,
-                    fontWeight: m.role === 'user' ? 500 : 400,
-                  }}
-                  dangerouslySetInnerHTML={{ __html: renderMarkdown(m.text) }}
-                />
-              </div>
-            ))}
-
-            {isTyping && (
-              <div style={{ display: 'flex', gap: 10, alignItems: 'center' }}>
-                <div style={{
-                  width: 32,
-                  height: 32,
-                  borderRadius: '50%',
-                  background: `${themeColor}20`,
-                  display: 'flex',
-                  alignItems: 'center',
-                  justifyContent: 'center',
-                  color: themeColor
-                }}>
-                  <Bot size={18} />
-                </div>
-                <div style={{
-                  background: COLORS.surface2,
-                  border: `1px solid ${COLORS.line}`,
-                  padding: '10px 16px',
-                  borderRadius: '4px 18px 18px 18px',
-                }}>
-                  <TypingDots color={themeColor} />
-                </div>
-              </div>
-            )}
-
-            <div ref={chatEndRef} />
-          </div>
-
-          {/* Input Box */}
-          <div style={{ marginTop: 20, paddingTop: 14, borderTop: `1px solid ${COLORS.line}` }}>
-            <form
-              onSubmit={(e) => {
-                e.preventDefault();
-                handleSend();
-              }}
-              style={{ display: 'flex', gap: 10, alignItems: 'center' }}
-            >
-              <input
-                type="text"
-                value={input}
-                onChange={(e) => setInput(e.target.value)}
-                placeholder="Ask Gemini about custom software, pricing, or ideas..."
-                disabled={isTyping}
-                style={{
-                  flex: 1,
-                  padding: '16px 20px',
-                  borderRadius: 16,
-                  background: COLORS.bg,
-                  border: `1.5px solid ${COLORS.line}`,
-                  color: COLORS.text,
-                  fontFamily: "'Inter', sans-serif",
-                  fontSize: 15,
-                  outline: 'none',
-                }}
-              />
-              <motion.button
-                whileHover={{ scale: 1.03 }}
-                whileTap={{ scale: 0.96 }}
-                type="submit"
-                disabled={isTyping || !input.trim()}
-                style={{
-                  padding: '16px 22px',
-                  borderRadius: 16,
-                  border: 'none',
-                  background: themeColor,
-                  color: '#15130F',
-                  fontWeight: 600,
-                  cursor: isTyping || !input.trim() ? 'not-allowed' : 'pointer',
-                  display: 'flex',
-                  alignItems: 'center',
-                  justifyContent: 'center',
-                  opacity: isTyping || !input.trim() ? 0.6 : 1,
-                }}
-              >
-                <Send size={18} />
-              </motion.button>
-            </form>
-          </div>
-
         </div>
 
-        {/* ── Bottom Row: Proposal card + Contact card side by side ── */}
-        <div style={{
-          display: 'grid',
-          gridTemplateColumns: 'repeat(auto-fit, minmax(280px, 1fr))',
-          gap: 20,
-          width: '100%',
-          boxSizing: 'border-box',
-        }}>
-
-          {/* ── Get a Proposal Card ── */}
-          <div style={{
-            background: COLORS.surface,
-            border: `1px solid ${COLORS.line}`,
-            borderRadius: 20,
-            padding: '28px 24px',
-            boxSizing: 'border-box',
-          }}>
-            <span style={{
-              fontFamily: "'IBM Plex Mono', monospace",
-              fontSize: 10,
-              fontWeight: 600,
-              letterSpacing: '0.1em',
-              textTransform: 'uppercase' as const,
-              color: themeColor,
-              background: `${themeColor}18`,
-              padding: '3px 10px',
-              borderRadius: 20,
-            }}>Free Consultation</span>
-            <div style={{
-              fontFamily: "'Fraunces', serif",
-              fontSize: 22,
-              fontWeight: 400,
-              color: COLORS.text,
-              margin: '12px 0 6px',
-              lineHeight: 1.25,
-            }}>Get a Custom Proposal</div>
-            <p style={{
-              fontFamily: "'Inter', sans-serif",
-              fontSize: 13,
-              lineHeight: 1.6,
-              color: COLORS.secondary,
-              margin: '0 0 20px',
-            }}>
-              Share your details and we'll send a tailored software proposal within 24 hours.
-            </p>
-
-            {leadSubmitted ? (
-              <div style={{
-                background: `${themeColor}15`,
-                border: `1px solid ${themeColor}40`,
-                borderRadius: 16,
-                padding: '22px 18px',
-                textAlign: 'center',
-              }}>
-                <div style={{
-                  width: 44, height: 44,
-                  borderRadius: '50%',
-                  background: `${themeColor}25`,
-                  display: 'flex', alignItems: 'center', justifyContent: 'center',
-                  margin: '0 auto 12px',
-                }}>
-                  <Check size={22} color={themeColor} />
-                </div>
-                <div style={{ fontFamily: "'Inter', sans-serif", fontSize: 15, fontWeight: 600, color: COLORS.text, marginBottom: 4 }}>
-                  Proposal Request Sent!
-                </div>
-                <div style={{ fontFamily: "'Inter', sans-serif", fontSize: 13, color: COLORS.secondary }}>
-                  We'll get back to you within 24 hours.
-                </div>
+        <AnimatePresence mode="wait">
+          {activeTab === 'ai' ? (
+            <motion.div key="ai-tab" initial={{ opacity: 0 }} animate={{ opacity: 1 }} exit={{ opacity: 0 }} transition={{ duration: 0.15 }}>
+              {/* Suggested Prompts */}
+              <div style={{ padding: '14px 20px 0', display: 'flex', gap: 8, flexWrap: 'wrap' }}>
+                {SUGGESTED_PROMPTS.map((p) => (
+                  <button key={p} className="prompt-chip" onClick={() => sendAiMessage(p)}>{p}</button>
+                ))}
               </div>
-            ) : (
-              <form onSubmit={handleLeadSubmit} style={{ display: 'flex', flexDirection: 'column', gap: 14 }}>
-                <div>
-                  <div style={{ fontFamily: "'Inter', sans-serif", fontSize: 11, fontWeight: 600, letterSpacing: '0.08em', textTransform: 'uppercase', color: COLORS.secondary, marginBottom: 6, opacity: 0.6 }}>Your Name</div>
+
+              {/* AI Messages */}
+              <div className="dk-scroll" style={chatAreaStyle}>
+                {aiMessages.map((msg) => <ChatBubble key={msg.id} msg={msg} accentColor={themeColor} />)}
+                {aiTyping && (
+                  <div style={{ display: 'flex', alignItems: 'flex-end', gap: 10, marginBottom: 16 }}>
+                    <div style={{ width: 30, height: 30, borderRadius: '50%', background: `${themeColor}20`, display: 'flex', alignItems: 'center', justifyContent: 'center', flexShrink: 0 }}>
+                      <Bot size={14} color={themeColor} />
+                    </div>
+                    <div style={{ padding: '12px 16px', borderRadius: '4px 18px 18px 18px', background: COLORS.surface, border: `1px solid ${COLORS.line}` }}>
+                      <TypingDots color={themeColor} />
+                    </div>
+                  </div>
+                )}
+                <div ref={aiEndRef} />
+              </div>
+
+              {/* AI Input */}
+              <form style={inputRowStyle} onSubmit={(e) => { e.preventDefault(); sendAiMessage(); }}>
+                <div style={{
+                  flex: 1, display: 'flex', alignItems: 'center',
+                  background: COLORS.bg,
+                  border: `1px solid ${COLORS.line}`,
+                  borderRadius: 14, padding: '10px 16px', gap: 8,
+                }}>
                   <input
-                    type="text"
-                    placeholder="e.g. Rahul Sharma"
-                    required
-                    value={leadForm.name}
-                    onChange={(e) => setLeadForm({ ...leadForm, name: e.target.value })}
-                    style={{
-                      width: '100%', boxSizing: 'border-box',
-                      padding: '13px 16px', borderRadius: 12,
-                      background: COLORS.bg, border: `1px solid ${COLORS.line}`,
-                      color: COLORS.text, fontSize: 14,
-                      fontFamily: "'Inter', sans-serif", outline: 'none',
-                    }}
+                    className="dk-input"
+                    value={aiInput}
+                    onChange={(e) => setAiInput(e.target.value)}
+                    placeholder="Ask about pricing, services, or your project..."
+                    disabled={aiTyping}
                   />
                 </div>
-                <div>
-                  <div style={{ fontFamily: "'Inter', sans-serif", fontSize: 11, fontWeight: 600, letterSpacing: '0.08em', textTransform: 'uppercase', color: COLORS.secondary, marginBottom: 6, opacity: 0.6 }}>Work Email</div>
-                  <input
-                    type="email"
-                    placeholder="you@company.com"
-                    required
-                    value={leadForm.email}
-                    onChange={(e) => setLeadForm({ ...leadForm, email: e.target.value })}
-                    style={{
-                      width: '100%', boxSizing: 'border-box',
-                      padding: '13px 16px', borderRadius: 12,
-                      background: COLORS.bg, border: `1px solid ${COLORS.line}`,
-                      color: COLORS.text, fontSize: 14,
-                      fontFamily: "'Inter', sans-serif", outline: 'none',
-                    }}
-                  />
-                </div>
-                <div>
-                  <div style={{ fontFamily: "'Inter', sans-serif", fontSize: 11, fontWeight: 600, letterSpacing: '0.08em', textTransform: 'uppercase', color: COLORS.secondary, marginBottom: 6, opacity: 0.6 }}>Business Type</div>
-                  <select
-                    value={leadForm.businessType}
-                    onChange={(e) => setLeadForm({ ...leadForm, businessType: e.target.value })}
-                    style={{
-                      width: '100%', boxSizing: 'border-box',
-                      padding: '13px 16px', borderRadius: 12,
-                      background: COLORS.bg, border: `1px solid ${COLORS.line}`,
-                      color: COLORS.text, fontSize: 14,
-                      fontFamily: "'Inter', sans-serif", outline: 'none',
-                    }}
-                  >
-                    <option value="Salon">💈 Salon / Beauty Parlour</option>
-                    <option value="Clinic">🏥 Medical Clinic</option>
-                    <option value="Gym">🏋️ Gym / Fitness Studio</option>
-                    <option value="Restaurant">🍽️ Restaurant / Cafe</option>
-                    <option value="Farmhouse">🌿 Farmhouse / Event Venue</option>
-                    <option value="Enterprise">⚡ Other Business</option>
-                  </select>
-                </div>
+                <button className="dk-send-btn" type="submit" disabled={aiTyping || !aiInput.trim()}>
+                  <Send size={16} />
+                </button>
                 <button
-                  type="submit"
-                  disabled={isSubmittingLead}
-                  style={{
-                    width: '100%', boxSizing: 'border-box',
-                    padding: '15px', borderRadius: 14, border: 'none',
-                    background: themeColor, color: '#15130F',
-                    fontFamily: "'Inter', sans-serif", fontSize: 14, fontWeight: 700,
-                    cursor: isSubmittingLead ? 'not-allowed' : 'pointer',
-                    opacity: isSubmittingLead ? 0.7 : 1,
-                    transition: 'opacity 0.2s', marginTop: 2,
-                  }}
+                  type="button"
+                  title="Reset chat"
+                  onClick={() => setAiMessages([AI_INIT_MESSAGE])}
+                  style={{ width: 40, height: 40, borderRadius: 12, border: `1px solid ${COLORS.line}`, background: 'transparent', cursor: 'pointer', display: 'flex', alignItems: 'center', justifyContent: 'center', flexShrink: 0 }}
                 >
-                  {isSubmittingLead ? 'Sending...' : '→  Request Free Proposal'}
+                  <RefreshCw size={14} color={COLORS.secondary} />
                 </button>
               </form>
-            )}
-          </div>
+            </motion.div>
+          ) : (
+            <motion.div key="lead-tab" initial={{ opacity: 0 }} animate={{ opacity: 1 }} exit={{ opacity: 0 }} transition={{ duration: 0.15 }}>
+              {/* Lead Bot Messages */}
+              <div className="dk-scroll" style={{ ...chatAreaStyle, paddingTop: 20 }}>
+                {leadMessages.map((msg) => <ChatBubble key={msg.id} msg={msg} accentColor={themeColor} />)}
+                {leadSubmitting && (
+                  <div style={{ display: 'flex', alignItems: 'center', gap: 8, color: COLORS.secondary, fontSize: 13, fontFamily: "'Inter', sans-serif", padding: '4px 0' }}>
+                    <TypingDots color={themeColor} />
+                    Saving your details...
+                  </div>
+                )}
+                {/* Business type quick buttons */}
+                {leadStep === 'business' && !leadDone && (
+                  <div style={{ display: 'flex', flexWrap: 'wrap', gap: 8, marginBottom: 12 }}>
+                    {BUSINESS_OPTIONS.map((opt) => (
+                      <button key={opt.value} className="biz-chip" onClick={() => sendLeadMessage(opt.value)}>
+                        {opt.label}
+                      </button>
+                    ))}
+                  </div>
+                )}
+                {leadDone && (
+                  <div style={{ display: 'flex', justifyContent: 'center', marginTop: 8 }}>
+                    <button
+                      onClick={resetLeadBot}
+                      style={{
+                        display: 'flex', alignItems: 'center', gap: 6,
+                        padding: '8px 16px', borderRadius: 20,
+                        border: `1px solid ${COLORS.line}`,
+                        background: 'transparent', cursor: 'pointer',
+                        fontFamily: "'Inter', sans-serif", fontSize: 12,
+                        color: COLORS.secondary,
+                      }}
+                    >
+                      <RefreshCw size={12} /> Start a new request
+                    </button>
+                  </div>
+                )}
+                <div ref={leadEndRef} />
+              </div>
 
-          {/* ── Contact Card ── */}
-          <div style={{
+              {/* Lead Bot Input */}
+              {!leadDone && leadStep !== 'done' && (
+                <form style={inputRowStyle} onSubmit={(e) => { e.preventDefault(); sendLeadMessage(); }}>
+                  <div style={{
+                    flex: 1, display: 'flex', alignItems: 'center',
+                    background: COLORS.bg,
+                    border: `1px solid ${COLORS.line}`,
+                    borderRadius: 14, padding: '10px 16px', gap: 8,
+                  }}>
+                    <input
+                      className="dk-input"
+                      value={leadInput}
+                      onChange={(e) => setLeadInput(e.target.value)}
+                      placeholder={
+                        leadStep === 'name' ? 'Your name...' :
+                        leadStep === 'email' ? 'your@email.com...' :
+                        leadStep === 'phone' ? '+91 ... (or type skip)' :
+                        leadStep === 'business' ? 'Or type your business type...' :
+                        'Describe your project...'
+                      }
+                    />
+                  </div>
+                  <button className="dk-send-btn" type="submit" disabled={!leadInput.trim()}>
+                    <ChevronRight size={18} />
+                  </button>
+                </form>
+              )}
+            </motion.div>
+          )}
+        </AnimatePresence>
+      </div>
+
+      {/* ── Bottom Contact Row ── */}
+      <div style={{
+        display: 'grid',
+        gridTemplateColumns: 'repeat(auto-fit, minmax(240px, 1fr))',
+        gap: 16,
+        width: '100%',
+        boxSizing: 'border-box',
+      }}>
+        {/* Strategy Call */}
+        <a
+          href="https://calendar.app.google/ycwYzWhqVRR6ZB3R9"
+          target="_blank"
+          rel="noopener noreferrer"
+          style={{
+            display: 'flex', alignItems: 'center', gap: 14,
+            padding: '18px 20px',
+            borderRadius: 18,
             background: COLORS.surface,
             border: `1px solid ${COLORS.line}`,
-            borderRadius: 20,
-            padding: '28px 24px',
+            textDecoration: 'none',
+            transition: 'border-color 0.2s',
             boxSizing: 'border-box',
-            display: 'flex',
-            flexDirection: 'column',
-            gap: 12,
+          }}
+        >
+          <div style={{
+            width: 44, height: 44, flexShrink: 0, borderRadius: 12,
+            background: `${themeColor}20`,
+            display: 'flex', alignItems: 'center', justifyContent: 'center',
           }}>
-            <div style={{
-              fontFamily: "'Fraunces', serif",
-              fontSize: 22,
-              fontWeight: 400,
-              color: COLORS.text,
-              marginBottom: 2,
-              lineHeight: 1.25,
-            }}>Prefer a quick call?</div>
-            <p style={{
-              fontFamily: "'Inter', sans-serif",
-              fontSize: 13,
-              color: COLORS.secondary,
-              lineHeight: 1.6,
-              margin: '0 0 6px',
-            }}>
-              Book a free 20-min strategy session — no pressure, just clarity.
-            </p>
-
-            <a
-              href="https://calendar.app.google/ycwYzWhqVRR6ZB3R9"
-              target="_blank"
-              rel="noopener noreferrer"
-              style={{
-                display: 'flex', alignItems: 'center', gap: 14,
-                padding: '16px 18px', borderRadius: 14,
-                background: `${themeColor}12`,
-                border: `1.5px solid ${themeColor}50`,
-                textDecoration: 'none',
-              }}
-            >
-              <div style={{
-                width: 38, height: 38, flexShrink: 0, borderRadius: 10,
-                background: `${themeColor}25`,
-                display: 'flex', alignItems: 'center', justifyContent: 'center',
-              }}>
-                <Calendar size={18} color={themeColor} />
-              </div>
-              <div>
-                <div style={{ fontFamily: "'IBM Plex Mono', monospace", fontSize: 10, color: themeColor, letterSpacing: '0.08em', textTransform: 'uppercase', marginBottom: 3 }}>Google Meet</div>
-                <div style={{ fontFamily: "'Inter', sans-serif", fontSize: 14, fontWeight: 600, color: COLORS.text }}>Schedule Strategy Call</div>
-              </div>
-            </a>
-
-            <a
-              href="https://wa.me/919313846266"
-              target="_blank"
-              rel="noopener noreferrer"
-              style={{
-                display: 'flex', alignItems: 'center', gap: 12,
-                padding: '14px 18px', borderRadius: 14,
-                border: `1px solid ${COLORS.line}`,
-                background: COLORS.bg, color: COLORS.text,
-                textDecoration: 'none',
-              }}
-            >
-              <MessageCircle size={17} color='#25D366' />
-              <div>
-                <div style={{ fontFamily: "'Inter', sans-serif", fontSize: 13, fontWeight: 600 }}>WhatsApp</div>
-                <div style={{ fontFamily: "'Inter', sans-serif", fontSize: 11, color: COLORS.secondary, marginTop: 1 }}>+91 93138 46266</div>
-              </div>
-            </a>
-
-            <a
-              href="mailto:duokarma54@gmail.com"
-              style={{
-                display: 'flex', alignItems: 'center', gap: 12,
-                padding: '14px 18px', borderRadius: 14,
-                border: `1px solid ${COLORS.line}`,
-                background: COLORS.bg, color: COLORS.text,
-                textDecoration: 'none',
-              }}
-            >
-              <Mail size={17} color={COLORS.secondary} />
-              <div>
-                <div style={{ fontFamily: "'Inter', sans-serif", fontSize: 13, fontWeight: 600 }}>Email Us</div>
-                <div style={{ fontFamily: "'Inter', sans-serif", fontSize: 11, color: COLORS.secondary, marginTop: 1 }}>duokarma54@gmail.com</div>
-              </div>
-            </a>
+            <Calendar size={20} color={themeColor} />
           </div>
+          <div>
+            <div style={{ fontFamily: "'IBM Plex Mono', monospace", fontSize: 10, color: themeColor, letterSpacing: '0.08em', textTransform: 'uppercase', marginBottom: 3 }}>Free · 20 min</div>
+            <div style={{ fontFamily: "'Inter', sans-serif", fontSize: 15, fontWeight: 600, color: COLORS.text }}>Book a Strategy Call</div>
+            <div style={{ fontFamily: "'Inter', sans-serif", fontSize: 12, color: COLORS.secondary, marginTop: 1 }}>Google Meet · No pressure</div>
+          </div>
+        </a>
 
-        </div>{/* close bottom row */}
+        {/* WhatsApp */}
+        <a
+          href="https://wa.me/919313846266"
+          target="_blank"
+          rel="noopener noreferrer"
+          style={{
+            display: 'flex', alignItems: 'center', gap: 14,
+            padding: '18px 20px',
+            borderRadius: 18,
+            background: COLORS.surface,
+            border: `1px solid ${COLORS.line}`,
+            textDecoration: 'none',
+            boxSizing: 'border-box',
+          }}
+        >
+          <div style={{
+            width: 44, height: 44, flexShrink: 0, borderRadius: 12,
+            background: '#25D36620',
+            display: 'flex', alignItems: 'center', justifyContent: 'center',
+          }}>
+            <MessageCircle size={20} color="#25D366" />
+          </div>
+          <div>
+            <div style={{ fontFamily: "'IBM Plex Mono', monospace", fontSize: 10, color: '#25D366', letterSpacing: '0.08em', textTransform: 'uppercase', marginBottom: 3 }}>Instant reply</div>
+            <div style={{ fontFamily: "'Inter', sans-serif", fontSize: 15, fontWeight: 600, color: COLORS.text }}>WhatsApp Us</div>
+            <div style={{ fontFamily: "'Inter', sans-serif", fontSize: 12, color: COLORS.secondary, marginTop: 1 }}>+91 93138 46266</div>
+          </div>
+        </a>
 
+        {/* Email */}
+        <a
+          href="mailto:duokarma54@gmail.com"
+          style={{
+            display: 'flex', alignItems: 'center', gap: 14,
+            padding: '18px 20px',
+            borderRadius: 18,
+            background: COLORS.surface,
+            border: `1px solid ${COLORS.line}`,
+            textDecoration: 'none',
+            boxSizing: 'border-box',
+          }}
+        >
+          <div style={{
+            width: 44, height: 44, flexShrink: 0, borderRadius: 12,
+            background: `${COLORS.secondary}20`,
+            display: 'flex', alignItems: 'center', justifyContent: 'center',
+          }}>
+            <Mail size={20} color={COLORS.secondary} />
+          </div>
+          <div>
+            <div style={{ fontFamily: "'IBM Plex Mono', monospace", fontSize: 10, color: COLORS.secondary, letterSpacing: '0.08em', textTransform: 'uppercase', marginBottom: 3 }}>Send us a note</div>
+            <div style={{ fontFamily: "'Inter', sans-serif", fontSize: 15, fontWeight: 600, color: COLORS.text }}>Email Us</div>
+            <div style={{ fontFamily: "'Inter', sans-serif", fontSize: 12, color: COLORS.secondary, marginTop: 1 }}>duokarma54@gmail.com</div>
+          </div>
+        </a>
       </div>
     </>
   );
