@@ -50,13 +50,6 @@ export function LoadingScreen({}: { done?: boolean }) {
           <div className="absolute inset-x-0 top-0 h-[35vh] bg-gradient-to-b from-black via-black/90 to-transparent pointer-events-none md:hidden z-20" />
           <div className="absolute inset-x-0 bottom-0 h-[35vh] bg-gradient-to-t from-black via-black/90 to-transparent pointer-events-none md:hidden z-20" />
 
-          {/* Skip Button */}
-          <button 
-            onClick={() => setIsExiting(true)} 
-            className="absolute bottom-10 right-10 text-white/50 hover:text-white z-50 font-sans text-sm transition-colors cursor-pointer"
-          >
-            Skip Intro
-          </button>
         </motion.div>
       )}
     </AnimatePresence>
