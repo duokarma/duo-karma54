@@ -42,25 +42,21 @@ export function LoadingScreen({}: { done?: boolean }) {
           initial={{ opacity: 1 }}
           exit={{ opacity: 0 }}
           transition={{ duration: 0.8, ease: easeOutExpo }}
-          className="fixed inset-0 z-[9999] bg-black flex items-center justify-center overflow-hidden h-[100dvh] w-[100vw]"
+          className="fixed inset-0 z-[9999] bg-[#050505] flex items-center justify-center overflow-hidden h-[100dvh] w-[100vw]"
         >
           {isMobile ? (
-            // Mobile: Fullscreen cover with premium cinematic fade
-            <div className="relative w-full h-full">
+            // Mobile: Cinematic luxury vignette. Avoids severe cropping of the logo while blending flawlessly into the dark background.
+            <div className="relative w-full h-full flex items-center justify-center">
               <video
                 src="/intro.mp4"
                 autoPlay
                 muted
                 playsInline
                 onEnded={() => setIsExiting(true)}
-                className="absolute inset-0 w-full h-full object-cover object-center"
-              />
-              
-              {/* Apple/Tesla Premium Effect Fade */}
-              <div 
-                className="absolute inset-0 pointer-events-none"
+                className="relative w-[125%] max-w-none h-auto"
                 style={{
-                  background: 'linear-gradient(to bottom, rgba(0,0,0,0.95) 0%, rgba(0,0,0,0) 20%, rgba(0,0,0,0) 80%, rgba(0,0,0,0.95) 100%)'
+                  WebkitMaskImage: 'radial-gradient(ellipse at center, black 35%, transparent 85%)',
+                  maskImage: 'radial-gradient(ellipse at center, black 35%, transparent 85%)'
                 }}
               />
             </div>
