@@ -42,11 +42,11 @@ export function LoadingScreen({}: { done?: boolean }) {
           initial={{ opacity: 1 }}
           exit={{ opacity: 0 }}
           transition={{ duration: 0.8, ease: easeOutExpo }}
-          className="fixed inset-0 z-[9999] bg-black flex items-center justify-center overflow-hidden"
+          className="fixed inset-0 z-[9999] bg-[#0f1523] flex items-center justify-center overflow-hidden"
         >
           {isMobile ? (
             // Mobile: use an ambient blur technique to perfectly match the video's background color
-            <div className="relative w-full h-full flex items-center justify-center bg-black overflow-hidden">
+            <div className="relative w-full h-full flex items-center justify-center bg-[#0f1523] overflow-hidden">
               {/* Ambient Background Video (Blurred & Scaled to fill) */}
               <video
                 src="/intro.mp4"
