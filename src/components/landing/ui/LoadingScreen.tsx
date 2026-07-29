@@ -45,20 +45,26 @@ export function LoadingScreen({}: { done?: boolean }) {
           className="fixed inset-0 z-[9999] bg-black flex items-center justify-center overflow-hidden"
         >
           {isMobile ? (
-            // Mobile: center the horizontal video in the screen, blend top/bottom into black naturally
-            <div className="relative w-full h-full flex items-center justify-center">
+            // Mobile: use an ambient blur technique to perfectly match the video's background color
+            <div className="relative w-full h-full flex items-center justify-center bg-black overflow-hidden">
+              {/* Ambient Background Video (Blurred & Scaled to fill) */}
+              <video
+                src="/intro.mp4"
+                autoPlay
+                muted
+                playsInline
+                className="absolute inset-0 w-full h-full object-cover scale-[1.2] blur-[50px] opacity-80"
+              />
+              
+              {/* Foreground Crisp Video */}
               <video
                 src="/intro.mp4"
                 autoPlay
                 muted
                 playsInline
                 onEnded={() => setIsExiting(true)}
-                style={{ width: '100%', height: 'auto', display: 'block' }}
+                className="relative z-10 w-full h-auto shadow-2xl"
               />
-              {/* Soft blend — top */}
-              <div className="absolute inset-x-0 top-0 pointer-events-none" style={{ height: '30%', background: 'linear-gradient(to bottom, #000000 0%, #000000 30%, transparent 100%)' }} />
-              {/* Soft blend — bottom */}
-              <div className="absolute inset-x-0 bottom-0 pointer-events-none" style={{ height: '30%', background: 'linear-gradient(to top, #000000 0%, #000000 30%, transparent 100%)' }} />
             </div>
           ) : (
             // Desktop/Laptop: full cover
