@@ -6,6 +6,14 @@ const easeOutExpo = [0.19, 1, 0.22, 1] as [number, number, number, number];
 export function LoadingScreen({}: { done?: boolean }) {
   const [isExiting, setIsExiting] = useState(false);
   const [isUnmounted, setIsUnmounted] = useState(false);
+  const [isMobile, setIsMobile] = useState(false);
+
+  useEffect(() => {
+    const check = () => setIsMobile(window.innerWidth < 768);
+    check();
+    window.addEventListener('resize', check);
+    return () => window.removeEventListener('resize', check);
+  }, []);
 
   useEffect(() => {
     if (isExiting) {
@@ -34,22 +42,35 @@ export function LoadingScreen({}: { done?: boolean }) {
           initial={{ opacity: 1 }}
           exit={{ opacity: 0 }}
           transition={{ duration: 0.8, ease: easeOutExpo }}
-          className="fixed inset-0 z-[9999] bg-black flex flex-col items-center justify-center overflow-hidden"
+          className="fixed inset-0 z-[9999] bg-black flex items-center justify-center overflow-hidden"
         >
-          {/* Main Video */}
-          <video 
-            src="/intro.mp4"
-            autoPlay
-            muted
-            playsInline
-            onEnded={() => setIsExiting(true)}
-            className="w-full h-full object-contain md:object-cover z-10"
-          />
-          
-          {/* Top and Bottom blending gradients for mobile (horizontal video masking) */}
-          <div className="absolute inset-x-0 top-0 h-[35vh] bg-gradient-to-b from-black via-black/90 to-transparent pointer-events-none md:hidden z-20" />
-          <div className="absolute inset-x-0 bottom-0 h-[35vh] bg-gradient-to-t from-black via-black/90 to-transparent pointer-events-none md:hidden z-20" />
-
+          {isMobile ? (
+            // Mobile: center the horizontal video in the screen, blend top/bottom into black naturally
+            <div className="relative w-full h-full flex items-center justify-center">
+              <video
+                src="/intro.mp4"
+                autoPlay
+                muted
+                playsInline
+                onEnded={() => setIsExiting(true)}
+                style={{ width: '100%', height: 'auto', display: 'block' }}
+              />
+              {/* Soft blend — top */}
+              <div className="absolute inset-x-0 top-0 pointer-events-none" style={{ height: '30%', background: 'linear-gradient(to bottom, #000000 0%, #000000 30%, transparent 100%)' }} />
+              {/* Soft blend — bottom */}
+              <div className="absolute inset-x-0 bottom-0 pointer-events-none" style={{ height: '30%', background: 'linear-gradient(to top, #000000 0%, #000000 30%, transparent 100%)' }} />
+            </div>
+          ) : (
+            // Desktop/Laptop: full cover
+            <video
+              src="/intro.mp4"
+              autoPlay
+              muted
+              playsInline
+              onEnded={() => setIsExiting(true)}
+              className="w-full h-full object-cover"
+            />
+          )}
         </motion.div>
       )}
     </AnimatePresence>

@@ -1,4 +1,4 @@
-import { useState } from 'react';
+import { useState, useEffect } from 'react';
 import { m as motion, AnimatePresence } from 'framer-motion';
 import { COLORS } from './ui/theme';
 import { Eyebrow } from './ui/Eyebrow';
@@ -18,6 +18,15 @@ const MODULES = [
 
 export function WhatWeBuild() {
   const [active, setActive] = useState<number | null>(0);
+  const [isMobile, setIsMobile] = useState(false);
+
+  useEffect(() => {
+    const check = () => setIsMobile(window.innerWidth < 768);
+    check();
+    window.addEventListener('resize', check);
+    return () => window.removeEventListener('resize', check);
+  }, []);
+
   return (
     <section style={{ padding: "140px 5%", background: COLORS.surface }} id="work">
       <Reveal>
@@ -40,23 +49,23 @@ export function WhatWeBuild() {
 
       <div className="max-w-[1200px] mx-auto w-full relative">
         {MODULES.map((m, i) => (
-          <div 
-            key={m.name} 
-            onMouseEnter={() => setActive(i)}
-            onClick={() => setActive(active === i ? null : i)}
-            style={{ 
-              borderBottom: `1px solid ${COLORS.line}`, 
+          <div
+            key={m.name}
+            onMouseEnter={() => !isMobile && setActive(i)}
+            onClick={() => isMobile && setActive(active === i ? null : i)}
+            style={{
+              borderBottom: `1px solid ${COLORS.line}`,
               position: "relative",
-              cursor: "pointer" 
+              cursor: "pointer"
             }}
           >
             <div
-              className="module-header"
               style={{
                 padding: "24px 0",
                 display: "flex",
                 alignItems: "center",
                 justifyContent: "space-between",
+                width: isMobile ? "100%" : "45%",
               }}
             >
               <span
@@ -79,74 +88,64 @@ export function WhatWeBuild() {
                 {String(i + 1).padStart(2, "0")}
               </span>
             </div>
-            
-            {/* Desktop Description Panel (Absolute, vertically centered to row) */}
-            <AnimatePresence>
-              {active === i && (
-                <motion.div
-                  initial={{ opacity: 0, y: "-50%", x: 14 }}
-                  animate={{ opacity: 1, y: "-50%", x: 0 }}
-                  exit={{ opacity: 0, y: "-50%", x: 14 }}
-                  transition={{ duration: 0.3, ease: [0.16, 1, 0.3, 1] }}
-                  className="desktop-description-panel"
-                  style={{
-                    position: "absolute",
-                    top: "50%",
-                    right: 0,
-                    width: "48%",
-                    background: COLORS.surface2,
-                    border: `1px solid ${COLORS.line}`,
-                    borderRadius: 16,
-                    padding: 32,
-                    zIndex: 10,
-                    boxShadow: "0 20px 40px rgba(0,0,0,0.4), inset 0 1px 0 rgba(255,255,255,0.05)",
-                    pointerEvents: "none", // Prevent hover flickering
-                  }}
-                >
-                  <div style={{ fontFamily: "'Fraunces', serif", fontSize: 24, color: COLORS.accent, marginBottom: 14 }}>
-                    {m.name}
-                  </div>
-                  <div style={{ fontFamily: "'Inter', sans-serif", fontSize: 15, color: COLORS.secondary, lineHeight: 1.7 }}>
-                    {m.detail}
-                  </div>
-                </motion.div>
-              )}
-            </AnimatePresence>
 
-            {/* Mobile Accordion Description */}
-            <AnimatePresence>
-              {active === i && (
-                <motion.div
-                  initial={{ height: 0, opacity: 0 }}
-                  animate={{ height: "auto", opacity: 1 }}
-                  exit={{ height: 0, opacity: 0 }}
-                  transition={{ duration: 0.3 }}
-                  style={{ overflow: "hidden" }}
-                  className="mobile-description-panel"
-                >
-                  <div style={{ paddingBottom: 24 }}>
+            {/* Desktop Description Panel — only rendered on desktop */}
+            {!isMobile && (
+              <AnimatePresence>
+                {active === i && (
+                  <motion.div
+                    initial={{ opacity: 0, y: "-50%", x: 14 }}
+                    animate={{ opacity: 1, y: "-50%", x: 0 }}
+                    exit={{ opacity: 0, y: "-50%", x: 14 }}
+                    transition={{ duration: 0.3, ease: [0.16, 1, 0.3, 1] }}
+                    style={{
+                      position: "absolute",
+                      top: "50%",
+                      right: 0,
+                      width: "48%",
+                      background: COLORS.surface2,
+                      border: `1px solid ${COLORS.line}`,
+                      borderRadius: 16,
+                      padding: 32,
+                      zIndex: 10,
+                      boxShadow: "0 20px 40px rgba(0,0,0,0.4), inset 0 1px 0 rgba(255,255,255,0.05)",
+                      pointerEvents: "none",
+                    }}
+                  >
+                    <div style={{ fontFamily: "'Fraunces', serif", fontSize: 24, color: COLORS.accent, marginBottom: 14 }}>
+                      {m.name}
+                    </div>
                     <div style={{ fontFamily: "'Inter', sans-serif", fontSize: 15, color: COLORS.secondary, lineHeight: 1.7 }}>
                       {m.detail}
                     </div>
-                  </div>
-                </motion.div>
-              )}
-            </AnimatePresence>
+                  </motion.div>
+                )}
+              </AnimatePresence>
+            )}
+
+            {/* Mobile Accordion — only rendered on mobile */}
+            {isMobile && (
+              <AnimatePresence initial={false}>
+                {active === i && (
+                  <motion.div
+                    initial={{ height: 0, opacity: 0 }}
+                    animate={{ height: "auto", opacity: 1 }}
+                    exit={{ height: 0, opacity: 0 }}
+                    transition={{ duration: 0.25, ease: "easeInOut" }}
+                    style={{ overflow: "hidden" }}
+                  >
+                    <div style={{ paddingBottom: 24 }}>
+                      <div style={{ fontFamily: "'Inter', sans-serif", fontSize: 15, color: COLORS.secondary, lineHeight: 1.7 }}>
+                        {m.detail}
+                      </div>
+                    </div>
+                  </motion.div>
+                )}
+              </AnimatePresence>
+            )}
           </div>
         ))}
       </div>
-      
-      <style>{`
-        .module-header { width: 45%; }
-        .desktop-description-panel { display: block; }
-        .mobile-description-panel { display: none; }
-        
-        @media (max-width: 768px) {
-          .module-header { width: 100%; }
-          .desktop-description-panel { display: none !important; }
-          .mobile-description-panel { display: block; }
-        }
-      `}</style>
     </section>
   );
 }
