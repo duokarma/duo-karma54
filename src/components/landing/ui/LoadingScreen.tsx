@@ -42,24 +42,26 @@ export function LoadingScreen({}: { done?: boolean }) {
           initial={{ opacity: 1 }}
           exit={{ opacity: 0 }}
           transition={{ duration: 0.8, ease: easeOutExpo }}
-          className="fixed inset-0 z-[9999] bg-[#000000] flex items-center justify-center overflow-hidden"
+          className="fixed inset-0 z-[9999] bg-black flex items-center justify-center overflow-hidden h-[100dvh] w-[100vw]"
         >
           {isMobile ? (
-            // Mobile: perfectly fade the video's top and bottom edges into the black background using a CSS mask
-            <div 
-              className="relative w-full aspect-video"
-              style={{
-                WebkitMaskImage: 'linear-gradient(to bottom, transparent 0%, black 15%, black 85%, transparent 100%)',
-                maskImage: 'linear-gradient(to bottom, transparent 0%, black 15%, black 85%, transparent 100%)'
-              }}
-            >
+            // Mobile: Fullscreen cover with premium cinematic fade
+            <div className="relative w-full h-full">
               <video
                 src="/intro.mp4"
                 autoPlay
                 muted
                 playsInline
                 onEnded={() => setIsExiting(true)}
-                className="w-full h-full object-cover"
+                className="absolute inset-0 w-full h-full object-cover object-center"
+              />
+              
+              {/* Apple/Tesla Premium Effect Fade */}
+              <div 
+                className="absolute inset-0 pointer-events-none"
+                style={{
+                  background: 'linear-gradient(to bottom, rgba(0,0,0,0.95) 0%, rgba(0,0,0,0) 20%, rgba(0,0,0,0) 80%, rgba(0,0,0,0.95) 100%)'
+                }}
               />
             </div>
           ) : (
