@@ -42,28 +42,24 @@ export function LoadingScreen({}: { done?: boolean }) {
           initial={{ opacity: 1 }}
           exit={{ opacity: 0 }}
           transition={{ duration: 0.8, ease: easeOutExpo }}
-          className="fixed inset-0 z-[9999] bg-[#0f1523] flex items-center justify-center overflow-hidden"
+          className="fixed inset-0 z-[9999] bg-[#000000] flex items-center justify-center overflow-hidden"
         >
           {isMobile ? (
-            // Mobile: use an ambient blur technique to perfectly match the video's background color
-            <div className="relative w-full h-full flex items-center justify-center bg-[#0f1523] overflow-hidden">
-              {/* Ambient Background Video (Blurred & Scaled to fill) */}
-              <video
-                src="/intro.mp4"
-                autoPlay
-                muted
-                playsInline
-                className="absolute inset-0 w-full h-full object-cover scale-[1.2] blur-[50px] opacity-80"
-              />
-              
-              {/* Foreground Crisp Video */}
+            // Mobile: perfectly fade the video's top and bottom edges into the black background using a CSS mask
+            <div 
+              className="relative w-full aspect-video"
+              style={{
+                WebkitMaskImage: 'linear-gradient(to bottom, transparent 0%, black 15%, black 85%, transparent 100%)',
+                maskImage: 'linear-gradient(to bottom, transparent 0%, black 15%, black 85%, transparent 100%)'
+              }}
+            >
               <video
                 src="/intro.mp4"
                 autoPlay
                 muted
                 playsInline
                 onEnded={() => setIsExiting(true)}
-                className="relative z-10 w-full h-auto shadow-2xl"
+                className="w-full h-full object-cover"
               />
             </div>
           ) : (
