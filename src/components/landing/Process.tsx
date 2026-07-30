@@ -195,7 +195,7 @@ export function Process() {
         onMouseMove={handleMouseMove}
         style={{
           display: 'flex',
-          gap: 24,
+          gap: 32,
           overflowX: 'auto',
           padding: '0 5%',
           paddingBottom: 40,
@@ -282,16 +282,25 @@ export function Process() {
 }
 
 function ProcessCard({ step }: { step: typeof PROCESS[0] }) {
+  const [hovered, setHovered] = useState(false);
   return (
-    <div
+    <motion.div
+      onHoverStart={() => setHovered(true)}
+      onHoverEnd={() => setHovered(false)}
+      whileHover={{ y: -4 }}
+      transition={{ type: 'spring', stiffness: 250, damping: 30 }}
       style={{
-        width: 280,
+        width: 300,
         flexShrink: 0,
-        background: COLORS.surface,
-        border: `1px solid ${COLORS.line}`,
-        borderRadius: 20,
-        padding: '28px 24px',
+        background: hovered ? 'rgba(28, 26, 24, 0.9)' : 'linear-gradient(135deg, rgba(22, 20, 18, 0.7) 0%, rgba(12, 11, 10, 0.9) 100%)',
+        border: `1px solid ${hovered ? 'rgba(255,255,255,0.08)' : 'rgba(255,255,255,0.03)'}`,
+        borderRadius: 24,
+        padding: '36px 32px',
         scrollSnapAlign: 'start',
+        transition: 'background 0.4s ease, border-color 0.4s ease',
+        boxShadow: hovered ? '0 20px 40px rgba(0,0,0,0.4)' : 'none',
+        position: 'relative',
+        overflow: 'hidden',
       }}
     >
       <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'flex-start', marginBottom: 20 }}>
@@ -309,6 +318,6 @@ function ProcessCard({ step }: { step: typeof PROCESS[0] }) {
       <p style={{ fontFamily: "'Inter', sans-serif", fontSize: 13.5, color: COLORS.secondary, lineHeight: 1.65 }}>
         {step.description}
       </p>
-    </div>
+    </motion.div>
   );
 }

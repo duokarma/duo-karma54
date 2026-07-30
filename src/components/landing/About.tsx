@@ -23,7 +23,7 @@ const PRINCIPLES = [
 
 export function About() {
   return (
-    <section style={{ padding: "140px 5%", background: COLORS.bg }}>
+    <section style={{ padding: "120px 5%", background: COLORS.bg }}>
       <Reveal>
         <Eyebrow>About DuoKarma</Eyebrow>
         <h2

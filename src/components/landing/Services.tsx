@@ -26,7 +26,7 @@ const SERVICES = [
 
 export function Services() {
   return (
-    <section style={{ padding: '160px 5%', background: COLORS.bg }} id="services">
+    <section style={{ padding: '180px 5%', background: COLORS.bg }} id="services">
       <Reveal>
         <div style={{ display: 'flex', flexDirection: 'column', alignItems: 'center', textAlign: 'center' }}>
           <Eyebrow>Capabilities</Eyebrow>
@@ -102,43 +102,29 @@ function ServiceCard({ service }: { service: typeof SERVICES[0] }) {
 
   // Responsive layout classes
   const flexStyle = isWide ? 'flex-col lg:flex-row items-start lg:items-center gap-6 lg:gap-10' : 'flex-col justify-start';
-  const paddingStyle = isLarge ? '40px' : isWide ? '32px 40px' : '28px';
+  const paddingStyle = isLarge ? '48px' : isWide ? '36px 44px' : '32px';
 
   return (
     <motion.div
-      onMouseMove={handleMouseMove}
-      className={`group relative flex h-full w-full overflow-hidden rounded-[32px] transition-all duration-700 ${flexStyle}`}
+      className={`group relative flex h-full w-full overflow-hidden rounded-3xl transition-all duration-700 ${flexStyle}`}
       style={{
         background: 'linear-gradient(135deg, rgba(22, 20, 18, 0.7) 0%, rgba(12, 11, 10, 0.9) 100%)',
-        border: '1px solid rgba(255,255,255,0.04)',
+        border: '1px solid rgba(255,255,255,0.03)',
         padding: paddingStyle,
-        boxShadow: 'inset 0 1px 0 rgba(255,255,255,0.02), 0 20px 40px rgba(0,0,0,0.3)',
+        boxShadow: 'inset 0 1px 0 rgba(255,255,255,0.02), 0 10px 30px rgba(0,0,0,0.2)',
       }}
-      whileHover={{ y: -6, scale: 0.985 }}
-      transition={{ type: "spring", stiffness: 400, damping: 30 }}
+      whileHover={{ 
+        y: -4, 
+        backgroundColor: 'rgba(28, 26, 24, 0.9)', 
+        borderColor: 'rgba(255,255,255,0.08)',
+        boxShadow: '0 20px 40px rgba(0,0,0,0.4)'
+      }}
+      transition={{ type: "spring", stiffness: 300, damping: 35 }}
     >
-      {/* Permanent subtle ambient glow so it looks good on mobile without hover */}
-      <div 
-        className="absolute inset-0 z-0 opacity-[0.03] pointer-events-none transition-opacity duration-500 group-hover:opacity-0"
-        style={{
-          background: 'radial-gradient(circle at 10% 10%, rgba(201, 168, 118, 0.8), transparent 60%)',
-        }}
-      />
-
-      {/* Background ambient glow for Large card */}
-      {isLarge && (
-        <motion.div
-          className="absolute -right-20 -top-20 z-0 h-[400px] w-[400px] rounded-full blur-[100px] opacity-20 pointer-events-none"
-          style={{ background: '#c9a876' }}
-          animate={{ scale: [1, 1.2, 1], opacity: [0.15, 0.25, 0.15] }}
-          transition={{ duration: 8, repeat: Infinity, ease: 'easeInOut' }}
-        />
-      )}
-      
       {/* Subtle grid pattern for Tall card */}
       {isTall && (
         <div 
-          className="absolute inset-0 z-0 opacity-[0.04] pointer-events-none mix-blend-overlay" 
+          className="absolute inset-0 z-0 opacity-[0.03] pointer-events-none mix-blend-overlay" 
           style={{ 
             backgroundImage: 'linear-gradient(#fff 1px, transparent 1px), linear-gradient(90deg, #fff 1px, transparent 1px)', 
             backgroundSize: '24px 24px' 
@@ -146,31 +132,6 @@ function ServiceCard({ service }: { service: typeof SERVICES[0] }) {
         />
       )}
 
-      {/* Mouse-tracking background glow (Desktop only, via hover opacity) */}
-      <motion.div
-        className="pointer-events-none absolute -inset-px rounded-[32px] opacity-0 transition-opacity duration-500 group-hover:opacity-100"
-        style={{
-          background: useMotionTemplate`radial-gradient(600px circle at ${mouseX}px ${mouseY}px, rgba(201, 168, 118, 0.08), transparent 80%)`,
-          zIndex: 1,
-        }}
-      />
-      
-      {/* Mouse-tracking border glow (Desktop only) */}
-      <motion.div
-        className="pointer-events-none absolute inset-0 rounded-[32px] opacity-0 transition-opacity duration-500 group-hover:opacity-100"
-        style={{
-          boxShadow: useMotionTemplate`inset 0 0 0 1.5px rgba(201, 168, 118, 0.6)`,
-          maskImage: useMotionTemplate`radial-gradient(350px circle at ${mouseX}px ${mouseY}px, black, transparent 80%)`,
-          WebkitMaskImage: useMotionTemplate`radial-gradient(350px circle at ${mouseX}px ${mouseY}px, black, transparent 80%)`,
-          zIndex: 2,
-        }}
-      />
-      
-      {/* Permanent glowing ring around the card (very subtle) to look premium on mobile */}
-      <div 
-        className="pointer-events-none absolute inset-0 rounded-[32px] opacity-20 z-0 transition-opacity duration-500 group-hover:opacity-0"
-        style={{ boxShadow: 'inset 0 0 0 1px rgba(201, 168, 118, 0.3)' }}
-      />
       
       <div 
         className={`relative z-10 flex items-center justify-center shrink-0 rounded-2xl transition-all duration-500 group-hover:scale-110 group-hover:shadow-[0_0_30px_rgba(201,168,118,0.3)] ${isLarge ? 'mb-8 lg:mb-10' : isTall ? 'mb-auto' : isWide ? 'mb-6 lg:mb-0' : 'mb-6 lg:mb-8'}`}

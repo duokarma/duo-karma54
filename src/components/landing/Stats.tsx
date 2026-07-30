@@ -29,7 +29,7 @@ function RollingDigit({ digit, delay = 0 }: { digit: string; delay?: number }) {
       <motion.span
         initial={{ y: '0%' }}
         animate={{ y: `-${num * 10}%` }}
-        transition={{ delay, duration: 1.2, ease: [0.16, 1, 0.3, 1] }}
+        transition={{ delay, duration: 1.5, ease: [0.22, 1, 0.36, 1] }}
         style={{ display: 'flex', flexDirection: 'column' }}
       >
         {digits.map((d) => (
@@ -114,7 +114,7 @@ export function Stats() {
   return (
     <section
       style={{
-        padding: '120px 5%',
+        padding: '200px 5%',
         background: COLORS.bg,
         borderTop: `1px solid ${COLORS.line}`,
         borderBottom: `1px solid ${COLORS.line}`,
@@ -130,7 +130,14 @@ export function Stats() {
         {STATS.map((s, i) => (
           <Reveal key={s.label} delay={i * 0.08}>
             <TiltCard>
-              <div className="p-6 rounded-2xl transition-all duration-300 hover:bg-white/5">
+              <div 
+                className="p-8 transition-all duration-400 hover:bg-[rgba(28,26,24,0.9)]"
+                style={{
+                  background: 'linear-gradient(135deg, rgba(22, 20, 18, 0.7) 0%, rgba(12, 11, 10, 0.9) 100%)',
+                  border: '1px solid rgba(255,255,255,0.03)',
+                  borderRadius: 24,
+                }}
+              >
                 <RollingCounter to={s.to} suffix={s.suffix} delay={i * 0.1} />
                 <div
                   style={{

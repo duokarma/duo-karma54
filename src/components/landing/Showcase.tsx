@@ -97,7 +97,7 @@ export function Showcase() {
   return (
     <section
       id="work"
-      style={{ padding: '140px 5%', background: COLORS.bg }}
+      style={{ padding: '120px 5%', background: COLORS.bg }}
     >
       <Reveal>
         <Eyebrow>Selected work</Eyebrow>
@@ -184,36 +184,24 @@ function BentoCard({
       onHoverStart={() => setHovered(true)}
       onHoverEnd={() => setHovered(false)}
       onClick={onOpen}
-      whileHover={{ scale: 1.015, y: -3 }}
+      whileHover={{ y: -4 }}
       whileTap={{ scale: 0.99 }}
-      transition={{ type: 'spring', stiffness: 300, damping: 26 }}
+      transition={{ type: 'spring', stiffness: 250, damping: 30 }}
       style={{
         ...style,
-        background: hovered ? project.accentBg : COLORS.surface,
-        border: `1px solid ${hovered ? project.color + '50' : COLORS.line}`,
-        borderRadius: 20,
-        padding: '32px 28px',
+        background: hovered ? 'rgba(28, 26, 24, 0.9)' : 'linear-gradient(135deg, rgba(22, 20, 18, 0.7) 0%, rgba(12, 11, 10, 0.9) 100%)',
+        border: `1px solid ${hovered ? 'rgba(255,255,255,0.08)' : 'rgba(255,255,255,0.03)'}`,
+        borderRadius: 24,
+        padding: '36px 32px',
         cursor: 'pointer',
         position: 'relative',
         overflow: 'hidden',
         minHeight: 200,
-        transition: 'background 0.35s ease, border-color 0.35s ease',
-        boxShadow: hovered ? `0 12px 48px rgba(0,0,0,0.25), 0 0 0 1px ${project.color}30` : 'none',
+        transition: 'background 0.4s ease, border-color 0.4s ease',
+        boxShadow: hovered ? '0 20px 40px rgba(0,0,0,0.4)' : 'none',
       }}
       data-cursor="View"
     >
-      {/* Gradient wash on hover */}
-      <motion.div
-        animate={{ opacity: hovered ? 1 : 0 }}
-        transition={{ duration: 0.4 }}
-        style={{
-          position: 'absolute',
-          inset: 0,
-          background: project.gradient,
-          borderRadius: 20,
-          pointerEvents: 'none',
-        }}
-      />
 
       <div style={{ position: 'relative', zIndex: 1 }}>
         {/* Header */}

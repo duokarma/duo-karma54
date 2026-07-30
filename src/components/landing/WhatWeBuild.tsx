@@ -28,7 +28,7 @@ export function WhatWeBuild() {
   }, []);
 
   return (
-    <section style={{ padding: "140px 5%", background: COLORS.surface }} id="work">
+    <section style={{ padding: "200px 5%", background: COLORS.surface }} id="work">
       <Reveal>
         <div className="max-w-[1200px] mx-auto">
           <Eyebrow>What we build</Eyebrow>

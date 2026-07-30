@@ -30,7 +30,6 @@ export function CinematicOutro() {
     >
       {/* Background Image Layer */}
       <motion.div
-        className="dk-video-mask"
         style={{
           position: 'absolute',
           inset: -150, // extend bounds significantly to allow for both scroll parallax and animated drift
@@ -40,7 +39,7 @@ export function CinematicOutro() {
         <img
           src="/start.png"
           alt=""
-          className="dk-outro-bg"
+          style={{ width: '100%', height: '100%', objectFit: 'cover', opacity: 0.3 }}
         />
       </motion.div>
 
@@ -49,17 +48,7 @@ export function CinematicOutro() {
         style={{
           position: 'absolute',
           inset: 0,
-          background: `linear-gradient(180deg, ${COLORS.bg} 0%, rgba(10,9,8,0.3) 15%, rgba(10,9,8,0.35) 75%, ${COLORS.bg} 100%)`,
-          pointerEvents: 'none',
-        }}
-      />
-      
-      {/* Additional vignette to frame the content */}
-      <div
-        style={{
-          position: 'absolute',
-          inset: 0,
-          background: 'radial-gradient(ellipse at 50% 50%, transparent 0%, rgba(0,0,0,0.45) 100%)',
+          background: `linear-gradient(180deg, ${COLORS.bg} 0%, rgba(10,9,8,0.2) 20%, rgba(10,9,8,0.2) 80%, ${COLORS.bg} 100%)`,
           pointerEvents: 'none',
         }}
       />
@@ -72,14 +61,14 @@ export function CinematicOutro() {
           viewport={{ once: true, margin: '-150px' }}
           transition={{ duration: 1.2, ease: [0.22, 1, 0.36, 1], delay: 0.15 }}
           style={{
-            background: 'rgba(14, 13, 12, 0.55)',
-            backdropFilter: 'blur(20px)',
-            WebkitBackdropFilter: 'blur(20px)',
-            border: '1px solid rgba(201,168,118,0.2)',
+            background: 'rgba(14, 13, 12, 0.65)',
+            backdropFilter: 'blur(24px)',
+            WebkitBackdropFilter: 'blur(24px)',
+            border: '1px solid rgba(255,255,255,0.06)',
             borderRadius: 24,
-            padding: '56px 48px',
+            padding: '64px 48px',
             maxWidth: 600,
-            boxShadow: '0 30px 60px rgba(0,0,0,0.6), inset 0 1px 0 rgba(255,255,255,0.06)',
+            boxShadow: '0 30px 60px rgba(0,0,0,0.4)',
             width: '100%',
             textAlign: 'center',
           }}
@@ -114,57 +103,35 @@ export function CinematicOutro() {
           </p>
 
           <motion.button
-            whileHover={{ scale: 1.02, y: -2 }}
+            whileHover={{ scale: 1.02 }}
             whileTap={{ scale: 0.98 }}
             onClick={() => document.getElementById('contact')?.scrollIntoView({ behavior: 'smooth' })}
             style={{
-              background: 'linear-gradient(180deg, rgba(201,168,118,0.15) 0%, rgba(201,168,118,0.05) 100%)',
-              border: '1px solid rgba(201,168,118,0.4)',
-              boxShadow: 'inset 0 1px 0 rgba(255,255,255,0.1), 0 8px 16px rgba(0,0,0,0.2)',
-              color: '#fff',
-              padding: '15px 32px',
+              background: '#fff',
+              color: '#010101',
+              border: 'none',
+              padding: '16px 36px',
               borderRadius: 100,
               fontFamily: "'Inter', sans-serif",
-              fontSize: 14,
-              fontWeight: 500,
-              letterSpacing: '0.02em',
+              fontSize: 15,
+              fontWeight: 600,
               cursor: 'pointer',
               display: 'inline-flex',
               alignItems: 'center',
               justifyContent: 'center',
               gap: 12,
-              transition: 'border-color 0.3s ease',
+              transition: 'transform 0.4s ease',
             }}
-            onMouseOver={(e) => e.currentTarget.style.borderColor = 'rgba(201,168,118,0.7)'}
-            onMouseOut={(e) => e.currentTarget.style.borderColor = 'rgba(201,168,118,0.4)'}
           >
-            Start Your Project <span style={{ fontSize: 18, color: '#c9a876', transform: 'translateY(1px)' }}>→</span>
+            Start Your Project <span style={{ fontSize: 18, transform: 'translateY(1px)' }}>→</span>
           </motion.button>
         </motion.div>
       </div>
 
       <style>{`
-        .dk-video-mask {
-          -webkit-mask-image: radial-gradient(ellipse 60% 60% at 50% 50%, black 40%, transparent 100%);
-          mask-image: radial-gradient(ellipse 60% 60% at 50% 50%, black 40%, transparent 100%);
-        }
-        .dk-outro-bg {
-          width: 100%;
-          height: 100%;
-          object-fit: cover;
-          object-position: center;
-          opacity: 0.7;
-        }
         @media (max-width: 640px) {
-          .dk-outro-bg {
-            object-fit: contain;
-          }
           .dk-cta-card {
             padding: 40px 24px !important;
-          }
-          .dk-video-mask {
-            -webkit-mask-image: radial-gradient(ellipse 80% 40% at 50% 50%, black 20%, transparent 100%);
-            mask-image: radial-gradient(ellipse 80% 40% at 50% 50%, black 20%, transparent 100%);
           }
         }
       `}</style>

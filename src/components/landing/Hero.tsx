@@ -55,20 +55,20 @@ export const Hero = React.memo(function Hero() {
         </h1>
 
         {/* Layer 4: Bottom-left paragraph */}
-        <div className="hidden md:block absolute bottom-14 left-14 max-w-[280px] z-50 hero-anim hero-fade" style={{ animationDelay: '0.7s' }}>
-          <p className="text-sm text-white/70 leading-relaxed font-light">
+        <div className="hidden md:block absolute bottom-14 left-14 max-w-[320px] z-50 hero-anim hero-fade" style={{ animationDelay: '0.7s' }}>
+          <p className="text-[15px] text-white/70 leading-loose font-light">
             We partner with visionary brands to build robust, scalable digital solutions that transform complex challenges into your competitive advantage.
           </p>
         </div>
 
         {/* Layer 5: Bottom-right block */}
-        <div className="absolute bottom-10 sm:bottom-14 left-6 right-6 sm:left-auto sm:right-10 md:right-14 max-w-full sm:max-w-[320px] flex flex-col items-start sm:items-end sm:text-right gap-5 z-50 hero-anim hero-fade" style={{ animationDelay: '0.85s' }}>
-          <p className="text-[13px] sm:text-sm text-white/70 leading-relaxed font-light">
+        <div className="absolute bottom-10 sm:bottom-14 left-6 right-6 sm:left-auto sm:right-10 md:right-14 max-w-full sm:max-w-[340px] flex flex-col items-start sm:items-end sm:text-right gap-5 z-50 hero-anim hero-fade" style={{ animationDelay: '0.85s' }}>
+          <p className="text-[14px] sm:text-[15px] text-white/70 leading-loose font-light">
             We engineer scalable, intuitive platforms that transform complex operations into streamlined workflows. Discover how intelligent automation drives measurable business growth.
           </p>
           <MagneticWrapper>
             <button 
-              className="bg-[#e8702a] hover:bg-[#d2611f] text-white text-sm font-medium px-7 py-3 rounded-full transition-all hover:scale-[1.03] active:scale-95 hover:shadow-lg hover:shadow-[#e8702a]/30 relative overflow-hidden group"
+              className="bg-[#e8702a] hover:bg-[#d2611f] text-white text-sm font-medium px-8 py-3.5 rounded-full transition-all duration-500 ease-out hover:scale-[1.02] active:scale-[0.98] hover:shadow-lg hover:shadow-[#e8702a]/20 relative overflow-hidden group"
               onClick={() => {
                 document.getElementById('work')?.scrollIntoView({ behavior: 'smooth' });
               }}
