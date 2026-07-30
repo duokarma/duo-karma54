@@ -1,4 +1,4 @@
-import { m as motion, useMotionTemplate, useMotionValue } from 'framer-motion';
+import { m as motion } from 'framer-motion';
 import { COLORS } from './ui/theme';
 import { Eyebrow } from './ui/Eyebrow';
 import { Reveal } from './ui/Reveal';
@@ -87,15 +87,6 @@ export function Services() {
 }
 
 function ServiceCard({ service }: { service: typeof SERVICES[0] }) {
-  const mouseX = useMotionValue(0);
-  const mouseY = useMotionValue(0);
-
-  function handleMouseMove({ currentTarget, clientX, clientY }: React.MouseEvent) {
-    const { left, top } = currentTarget.getBoundingClientRect();
-    mouseX.set(clientX - left);
-    mouseY.set(clientY - top);
-  }
-
   const isLarge = service.size === 'large';
   const isTall = service.size === 'tall';
   const isWide = service.size === 'wide' || service.size === 'wide-large';

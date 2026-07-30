@@ -51,6 +51,7 @@ Guidelines:
 - Be helpful and energetic. Avoid overly verbose explanations.
 - NEVER provide raw calendar links or URLs. Instead, tell them to use the "Book a Strategy Call" button below the chat.`;
 
+                  // @ts-ignore: TS doesn't find types for this package
                   const { GoogleGenAI } = await import('@google/genai');
                   const ai = new GoogleGenAI({ apiKey });
                   const models = ['gemini-2.5-flash', 'gemini-2.0-flash', 'gemini-1.5-flash'];
