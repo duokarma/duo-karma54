@@ -160,8 +160,17 @@ export function ConversationFlow() {
   const aiEndRef = useRef<HTMLDivElement | null>(null);
   const leadEndRef = useRef<HTMLDivElement | null>(null);
 
-  useEffect(() => { aiEndRef.current?.scrollIntoView({ behavior: 'smooth' }); }, [aiMessages, aiTyping]);
-  useEffect(() => { leadEndRef.current?.scrollIntoView({ behavior: 'smooth' }); }, [leadMessages]);
+  useEffect(() => { 
+    if (aiMessages.length > 1 || aiTyping) {
+      aiEndRef.current?.scrollIntoView({ behavior: 'smooth', block: 'nearest' }); 
+    }
+  }, [aiMessages, aiTyping]);
+  
+  useEffect(() => { 
+    if (leadMessages.length > 1) {
+      leadEndRef.current?.scrollIntoView({ behavior: 'smooth', block: 'nearest' }); 
+    }
+  }, [leadMessages]);
 
   // ── AI Chat handler ──────────────────────────────────────────────────────────
 
