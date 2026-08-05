@@ -16,15 +16,13 @@ export function LoadingScreen({}: { done?: boolean }) {
   }, []);
 
   useEffect(() => {
-    if (isExiting) {
-      // Allow time for exit animations to play before unmounting
-      const t = setTimeout(() => setIsUnmounted(true), 1200);
-      return () => clearTimeout(t);
+    if (done) {
+      setIsExiting(true);
     }
-  }, [isExiting]);
+  }, [done]);
 
   useEffect(() => {
-    if (!isUnmounted) {
+    if (!isExiting) {
       document.body.style.overflow = 'hidden';
     } else {
       document.body.style.overflow = '';
@@ -32,11 +30,11 @@ export function LoadingScreen({}: { done?: boolean }) {
     return () => {
       document.body.style.overflow = '';
     };
-  }, [isUnmounted]);
+  }, [isExiting]);
 
   return (
     <AnimatePresence>
-      {!isUnmounted && (
+      {!isExiting && (
         <motion.div
           key="loader"
           initial={{ opacity: 1 }}
