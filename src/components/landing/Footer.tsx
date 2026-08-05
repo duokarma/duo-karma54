@@ -4,7 +4,7 @@ export function Footer() {
   return (
     <footer
       style={{
-        padding: "34px 5%",
+        padding: "34px 5% 100px",
         borderTop: `1px solid ${COLORS.line}`,
         display: "flex",
         justifyContent: "space-between",

@@ -558,7 +558,6 @@ export function ConversationFlow() {
         width: '100%',
         boxSizing: 'border-box',
         marginTop: 16,
-        paddingBottom: 120,
       }}>
         {/* Strategy Call */}
         <a
