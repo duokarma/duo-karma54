@@ -26,7 +26,7 @@ export const Hero = React.memo(function Hero() {
         <div className="absolute inset-0 z-10 hero-zoom bg-black">
           <video 
             ref={videoRef}
-            src="/homepage-new.mp4"
+            src="/homepage.mp4"
             autoPlay
             loop
             muted
