@@ -63,9 +63,9 @@ export function LazyVideo({ src, lowEndFallback = true, children, ...props }: La
       {children}
       {/* 
         NOTE FOR USER: To enable AV1/WebM formats, remove the `src` prop and provide sources like this:
-        <source src="/homepage.av1.mp4" type="video/mp4; codecs=av01.0.05M.08" />
-        <source src="/homepage.webm" type="video/webm" />
-        <source src="/homepage.mp4" type="video/mp4" />
+        <source src="/homepage-new.av1.mp4" type="video/mp4; codecs=av01.0.05M.08" />
+        <source src="/homepage-new.webm" type="video/webm" />
+        <source src="/homepage-new.mp4" type="video/mp4" />
       */}
     </video>
   );

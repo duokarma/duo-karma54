@@ -26,12 +26,13 @@ export const Hero = React.memo(function Hero() {
         <div className="absolute inset-0 z-10 hero-zoom bg-black">
           <video 
             ref={videoRef}
-            src="/homepage.mp4"
+            src="/homepage-new.mp4"
             autoPlay
             loop
             muted
             playsInline
-            className="w-full h-full object-cover opacity-50"
+            disablePictureInPicture
+            className="absolute inset-0 w-full h-full object-cover object-center opacity-50 pointer-events-none"
             style={{ filter: 'contrast(1.1) brightness(0.9)' }}
           />
           {/* Simple, clean gradients to blend edges without obscuring the main video */}
