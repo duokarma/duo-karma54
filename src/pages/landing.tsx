@@ -22,7 +22,6 @@ const Footer = React.lazy(() => import('@/components/landing/Footer').then(m => 
 // AmbientEffects removed to improve performance and remove particle effects
 
 export function LandingPage() {
-  const [ready, setReady] = useState(false);
   const [cmdOpen, setCmdOpen] = useState(false);
 
   // ── Mouse-light tracking — Framer Motion value system ──────────────────────
@@ -51,13 +50,6 @@ export function LandingPage() {
       history.scrollRestoration = 'manual';
     }
     window.scrollTo(0, 0);
-    
-    // Trigger ready state when the loader finishes (2.4s to match AI OS boot animation)
-    const t = setTimeout(() => {
-      setReady(true);
-      window.scrollTo(0, 0);
-    }, 2400);
-    return () => clearTimeout(t);
   }, []);
 
   // ⌘K / Ctrl+K listener
@@ -127,7 +119,7 @@ export function LandingPage() {
         }}
       />
 
-      <LoadingScreen done={ready} />
+      <LoadingScreen />
       <Cursor />
       <Nav />
       <BottomDock />
