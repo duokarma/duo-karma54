@@ -48,11 +48,12 @@ export function LoadingScreen({}: { done?: boolean }) {
             // Mobile: Cinematic luxury vignette. Avoids severe cropping of the logo while blending flawlessly into the dark background.
             <div className="relative w-full h-full flex items-center justify-center">
               <video
-                src="/intro.mp4"
+                src="/homepage-new.mp4"
                 autoPlay
                 muted
                 playsInline
                 onEnded={() => setIsExiting(true)}
+                onError={() => setIsExiting(true)}
                 className="relative w-[125%] max-w-none h-auto"
                 style={{
                   WebkitMaskImage: 'radial-gradient(ellipse at center, black 35%, transparent 85%)',
@@ -63,11 +64,12 @@ export function LoadingScreen({}: { done?: boolean }) {
           ) : (
             // Desktop/Laptop: full cover
             <video
-              src="/intro.mp4"
+              src="/homepage-new.mp4"
               autoPlay
               muted
               playsInline
               onEnded={() => setIsExiting(true)}
+              onError={() => setIsExiting(true)}
               className="w-full h-full object-cover"
             />
           )}
