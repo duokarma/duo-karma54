@@ -249,6 +249,9 @@ export function SchemaBuilderPage() {
   const [newFields, setNewFields] = useState<Array<Partial<DynamicSchemaField> & { _tempId: string }>>([]);
 
   // Manage-fields state
+  const [editName, setEditName] = useState("");
+  const [editDesc, setEditDesc] = useState("");
+  const [editIcon, setEditIcon] = useState("Database");
   const [editFields, setEditFields] = useState<Array<Partial<DynamicSchemaField> & { _tempId: string }>>([]);
 
   // ── Queries ──
@@ -295,6 +298,9 @@ export function SchemaBuilderPage() {
   // Sync manageFields into local editFields when drawer opens
   const openManage = useCallback((schema: DynamicSchema) => {
     setSelectedSchema(schema);
+    setEditName(schema.name);
+    setEditDesc(schema.description || "");
+    setEditIcon(schema.icon || "Database");
     setEditFields(
       (manageFields.length
         ? manageFields
@@ -376,6 +382,18 @@ export function SchemaBuilderPage() {
   const saveFieldsMutation = useMutation({
     mutationFn: async () => {
       if (!selectedSchema) return;
+      
+      // Update schema details
+      const { error: schemaUpdateError } = await supabase
+        .from("dynamic_schemas")
+        .update({
+          name: editName,
+          description: editDesc,
+          icon: editIcon,
+        })
+        .eq("id", selectedSchema.id);
+      if (schemaUpdateError) throw schemaUpdateError;
+
       // Delete all existing fields then re-insert
       await supabase.from("dynamic_schema_fields").delete().eq("schema_id", selectedSchema.id);
       const toInsert = editFields
@@ -605,16 +623,64 @@ export function SchemaBuilderPage() {
               <DrawerHeader>
                 <div className="flex items-center gap-3">
                   <div className="flex h-9 w-9 items-center justify-center rounded-lg bg-white/[0.08] border border-edge text-xl">
-                    {renderIconComponent(selectedSchema.icon)}
+                    {renderIconComponent(editIcon)}
                   </div>
                   <div>
-                    <DrawerTitle>Manage "{selectedSchema.name}" Fields</DrawerTitle>
-                    <DrawerDescription>Add, remove, or reorder the fields for this section.</DrawerDescription>
+                    <DrawerTitle>Manage "{selectedSchema.name}"</DrawerTitle>
+                    <DrawerDescription>Update details, add, remove, or reorder the fields.</DrawerDescription>
                   </div>
                 </div>
               </DrawerHeader>
 
-              <div className="space-y-4">
+              <div className="space-y-6">
+                <div className="space-y-4">
+                  <div>
+                    <label className="mb-1.5 block text-xs font-medium text-ink-dim">Section Name *</label>
+                    <Input
+                      placeholder="e.g. Clients, Inventory, Suppliers..."
+                      value={editName}
+                      onChange={(e) => setEditName(e.target.value)}
+                    />
+                  </div>
+
+                  <div>
+                    <label className="mb-1.5 block text-xs font-medium text-ink-dim">Description (optional)</label>
+                    <Input
+                      placeholder="What is this section for?"
+                      value={editDesc}
+                      onChange={(e) => setEditDesc(e.target.value)}
+                    />
+                  </div>
+
+                  <div>
+                    <label className="mb-2 block text-xs font-medium text-ink-dim">Icon</label>
+                    <div className="flex flex-wrap gap-2">
+                      {ICON_OPTIONS.map((icon) => (
+                        <button
+                          key={icon}
+                          type="button"
+                          onClick={() => setEditIcon(icon)}
+                          title={icon}
+                          className={cn(
+                            "relative flex h-9 w-9 items-center justify-center rounded-lg border text-lg transition-all",
+                            editIcon === icon
+                              ? "border-electric bg-electric/20 shadow-[0_0_8px_rgba(96,165,250,0.4)]"
+                              : "border-edge bg-white/[0.04] hover:border-white/20 hover:bg-white/[0.08]"
+                          )}
+                        >
+                          {renderIconComponent(icon, "h-4 w-4")}
+                          {editIcon === icon && (
+                            <div className="absolute -top-1 -right-1 flex h-3.5 w-3.5 items-center justify-center rounded-full bg-electric">
+                              <Check className="h-2 w-2 text-white" />
+                            </div>
+                          )}
+                        </button>
+                      ))}
+                    </div>
+                  </div>
+                </div>
+
+                <div className="space-y-4 pt-4 border-t border-edge/60">
                 <div className="flex items-center justify-between">
                   <span className="text-xs text-ink-faint">{editFields.length} fields configured</span>
                   <Button
@@ -649,10 +715,10 @@ export function SchemaBuilderPage() {
 
                 <Button
                   className="w-full"
-                  disabled={saveFieldsMutation.isPending}
+                  disabled={!editName.trim() || saveFieldsMutation.isPending}
                   onClick={() => saveFieldsMutation.mutate()}
                 >
-                  {saveFieldsMutation.isPending ? "Saving..." : "Save Fields"}
+                  {saveFieldsMutation.isPending ? "Saving..." : "Save Changes"}
                 </Button>
               </div>
             </>
