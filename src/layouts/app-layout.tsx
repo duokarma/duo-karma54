@@ -57,6 +57,7 @@ export function AppLayout() {
           </AnimatePresence>
         </main>
       </div>
+      </div>
 
       <CommandPalette />
       <WidgetsPanel />
