@@ -109,7 +109,7 @@ export function Sidebar() {
         </div>
 
         {/* ── Navigation ── */}
-        <nav className="flex-1 overflow-y-auto px-2 pb-2">
+        <nav className="flex-1 overflow-y-auto overflow-x-hidden p-3 pb-8 custom-scrollbar">
           {navGroups.map((group) => {
             const items = navItems.filter((item) => item.group === group);
             const isDynamicGroup = group === "Custom";
@@ -121,7 +121,7 @@ export function Sidebar() {
                     {group}
                   </p>
                 )}
-                <div className="space-y-0.5">
+                <div className="space-y-1 lg:space-y-0.5">
                   {/* Static nav items in this group */}
                   {items.map((item) => (
                     <NavLink
@@ -132,7 +132,7 @@ export function Sidebar() {
                       aria-label={item.label}
                       className={({ isActive }) =>
                         cn(
-                          "group relative flex items-center gap-2.5 rounded-[var(--radius-control)] px-2.5 py-1.5 text-sm transition-colors duration-150",
+                          "group relative flex items-center gap-2.5 rounded-[var(--radius-control)] px-3 py-2.5 lg:px-2.5 lg:py-1.5 text-sm transition-colors duration-150",
                           collapsed && "justify-center px-0 py-2",
                           isActive
                             ? "bg-white/10 text-white shadow-sm"
@@ -177,7 +177,7 @@ export function Sidebar() {
                       aria-label={schema.name}
                       className={({ isActive }) =>
                         cn(
-                          "group relative flex items-center gap-2.5 rounded-[var(--radius-control)] px-2.5 py-1.5 text-sm transition-colors duration-150",
+                          "group relative flex items-center gap-2.5 rounded-[var(--radius-control)] px-3 py-2.5 lg:px-2.5 lg:py-1.5 text-sm transition-colors duration-150",
                           collapsed && "justify-center px-0 py-2",
                           isActive
                             ? "bg-white/10 text-white shadow-sm"
