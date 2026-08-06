@@ -318,19 +318,32 @@ export function SchemaBuilderPage() {
       if (newFields.length > 0) {
         const fieldsToInsert = newFields
           .filter((f) => f.name && f.type)
-          .map((f, i) => ({
-            schema_id: schema.id,
-            name: f.name!,
-            slug: f.slug || slugify(f.name!),
-            type: f.type!,
-            is_required: f.is_required ?? false,
-            options: f.options ?? null,
-            sort_order: i,
-          }));
-        const { error: fieldsError } = await supabase
-          .from("dynamic_schema_fields")
-          .insert(fieldsToInsert);
-        if (fieldsError) throw fieldsError;
+          .map((f, i) => {
+            const field: any = {
+              schema_id: schema.id,
+              name: f.name!,
+              slug: f.slug || slugify(f.name!),
+              type: f.type!,
+              is_required: f.is_required ?? false,
+              sort_order: i,
+            };
+            if (f.options && f.options.length > 0) {
+              field.options = f.options;
+            }
+            return field;
+          });
+          
+        if (fieldsToInsert.length > 0) {
+          const { error: fieldsError } = await supabase
+            .from("dynamic_schema_fields")
+            .insert(fieldsToInsert);
+            
+          if (fieldsError) {
+            // Rollback schema creation
+            await supabase.from("dynamic_schemas").delete().eq("id", schema.id);
+            throw new Error(`Failed to save fields: ${fieldsError.message}`);
+          }
+        }
       }
       return schema;
     },
@@ -367,15 +380,20 @@ export function SchemaBuilderPage() {
       await supabase.from("dynamic_schema_fields").delete().eq("schema_id", selectedSchema.id);
       const toInsert = editFields
         .filter((f) => f.name && f.type)
-        .map((f, i) => ({
-          schema_id: selectedSchema.id,
-          name: f.name!,
-          slug: f.slug || slugify(f.name!),
-          type: f.type!,
-          is_required: f.is_required ?? false,
-          options: f.options ?? null,
-          sort_order: i,
-        }));
+        .map((f, i) => {
+          const field: any = {
+            schema_id: selectedSchema.id,
+            name: f.name!,
+            slug: f.slug || slugify(f.name!),
+            type: f.type!,
+            is_required: f.is_required ?? false,
+            sort_order: i,
+          };
+          if (f.options && f.options.length > 0) {
+            field.options = f.options;
+          }
+          return field;
+        });
       if (toInsert.length > 0) {
         const { error } = await supabase.from("dynamic_schema_fields").insert(toInsert);
         if (error) throw error;

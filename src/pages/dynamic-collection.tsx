@@ -536,6 +536,79 @@ export function DynamicCollectionPage() {
           )}
         </DrawerContent>
       </Drawer>
+      {/* ── Record Detail Preview Drawer ── */}
+      <Drawer open={detailOpen} onOpenChange={(open) => {
+        setDetailOpen(open);
+        if (!open) { setFormData({}); setSelectedRecord(null); }
+      }}>
+        <DrawerContent>
+          <DrawerHeader>
+            <div className="flex items-start justify-between gap-4">
+              <div>
+                <DrawerTitle>Record Details</DrawerTitle>
+                <DrawerDescription>
+                  Preview details for this record.
+                </DrawerDescription>
+              </div>
+              <div className="flex items-center gap-2">
+                <Button
+                  size="sm"
+                  variant="outline"
+                  onClick={() => {
+                    setDetailOpen(false);
+                    setFormOpen(true);
+                  }}
+                >
+                  <Edit2 className="mr-1.5 h-3.5 w-3.5" /> Edit
+                </Button>
+                <Button
+                  size="sm"
+                  variant="outline"
+                  className="text-rose hover:bg-rose/10 hover:text-rose border-rose/20"
+                  disabled={deleteMutation.isPending}
+                  onClick={() => {
+                    if (confirm("Are you sure you want to delete this record?")) {
+                      deleteMutation.mutate(selectedRecord!.id);
+                    }
+                  }}
+                >
+                  <Trash2 className="mr-1.5 h-3.5 w-3.5" /> Delete
+                </Button>
+              </div>
+            </div>
+          </DrawerHeader>
+
+          <div className="space-y-6 pb-6">
+            <div className="grid grid-cols-1 sm:grid-cols-2 gap-x-6 gap-y-4">
+              {fields.map((field) => {
+                const val = selectedRecord?.data?.[field.slug];
+                const isEmpty = val === undefined || val === null || val === "";
+                
+                return (
+                  <div key={field.id} className="flex flex-col gap-1">
+                    <span className="text-[10px] font-semibold uppercase tracking-wider text-ink-faint">
+                      {field.name}
+                    </span>
+                    {isEmpty ? (
+                      <span className="text-sm text-ink-dim italic">—</span>
+                    ) : field.type === "url" ? (
+                      <a href={val as string} target="_blank" rel="noreferrer" className="text-sm text-electric hover:underline break-all">
+                        {val as string}
+                      </a>
+                    ) : field.type === "boolean" ? (
+                      <span className="text-sm text-ink">{val ? "Yes" : "No"}</span>
+                    ) : (
+                      <span className="text-sm text-ink whitespace-pre-wrap break-words">
+                        {String(val)}
+                      </span>
+                    )}
+                  </div>
+                );
+              })}
+            </div>
+          </div>
+        </DrawerContent>
+      </Drawer>
     </div>
   );
 }
