@@ -85,8 +85,7 @@ export function AiAssistant() {
               onClick={() => setIsOpen(true)}
               size="icon"
               className="h-14 w-14 rounded-full bg-electric text-ink shadow-[0_4px_24px_rgba(45,212,191,0.4)] hover:bg-electric/90 hover:scale-105 transition-transform"
-            >
-              <img src="/ai-brain.png" alt="AI Brain" className="h-8 w-8 object-contain drop-shadow-md" />
+              <img src="/ai-brain.png" alt="AI Brain" className="h-8 w-8 object-contain drop-shadow-[0_0_12px_rgba(45,212,191,0.8)] brightness-110" />
             </Button>
           </motion.div>
         )}
@@ -105,7 +104,7 @@ export function AiAssistant() {
             <div className="flex items-center justify-between border-b border-edge bg-graphite px-4 py-3">
               <div className="flex items-center gap-2">
                 <div className="flex h-8 w-8 items-center justify-center rounded-full bg-electric/20 text-electric">
-                  <img src="/ai-brain.png" alt="AI Brain" className="h-5 w-5 object-contain" />
+                  <img src="/ai-brain.png" alt="AI Brain" className="h-5 w-5 object-contain drop-shadow-[0_0_8px_rgba(45,212,191,0.6)]" />
                 </div>
                 <div>
                   <h3 className="text-sm font-semibold text-ink">AI Assistant</h3>
