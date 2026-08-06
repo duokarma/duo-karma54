@@ -63,12 +63,12 @@ async function executeToolCall(toolCall: any) {
       }
       
       const nativeSchemas = [
-        { id: "native_clients", name: "Clients (Built-in)", slug: "clients" },
-        { id: "native_leads", name: "Leads (Built-in)", slug: "leads" },
-        { id: "native_projects", name: "Projects (Built-in)", slug: "projects" },
-        { id: "native_tasks", name: "Tasks (Built-in)", slug: "tasks" },
-        { id: "native_invoices", name: "Invoices/Revenue (Built-in)", slug: "invoices" },
-        { id: "native_expenses", name: "Expenses (Built-in)", slug: "expenses" }
+        { id: "native_clients", name: "Clients (Contains totalValue/revenue, amountPaid, incomeType)", slug: "clients" },
+        { id: "native_leads", name: "Leads (Contains lead value and status)", slug: "leads" },
+        { id: "native_projects", name: "Projects", slug: "projects" },
+        { id: "native_tasks", name: "Tasks", slug: "tasks" },
+        { id: "native_financial_metrics", name: "Monthly Financial Metrics (Chart Data for Revenue, Expenses, Profit)", slug: "financial_metrics" },
+        { id: "native_expenses", name: "Expenses Log", slug: "expenses" }
       ];
       
       return { schemas: [...nativeSchemas, ...(data || [])] };
