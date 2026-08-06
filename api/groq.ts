@@ -1,23 +1,23 @@
-import { serve } from "https://deno.land/std@0.168.0/http/server.ts";
+export default async function handler(req: any, res: any) {
+  // CORS handling
+  if (req.method === 'OPTIONS') {
+    res.setHeader('Access-Control-Allow-Origin', '*');
+    res.setHeader('Access-Control-Allow-Methods', 'POST, OPTIONS');
+    res.setHeader('Access-Control-Allow-Headers', 'Content-Type');
+    return res.status(200).end();
+  }
 
-const corsHeaders = {
-  "Access-Control-Allow-Origin": "*",
-  "Access-Control-Allow-Headers": "authorization, x-client-info, apikey, content-type",
-};
-
-serve(async (req) => {
-  // Handle CORS preflight requests
-  if (req.method === "OPTIONS") {
-    return new Response("ok", { headers: corsHeaders });
+  if (req.method !== 'POST') {
+    return res.status(405).json({ error: 'Method not allowed' });
   }
 
   try {
-    const { action, prompt, messages, systemPrompt } = await req.json();
-
-    const groqApiKey = Deno.env.get("GROQ_API_KEY");
+    const groqApiKey = process.env.GROQ_API_KEY;
     if (!groqApiKey) {
-      throw new Error("Missing GROQ_API_KEY environment variable");
+      return res.status(500).json({ error: 'Missing GROQ_API_KEY environment variable' });
     }
+
+    const { action, prompt, messages, systemPrompt } = req.body;
 
     const apiUrl = "https://api.groq.com/openai/v1/chat/completions";
 
@@ -39,7 +39,7 @@ serve(async (req) => {
         { role: "user", content: prompt },
       ];
     } else {
-      throw new Error("Invalid action provided");
+      return res.status(400).json({ error: "Invalid action provided" });
     }
 
     const response = await fetch(apiUrl, {
@@ -57,13 +57,9 @@ serve(async (req) => {
     }
 
     const data = await response.json();
-    return new Response(JSON.stringify(data), {
-      headers: { ...corsHeaders, "Content-Type": "application/json" },
-    });
+    return res.status(200).json(data);
   } catch (error: any) {
-    return new Response(JSON.stringify({ error: error.message }), {
-      status: 400,
-      headers: { ...corsHeaders, "Content-Type": "application/json" },
-    });
+    console.error("Groq Handler Error:", error);
+    return res.status(400).json({ error: error.message });
   }
-});
+}

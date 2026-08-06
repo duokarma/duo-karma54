@@ -4,7 +4,6 @@ import { Bot, X, Send, Loader2, Sparkles } from "lucide-react";
 import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
 import { cn } from "@/lib/utils";
-import { supabase } from "@/lib/supabase";
 
 interface Message {
   role: "user" | "assistant" | "system";
@@ -45,13 +44,14 @@ export function AiAssistant() {
         userMsg
       ];
 
-      const { data, error } = await supabase.functions.invoke("groq-chat", {
-        body: { action: "chat", messages: conversation },
+      const response = await fetch("/api/groq", {
+        method: "POST",
+        headers: { "Content-Type": "application/json" },
+        body: JSON.stringify({ action: "chat", messages: conversation }),
       });
 
-      if (error) throw error;
-      
-      if (data.error) throw new Error(data.error);
+      const data = await response.json();
+      if (!response.ok) throw new Error(data.error || "Failed to fetch");
 
       const aiResponse = data.choices[0].message.content;
       

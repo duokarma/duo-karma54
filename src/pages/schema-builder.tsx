@@ -436,16 +436,18 @@ export function SchemaBuilderPage() {
     
     setIsGeneratingAi(true);
     try {
-      const { data, error } = await supabase.functions.invoke("groq-chat", {
-        body: {
+      const response = await fetch("/api/groq", {
+        method: "POST",
+        headers: { "Content-Type": "application/json" },
+        body: JSON.stringify({
           action: "schema",
           prompt: `Generate a list of logical database fields for a schema named: "${newName}".`,
           systemPrompt: `You are an expert database architect. Return ONLY valid JSON in this exact structure: { "fields": [ { "name": "Field Name", "type": "text|number|boolean|date|email|url|select|textarea", "options": ["opt1", "opt2"] /* only if type is select */ } ] }`
-        }
+        })
       });
       
-      if (error) throw error;
-      if (data.error) throw new Error(data.error);
+      const data = await response.json();
+      if (!response.ok) throw new Error(data.error || "Failed to fetch");
       
       const content = JSON.parse(data.choices[0].message.content);
       if (content.fields && Array.isArray(content.fields)) {
