@@ -73,7 +73,7 @@ const DataTableInner = <T,>({ columns, data, pageSize = 8, rowKey, onRowClick, i
                   key={col.key}
                   style={{ width: col.width }}
                   className={cn(
-                    "px-4 py-3 text-xs font-medium uppercase tracking-wider text-ink-faint whitespace-nowrap",
+                    "px-4 py-3 text-xs font-medium uppercase tracking-wider text-ink-faint whitespace-nowrap text-left",
                     col.align === "right" && "text-right",
                     col.align === "center" && "text-center"
                   )}
@@ -128,7 +128,7 @@ const DataTableInner = <T,>({ columns, data, pageSize = 8, rowKey, onRowClick, i
                   <td
                     key={col.key}
                     className={cn(
-                      "px-4 py-3.5 text-ink-dim",
+                      "px-4 py-3.5 text-ink-dim text-left",
                       col.align === "right" && "text-right",
                       col.align === "center" && "text-center"
                     )}
