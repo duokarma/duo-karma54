@@ -57,11 +57,27 @@ async function executeToolCall(toolCall: any) {
   try {
     if (name === "list_schemas") {
       const { data, error } = await supabase.from('dynamic_schemas').select('id, name, slug');
-      if (error) throw error;
-      return data;
+      if (error && error.code !== 'PGRST116') {
+        // Ignore RLS errors if no dynamic schemas exist yet
+        console.error("Dynamic schema fetch error:", error);
+      }
+      
+      const nativeSchemas = [
+        { id: "native_clients", name: "Clients (Built-in)", slug: "clients" },
+        { id: "native_leads", name: "Leads (Built-in)", slug: "leads" },
+        { id: "native_projects", name: "Projects (Built-in)", slug: "projects" },
+        { id: "native_tasks", name: "Tasks (Built-in)", slug: "tasks" },
+        { id: "native_invoices", name: "Invoices/Revenue (Built-in)", slug: "invoices" },
+        { id: "native_expenses", name: "Expenses (Built-in)", slug: "expenses" }
+      ];
+      
+      return { schemas: [...nativeSchemas, ...(data || [])] };
     } 
     
     else if (name === "get_schema_fields") {
+      if (args.schema_id.startsWith("native_")) {
+        return { message: "Built-in tables do not have dynamic fields. You can proceed to call search_records directly." };
+      }
       const { data, error } = await supabase
         .from('dynamic_schema_fields')
         .select('*')
@@ -71,19 +87,26 @@ async function executeToolCall(toolCall: any) {
     } 
     
     else if (name === "search_records") {
-      let query = supabase
-        .from('dynamic_records')
-        .select('*')
-        .eq('schema_id', args.schema_id)
-        .limit(args.limit || 10);
+      if (args.schema_id.startsWith("native_")) {
+        const tableName = args.schema_id.replace("native_", "");
+        const { data, error } = await supabase.from(tableName).select('*').limit(args.limit || 50);
+        if (error) throw error;
+        return data;
+      } else {
+        let query = supabase
+          .from('dynamic_records')
+          .select('*')
+          .eq('schema_id', args.schema_id)
+          .limit(args.limit || 50);
+          
+        if (args.search_term) {
+          query = query.textSearch('data', args.search_term);
+        }
         
-      if (args.search_term) {
-        query = query.textSearch('data', args.search_term);
+        const { data, error } = await query;
+        if (error) throw error;
+        return data;
       }
-      
-      const { data, error } = await query;
-      if (error) throw error;
-      return data;
     }
     
     return { error: `Tool ${name} not found.` };
