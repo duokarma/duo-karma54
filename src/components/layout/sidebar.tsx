@@ -218,7 +218,7 @@ export function Sidebar() {
           {/* User row */}
           {!collapsed && (
             <div className="flex items-center gap-2.5 px-3 py-2.5">
-              <Avatar seed={userEmail} size="sm" />
+              <img src="/logo.jpeg" alt="Admin Logo" className="h-7 w-7 shrink-0 rounded-md object-cover" />
               <div className="min-w-0 flex-1">
                 <p className="truncate text-xs font-medium text-ink">{displayName}</p>
                 <p className="truncate text-[10px] text-ink-faint">{userEmail}</p>
