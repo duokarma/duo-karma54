@@ -721,6 +721,7 @@ export function SchemaBuilderPage() {
                   {saveFieldsMutation.isPending ? "Saving..." : "Save Changes"}
                 </Button>
               </div>
+              </div>
             </>
           )}
         </DrawerContent>
