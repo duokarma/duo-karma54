@@ -7,6 +7,18 @@ import { useSidebar } from "@/hooks/use-sidebar";
 import { useCommandPalette } from "@/hooks/use-command-palette";
 import { useAuth } from "@/hooks/use-auth";
 import { Avatar } from "@/components/shared/avatar";
+import { useQuery } from "@tanstack/react-query";
+import { supabase } from "@/lib/supabase";
+import type { DynamicSchema } from "@/types";
+
+// Map icon name → emoji for sidebar rendering (lightweight, no extra deps)
+const ICON_EMOJI: Record<string, string> = {
+  Database: "🗄️", Users: "👥", Star: "⭐", Heart: "❤️", Briefcase: "💼",
+  ShoppingCart: "🛒", Package: "📦", Tag: "🏷️", FileText: "📄",
+  BarChart3: "📊", Layers: "🗂️", Globe: "🌍", Building2: "🏢",
+  Truck: "🚚", Zap: "⚡", Target: "🎯", BookOpen: "📖", Award: "🏆",
+  Calendar: "📅", Camera: "📷", Music: "🎵", Coffee: "☕", Gift: "🎁", Home: "🏠",
+};
 
 export function Sidebar() {
   const { collapsed, toggleCollapsed, mobileOpen, setMobileOpen } = useSidebar();
@@ -16,6 +28,19 @@ export function Sidebar() {
 
   const userEmail = "admin@duokarrma.com";
   const displayName = userEmail.split("@")[0].replace(/[._-]/g, " ").replace(/\b\w/g, (l) => l.toUpperCase());
+
+  // Fetch user-created schemas for the dynamic sidebar section
+  const { data: dynamicSchemas = [] } = useQuery({
+    queryKey: ["dynamic_schemas"],
+    queryFn: async () => {
+      const { data, error } = await supabase
+        .from("dynamic_schemas")
+        .select("id, name, slug, icon")
+        .order("created_at", { ascending: true });
+      if (error) throw error;
+      return data as Pick<DynamicSchema, "id" | "name" | "slug" | "icon">[];
+    },
+  });
 
   return (
     <>
@@ -87,6 +112,8 @@ export function Sidebar() {
         <nav className="flex-1 overflow-y-auto px-2 pb-2">
           {navGroups.map((group) => {
             const items = navItems.filter((item) => item.group === group);
+            const isDynamicGroup = group === "Custom";
+
             return (
               <div key={group} className="mb-3">
                 {!collapsed && (
@@ -95,6 +122,7 @@ export function Sidebar() {
                   </p>
                 )}
                 <div className="space-y-0.5">
+                  {/* Static nav items in this group */}
                   {items.map((item) => (
                     <NavLink
                       key={item.path}
@@ -114,11 +142,10 @@ export function Sidebar() {
                     >
                       {({ isActive }) => (
                         <>
-                          {/* Left accent bar with glow */}
                           {isActive && !collapsed && (
-                            <motion.span 
+                            <motion.span
                               layoutId="sidebar-active-indicator"
-                              className="absolute left-0 top-1/2 h-5 w-1 -translate-y-1/2 rounded-r-full bg-[var(--color-accent)] shadow-[0_0_8px_var(--color-accent)]" 
+                              className="absolute left-0 top-1/2 h-5 w-1 -translate-y-1/2 rounded-r-full bg-[var(--color-accent)] shadow-[0_0_8px_var(--color-accent)]"
                             />
                           )}
                           <motion.div
@@ -136,6 +163,49 @@ export function Sidebar() {
                           {!collapsed && (
                             <span className={cn("truncate text-[13px]", isActive && "font-medium text-ink")}>
                               {item.label}
+                            </span>
+                          )}
+                        </>
+                      )}
+                    </NavLink>
+                  ))}
+
+                  {/* Dynamic schema links rendered under the Custom group */}
+                  {isDynamicGroup && dynamicSchemas.map((schema) => (
+                    <NavLink
+                      key={schema.id}
+                      to={`/admin/custom/${schema.slug}`}
+                      onClick={() => setMobileOpen(false)}
+                      aria-label={schema.name}
+                      className={({ isActive }) =>
+                        cn(
+                          "group relative flex items-center gap-2.5 rounded-[var(--radius-control)] px-2.5 py-1.5 text-sm transition-colors duration-150",
+                          collapsed && "justify-center px-0 py-2",
+                          isActive
+                            ? "bg-white/10 text-white shadow-sm"
+                            : "text-ink/80 hover:bg-white/5 hover:text-white"
+                        )
+                      }
+                    >
+                      {({ isActive }) => (
+                        <>
+                          {isActive && !collapsed && (
+                            <motion.span
+                              layoutId="sidebar-active-indicator"
+                              className="absolute left-0 top-1/2 h-5 w-1 -translate-y-1/2 rounded-r-full bg-[var(--color-accent)] shadow-[0_0_8px_var(--color-accent)]"
+                            />
+                          )}
+                          <motion.div
+                            whileHover={{ scale: 1.1, rotate: -2 }}
+                            whileTap={{ scale: 0.95 }}
+                            transition={{ type: "spring", stiffness: 400, damping: 25 }}
+                            className="text-base leading-none shrink-0"
+                          >
+                            {ICON_EMOJI[schema.icon] ?? "🗄️"}
+                          </motion.div>
+                          {!collapsed && (
+                            <span className={cn("truncate text-[13px]", isActive && "font-medium text-ink")}>
+                              {schema.name}
                             </span>
                           )}
                         </>

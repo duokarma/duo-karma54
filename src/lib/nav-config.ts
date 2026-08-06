@@ -11,6 +11,7 @@ import {
   FolderOpen,
   BarChart3,
   LineChart,
+  Sparkles,
   type LucideIcon,
 } from "lucide-react";
 
@@ -34,6 +35,8 @@ export const navItems: NavItem[] = [
   { label: "Documents", path: "/admin/documents", icon: FolderOpen, group: "Workspace" },
   { label: "Reports", path: "/admin/reports", icon: BarChart3, group: "Insights" },
   { label: "Analytics", path: "/admin/analytics", icon: LineChart, group: "Insights" },
+  { label: "Schema Builder", path: "/admin/schema-builder", icon: Sparkles, group: "Custom" },
 ];
 
-export const navGroups = ["Overview", "Pipeline", "Finance", "Workspace", "Insights"];
+export const navGroups = ["Overview", "Pipeline", "Finance", "Workspace", "Insights", "Custom"];
+

@@ -62,6 +62,12 @@ const ReportsPage = lazy(() =>
 const AnalyticsPage = lazy(() =>
   import("@/pages/analytics").then((m) => ({ default: m.AnalyticsPage }))
 );
+const SchemaBuilderPage = lazy(() =>
+  import("@/pages/schema-builder").then((m) => ({ default: m.SchemaBuilderPage }))
+);
+const DynamicCollectionPage = lazy(() =>
+  import("@/pages/dynamic-collection").then((m) => ({ default: m.DynamicCollectionPage }))
+);
 
 // Singleton QueryClient created once per dashboard chunk load (once per session)
 const queryClient = new QueryClient({
@@ -105,6 +111,8 @@ function DashboardRoutes() {
             { path: "documents", element: <DocumentsPage /> },
             { path: "reports", element: <ReportsPage /> },
             { path: "analytics", element: <AnalyticsPage /> },
+            { path: "schema-builder", element: <SchemaBuilderPage /> },
+            { path: "custom/:schemaSlug", element: <DynamicCollectionPage /> },
           ],
         },
       ],

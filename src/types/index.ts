@@ -188,3 +188,37 @@ export interface KPI {
   trend: "up" | "down";
   icon: string;
 }
+
+// ── Dynamic Schema Builder ────────────────────────────────────────────────────
+
+export type FieldType = "text" | "number" | "boolean" | "date" | "select" | "email" | "url" | "textarea";
+
+export interface DynamicSchema {
+  id: string;
+  name: string;
+  slug: string;
+  icon: string;
+  description?: string;
+  created_at: string;
+  updated_at: string;
+}
+
+export interface DynamicSchemaField {
+  id: string;
+  schema_id: string;
+  name: string;
+  slug: string;
+  type: FieldType;
+  is_required: boolean;
+  options?: string[];  // for "select" type
+  sort_order: number;
+  created_at: string;
+}
+
+export interface DynamicRecord {
+  id: string;
+  schema_id: string;
+  data: Record<string, unknown>;
+  created_at: string;
+  updated_at: string;
+}
