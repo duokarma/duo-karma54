@@ -85,6 +85,7 @@ export function AiAssistant() {
               onClick={() => setIsOpen(true)}
               size="icon"
               className="h-14 w-14 rounded-full bg-electric text-ink shadow-[0_4px_24px_rgba(45,212,191,0.4)] hover:bg-electric/90 hover:scale-105 transition-transform"
+            >
               <img src="/ai-brain.png" alt="AI Brain" className="h-8 w-8 object-contain drop-shadow-[0_0_12px_rgba(45,212,191,0.8)] brightness-110" />
             </Button>
           </motion.div>
@@ -98,7 +99,7 @@ export function AiAssistant() {
             initial={{ opacity: 0, y: 20, scale: 0.95 }}
             animate={{ opacity: 1, y: 0, scale: 1 }}
             exit={{ opacity: 0, y: 20, scale: 0.95 }}
-            className="fixed bottom-6 right-6 z-[999] pointer-events-auto flex h-[500px] max-h-[80vh] w-[350px] max-w-[90vw] flex-col overflow-hidden rounded-[var(--radius-panel)] border border-edge bg-void shadow-2xl"
+            className="fixed bottom-6 right-6 z-[999] pointer-events-auto flex h-[500px] max-h-[80vh] w-[350px] max-w-[calc(100vw-3rem)] flex-col overflow-hidden rounded-[var(--radius-panel)] border border-edge bg-[#0c0c0c] shadow-2xl"
           >
             {/* Header */}
             <div className="flex items-center justify-between border-b border-edge bg-graphite px-4 py-3">
@@ -177,7 +178,7 @@ export function AiAssistant() {
                   type="submit"
                   size="icon"
                   disabled={!input.trim() || isLoading}
-                  className="h-10 w-10 shrink-0 bg-electric text-void hover:bg-electric/90"
+                  className="h-10 w-10 shrink-0 bg-electric text-black hover:bg-electric/90"
                 >
                   <Send className="h-4 w-4" />
                 </Button>
