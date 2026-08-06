@@ -441,7 +441,7 @@ export function SchemaBuilderPage() {
         headers: { "Content-Type": "application/json" },
         body: JSON.stringify({
           action: "schema",
-          prompt: `Generate a list of logical database fields for a schema named: "${newName}".`,
+          prompt: `Generate a list of logical database fields for a schema named: "${newName}". The user also provided this description for context: "${newDesc || "None"}". Ensure the fields perfectly match this use-case.`,
           systemPrompt: `You are an expert database architect. Return ONLY valid JSON in this exact structure: { "fields": [ { "name": "Field Name", "type": "text|number|boolean|date|email|url|select|textarea", "options": ["opt1", "opt2"] /* only if type is select */ } ] }`
         })
       });

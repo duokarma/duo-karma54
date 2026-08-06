@@ -79,7 +79,7 @@ export function AiAssistant() {
             initial={{ scale: 0, opacity: 0 }}
             animate={{ scale: 1, opacity: 1 }}
             exit={{ scale: 0, opacity: 0 }}
-            className="fixed bottom-6 right-6 z-50"
+            className="fixed bottom-6 right-6 z-[999] pointer-events-auto"
           >
             <Button
               onClick={() => setIsOpen(true)}
@@ -99,7 +99,7 @@ export function AiAssistant() {
             initial={{ opacity: 0, y: 20, scale: 0.95 }}
             animate={{ opacity: 1, y: 0, scale: 1 }}
             exit={{ opacity: 0, y: 20, scale: 0.95 }}
-            className="fixed bottom-6 right-6 z-50 flex h-[500px] max-h-[80vh] w-[350px] max-w-[90vw] flex-col overflow-hidden rounded-[var(--radius-panel)] border border-edge bg-void shadow-2xl"
+            className="fixed bottom-6 right-6 z-[999] pointer-events-auto flex h-[500px] max-h-[80vh] w-[350px] max-w-[90vw] flex-col overflow-hidden rounded-[var(--radius-panel)] border border-edge bg-void shadow-2xl"
           >
             {/* Header */}
             <div className="flex items-center justify-between border-b border-edge bg-graphite px-4 py-3">
