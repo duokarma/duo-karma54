@@ -6,7 +6,6 @@ import { navGroups, navItems } from "@/lib/nav-config";
 import { useSidebar } from "@/hooks/use-sidebar";
 import { useCommandPalette } from "@/hooks/use-command-palette";
 import { useAuth } from "@/hooks/use-auth";
-import { Avatar } from "@/components/shared/avatar";
 import { useQuery } from "@tanstack/react-query";
 import { supabase } from "@/lib/supabase";
 import type { DynamicSchema } from "@/types";
