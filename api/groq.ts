@@ -136,14 +136,14 @@ export default async function handler(req: any, res: any) {
     }
 
     // 1. Initial Call to Groq with Tools
-    let currentMessages = [...messages];
-    // Add system message if not present
-    if (!currentMessages.find(m => m.role === 'system')) {
-       currentMessages.unshift({
-           role: 'system',
-           content: 'You are an intelligent data-aware business assistant. You have tools to read the database schemas and records. When a user asks about their data, use your tools to find the answer. Do not guess. If a tool call fails, tell the user.'
-       });
-    }
+    // Enforce the backend Agent system prompt (filter out any basic frontend system prompts)
+    let currentMessages = [
+      {
+        role: 'system',
+        content: "You are an intelligent, data-aware business assistant for DuoKarma. You have tools to read database schemas (tables/sections) and records. \n\nCRITICAL INSTRUCTION: When a user asks about data (e.g., 'How many clients do we have?', 'Who are my projects?'), you MUST first call `list_schemas` to find the exact `schema_id` for that topic. Do NOT ask the user for a schema ID. Once you find the `schema_id` from `list_schemas`, immediately call `search_records` using that ID to fetch the data, then answer the user. Do not guess information."
+      },
+      ...messages.filter((m: any) => m.role !== 'system')
+    ];
 
     const apiUrl = "https://api.groq.com/openai/v1/chat/completions";
     
