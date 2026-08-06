@@ -148,9 +148,8 @@ export function Sidebar() {
                               className="absolute left-0 top-1/2 h-5 w-1 -translate-y-1/2 rounded-r-full bg-[var(--color-accent)] shadow-[0_0_8px_var(--color-accent)]"
                             />
                           )}
-                          <motion.div
-                            whileHover={{ scale: 1.1, rotate: -2 }}
-                            transition={{ type: "spring", stiffness: 400, damping: 25 }}
+                          <div
+                            className="pointer-events-none transition-transform duration-300 group-hover:scale-110 group-hover:-rotate-2"
                           >
                             <item.icon
                               className={cn(
@@ -158,7 +157,7 @@ export function Sidebar() {
                                 isActive ? "text-white drop-shadow-[0_0_4px_rgba(255,255,255,0.5)]" : "text-ink/70 group-hover:text-ink/90"
                               )}
                             />
-                          </motion.div>
+                          </div>
                           {!collapsed && (
                             <span className={cn("truncate text-[13px]", isActive && "font-medium text-ink")}>
                               {item.label}
@@ -194,13 +193,11 @@ export function Sidebar() {
                               className="absolute left-0 top-1/2 h-5 w-1 -translate-y-1/2 rounded-r-full bg-[var(--color-accent)] shadow-[0_0_8px_var(--color-accent)]"
                             />
                           )}
-                          <motion.div
-                            whileHover={{ scale: 1.1, rotate: -2 }}
-                            transition={{ type: "spring", stiffness: 400, damping: 25 }}
-                            className="text-base leading-none shrink-0"
+                          <div
+                            className="text-base leading-none shrink-0 pointer-events-none transition-transform duration-300 group-hover:scale-110 group-hover:-rotate-2"
                           >
                             {ICON_EMOJI[schema.icon] ?? "🗄️"}
-                          </motion.div>
+                          </div>
                           {!collapsed && (
                             <span className={cn("truncate text-[13px]", isActive && "font-medium text-ink")}>
                               {schema.name}
