@@ -1,6 +1,6 @@
 import { useState, useRef, useEffect } from "react";
 import { m as motion, AnimatePresence } from "framer-motion";
-import { Bot, X, Send, Loader2, Sparkles } from "lucide-react";
+import { X, Send, Loader2 } from "lucide-react";
 import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
 import { cn } from "@/lib/utils";
@@ -86,7 +86,7 @@ export function AiAssistant() {
               size="icon"
               className="h-14 w-14 rounded-full bg-electric text-ink shadow-[0_4px_24px_rgba(45,212,191,0.4)] hover:bg-electric/90 hover:scale-105 transition-transform"
             >
-              <Sparkles className="h-6 w-6" />
+              <img src="/ai-brain.png" alt="AI Brain" className="h-8 w-8 object-contain drop-shadow-md" />
             </Button>
           </motion.div>
         )}
@@ -105,7 +105,7 @@ export function AiAssistant() {
             <div className="flex items-center justify-between border-b border-edge bg-graphite px-4 py-3">
               <div className="flex items-center gap-2">
                 <div className="flex h-8 w-8 items-center justify-center rounded-full bg-electric/20 text-electric">
-                  <Bot className="h-4 w-4" />
+                  <img src="/ai-brain.png" alt="AI Brain" className="h-5 w-5 object-contain" />
                 </div>
                 <div>
                   <h3 className="text-sm font-semibold text-ink">AI Assistant</h3>
