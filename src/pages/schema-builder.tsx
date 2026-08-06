@@ -418,10 +418,11 @@ export function SchemaBuilderPage() {
       }
     },
     onSuccess: () => {
+      queryClient.invalidateQueries({ queryKey: ["dynamic_schemas"] });
       queryClient.invalidateQueries({ queryKey: ["dynamic_schema_fields", selectedSchema?.id] });
       queryClient.invalidateQueries({ queryKey: ["dynamic_schema_fields_all"] });
       setManageOpen(false);
-      toast({ title: "Fields saved!", variant: "success" });
+      toast({ title: "Changes saved!", variant: "success" });
     },
     onError: (e: any) => toast({ title: "Error", description: e.message, variant: "error" }),
   });
