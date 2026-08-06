@@ -6,6 +6,7 @@ import { Topbar } from "@/components/layout/topbar";
 import { CommandPalette } from "@/components/layout/command-palette";
 import { WidgetsPanel } from "@/components/layout/widgets-panel";
 import { AnimatedNoise, SoftAurora, FloatingParticles } from "@/components/premium/ambient-effects";
+import { AiAssistant } from "@/components/shared/ai-assistant";
 import { useSidebar } from "@/hooks/use-sidebar";
 import { cn } from "@/lib/utils";
 
@@ -56,10 +57,10 @@ export function AppLayout() {
           </AnimatePresence>
         </main>
       </div>
-      </div>
 
       <CommandPalette />
       <WidgetsPanel />
+      <AiAssistant />
     </div>
   );
 }

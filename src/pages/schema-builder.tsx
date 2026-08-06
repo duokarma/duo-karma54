@@ -1,5 +1,5 @@
 import { useState, useCallback } from "react";
-import { Plus, Settings, Trash2, GripVertical, Database, ChevronRight, Sparkles, X, Check } from "lucide-react";
+import { Plus, Settings, Trash2, GripVertical, Database, ChevronRight, Sparkles, X, Check, Loader2 } from "lucide-react";
 import { m as motion, AnimatePresence } from "framer-motion";
 import { PageHeader } from "@/components/shared/page-header";
 import { Button } from "@/components/ui/button";
@@ -247,6 +247,7 @@ export function SchemaBuilderPage() {
   const [newDesc, setNewDesc] = useState("");
   const [newIcon, setNewIcon] = useState("Database");
   const [newFields, setNewFields] = useState<Array<Partial<DynamicSchemaField> & { _tempId: string }>>([]);
+  const [isGeneratingAi, setIsGeneratingAi] = useState(false);
 
   // Manage-fields state
   const [editName, setEditName] = useState("");
@@ -427,6 +428,47 @@ export function SchemaBuilderPage() {
     onError: (e: any) => toast({ title: "Error", description: e.message, variant: "error" }),
   });
 
+  const generateFields = async () => {
+    if (!newName.trim()) {
+      toast({ title: "Missing Name", description: "Please enter a section name first.", variant: "error" });
+      return;
+    }
+    
+    setIsGeneratingAi(true);
+    try {
+      const { data, error } = await supabase.functions.invoke("groq-chat", {
+        body: {
+          action: "schema",
+          prompt: `Generate a list of logical database fields for a schema named: "${newName}".`,
+          systemPrompt: `You are an expert database architect. Return ONLY valid JSON in this exact structure: { "fields": [ { "name": "Field Name", "type": "text|number|boolean|date|email|url|select|textarea", "options": ["opt1", "opt2"] /* only if type is select */ } ] }`
+        }
+      });
+      
+      if (error) throw error;
+      if (data.error) throw new Error(data.error);
+      
+      const content = JSON.parse(data.choices[0].message.content);
+      if (content.fields && Array.isArray(content.fields)) {
+        const aiFields = content.fields.map((f: any) => ({
+          _tempId: crypto.randomUUID(),
+          name: f.name || "Field",
+          type: f.type || "text",
+          is_required: false,
+          options: f.options || [],
+        }));
+        setNewFields(aiFields);
+        toast({ title: "Fields generated!", description: `AI generated ${aiFields.length} fields.`, variant: "success" });
+      } else {
+        throw new Error("Unexpected JSON structure");
+      }
+    } catch (err: any) {
+      console.error(err);
+      toast({ title: "AI Error", description: "Failed to generate fields.", variant: "error" });
+    } finally {
+      setIsGeneratingAi(false);
+    }
+  };
+
   // ── Field helpers ──
   const addField = (arr: typeof newFields, set: typeof setNewFields) => {
     set([...arr, { _tempId: crypto.randomUUID(), name: "", type: "text", is_required: false }]);
@@ -576,14 +618,27 @@ export function SchemaBuilderPage() {
             <div>
               <div className="mb-2 flex items-center justify-between">
                 <label className="text-xs font-medium text-ink-dim">Fields</label>
-                <Button
-                  size="sm"
-                  variant="ghost"
-                  type="button"
-                  onClick={() => addField(newFields, setNewFields)}
-                >
-                  <Plus className="h-3.5 w-3.5" /> Add Field
-                </Button>
+                <div className="flex gap-2">
+                  <Button
+                    size="sm"
+                    variant="outline"
+                    type="button"
+                    onClick={generateFields}
+                    disabled={isGeneratingAi}
+                    className="border-electric/30 text-electric hover:bg-electric/10 hover:border-electric/50"
+                  >
+                    {isGeneratingAi ? <Loader2 className="h-3.5 w-3.5 animate-spin mr-1" /> : <Sparkles className="h-3.5 w-3.5 mr-1" />}
+                    AI Generate
+                  </Button>
+                  <Button
+                    size="sm"
+                    variant="ghost"
+                    type="button"
+                    onClick={() => addField(newFields, setNewFields)}
+                  >
+                    <Plus className="h-3.5 w-3.5 mr-1" /> Add Field
+                  </Button>
+                </div>
               </div>
               <div className="space-y-2">
                 <AnimatePresence>
