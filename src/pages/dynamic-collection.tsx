@@ -397,7 +397,7 @@ export function DynamicCollectionPage() {
               description={
                 search
                   ? "Try a different search term."
-                  : "Click "Add Record" to add your first entry."
+                  : "Click 'Add Record' to add your first entry."
               }
               actionLabel={search ? "Clear search" : "Add Record"}
               onAction={search ? () => setSearch("") : openAddForm}
