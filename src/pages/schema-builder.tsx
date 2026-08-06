@@ -26,7 +26,7 @@ import { supabase } from "@/lib/supabase";
 import { useToast } from "@/components/ui/toast";
 import { cn } from "@/lib/utils";
 import type { DynamicSchema, DynamicSchemaField, FieldType } from "@/types";
-import { useNavigate } from "react-router-dom";
+
 
 // ── Icon picker options ────────────────────────────────────────────────────────
 const ICON_OPTIONS = [
