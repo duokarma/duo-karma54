@@ -14,7 +14,9 @@ CREATE TABLE clients (
   "projectsCount" INTEGER NOT NULL,
   "joinedDate" DATE NOT NULL,
   location TEXT NOT NULL,
-  tags TEXT[] NOT NULL
+  tags TEXT[] NOT NULL,
+  "amountPaid" NUMERIC DEFAULT 0,
+  "incomeType" TEXT DEFAULT 'one-time'
 );
 
 -- Leads Table
