@@ -2,7 +2,7 @@ import { useState } from "react";
 import { Command } from "cmdk";
 import { useNavigate } from "react-router-dom";
 import { m as motion, AnimatePresence } from "framer-motion";
-import { Search, ArrowRight, Clock, Pin, Plus } from "lucide-react";
+import { Search, ArrowRight } from "lucide-react";
 import { navItems } from "@/lib/nav-config";
 import { useCommandPalette } from "@/hooks/use-command-palette";
 import { useQuery } from "@tanstack/react-query";
