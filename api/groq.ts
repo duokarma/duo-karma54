@@ -164,7 +164,7 @@ export default async function handler(req: any, res: any) {
     let responseMessage = data.choices[0].message;
 
     // 2. Loop if the model wants to call tools
-    let MAX_LOOPS = 3; // Prevent infinite loops
+    let MAX_LOOPS = 7; // Prevent infinite loops
     let loops = 0;
     
     while (responseMessage.tool_calls && loops < MAX_LOOPS) {

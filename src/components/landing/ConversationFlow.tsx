@@ -1,6 +1,6 @@
 import React, { useState, useRef, useEffect } from 'react';
 import { m as motion, AnimatePresence } from 'framer-motion';
-import { Send, MessageCircle, Mail, Calendar, RefreshCw, Sparkles, ClipboardList, ChevronRight } from 'lucide-react';
+import { Send, Bot, MessageCircle, Mail, Calendar, RefreshCw, Sparkles, ClipboardList, ChevronRight } from 'lucide-react';
 import { COLORS } from './ui/theme';
 
 // ── Types ──────────────────────────────────────────────────────────────────────
@@ -101,7 +101,7 @@ const ChatBubble = ({ msg, accentColor }: { msg: Message; accentColor: string })
         background: `${accentColor}20`,
         display: 'flex', alignItems: 'center', justifyContent: 'center',
       }}>
-        <img src="/ai-brain.png" alt="AI Brain" style={{ width: 22, height: 22, objectFit: 'contain', filter: 'drop-shadow(0px 0px 6px rgba(45,212,191,0.6)) brightness(1.1)' }} />
+        <Bot size={14} color={accentColor} />
       </div>
     )}
     <div
@@ -410,7 +410,7 @@ export function ConversationFlow() {
             gap: 4,
           }}>
             <button style={tabStyle(activeTab === 'ai')} onClick={() => setActiveTab('ai')}>
-              <img src="/ai-brain.png" alt="AI Brain" style={{ width: 16, height: 16, objectFit: 'contain', filter: 'drop-shadow(0px 0px 4px rgba(45,212,191,0.6)) brightness(1.1)' }} />
+              <Bot size={14} />
               AI Chat
             </button>
             <button style={tabStyle(activeTab === 'lead')} onClick={() => setActiveTab('lead')}>
@@ -436,7 +436,7 @@ export function ConversationFlow() {
                 {aiTyping && (
                   <div style={{ display: 'flex', alignItems: 'flex-end', gap: 10, marginBottom: 16 }}>
                     <div style={{ width: 30, height: 30, borderRadius: '50%', background: `${themeColor}20`, display: 'flex', alignItems: 'center', justifyContent: 'center', flexShrink: 0 }}>
-                      <img src="/ai-brain.png" alt="AI Brain" style={{ width: 22, height: 22, objectFit: 'contain', filter: 'drop-shadow(0px 0px 6px rgba(45,212,191,0.6)) brightness(1.1)' }} />
+                      <Bot size={14} color={themeColor} />
                     </div>
                     <div style={{ padding: '12px 16px', borderRadius: '4px 18px 18px 18px', background: COLORS.surface, border: `1px solid ${COLORS.line}` }}>
                       <TypingDots color={themeColor} />
