@@ -1,5 +1,5 @@
-import { useState } from "react";
-import { Plus, Trash2, GripVertical, Database, ChevronRight, Sparkles, X, Check } from "lucide-react";
+import { useState, useCallback } from "react";
+import { Plus, Settings, Trash2, GripVertical, Database, ChevronRight, Sparkles, X, Check } from "lucide-react";
 import { m as motion, AnimatePresence } from "framer-motion";
 import { PageHeader } from "@/components/shared/page-header";
 import { Button } from "@/components/ui/button";
@@ -236,7 +236,6 @@ function SchemaCard({ schema, onManage, onDelete }: {
 export function SchemaBuilderPage() {
   const queryClient = useQueryClient();
   const { toast } = useToast();
-  const navigate = useNavigate();
 
   // Drawer states
   const [createOpen, setCreateOpen] = useState(false);
@@ -293,6 +292,17 @@ export function SchemaBuilderPage() {
   });
 
 
+  // Sync manageFields into local editFields when drawer opens
+  const openManage = useCallback((schema: DynamicSchema) => {
+    setSelectedSchema(schema);
+    setEditFields(
+      (manageFields.length
+        ? manageFields
+        : allFields.filter((f) => f.schema_id === schema.id)
+      ).map((f) => ({ ...f, _tempId: f.id }))
+    );
+    setManageOpen(true);
+  }, [manageFields, allFields]);
 
   // ── Mutations ──
   const createSchemaMutation = useMutation({
@@ -440,9 +450,7 @@ export function SchemaBuilderPage() {
               <SchemaCard
                 key={schema.id}
                 schema={{ ...schema, fieldCount: fieldCounts[schema.id] ?? 0 }}
-                onManage={() => {
-                  navigate(`/admin/custom/${schema.slug}`);
-                }}
+                onManage={() => openManage(schema)}
                 onDelete={() => {
                   if (confirm(`Delete "${schema.name}"? All its records will also be deleted.`)) {
                     deleteSchemaMutation.mutate(schema.id);
