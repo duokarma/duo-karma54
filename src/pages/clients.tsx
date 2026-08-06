@@ -59,7 +59,18 @@ export function ClientsPage() {
   const [query, setQuery] = useState("");
   const [statusFilter, setStatusFilter] = useState<string>("all");
   const [addOpen, setAddOpen] = useState(false);
-  const [selected, setSelected] = useState<Client | null>(null);
+  const [selectedId, setSelectedId] = useState<string | null>(null);
+
+  const { data: clients = [], isLoading } = useQuery({
+    queryKey: ["clients"],
+    queryFn: async () => {
+      const { data, error } = await supabase.from("clients").select("*");
+      if (error) throw error;
+      return data as Client[];
+    },
+  });
+
+  const selected = useMemo(() => clients.find(c => c.id === selectedId) || null, [clients, selectedId]);
 
   const { register, handleSubmit, reset, watch, formState: { errors } } = useForm<ClientFormValues>({
     resolver: zodResolver(clientSchema),
@@ -117,16 +128,7 @@ export function ClientsPage() {
     },
     onSuccess: () => {
       queryClient.invalidateQueries({ queryKey: ["clients"] });
-      setSelected(null);
-    },
-  });
-
-  const { data: clients = [], isLoading } = useQuery({
-    queryKey: ["clients"],
-    queryFn: async () => {
-      const { data, error } = await supabase.from("clients").select("*");
-      if (error) throw error;
-      return data as Client[];
+      setSelectedId(null);
     },
   });
 
@@ -265,7 +267,7 @@ export function ClientsPage() {
           />
         </Card>
       ) : (
-        <DataTable columns={columns} data={filtered} rowKey={(c) => c.id} onRowClick={setSelected} />
+        <DataTable columns={columns} data={filtered} rowKey={(c) => c.id} onRowClick={(c) => setSelectedId(c.id)} />
       )}
 
       {/* Add/Edit Client Drawer */}
@@ -378,7 +380,7 @@ export function ClientsPage() {
       </Drawer>
 
       {/* Client Detail Drawer */}
-      <Drawer open={!!selected && !addOpen} onOpenChange={(open) => !open && setSelected(null)}>
+      <Drawer open={!!selected && !addOpen} onOpenChange={(open) => !open && setSelectedId(null)}>
         <DrawerContent>
           {selected && !addOpen && (
             <>
