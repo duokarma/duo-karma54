@@ -88,49 +88,7 @@ export function CommandPalette() {
                   </motion.div>
                 </Command.Empty>
 
-                {search.length === 0 && (
-                  <>
-                    <Command.Group heading="Recent Actions" className="px-2 py-1.5 text-[10px] font-semibold uppercase tracking-wider text-ink-faint">
-                      {[
-                        { label: "Add new client", icon: Plus, path: "/admin/clients/new" },
-                        { label: "View financials", icon: Clock, path: "/admin/financials" },
-                      ].map((action, i) => (
-                        <Command.Item
-                          key={action.label}
-                          onSelect={() => go(action.path)}
-                          className="flex items-center gap-3 rounded-[var(--radius-control)] px-3 py-2.5 text-sm text-ink-dim aria-selected:bg-electric/15 aria-selected:text-ink cursor-pointer group"
-                        >
-                          <motion.div initial={{ opacity: 0, x: -10 }} animate={{ opacity: 1, x: 0 }} transition={{ delay: i * 0.05 }}>
-                            <action.icon className="h-4 w-4" />
-                          </motion.div>
-                          <motion.span initial={{ opacity: 0, x: -10 }} animate={{ opacity: 1, x: 0 }} transition={{ delay: i * 0.05 }}>
-                            {action.label}
-                          </motion.span>
-                          <ArrowRight className="ml-auto h-3.5 w-3.5 opacity-0 group-aria-selected:opacity-100" />
-                        </Command.Item>
-                      ))}
-                    </Command.Group>
-                    <Command.Group heading="Pinned Actions" className="px-2 py-1.5 text-[10px] font-semibold uppercase tracking-wider text-ink-faint">
-                      {[
-                        { label: "Create Project", icon: Pin, path: "/admin/projects/new" },
-                      ].map((action, i) => (
-                        <Command.Item
-                          key={action.label}
-                          onSelect={() => go(action.path)}
-                          className="flex items-center gap-3 rounded-[var(--radius-control)] px-3 py-2.5 text-sm text-ink-dim aria-selected:bg-electric/15 aria-selected:text-ink cursor-pointer group"
-                        >
-                          <motion.div initial={{ opacity: 0, x: -10 }} animate={{ opacity: 1, x: 0 }} transition={{ delay: i * 0.05 + 0.1 }}>
-                            <action.icon className="h-4 w-4" />
-                          </motion.div>
-                          <motion.span initial={{ opacity: 0, x: -10 }} animate={{ opacity: 1, x: 0 }} transition={{ delay: i * 0.05 + 0.1 }}>
-                            {action.label}
-                          </motion.span>
-                          <ArrowRight className="ml-auto h-3.5 w-3.5 opacity-0 group-aria-selected:opacity-100" />
-                        </Command.Item>
-                      ))}
-                    </Command.Group>
-                  </>
-                )}
+
 
                 <Command.Group heading="Pages" className="px-2 py-1.5 text-[10px] font-semibold uppercase tracking-wider text-ink-faint">
                   {navItems.map((item, i) => (
