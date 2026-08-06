@@ -1,7 +1,7 @@
 import { useState, useCallback } from "react";
 import { useParams, useNavigate } from "react-router-dom";
 import { Plus, Search, Trash2, Edit2, Database, ArrowLeft } from "lucide-react";
-import { m as motion, AnimatePresence } from "framer-motion";
+import { m as motion } from "framer-motion";
 import { PageHeader } from "@/components/shared/page-header";
 import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";

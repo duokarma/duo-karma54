@@ -1,10 +1,10 @@
-import { useState, useCallback } from "react";
-import { Plus, Settings, Trash2, GripVertical, Database, ChevronRight, Sparkles, X, Check } from "lucide-react";
+import { useState } from "react";
+import { Plus, Trash2, GripVertical, Database, ChevronRight, Sparkles, X, Check } from "lucide-react";
 import { m as motion, AnimatePresence } from "framer-motion";
 import { PageHeader } from "@/components/shared/page-header";
 import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
-import { Card, CardContent } from "@/components/ui/card";
+import { Card } from "@/components/ui/card";
 import { EmptyState } from "@/components/shared/empty-state";
 import {
   Select,
@@ -292,17 +292,7 @@ export function SchemaBuilderPage() {
     enabled: !!selectedSchema,
   });
 
-  // Sync manageFields into local editFields when drawer opens
-  const openManage = useCallback((schema: DynamicSchema) => {
-    setSelectedSchema(schema);
-    setEditFields(
-      (manageFields.length
-        ? manageFields
-        : allFields.filter((f) => f.schema_id === schema.id)
-      ).map((f) => ({ ...f, _tempId: f.id }))
-    );
-    setManageOpen(true);
-  }, [manageFields, allFields]);
+
 
   // ── Mutations ──
   const createSchemaMutation = useMutation({
