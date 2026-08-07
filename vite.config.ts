@@ -54,7 +54,7 @@ Guidelines:
                   // @ts-ignore: TS doesn't find types for this package
                   const { GoogleGenAI } = await import('@google/genai');
                   const ai = new GoogleGenAI({ apiKey });
-                  const models = ['gemini-2.5-flash', 'gemini-2.0-flash', 'gemini-1.5-flash'];
+                  const models = ['gemini-2.0-flash', 'gemini-1.5-flash'];
                   let text = '';
                   let success = false;
                   let isRateLimit = false;

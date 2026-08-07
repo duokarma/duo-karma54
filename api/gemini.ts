@@ -117,7 +117,7 @@ async function executeToolCall(toolCall: any) {
 
 async function fetchWithFallback(geminiApiKey: string, groqApiKey: string, payload: any) {
   // First, try Gemini models
-  const geminiModels = ['gemini-3.6-flash', 'gemini-flash-latest', 'gemini-2.5-flash', 'gemini-2.0-flash'];
+  const geminiModels = ['gemini-2.0-flash', 'gemini-1.5-flash'];
   let lastError = null;
 
   for (const model of geminiModels) {
@@ -131,7 +131,8 @@ async function fetchWithFallback(geminiApiKey: string, groqApiKey: string, paylo
       
       if (!res.ok) {
         const text = await res.text();
-        if (res.status === 429 || res.status === 503 || text.includes("UNAVAILABLE")) {
+        // Catch rate limits (429), server errors (503), model deprecations/not found (404, 400)
+        if (res.status === 429 || res.status === 503 || res.status === 404 || res.status === 400 || text.includes("UNAVAILABLE")) {
           lastError = text;
           continue;
         }
@@ -139,7 +140,7 @@ async function fetchWithFallback(geminiApiKey: string, groqApiKey: string, paylo
       }
       return res;
     } catch (err: any) {
-      if (err.message.includes("429") || err.message.includes("503") || err.message.includes("UNAVAILABLE")) {
+      if (err.message.includes("429") || err.message.includes("503") || err.message.includes("404") || err.message.includes("400") || err.message.includes("UNAVAILABLE")) {
         lastError = err.message;
         continue;
       }
