@@ -275,7 +275,7 @@ async function fetchWithFallback(groqApiKey: string, cerebrasApiKey: string, pay
   if (cerebrasApiKey) {
     console.log(`Groq failed (or missing key). Error: ${lastError}. Falling back to Cerebras...`);
     try {
-      payload.model = 'llama3.1-70b';
+      payload.model = 'llama3.1-8b';
       const res = await fetch("https://api.cerebras.ai/v1/chat/completions", {
         method: "POST",
         headers: { "Authorization": `Bearer ${cerebrasApiKey}`, "Content-Type": "application/json" },
