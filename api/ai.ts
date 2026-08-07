@@ -26,7 +26,7 @@ const TOOLS = [
       parameters: {
         type: "object",
         properties: {
-          schema_id: { type: "string", description: "The ID of the schema to fetch fields for." }
+          schema_id: { type: "string", description: "The EXACT 'id' field (UUID) from the list_schemas response. Do not use the slug or name." }
         },
         required: ["schema_id"]
       }
@@ -40,7 +40,7 @@ const TOOLS = [
       parameters: {
         type: "object",
         properties: {
-          schema_id: { type: "string", description: "The ID of the schema to search." },
+          schema_id: { type: "string", description: "The EXACT 'id' field (UUID) from the list_schemas response. Do not use the slug or name." },
           limit: { type: "number", description: "Number of records to return (max 50)." },
           search_term: { type: "string", description: "Optional search text to filter records." }
         },
