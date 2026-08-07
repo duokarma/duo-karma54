@@ -1,41 +1,49 @@
 import { createContext, useContext, useEffect, useState } from "react";
+import { User } from "@supabase/supabase-js";
+import { supabase } from "@/lib/supabase";
 
 type AuthContextType = {
+  user: User | null;
   isAuthenticated: boolean;
   isLoading: boolean;
-  signIn: () => void;
-  signOut: () => void;
+  signOut: () => Promise<void>;
 };
 
 const AuthContext = createContext<AuthContextType | undefined>(undefined);
 
 export function AuthProvider({ children }: { children: React.ReactNode }) {
-  const [isAuthenticated, setIsAuthenticated] = useState<boolean>(false);
+  const [user, setUser] = useState<User | null>(null);
   const [isLoading, setIsLoading] = useState(true);
 
-  // Check local storage on mount
   useEffect(() => {
-    const authStatus = localStorage.getItem("duokarma_auth");
-    if (authStatus === "true") {
-      setIsAuthenticated(true);
-    }
-    setIsLoading(false);
+    // Get initial session
+    supabase.auth.getSession().then(({ data: { session } }) => {
+      setUser(session?.user ?? null);
+      setIsLoading(false);
+    });
+
+    // Listen for auth changes
+    const { data: { subscription } } = supabase.auth.onAuthStateChange((_event, session) => {
+      setUser(session?.user ?? null);
+      setIsLoading(false);
+    });
+
+    return () => subscription.unsubscribe();
   }, []);
 
-
-
-  const signIn = () => {
-    localStorage.setItem("duokarma_auth", "true");
-    setIsAuthenticated(true);
-  };
-
-  const signOut = () => {
-    localStorage.removeItem("duokarma_auth");
-    setIsAuthenticated(false);
+  const signOut = async () => {
+    await supabase.auth.signOut();
   };
 
   return (
-    <AuthContext.Provider value={{ isAuthenticated, isLoading, signIn, signOut }}>
+    <AuthContext.Provider 
+      value={{ 
+        user, 
+        isAuthenticated: !!user, 
+        isLoading, 
+        signOut 
+      }}
+    >
       {children}
     </AuthContext.Provider>
   );
