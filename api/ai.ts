@@ -14,7 +14,7 @@ const RETRIABLE_STATUSES = new Set([402, 429, 502, 503, 504]);
 
 const MODELS = {
   GEMINI:     'gemini-1.5-flash',
-  OPENROUTER: 'google/gemini-1.5-flash',
+  OPENROUTER: 'google/gemma-3-27b-it:free',
   GROQ:       'llama-3.3-70b-versatile',
   CEREBRAS:   'gemma-4-31b',
 } as const;
