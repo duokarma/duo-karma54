@@ -115,13 +115,13 @@ async function executeToolCall(toolCall: any) {
   }
 }
 
-async function fetchWithFallback(geminiApiKey: string, payload: any) {
-  const models = ['gemini-3.6-flash', 'gemini-flash-latest', 'gemini-2.5-flash', 'gemini-2.0-flash'];
+async function fetchWithFallback(geminiApiKey: string, groqApiKey: string, payload: any) {
+  // First, try Gemini models
+  const geminiModels = ['gemini-3.6-flash', 'gemini-flash-latest', 'gemini-2.5-flash', 'gemini-2.0-flash'];
   let lastError = null;
 
-  for (const model of models) {
+  for (const model of geminiModels) {
     try {
-      // Overwrite the model in the payload for each attempt
       payload.model = model;
       const res = await fetch("https://generativelanguage.googleapis.com/v1beta/openai/chat/completions", {
         method: "POST",
@@ -131,13 +131,13 @@ async function fetchWithFallback(geminiApiKey: string, payload: any) {
       
       if (!res.ok) {
         const text = await res.text();
-        if (res.status === 429 || res.status === 503) {
+        if (res.status === 429 || res.status === 503 || text.includes("UNAVAILABLE")) {
           lastError = text;
-          continue; // Try next model
+          continue;
         }
         throw new Error(text);
       }
-      return res; // Success
+      return res;
     } catch (err: any) {
       if (err.message.includes("429") || err.message.includes("503") || err.message.includes("UNAVAILABLE")) {
         lastError = err.message;
@@ -146,7 +146,29 @@ async function fetchWithFallback(geminiApiKey: string, payload: any) {
       throw err;
     }
   }
-  throw new Error(`All models failed due to high demand. Last error: ${lastError}`);
+
+  // If all Gemini models fail, fallback to Groq (if key is available)
+  if (groqApiKey) {
+    console.log("All Gemini models failed. Falling back to Groq Llama 3...");
+    try {
+      payload.model = 'llama3-70b-8192'; // or llama-3.1-8b-instant
+      const res = await fetch("https://api.groq.com/openai/v1/chat/completions", {
+        method: "POST",
+        headers: { "Authorization": `Bearer ${groqApiKey}`, "Content-Type": "application/json" },
+        body: JSON.stringify(payload)
+      });
+
+      if (!res.ok) {
+        const text = await res.text();
+        throw new Error(`Groq Fallback Error: ${text}`);
+      }
+      return res;
+    } catch (err: any) {
+      throw new Error(`Gemini failed due to high demand (${lastError}), and Groq fallback also failed: ${err.message}`);
+    }
+  }
+
+  throw new Error(`All Gemini models failed due to high demand. No Groq API key available for fallback. Last error: ${lastError}`);
 }
 
 export default async function handler(req: any, res: any) {
@@ -164,6 +186,7 @@ export default async function handler(req: any, res: any) {
 
   try {
     const geminiApiKey = process.env.VITE_GEMINI_API_KEY;
+    const groqApiKey = process.env.GROQ_API_KEY || '';
     if (!geminiApiKey) {
       return res.status(500).json({ error: 'Missing VITE_GEMINI_API_KEY environment variable' });
     }
@@ -180,7 +203,7 @@ export default async function handler(req: any, res: any) {
           { role: "user", content: prompt }
         ]
       };
-      const r = await fetchWithFallback(geminiApiKey, payload);
+      const r = await fetchWithFallback(geminiApiKey, groqApiKey, payload);
       return res.status(200).json(await r.json());
     }
 
@@ -198,7 +221,7 @@ export default async function handler(req: any, res: any) {
       ...messages.filter((m: any) => m.role !== 'system')
     ];
 
-    let aiRes = await fetchWithFallback(geminiApiKey, {
+    let aiRes = await fetchWithFallback(geminiApiKey, groqApiKey, {
       messages: currentMessages,
       tools: TOOLS,
       tool_choice: "auto",
@@ -233,7 +256,7 @@ export default async function handler(req: any, res: any) {
       currentMessages.push(...toolResults);
 
       // Call Gemini again with the tool results
-      aiRes = await fetchWithFallback(geminiApiKey, {
+      aiRes = await fetchWithFallback(geminiApiKey, groqApiKey, {
         messages: currentMessages,
         tools: TOOLS,
         tool_choice: "auto",
