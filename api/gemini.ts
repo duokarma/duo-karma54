@@ -138,7 +138,7 @@ export default async function handler(req: any, res: any) {
 
     if (action === "schema") {
       const payload = {
-        model: "gemini-1.5-flash",
+        model: "gemini-2.5-flash",
         temperature: 0.7,
         response_format: { type: "json_object" },
         messages: [
@@ -174,7 +174,7 @@ export default async function handler(req: any, res: any) {
       method: "POST",
       headers: { "Authorization": `Bearer ${geminiApiKey}`, "Content-Type": "application/json" },
       body: JSON.stringify({
-        model: "gemini-1.5-flash",
+        model: "gemini-2.5-flash",
         messages: currentMessages,
         tools: TOOLS,
         tool_choice: "auto",
@@ -215,7 +215,7 @@ export default async function handler(req: any, res: any) {
         method: "POST",
         headers: { "Authorization": `Bearer ${geminiApiKey}`, "Content-Type": "application/json" },
         body: JSON.stringify({
-          model: "gemini-1.5-flash",
+          model: "gemini-2.5-flash",
           messages: currentMessages,
           tools: TOOLS,
           tool_choice: "auto",
