@@ -41,9 +41,11 @@ export function AiAssistant() {
 
     try {
       // Build the message history to send to Gemini
+      // Short-term memory optimization: only keep the last 10 messages (5 turns)
+      const recentMessages = messages.filter(m => m.role !== "system").slice(-10);
       const conversation = [
         { role: "system", content: "You are a helpful business assistant for DuoKarma Business Hub. Keep your answers concise, professional, and formatted nicely." },
-        ...messages.filter(m => m.role !== "system"),
+        ...recentMessages,
         userMsg
       ];
 
