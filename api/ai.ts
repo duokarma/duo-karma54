@@ -247,7 +247,7 @@ async function fetchWithFallback(geminiApiKey: string, groqApiKey: string, cereb
   if (geminiApiKey) {
     try {
       // Gemini 1.5 Flash via OpenAI compatibility endpoint
-      payload.model = 'gemini-1.5-flash';
+      payload.model = 'gemini-flash-latest';
       const res = await fetch("https://generativelanguage.googleapis.com/v1beta/openai/chat/completions", {
         method: "POST",
         headers: { "Authorization": `Bearer ${geminiApiKey}`, "Content-Type": "application/json" },
@@ -302,7 +302,7 @@ async function fetchWithFallback(geminiApiKey: string, groqApiKey: string, cereb
   if (cerebrasApiKey) {
     console.log(`Groq failed (or missing key). Error: ${lastError}. Falling back to Cerebras...`);
     try {
-      payload.model = 'llama3.1-8b';
+      payload.model = 'gemma-4-31b';
       const res = await fetch("https://api.cerebras.ai/v1/chat/completions", {
         method: "POST",
         headers: { "Authorization": `Bearer ${cerebrasApiKey}`, "Content-Type": "application/json" },
@@ -359,7 +359,7 @@ export default async function handler(req: any, res: any) {
 
     if (action === "schema") {
       const payload = {
-        model: "gemini-1.5-flash",
+        model: "gemini-flash-latest",
         temperature: 0.7,
         response_format: { type: "json_object" },
         messages: [
