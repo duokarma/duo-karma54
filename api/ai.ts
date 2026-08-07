@@ -42,6 +42,21 @@ const TOOLS = [
         required: ["schema_id"]
       }
     }
+  },
+  {
+    type: "function",
+    function: {
+      name: "insert_record",
+      description: "Insert a new record into a specific schema. Use this when the user asks to create or add something.",
+      parameters: {
+        type: "object",
+        properties: {
+          schema_id: { type: "string", description: "The EXACT 'id' field (UUID) from the list_schemas response." },
+          record: { type: "object", description: "A JSON object containing the field names and their values to insert." }
+        },
+        required: ["schema_id", "record"]
+      }
+    }
   }
 ];
 
@@ -105,6 +120,28 @@ async function executeToolCall(toolCall: any, supabase: any) {
         const { data, error } = await query;
         if (error) throw error;
         return data;
+      }
+    }
+    
+    else if (name === "insert_record") {
+      let recordToInsert = args.record;
+      // Add id if native schema and id missing
+      if (args.schema_id.startsWith("native_") && !recordToInsert.id) {
+        recordToInsert.id = Math.random().toString(36).substring(2, 15);
+      }
+      
+      if (args.schema_id.startsWith("native_")) {
+        const tableName = args.schema_id.replace("native_", "");
+        const { data, error } = await supabase.from(tableName).insert([recordToInsert]).select();
+        if (error) throw error;
+        return { success: true, data };
+      } else {
+        const { data, error } = await supabase
+          .from('dynamic_records')
+          .insert([{ schema_id: args.schema_id, data: recordToInsert }])
+          .select();
+        if (error) throw error;
+        return { success: true, data };
       }
     }
     
@@ -223,7 +260,7 @@ export default async function handler(req: any, res: any) {
     let currentMessages = [
       {
         role: 'system',
-        content: "You are duo-AI, a highly intelligent, proactive, Tony Stark JARVIS-like business assistant for DuoKarma. You are deeply integrated into the admin dashboard.\n\nIMPORTANT: If the user asks a casual question or greets you, respond conversationally with a sharp, professional, and slightly witty JARVIS-like tone. DO NOT call any tools.\n\nIF AND ONLY IF the user asks about their business data (e.g. 'Which client paid the most?', 'What are my projects?', 'give me the passwords'), you MUST act as an elite data analyst:\n1. Call `list_schemas` to find the exact `schema_id`.\n2. Call `search_records` using that `schema_id` to fetch the data. By default, it will fetch up to 1000 records so you can see everything.\n3. **CRITICAL**: Do NOT just spit out raw data. Analyze the data mathematically and logically. If they ask 'who paid the highest', find the maximum value and state it definitively like a genius AI. If they ask for totals, sum it up for them. Provide a precise, highly accurate, and impressive answer.\n\nDo not ask the user for a schema ID. Do not guess data. Always be incredibly helpful, highly capable, and fetch the exact requested data to provide the perfect answer."
+        content: "You are duo-AI, a highly intelligent, proactive, Tony Stark JARVIS-like business assistant for DuoKarma. You are deeply integrated into the admin dashboard.\n\nIMPORTANT: If the user asks a casual question or greets you, respond conversationally with a sharp, professional, and slightly witty JARVIS-like tone. DO NOT call any tools.\n\nIF the user asks about their business data (e.g. 'Which client paid the most?', 'What are my projects?', 'list incomplete records'), you MUST act as an elite data analyst:\n1. Call `list_schemas` to find the exact `schema_id`.\n2. Call `search_records` using that `schema_id` to fetch the data.\n3. **CRITICAL**: Analyze the data logically. If they ask for incomplete records, filter the data to find missing fields. Provide a precise, accurate answer.\n\nIF the user asks to ADD or CREATE something (e.g. 'add a new client named Hatim with phone 8758457909'):\n1. Call `list_schemas` to find the schema_id.\n2. Call `insert_record` with the schema_id and the fields they provided. DO NOT ask the user for missing fields; the database will use defaults for anything omitted.\n3. Confirm success conversationally."
       },
       ...messages.filter((m: any) => m.role !== 'system')
     ];
