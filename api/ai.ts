@@ -13,15 +13,17 @@ const MAX_SEARCH_LIMIT = 100;
 const RETRIABLE_STATUSES = new Set([402, 429, 502, 503, 504]);
 
 const MODELS = {
-  GEMINI:   'gemini-flash-latest',
-  GROQ:     'llama-3.3-70b-versatile',
-  CEREBRAS: 'gemma-4-31b',
+  GEMINI:     'gemini-1.5-flash',
+  OPENROUTER: 'google/gemini-1.5-flash',
+  GROQ:       'llama-3.3-70b-versatile',
+  CEREBRAS:   'gemma-4-31b',
 } as const;
 
 const ENDPOINTS = {
-  GEMINI:   'https://generativelanguage.googleapis.com/v1beta/openai/chat/completions',
-  GROQ:     'https://api.groq.com/openai/v1/chat/completions',
-  CEREBRAS: 'https://api.cerebras.ai/v1/chat/completions',
+  GEMINI:     'https://generativelanguage.googleapis.com/v1beta/openai/chat/completions',
+  OPENROUTER: 'https://openrouter.ai/api/v1/chat/completions',
+  GROQ:       'https://api.groq.com/openai/v1/chat/completions',
+  CEREBRAS:   'https://api.cerebras.ai/v1/chat/completions',
 } as const;
 
 // ─────────────────────────────────────────────────────────────────────────────
@@ -1199,6 +1201,8 @@ async function executeToolCall(toolCall: any, supabase: any, log: Logger, agentS
 // PROVIDER FALLBACK CHAIN
 // ─────────────────────────────────────────────────────────────────────────────
 
+const providerCooldowns = new Map<string, number>();
+
 interface ProviderConfig {
   name:     string;
   endpoint: string;
@@ -1268,23 +1272,31 @@ async function callProvider(
  * Falls through to the next provider only on retriable errors.
  */
 async function fetchWithFallback(
-  keys: { gemini: string; groq: string; cerebras: string },
+  keys: { gemini: string; groq: string; cerebras: string; openrouter: string },
   payload: Record<string, any>,
   log: Logger,
 ): Promise<Response> {
   const providers: ProviderConfig[] = [
-    keys.gemini   && { name: 'Gemini',   endpoint: ENDPOINTS.GEMINI,   apiKey: keys.gemini,   model: MODELS.GEMINI   },
-    keys.groq     && { name: 'Groq',     endpoint: ENDPOINTS.GROQ,     apiKey: keys.groq,     model: MODELS.GROQ     },
-    keys.cerebras && { name: 'Cerebras', endpoint: ENDPOINTS.CEREBRAS, apiKey: keys.cerebras, model: MODELS.CEREBRAS },
+    keys.gemini     && { name: 'Gemini',     endpoint: ENDPOINTS.GEMINI,     apiKey: keys.gemini,     model: MODELS.GEMINI     },
+    keys.openrouter && { name: 'OpenRouter', endpoint: ENDPOINTS.OPENROUTER, apiKey: keys.openrouter, model: MODELS.OPENROUTER },
+    keys.groq       && { name: 'Groq',       endpoint: ENDPOINTS.GROQ,       apiKey: keys.groq,       model: MODELS.GROQ       },
+    keys.cerebras   && { name: 'Cerebras',   endpoint: ENDPOINTS.CEREBRAS,   apiKey: keys.cerebras,   model: MODELS.CEREBRAS   },
   ].filter(Boolean) as ProviderConfig[];
 
   if (providers.length === 0) {
-    throw new Error('No AI providers configured. Set at least one of GEMINI_API_KEY, GROQ_API_KEY, or CEREBRAS_API_KEY.');
+    throw new Error('No AI providers configured. Set at least one AI provider API key.');
   }
 
   const errors: string[] = [];
 
   for (const provider of providers) {
+    const cooldownUntil = providerCooldowns.get(provider.name) || 0;
+    if (Date.now() < cooldownUntil) {
+      log.warn(`Skipping ${provider.name} (in cooldown for ${Math.round((cooldownUntil - Date.now()) / 1000)}s)`);
+      errors.push(`${provider.name}: Skipped due to active cooldown (rate limited)`);
+      continue;
+    }
+
     try {
       return await callProvider(provider, payload, log);
     } catch (err: any) {
@@ -1293,7 +1305,8 @@ async function fetchWithFallback(
         // Fatal error — surface immediately without trying the rest
         throw err;
       }
-      log.warn(`Falling back from ${provider.name} to next provider`);
+      log.warn(`Falling back from ${provider.name} to next provider. Initiating 60s cooldown.`);
+      providerCooldowns.set(provider.name, Date.now() + 60000);
     }
   }
 
@@ -1381,12 +1394,13 @@ export default async function handler(req: any, res: any) {
   try {
     // ── API keys ─────────────────────────────────────────────────────────
     const keys = {
-      gemini:   process.env.GEMINI_API_KEY   ?? '',
-      groq:     process.env.GROQ_API_KEY     ?? '',
-      cerebras: process.env.CEREBRAS_API_KEY ?? '',
+      gemini:     process.env.GEMINI_API_KEY     ?? '',
+      openrouter: process.env.OPENROUTER_API_KEY ?? '',
+      groq:       process.env.GROQ_API_KEY       ?? '',
+      cerebras:   process.env.CEREBRAS_API_KEY   ?? '',
     };
 
-    if (!keys.gemini && !keys.groq && !keys.cerebras) {
+    if (!keys.gemini && !keys.groq && !keys.cerebras && !keys.openrouter) {
       log.error('No API keys configured');
       return res.status(500).json({ error: 'Server configuration error: no AI provider keys are set.' });
     }
@@ -1559,7 +1573,7 @@ export default async function handler(req: any, res: any) {
       choices: [{
         message: {
           role:    'assistant',
-          content: `⚠️ Something went wrong on the server side. Please try again in a moment.\n\n_Details: ${error.message}_`,
+          content: `⚠️ The AI is temporarily unavailable. This is usually due to high traffic or exhausted free-tier API quotas. Please wait a few minutes before trying again.`,
         },
       }],
     });
