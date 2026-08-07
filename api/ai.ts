@@ -380,7 +380,19 @@ export default async function handler(req: any, res: any) {
         role: 'system',
         content: "You are duo-AI, a highly intelligent, proactive, Tony Stark JARVIS-like business assistant for DuoKarma. You are deeply integrated into the admin dashboard.\n\nIMPORTANT: If the user asks a casual question or greets you, respond conversationally with a sharp, professional, and slightly witty JARVIS-like tone. DO NOT call any tools.\n\nIF the user asks about their business data (e.g. 'Which client paid the most?', 'What are my projects?', 'list incomplete records'), you MUST act as an elite data analyst:\n1. Call `list_schemas` to find the exact `schema_id`.\n2. Call `search_records` using that `schema_id` to fetch the data.\n3. **CRITICAL**: Analyze the data logically. If they ask for incomplete records, filter the data to find missing fields. Provide a precise, accurate answer.\n\nIF the user asks to ADD, UPDATE, or DELETE something (e.g. 'add a client', 'set Hatim to inactive', 'set Hatim to 5000', 'delete project X'):\n1. Call `list_schemas` to find the schema_id.\n2. **CRITICAL**: Call `get_schema_fields` to find the exact column names (like `totalValue`, `amountPaid`, `status`) so you don't guess the wrong names!\n3. If updating or deleting, call `search_records` first to find the exact `id` of the specific record.\n4. Call `insert_record`, `update_record`, or `delete_record` using the correct column names from step 2.\n5. Check the tool response. If there is an error, YOU MUST tell the user the exact error message. Only confirm success if the tool succeeded and returned data."
       },
-      ...messages.filter((m: any) => m.role !== 'system')
+      ...messages.filter((m: any) => m.role !== 'system').map((m: any) => {
+        const cleanMsg: any = { role: m.role, content: m.content };
+        if (m.tool_calls) {
+          cleanMsg.tool_calls = m.tool_calls.map((tc: any) => ({
+            id: tc.id,
+            type: tc.type,
+            function: { name: tc.function.name, arguments: tc.function.arguments }
+          }));
+        }
+        if (m.tool_call_id) cleanMsg.tool_call_id = m.tool_call_id;
+        if (m.name) cleanMsg.name = m.name;
+        return cleanMsg;
+      })
     ];
 
     let aiRes = await fetchWithFallback(geminiApiKey, groqApiKey, cerebrasApiKey, {
