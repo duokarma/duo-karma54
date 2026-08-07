@@ -45,10 +45,10 @@ const clientSchema = z.object({
   phone: z.string().min(5, "Phone is required"),
   location: z.string().min(2, "Location is required"),
   status: z.enum(["active", "inactive"]).optional(),
-  totalValue: z.number().min(0).optional(),
+  totalValue: z.preprocess((val) => (val === "" || Number.isNaN(val) ? 0 : Number(val)), z.number().min(0).optional()),
   joinedDate: z.string().optional(),
   incomeType: z.enum(["one-time", "monthly", "yearly"]).optional(),
-  amountPaid: z.number().min(0).optional(),
+  amountPaid: z.preprocess((val) => (val === "" || Number.isNaN(val) ? 0 : Number(val)), z.number().min(0).optional()),
 });
 
 type ClientFormValues = z.infer<typeof clientSchema>;
@@ -109,8 +109,13 @@ export function ClientsPage() {
       const { id, ...updateData } = values;
       const { error } = await supabase.from("clients").update(updateData).eq("id", id);
       if (error) throw error;
+      return { id, ...updateData };
     },
-    onSuccess: () => {
+    onSuccess: (data) => {
+      queryClient.setQueryData(["clients"], (old: Client[] | undefined) => {
+        if (!old) return old;
+        return old.map(c => c.id === data.id ? { ...c, ...data } : c);
+      });
       queryClient.invalidateQueries({ queryKey: ["clients"] });
       setAddOpen(false);
       reset();
