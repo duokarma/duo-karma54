@@ -165,6 +165,14 @@
     from { opacity: 1; transform: translate(-50%, -50%) scale(1); }
     to   { opacity: 0; transform: translate(-50%, -50%) scale(0.96); }
   }
+  @keyframes dialog-zoom-in {
+    from { opacity: 0; transform: scale(0.92); }
+    to   { opacity: 1; transform: scale(1); }
+  }
+  @keyframes dialog-zoom-out {
+    from { opacity: 1; transform: scale(1); }
+    to   { opacity: 0; transform: scale(0.96); }
+  }
   @keyframes overlay-in {
     from { opacity: 0; backdrop-filter: blur(0px); -webkit-backdrop-filter: blur(0px); }
     to   { opacity: 1; backdrop-filter: blur(8px); -webkit-backdrop-filter: blur(8px); }
@@ -204,6 +212,9 @@
 
   [data-state="open"].dialog-content-anim { animation: dialog-in  0.4s cubic-bezier(0.175, 0.885, 0.32, 1.1) forwards; }
   [data-state="closed"].dialog-content-anim { animation: dialog-out  0.2s ease-in forwards; }
+  
+  [data-state="open"].dialog-zoom-anim { animation: dialog-zoom-in  0.4s cubic-bezier(0.175, 0.885, 0.32, 1.1) forwards; }
+  [data-state="closed"].dialog-zoom-anim { animation: dialog-zoom-out  0.2s ease-in forwards; }
   
   [data-state="open"].toast-anim { animation: toast-in  0.4s cubic-bezier(0.175, 0.885, 0.32, 1.1) forwards; }
   [data-state="closed"].toast-anim { animation: toast-out  0.2s ease-in forwards; }
