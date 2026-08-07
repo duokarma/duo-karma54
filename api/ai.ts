@@ -1480,7 +1480,15 @@ export default async function handler(req: any, res: any) {
       });
 
       // Push the assistant's tool-call message into history
-      currentMessages.push(responseMessage);
+      currentMessages.push({
+        role: responseMessage.role,
+        content: responseMessage.content ?? null,
+        tool_calls: responseMessage.tool_calls.map((tc: any) => ({
+          id: tc.id,
+          type: tc.type ?? 'function',
+          function: { name: tc.function.name, arguments: tc.function.arguments },
+        })),
+      });
 
       // Execute all tool calls in parallel
       const toolResults = await Promise.all(
