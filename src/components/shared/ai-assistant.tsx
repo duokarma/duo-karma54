@@ -14,8 +14,8 @@ export function AiAssistant() {
   const [isOpen, setIsOpen] = useState(false);
   const [messages, setMessages] = useState<Message[]>([
     {
-      role: "assistant",
-      content: "Hi! I'm your AI Business Assistant powered by Gemini. How can I help you today?",
+      role: 'assistant',
+      content: "Hi! I'm your duo-AI Business Assistant. How can I help you today?",
     },
   ]);
   const [input, setInput] = useState("");
@@ -44,7 +44,7 @@ export function AiAssistant() {
         userMsg
       ];
 
-      const response = await fetch("/api/gemini", {
+      const response = await fetch('/api/ai', {
         method: "POST",
         headers: { "Content-Type": "application/json" },
         body: JSON.stringify({ action: "chat", messages: conversation }),
@@ -108,8 +108,8 @@ export function AiAssistant() {
                   <Bot className="h-4 w-4" />
                 </div>
                 <div>
-                  <h3 className="text-sm font-semibold text-ink">AI Assistant</h3>
-                  <p className="text-[10px] text-ink-faint">Powered by Gemini</p>
+                  <h3 className="text-sm font-semibold text-ink">duo-AI Assistant</h3>
+                  <p className="text-[10px] text-ink-faint">Powered by duo-AI</p>
                 </div>
               </div>
               <Button

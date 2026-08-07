@@ -115,61 +115,60 @@ async function executeToolCall(toolCall: any) {
   }
 }
 
-async function fetchWithFallback(geminiApiKey: string, groqApiKey: string, payload: any) {
-  // First, try Gemini models
-  const geminiModels = ['gemini-2.0-flash', 'gemini-1.5-flash'];
+async function fetchWithFallback(groqApiKey: string, cerebrasApiKey: string, payload: any) {
   let lastError = null;
 
-  for (const model of geminiModels) {
-    try {
-      payload.model = model;
-      const res = await fetch("https://generativelanguage.googleapis.com/v1beta/openai/chat/completions", {
-        method: "POST",
-        headers: { "Authorization": `Bearer ${geminiApiKey}`, "Content-Type": "application/json" },
-        body: JSON.stringify(payload)
-      });
-      
-      if (!res.ok) {
-        const text = await res.text();
-        // Catch rate limits (429), server errors (503), model deprecations/not found (404, 400)
-        if (res.status === 429 || res.status === 503 || res.status === 404 || res.status === 400 || text.includes("UNAVAILABLE")) {
-          lastError = text;
-          continue;
-        }
-        throw new Error(text);
-      }
-      return res;
-    } catch (err: any) {
-      if (err.message.includes("429") || err.message.includes("503") || err.message.includes("404") || err.message.includes("400") || err.message.includes("UNAVAILABLE")) {
-        lastError = err.message;
-        continue;
-      }
-      throw err;
-    }
-  }
-
-  // If all Gemini models fail, fallback to Groq (if key is available)
+  // Try Groq First
   if (groqApiKey) {
-    console.log("All Gemini models failed. Falling back to Groq Llama 3...");
     try {
-      payload.model = 'llama-3.3-70b-versatile'; // Use valid Groq model
+      payload.model = 'llama-3.3-70b-versatile';
       const res = await fetch("https://api.groq.com/openai/v1/chat/completions", {
         method: "POST",
         headers: { "Authorization": `Bearer ${groqApiKey}`, "Content-Type": "application/json" },
         body: JSON.stringify(payload)
       });
-
+      
       if (!res.ok) {
         const text = await res.text();
-        throw new Error(`Groq Fallback Error: ${text}`);
+        if (res.status === 429 || res.status === 503 || res.status === 404 || res.status === 400) {
+          lastError = text;
+        } else {
+          throw new Error(`Groq API Error: ${text}`);
+        }
+      } else {
+        return res; // Success from Groq
       }
-      return res;
     } catch (err: any) {
-      throw new Error(`Gemini failed due to high demand (${lastError}), and Groq fallback also failed: ${err.message}`);
+      if (err.message.includes("429") || err.message.includes("503") || err.message.includes("404") || err.message.includes("400")) {
+        lastError = err.message;
+      } else {
+        throw err;
+      }
     }
   }
 
-  throw new Error(`All Gemini models failed due to high demand. No Groq API key available for fallback. Last error: ${lastError}`);
+  // Fallback to Cerebras
+  if (cerebrasApiKey) {
+    console.log(`Groq failed (or missing key). Error: ${lastError}. Falling back to Cerebras...`);
+    try {
+      payload.model = 'llama3.1-70b';
+      const res = await fetch("https://api.cerebras.ai/v1/chat/completions", {
+        method: "POST",
+        headers: { "Authorization": `Bearer ${cerebrasApiKey}`, "Content-Type": "application/json" },
+        body: JSON.stringify(payload)
+      });
+
+      if (!res.ok) {
+        const text = await res.text();
+        throw new Error(`Cerebras Fallback Error: ${text}`);
+      }
+      return res; // Success from Cerebras
+    } catch (err: any) {
+      throw new Error(`Primary AI failed (${lastError}), and backup AI also failed: ${err.message}`);
+    }
+  }
+
+  throw new Error(`All AI models failed. Groq Error: ${lastError}`);
 }
 
 export default async function handler(req: any, res: any) {
@@ -186,17 +185,18 @@ export default async function handler(req: any, res: any) {
   }
 
   try {
-    const geminiApiKey = process.env.VITE_GEMINI_API_KEY;
     const groqApiKey = process.env.GROQ_API_KEY || '';
-    if (!geminiApiKey) {
-      return res.status(500).json({ error: 'Missing VITE_GEMINI_API_KEY environment variable' });
+    const cerebrasApiKey = process.env.CEREBRAS_API_KEY || '';
+    
+    if (!groqApiKey && !cerebrasApiKey) {
+      return res.status(500).json({ error: 'Missing API keys. Please configure GROQ_API_KEY or CEREBRAS_API_KEY' });
     }
 
     const { action, prompt, messages, systemPrompt } = req.body;
 
     if (action === "schema") {
       const payload = {
-        model: "gemini-3.6-flash",
+        model: "llama-3.3-70b-versatile",
         temperature: 0.7,
         response_format: { type: "json_object" },
         messages: [
@@ -204,7 +204,7 @@ export default async function handler(req: any, res: any) {
           { role: "user", content: prompt }
         ]
       };
-      const r = await fetchWithFallback(geminiApiKey, groqApiKey, payload);
+      const r = await fetchWithFallback(groqApiKey, cerebrasApiKey, payload);
       return res.status(200).json(await r.json());
     }
 
@@ -212,8 +212,7 @@ export default async function handler(req: any, res: any) {
       return res.status(400).json({ error: "Invalid action" });
     }
 
-    // 1. Initial Call to Gemini with Tools
-    // Enforce the backend Agent system prompt (filter out any basic frontend system prompts)
+    // 1. Initial Call to AI with Tools
     let currentMessages = [
       {
         role: 'system',
@@ -222,7 +221,7 @@ export default async function handler(req: any, res: any) {
       ...messages.filter((m: any) => m.role !== 'system')
     ];
 
-    let aiRes = await fetchWithFallback(geminiApiKey, groqApiKey, {
+    let aiRes = await fetchWithFallback(groqApiKey, cerebrasApiKey, {
       messages: currentMessages,
       tools: TOOLS,
       tool_choice: "auto",
@@ -256,8 +255,8 @@ export default async function handler(req: any, res: any) {
       // Append tool results to history
       currentMessages.push(...toolResults);
 
-      // Call Gemini again with the tool results
-      aiRes = await fetchWithFallback(geminiApiKey, groqApiKey, {
+      // Call AI again with the tool results
+      aiRes = await fetchWithFallback(groqApiKey, cerebrasApiKey, {
         messages: currentMessages,
         tools: TOOLS,
         tool_choice: "auto",
@@ -270,7 +269,7 @@ export default async function handler(req: any, res: any) {
 
     return res.status(200).json(data);
   } catch (error: any) {
-    console.error("Gemini Handler Error:", error);
+    console.error("AI Handler Error:", error);
     return res.status(400).json({ error: error.message });
   }
 }
