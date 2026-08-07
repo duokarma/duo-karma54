@@ -1,10 +1,5 @@
 import { createClient } from '@supabase/supabase-js';
 
-const supabaseUrl = process.env.VITE_SUPABASE_URL || '';
-const supabaseKey = process.env.SUPABASE_SERVICE_ROLE_KEY || process.env.VITE_SUPABASE_ANON_KEY || '';
-
-const supabase = createClient(supabaseUrl, supabaseKey);
-
 const TOOLS = [
   {
     type: "function",
@@ -50,7 +45,7 @@ const TOOLS = [
   }
 ];
 
-async function executeToolCall(toolCall: any) {
+async function executeToolCall(toolCall: any, supabase: any) {
   const { name, arguments: argsString } = toolCall.function;
   const args = JSON.parse(argsString);
 
@@ -69,12 +64,7 @@ async function executeToolCall(toolCall: any) {
         { id: "native_tasks", name: "Tasks", slug: "tasks" },
         { id: "native_financial_metrics", name: "Monthly Financial Metrics (Chart Data for Revenue, Expenses, Profit)", slug: "financial_metrics" },
         { id: "native_expenses", name: "Expenses Log", slug: "expenses" },
-        { id: "native_invoices", name: "Invoices (Billing and line items)", slug: "invoices" },
-        { id: "native_team_members", name: "Team Members (Employees/Staff)", slug: "team_members" },
-        { id: "native_activities", name: "Recent Activities (Activity Log)", slug: "activities" },
         { id: "native_documents", name: "Documents (Uploaded files)", slug: "documents" },
-        { id: "native_portfolio_items", name: "Portfolio Items", slug: "portfolio_items" },
-        { id: "native_website_inquiries", name: "Website Inquiries (Messages from visitors)", slug: "website_inquiries" },
         { id: "native_client_growth", name: "Client Growth Analytics", slug: "client_growth" },
         { id: "native_lead_conversion", name: "Lead Conversion Analytics", slug: "lead_conversion" },
         { id: "native_expense_breakdown", name: "Expense Breakdown Analytics", slug: "expense_breakdown" }
@@ -185,7 +175,7 @@ export default async function handler(req: any, res: any) {
   if (req.method === 'OPTIONS') {
     res.setHeader('Access-Control-Allow-Origin', '*');
     res.setHeader('Access-Control-Allow-Methods', 'POST, OPTIONS');
-    res.setHeader('Access-Control-Allow-Headers', 'Content-Type');
+    res.setHeader('Access-Control-Allow-Headers', 'Content-Type, Authorization');
     return res.status(200).end();
   }
 
@@ -200,6 +190,18 @@ export default async function handler(req: any, res: any) {
     if (!groqApiKey && !cerebrasApiKey) {
       return res.status(500).json({ error: 'Missing API keys. Please configure GROQ_API_KEY or CEREBRAS_API_KEY' });
     }
+
+    const authHeader = req.headers.authorization;
+    const supabaseUrl = process.env.VITE_SUPABASE_URL || '';
+    const supabaseKey = process.env.VITE_SUPABASE_ANON_KEY || '';
+    
+    const supabase = createClient(supabaseUrl, supabaseKey, {
+      global: {
+        headers: {
+          ...(authHeader ? { Authorization: authHeader } : {})
+        }
+      }
+    });
 
     const { action, prompt, messages, systemPrompt } = req.body;
 
@@ -251,7 +253,7 @@ export default async function handler(req: any, res: any) {
       // Execute all tool calls in parallel
       const toolResults = await Promise.all(
         responseMessage.tool_calls.map(async (toolCall: any) => {
-          const result = await executeToolCall(toolCall);
+          const result = await executeToolCall(toolCall, supabase);
           return {
             tool_call_id: toolCall.id,
             role: "tool",
