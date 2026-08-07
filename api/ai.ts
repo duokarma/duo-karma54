@@ -10,7 +10,7 @@ const DEFAULT_SEARCH_LIMIT = 50;
 const MAX_SEARCH_LIMIT = 100;
 
 /** HTTP statuses that mean "try next provider"; anything else is fatal. */
-const RETRIABLE_STATUSES = new Set([429, 502, 503, 504]);
+const RETRIABLE_STATUSES = new Set([402, 429, 502, 503, 504]);
 
 const MODELS = {
   GEMINI:   'gemini-flash-latest',
