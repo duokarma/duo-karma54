@@ -31,12 +31,12 @@ const TOOLS = [
     type: "function",
     function: {
       name: "search_records",
-      description: "Search or list records from a specific schema.",
+      description: "Search or list records from a specific schema. Use this to fetch data to answer questions.",
       parameters: {
         type: "object",
         properties: {
-          schema_id: { type: "string", description: "The EXACT 'id' field (UUID) from the list_schemas response. Do not use the slug or name." },
-          limit: { type: "number", description: "Number of records to return (max 50)." },
+          schema_id: { type: "string", description: "The EXACT 'id' field (UUID) from the list_schemas response." },
+          limit: { type: "number", description: "Number of records to return (max 1000). Default is 1000 to allow full data analysis." },
           search_term: { type: "string", description: "Optional search text to filter records." }
         },
         required: ["schema_id"]
@@ -53,17 +53,16 @@ async function executeToolCall(toolCall: any, supabase: any) {
     if (name === "list_schemas") {
       const { data, error } = await supabase.from('dynamic_schemas').select('id, name, slug');
       if (error && error.code !== 'PGRST116') {
-        // Ignore RLS errors if no dynamic schemas exist yet
         console.error("Dynamic schema fetch error:", error);
       }
       
       const nativeSchemas = [
-        { id: "native_clients", name: "Clients (Contains totalValue/revenue, amountPaid, incomeType)", slug: "clients" },
+        { id: "native_clients", name: "Clients (Contains totalValue/revenue, amountPaid, incomeType, status)", slug: "clients" },
         { id: "native_leads", name: "Leads (Contains lead value and status)", slug: "leads" },
         { id: "native_projects", name: "Projects", slug: "projects" },
         { id: "native_tasks", name: "Tasks", slug: "tasks" },
         { id: "native_financial_metrics", name: "Monthly Financial Metrics (Chart Data for Revenue, Expenses, Profit)", slug: "financial_metrics" },
-        { id: "native_expenses", name: "Expenses Log", slug: "expenses" },
+        { id: "native_expenses", name: "Expenses Log (amount, category, description, date)", slug: "expenses" },
         { id: "native_documents", name: "Documents (Uploaded files)", slug: "documents" },
         { id: "native_client_growth", name: "Client Growth Analytics", slug: "client_growth" },
         { id: "native_lead_conversion", name: "Lead Conversion Analytics", slug: "lead_conversion" },
@@ -86,9 +85,10 @@ async function executeToolCall(toolCall: any, supabase: any) {
     } 
     
     else if (name === "search_records") {
+      const limit = args.limit || 1000;
       if (args.schema_id.startsWith("native_")) {
         const tableName = args.schema_id.replace("native_", "");
-        const { data, error } = await supabase.from(tableName).select('*').limit(args.limit || 50);
+        const { data, error } = await supabase.from(tableName).select('*').limit(limit);
         if (error) throw error;
         return data;
       } else {
@@ -96,7 +96,7 @@ async function executeToolCall(toolCall: any, supabase: any) {
           .from('dynamic_records')
           .select('*')
           .eq('schema_id', args.schema_id)
-          .limit(args.limit || 50);
+          .limit(limit);
           
         if (args.search_term) {
           query = query.textSearch('data', args.search_term);
@@ -117,7 +117,6 @@ async function executeToolCall(toolCall: any, supabase: any) {
 async function fetchWithFallback(groqApiKey: string, cerebrasApiKey: string, payload: any) {
   let lastError = null;
 
-  // Try Groq First
   if (groqApiKey) {
     try {
       payload.model = 'llama-3.3-70b-versatile';
@@ -135,7 +134,7 @@ async function fetchWithFallback(groqApiKey: string, cerebrasApiKey: string, pay
           throw new Error(`Groq API Error: ${text}`);
         }
       } else {
-        return res; // Success from Groq
+        return res;
       }
     } catch (err: any) {
       if (err.message.includes("429") || err.message.includes("503") || err.message.includes("404") || err.message.includes("400")) {
@@ -146,7 +145,6 @@ async function fetchWithFallback(groqApiKey: string, cerebrasApiKey: string, pay
     }
   }
 
-  // Fallback to Cerebras
   if (cerebrasApiKey) {
     console.log(`Groq failed (or missing key). Error: ${lastError}. Falling back to Cerebras...`);
     try {
@@ -161,7 +159,7 @@ async function fetchWithFallback(groqApiKey: string, cerebrasApiKey: string, pay
         const text = await res.text();
         throw new Error(`Cerebras Fallback Error: ${text}`);
       }
-      return res; // Success from Cerebras
+      return res;
     } catch (err: any) {
       throw new Error(`Primary AI failed (${lastError}), and backup AI also failed: ${err.message}`);
     }
@@ -171,7 +169,6 @@ async function fetchWithFallback(groqApiKey: string, cerebrasApiKey: string, pay
 }
 
 export default async function handler(req: any, res: any) {
-  // CORS handling
   if (req.method === 'OPTIONS') {
     res.setHeader('Access-Control-Allow-Origin', '*');
     res.setHeader('Access-Control-Allow-Methods', 'POST, OPTIONS');
@@ -188,7 +185,7 @@ export default async function handler(req: any, res: any) {
     const cerebrasApiKey = process.env.CEREBRAS_API_KEY || '';
     
     if (!groqApiKey && !cerebrasApiKey) {
-      return res.status(500).json({ error: 'Missing API keys. Please configure GROQ_API_KEY or CEREBRAS_API_KEY' });
+      return res.status(500).json({ error: 'Missing API keys.' });
     }
 
     const authHeader = req.headers.authorization;
@@ -223,11 +220,10 @@ export default async function handler(req: any, res: any) {
       return res.status(400).json({ error: "Invalid action" });
     }
 
-    // 1. Initial Call to AI with Tools
     let currentMessages = [
       {
         role: 'system',
-        content: "You are a helpful, data-aware business assistant for DuoKarma.\n\nIMPORTANT: If the user simply says hello, greets you, or asks a general question, just respond normally and conversationally. DO NOT call any tools.\n\nIF AND ONLY IF the user explicitly asks about their business data (e.g. 'How many clients do we have?', 'What are my projects?', 'give me the passwords from imp pass'), you must use your tools to find the answer:\n1. First, call `list_schemas` to find the exact `schema_id` for the topic.\n2. Next, call `search_records` using that `schema_id` to fetch the data.\n3. Answer the user based on the fetched data. If they ask for sensitive data like passwords that are stored in their schemas, give it to them, as you are their private assistant.\n\nDo not ask the user for a schema ID. Do not guess data. Always be helpful and fetch the requested data if it exists in a schema."
+        content: "You are duo-AI, a highly intelligent, proactive, Tony Stark JARVIS-like business assistant for DuoKarma. You are deeply integrated into the admin dashboard.\n\nIMPORTANT: If the user asks a casual question or greets you, respond conversationally with a sharp, professional, and slightly witty JARVIS-like tone. DO NOT call any tools.\n\nIF AND ONLY IF the user asks about their business data (e.g. 'Which client paid the most?', 'What are my projects?', 'give me the passwords'), you MUST act as an elite data analyst:\n1. Call `list_schemas` to find the exact `schema_id`.\n2. Call `search_records` using that `schema_id` to fetch the data. By default, it will fetch up to 1000 records so you can see everything.\n3. **CRITICAL**: Do NOT just spit out raw data. Analyze the data mathematically and logically. If they ask 'who paid the highest', find the maximum value and state it definitively like a genius AI. If they ask for totals, sum it up for them. Provide a precise, highly accurate, and impressive answer.\n\nDo not ask the user for a schema ID. Do not guess data. Always be incredibly helpful, highly capable, and fetch the exact requested data to provide the perfect answer."
       },
       ...messages.filter((m: any) => m.role !== 'system')
     ];
