@@ -70,6 +70,115 @@ const NATIVE_FIELDS: Record<string, Array<{ name: string; type: string }>> = {
 };
 
 // ─────────────────────────────────────────────────────────────────────────────
+// INPUT VALIDATION
+// ─────────────────────────────────────────────────────────────────────────────
+
+interface ValidationError { field: string; message: string; }
+type Validator = (record: Record<string, any>) => ValidationError[];
+
+/**
+ * Per-table domain validators. Each function receives the record/updates object
+ * and returns an array of field-level errors. An empty array means valid.
+ *
+ * Validators are intentionally lenient for UPDATE (partial patches) — they only
+ * fire when the field is present in the payload. For INSERT, required-field
+ * checks are handled separately by INSERT_REQUIRED_FIELDS below.
+ */
+const VALIDATORS: Record<string, Validator> = {
+  clients: (r) => {
+    const e: ValidationError[] = [];
+    if (r.name         !== undefined && (!r.name || r.name.trim().length < 2))
+      e.push({ field: 'name',        message: 'name must be at least 2 characters.' });
+    if (r.email        !== undefined && r.email && !/^[^\s@]+@[^\s@]+\.[^\s@]+$/.test(r.email))
+      e.push({ field: 'email',       message: 'email is not a valid email address.' });
+    if (r.totalValue   !== undefined && (typeof r.totalValue !== 'number' || r.totalValue < 0))
+      e.push({ field: 'totalValue',  message: 'totalValue must be a non-negative number.' });
+    if (r.amountPaid   !== undefined && (typeof r.amountPaid !== 'number' || r.amountPaid < 0))
+      e.push({ field: 'amountPaid',  message: 'amountPaid must be a non-negative number.' });
+    if (r.status       !== undefined && !['active', 'inactive'].includes(r.status))
+      e.push({ field: 'status',      message: 'status must be "active" or "inactive".' });
+    return e;
+  },
+  leads: (r) => {
+    const e: ValidationError[] = [];
+    if (r.value       !== undefined && (typeof r.value !== 'number' || r.value < 0))
+      e.push({ field: 'value',       message: 'value must be a non-negative number.' });
+    if (r.stage       !== undefined && !['new', 'negotiation', 'won'].includes(r.stage))
+      e.push({ field: 'stage',       message: 'stage must be "new", "negotiation", or "won".' });
+    if (r.probability !== undefined && (typeof r.probability !== 'number' || r.probability < 0 || r.probability > 100))
+      e.push({ field: 'probability', message: 'probability must be a number between 0 and 100.' });
+    return e;
+  },
+  projects: (r) => {
+    const e: ValidationError[] = [];
+    if (r.status   !== undefined && !['planning', 'in-progress', 'completed', 'on-hold'].includes(r.status))
+      e.push({ field: 'status',   message: 'status must be "planning", "in-progress", "completed", or "on-hold".' });
+    if (r.progress !== undefined && (typeof r.progress !== 'number' || r.progress < 0 || r.progress > 100))
+      e.push({ field: 'progress', message: 'progress must be a number between 0 and 100.' });
+    if (r.budget   !== undefined && (typeof r.budget   !== 'number' || r.budget   < 0))
+      e.push({ field: 'budget',   message: 'budget must be a non-negative number.' });
+    if (r.spent    !== undefined && (typeof r.spent    !== 'number' || r.spent    < 0))
+      e.push({ field: 'spent',    message: 'spent must be a non-negative number.' });
+    if (r.priority !== undefined && !['low', 'medium', 'high', 'urgent'].includes(r.priority))
+      e.push({ field: 'priority', message: 'priority must be "low", "medium", "high", or "urgent".' });
+    return e;
+  },
+  tasks: (r) => {
+    const e: ValidationError[] = [];
+    if (r.status   !== undefined && !['todo', 'in-progress', 'review', 'completed'].includes(r.status))
+      e.push({ field: 'status',   message: 'status must be "todo", "in-progress", "review", or "completed".' });
+    if (r.priority !== undefined && !['low', 'medium', 'high', 'urgent'].includes(r.priority))
+      e.push({ field: 'priority', message: 'priority must be "low", "medium", "high", or "urgent".' });
+    return e;
+  },
+  expenses: (r) => {
+    const e: ValidationError[] = [];
+    if (r.amount !== undefined && (typeof r.amount !== 'number' || r.amount < 0))
+      e.push({ field: 'amount', message: 'amount must be a non-negative number.' });
+    if (r.category !== undefined && (!r.category || typeof r.category !== 'string'))
+      e.push({ field: 'category', message: 'category must be a non-empty string.' });
+    return e;
+  },
+};
+
+/** Fields that MUST be present when creating a new record. */
+const INSERT_REQUIRED_FIELDS: Record<string, string[]> = {
+  clients:  ['name'],
+  leads:    ['name', 'stage'],
+  projects: ['name'],
+  tasks:    ['title'],
+  expenses: ['description', 'amount'],
+};
+
+/**
+ * Validates a record object against both required-field rules (insert mode)
+ * and domain rules. Returns a human-readable error string or null if valid.
+ */
+function validateRecord(
+  tableName: string,
+  record:    Record<string, any>,
+  mode:      'insert' | 'update',
+): string | null {
+  // Required-field check (insert only)
+  if (mode === 'insert') {
+    const required = INSERT_REQUIRED_FIELDS[tableName] ?? [];
+    const missing  = required.filter(f => record[f] === undefined || record[f] === null || record[f] === '');
+    if (missing.length > 0) {
+      return `Missing required fields for ${tableName}: ${missing.join(', ')}.`;
+    }
+  }
+
+  // Domain validation
+  const validator = VALIDATORS[tableName];
+  if (!validator) return null;
+
+  const errors = validator(record);
+  if (errors.length === 0) return null;
+
+  return `Validation failed:\n${errors.map(e => `  • ${e.field}: ${e.message}`).join('\n')}`;
+}
+
+// ─────────────────────────────────────────────────────────────────────────────
 // CRUD TOOLS  — fine-grained record-level operations
 // ─────────────────────────────────────────────────────────────────────────────
 
@@ -147,14 +256,16 @@ const CRUD_TOOLS = [
     type: 'function',
     function: {
       name: 'delete_record',
-      description: 'Delete a record from a schema. Use this when the user asks to delete or remove something.',
+      description: 'Permanently delete a record. IMPORTANT: You MUST call this with confirmed=false first to get a confirmation prompt to show the user. Only call again with confirmed=true after the user has explicitly said yes, confirmed, or agreed to the deletion.',
       parameters: {
         type: 'object',
         properties: {
-          schema_id: { type: 'string', description: "The EXACT 'id' field (UUID) from the list_schemas response." },
-          record_id: { type: 'string', description: 'The ID of the record to delete.' },
+          schema_id:   { type: 'string',  description: "The EXACT 'id' field (UUID) from the list_schemas response." },
+          record_id:   { type: 'string',  description: 'The ID of the record to delete.' },
+          record_name: { type: 'string',  description: 'The human-readable name/title of the record being deleted, shown in the confirmation prompt.' },
+          confirmed:   { type: 'boolean', description: 'Set to false for the initial confirmation request. Set to true ONLY after the user has explicitly confirmed.' },
         },
-        required: ['schema_id', 'record_id'],
+        required: ['schema_id', 'record_id', 'confirmed'],
       },
     },
   },
@@ -450,32 +561,51 @@ function sanitizeMessages(messages: any[]): any[] {
 
 // ─────────────────────────────────────────────────────────────────────────────
 // TOOL EXECUTION
-// ─────────────────────────────────────────────────────────────────────────────
+// ──────────────────────────────�      // ── insert_record ────────────────────────────────────────────────────
+      case 'insert_record': {
+        const { schema_id, record } = args;
+        if (!schema_id || typeof schema_id !== 'string') {
+          return { error: 'schema_id is required and must be a string.' };
+        }
+        if (!record || typeof record !== 'object' || Array.isArray(record)) {
+          return { error: 'record must be a non-null JSON object.' };
+        }
 
-async function executeToolCall(
-  toolCall: any,
-  supabase:  any,
-  log:       Logger,
-): Promise<Record<string, any>> {
-  const { name, arguments: rawArgs } = toolCall.function;
-  log.info(`Tool call: ${name}`);
+        // ── Validation ──────────────────────────────────────────────────────
+        if (schema_id.startsWith('native_')) {
+          const tableName  = schema_id.replace('native_', '');
+          const validError = validateRecord(tableName, record, 'insert');
+          if (validError) return { error: validError };
+        }
 
-  // 1. Parse arguments safely
-  let args: Record<string, any>;
-  try {
-    args = parseToolArgs(rawArgs, name);
-  } catch (err: any) {
-    log.error('Tool argument parse failed', { tool: name, error: err.message });
-    return { error: err.message };
-  }
+        // Ensure every new record gets a stable unique ID
+        const recordToInsert = { ...record };
+        if (!recordToInsert.id) {
+          recordToInsert.id = generateId();
+        }
 
-  // 2. Execute
-  try {
-    switch (name) {
+        if (schema_id.startsWith('native_')) {
+          const tableName = schema_id.replace('native_', '');
+          const { data, error } = await supabase
+            .from(tableName)
+            .insert([recordToInsert])
+            .select();
+          if (error) {
+            // Surface the Postgres constraint message directly so the AI can report it
+            return { error: `Insert failed: ${error.message}` };
+          }
+          log.info(`Inserted 1 record into ${tableName}`);
+          return {
+            success: true,
+            message: `Successfully created record in ${tableName}.`,
+            data,
+            mutatedTable: tableName,
+          };
+        }
 
-      // ── list_schemas ──────────────────────────────────────────────────────
-      case 'list_schemas': {
         const { data, error } = await supabase
+          .from('dynamic_records')
+          .insert([{ schema_id, data: recordToInsert }])ta, error } = await supabase
           .from('dynamic_schemas')
           .select('id, name, slug');
 
@@ -484,61 +614,119 @@ async function executeToolCall(
           log.warn('dynamic_schemas fetch error (non-fatal)', { code: error.code, msg: error.message });
         }
 
-        return { schemas: [...NATIVE_SCHEMAS, ...(data ?? [])] };
-      }
-
-      // ── get_schema_fields ────────────────────────────────────────────────
-      case 'get_schema_fields': {
-        const { schema_id } = args;
-        if (!schema_id || typeof schema_id !== 'string') {
-          return { error: 'schema_id is required and must be a string.' };
+        return { schemas: [...NATIVE_SCHEMAS, ...(d      // ── update_record ────────────────────────────────────────────────────
+      case 'update_record': {
+        const { schema_id, record_id, updates } = args;
+        if (!schema_id  || typeof schema_id  !== 'string') return { error: 'schema_id is required.'  };
+        if (!record_id  || typeof record_id  !== 'string') return { error: 'record_id is required.'  };
+        if (!updates    || typeof updates    !== 'object' || Array.isArray(updates)) {
+          return { error: 'updates must be a non-null JSON object.' };
+        }
+        if (Object.keys(updates).length === 0) {
+          return { error: 'updates object is empty — nothing to update.' };
         }
 
         if (schema_id.startsWith('native_')) {
-          const tableName = schema_id.replace('native_', '');
-          const fields    = NATIVE_FIELDS[tableName];
-          return fields
-            ? fields
-            : { message: `No explicit field map for "${tableName}". Infer columns from the table name.` };
+          const tableName  = schema_id.replace('native_', '');
+          const validError = validateRecord(tableName, updates, 'update');
+          if (validError) return { error: validError };
+
+          // Verify the record exists before attempting the update
+          const { data: existing, error: findErr } = await supabase
+            .from(tableName)
+            .select('id')
+            .eq('id', record_id)
+            .maybeSingle();
+          if (findErr) throw findErr;
+          if (!existing) {
+            return { error: `Record with id "${record_id}" not found in ${tableName}. Cannot update a record that does not exist.` };
+          }
+
+          const { data, error } = await supabase
+            .from(tableName)
+            .update(updates)
+            .eq('id', record_id)
+            .select();
+          if (error) return { error: `Update failed: ${error.message}` };
+          if (!data || data.length === 0) {
+            return { error: `Update had no effect for record "${record_id}" in ${tableName}.` };
+          }
+          log.info(`Updated record ${record_id} in ${tableName}`);
+          return {
+            success: true,
+            message: `Successfully updated record in ${tableName}.`,
+            data,
+            mutatedTable: tableName,
+          };
         }
 
         const { data, error } = await supabase
-          .from('dynamic_schema_fields')
-          .select('*')
-          .eq('schema_id', schema_id);
-        if (error) throw error;
-        return data ?? [];
-      }
+          .from('dynamic_records')
+          .update({ data: updates })
+          .eq('id', record_id)
+          .select();
+        if (error) return { error: `Update failed: ${error.message}` };
+        return { success: true, data, mutatedTable: 'dynamic_records' };
+      }mi      // ── delete_record ────────────────────────────────────────────────────
+      case 'delete_record': {
+        const { schema_id, record_id, record_name, confirmed } = args;
+        if (!schema_id || typeof schema_id !== 'string') return { error: 'schema_id is required.' };
+        if (!record_id || typeof record_id !== 'string') return { error: 'record_id is required.' };
 
-      // ── search_records ────────────────────────────────────────────────────
-      case 'search_records': {
-        const { schema_id, limit: rawLimit, search_term } = args;
-        if (!schema_id || typeof schema_id !== 'string') {
-          return { error: 'schema_id is required and must be a string.' };
+        // ── Two-phase confirmation gate ─────────────────────────────────────
+        // Phase 1: Return a confirmation prompt (confirmed=false).
+        // The AI shows this message to the user. The user must explicitly agree.
+        // Phase 2: Execute the delete only after confirmed=true.
+        if (!confirmed) {
+          const displayName = record_name
+            ? `"${record_name}"`
+            : `the record with ID ${record_id}`;
+          return {
+            requiresConfirmation: true,
+            confirmationPrompt:   `⚠️ **Confirmation required**: You are about to permanently delete ${displayName}. **This action cannot be undone.** Please reply with “yes, delete it” or “confirm” to proceed, or “cancel” to abort.`,
+          };
         }
 
-        // Clamp limit to a safe window
-        const limit = typeof rawLimit === 'number'
-          ? Math.min(Math.max(1, rawLimit), MAX_SEARCH_LIMIT)
-          : DEFAULT_SEARCH_LIMIT;
-
+        // Phase 2: Confirmed — proceed with deletion
         if (schema_id.startsWith('native_')) {
           const tableName = schema_id.replace('native_', '');
-          const { data, error } = await supabase
+
+          // Verify the record still exists before deleting
+          const { data: existing, error: findErr } = await supabase
             .from(tableName)
-            .select('*')
-            .limit(limit);
-          if (error) throw error;
-          return data ?? [];
+            .select('id')
+            .eq('id', record_id)
+            .maybeSingle();
+          if (findErr) throw findErr;
+          if (!existing) {
+            return { error: `Record with id "${record_id}" not found in ${tableName}. It may have already been deleted.` };
+          }
+
+          const { error } = await supabase
+            .from(tableName)
+            .delete()
+            .eq('id', record_id);
+          if (error) return { error: `Delete failed: ${error.message}` };
+
+          log.info(`Deleted record ${record_id} from ${tableName}`);
+          return {
+            success: true,
+            message: `Successfully deleted ${record_name ? `"${record_name}"` : 'the record'} from ${tableName}.`,
+            mutatedTable: tableName,
+          };
         }
 
-        // Dynamic collections — use ilike for basic text search
-        // (avoids the broken textSearch/tsvector path)
-        let query = supabase
+        const { error } = await supabase
           .from('dynamic_records')
-          .select('*')
-          .eq('schema_id', schema_id)
-          .limit(limit);
+          .delete()
+          .eq('id', record_id);
+        if (error) return { error: `Delete failed: ${error.message}` };
+        return {
+          success: true,
+          message: 'Successfully deleted the record.',
+          mutatedTable: 'dynamic_records',
+        };
+      }  .limit(limit);
 
         if (search_term && typeof search_term === 'string' && search_term.trim()) {
           query = query.ilike('data::text', `%${search_term.trim()}%`);
@@ -1175,17 +1363,33 @@ If the user asks about a specific named entity (e.g. "Tell me about Hatim's proj
 
 ## Write Operations (ADD / UPDATE / DELETE)
 If the user wants to create, modify, or delete something:
-1. Call \`list_schemas\` → get schema_id.
-2. Call \`get_schema_fields\` → get exact column names (critical: use \`totalValue\`, \`amountPaid\`, etc. exactly).
-3. If updating/deleting: call \`search_records\` to find the record's exact \`id\`.
-4. Call \`insert_record\`, \`update_record\`, or \`delete_record\` with correct column names.
-5. Report the result. If the tool returns an error, report it verbatim — never pretend success.
+
+**INSERT:**
+1. Call `list_schemas` → get schema_id.
+2. Call `get_schema_fields` → get exact column names.
+3. Call `insert_record`. If the tool returns a validation error, report it to the user and ask for correction. Never proceed with invalid data.
+
+**UPDATE:**
+1. Call `list_schemas` → get schema_id.
+2. Call `get_schema_fields` → get exact column names.
+3. Call `search_records` to find the exact `id` of the target record.
+4. Call `update_record`. Report any validation errors verbatim.
+
+**DELETE — MANDATORY TWO-STEP PROCESS:**
+1. Call `list_schemas` + `search_records` to find the exact `id` and name of the target record.
+2. Call `delete_record` with `confirmed: false` first. Show the `confirmationPrompt` from the response to the user verbatim.
+3. Wait for the user to explicitly say “yes”, “confirm”, or equivalent.
+4. Only then call `delete_record` again with `confirmed: true`.
+5. If the user says “no”, “cancel”, or similar, abort — do NOT call delete again.
+
+Rule: If any tool returns an `error` field, report the exact error message to the user. Never claim success unless `success: true` is in the response.
 
 ## Response Style
 - Lead with the answer, not the process.
 - Format currency as ₹X or ₹X,XXX.
 - Use percentages for rates and margins.
 - Be concise. Executives want the insight, not the raw numbers dump.`;
+
 
 export default async function handler(req: any, res: any) {
   // ── CORS pre-flight ──────────────────────────────────────────────────────
