@@ -293,7 +293,7 @@ export function ClientsPage() {
             } else {
               createMutation.mutate(data);
             }
-          })} className="space-y-4">
+          })} className="space-y-4 pb-12 sm:pb-4">
             <div>
               <label className="mb-1.5 block text-xs font-medium text-ink-dim">Full name</label>
               <Input placeholder="Rahul Sharma" {...register("name")} />
@@ -377,7 +377,18 @@ export function ClientsPage() {
               </div>
               <p className="mt-1.5 text-[10px] text-ink-dim">Update the Promised and Paid fields to recalculate the Due amount.</p>
             </div>
-            <Button className="w-full mt-4" type="submit" disabled={createMutation.isPending || editMutation.isPending}>
+            <Button 
+              className="w-full mt-4 h-12 text-base sm:h-10 sm:text-sm" 
+              type="submit" 
+              disabled={createMutation.isPending || editMutation.isPending}
+              onClick={handleSubmit((data) => {
+                if (selected) {
+                  editMutation.mutate({ ...data, id: selected.id });
+                } else {
+                  createMutation.mutate(data);
+                }
+              })}
+            >
               {createMutation.isPending || editMutation.isPending ? "Saving..." : "Save Client"}
             </Button>
           </form>
