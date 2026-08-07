@@ -45,10 +45,10 @@ const clientSchema = z.object({
   phone: z.string().min(5, "Phone is required"),
   location: z.string().min(2, "Location is required"),
   status: z.enum(["active", "inactive"]).optional(),
-  totalValue: z.preprocess((val) => (val === "" || Number.isNaN(val) ? 0 : Number(val)), z.number().min(0).optional()),
+  totalValue: z.number().min(0).optional(),
   joinedDate: z.string().optional(),
   incomeType: z.enum(["one-time", "monthly", "yearly"]).optional(),
-  amountPaid: z.preprocess((val) => (val === "" || Number.isNaN(val) ? 0 : Number(val)), z.number().min(0).optional()),
+  amountPaid: z.number().min(0).optional(),
 });
 
 type ClientFormValues = z.infer<typeof clientSchema>;
@@ -361,12 +361,12 @@ export function ClientsPage() {
             <div className="grid grid-cols-2 gap-4">
               <div>
                 <label className="mb-1.5 block text-xs font-medium text-ink-dim">Total Promised (₹)</label>
-                <Input type="number" placeholder="0" {...register("totalValue", { valueAsNumber: true })} />
+                <Input type="number" placeholder="0" {...register("totalValue", { setValueAs: (v) => v === "" || Number.isNaN(v) ? 0 : Number(v) })} />
                 {errors.totalValue && <p className="mt-1 text-[10px] text-rose">{errors.totalValue.message}</p>}
               </div>
               <div>
                 <label className="mb-1.5 block text-xs font-medium text-ink-dim">Amount Paid (₹)</label>
-                <Input type="number" placeholder="0" {...register("amountPaid", { valueAsNumber: true })} />
+                <Input type="number" placeholder="0" {...register("amountPaid", { setValueAs: (v) => v === "" || Number.isNaN(v) ? 0 : Number(v) })} />
                 {errors.amountPaid && <p className="mt-1 text-[10px] text-rose">{errors.amountPaid.message}</p>}
               </div>
             </div>
