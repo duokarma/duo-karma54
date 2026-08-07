@@ -16,14 +16,12 @@ const MODELS = {
   GEMINI:     'gemini-1.5-flash',
   OPENROUTER: 'google/gemma-3-27b-it:free',
   GROQ:       'llama-3.3-70b-versatile',
-  CEREBRAS:   'gemma-4-31b',
 } as const;
 
 const ENDPOINTS = {
   GEMINI:     'https://generativelanguage.googleapis.com/v1beta/openai/chat/completions',
   OPENROUTER: 'https://openrouter.ai/api/v1/chat/completions',
   GROQ:       'https://api.groq.com/openai/v1/chat/completions',
-  CEREBRAS:   'https://api.cerebras.ai/v1/chat/completions',
 } as const;
 
 // ─────────────────────────────────────────────────────────────────────────────
@@ -1272,7 +1270,7 @@ async function callProvider(
  * Falls through to the next provider only on retriable errors.
  */
 async function fetchWithFallback(
-  keys: { gemini: string; groq: string; cerebras: string; openrouter: string },
+  keys: { gemini: string; groq: string; openrouter: string },
   payload: Record<string, any>,
   log: Logger,
 ): Promise<Response> {
@@ -1280,7 +1278,6 @@ async function fetchWithFallback(
     keys.gemini     && { name: 'Gemini',     endpoint: ENDPOINTS.GEMINI,     apiKey: keys.gemini,     model: MODELS.GEMINI     },
     keys.openrouter && { name: 'OpenRouter', endpoint: ENDPOINTS.OPENROUTER, apiKey: keys.openrouter, model: MODELS.OPENROUTER },
     keys.groq       && { name: 'Groq',       endpoint: ENDPOINTS.GROQ,       apiKey: keys.groq,       model: MODELS.GROQ       },
-    keys.cerebras   && { name: 'Cerebras',   endpoint: ENDPOINTS.CEREBRAS,   apiKey: keys.cerebras,   model: MODELS.CEREBRAS   },
   ].filter(Boolean) as ProviderConfig[];
 
   if (providers.length === 0) {
@@ -1397,10 +1394,9 @@ export default async function handler(req: any, res: any) {
       gemini:     process.env.GEMINI_API_KEY     ?? '',
       openrouter: process.env.OPENROUTER_API_KEY ?? '',
       groq:       process.env.GROQ_API_KEY       ?? '',
-      cerebras:   process.env.CEREBRAS_API_KEY   ?? '',
     };
 
-    if (!keys.gemini && !keys.groq && !keys.cerebras && !keys.openrouter) {
+    if (!keys.gemini && !keys.groq && !keys.openrouter) {
       log.error('No API keys configured');
       return res.status(500).json({ error: 'Server configuration error: no AI provider keys are set.' });
     }
