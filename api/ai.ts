@@ -13,9 +13,11 @@ const MAX_SEARCH_LIMIT = 100;
 const RETRIABLE_STATUSES = new Set([402, 429, 502, 503, 504]);
 
 const MODELS = {
-  GEMINI:     'gemini-1.5-flash',
-  OPENROUTER: 'google/gemma-3-27b-it:free',
-  GROQ:       'llama-3.3-70b-versatile',
+  GEMINI:              'gemini-1.5-flash',
+  OPENROUTER_GEMMA:    'google/gemma-3-27b-it:free',
+  OPENROUTER_QWEN:     'qwen/qwen3-32b:free',
+  OPENROUTER_DEEPSEEK: 'deepseek/deepseek-r1-distill-llama-70b:free',
+  GROQ:                'llama-3.3-70b-versatile',
 } as const;
 
 const ENDPOINTS = {
@@ -1275,9 +1277,11 @@ async function fetchWithFallback(
   log: Logger,
 ): Promise<Response> {
   const providers: ProviderConfig[] = [
-    keys.gemini     && { name: 'Gemini',     endpoint: ENDPOINTS.GEMINI,     apiKey: keys.gemini,     model: MODELS.GEMINI     },
-    keys.openrouter && { name: 'OpenRouter', endpoint: ENDPOINTS.OPENROUTER, apiKey: keys.openrouter, model: MODELS.OPENROUTER },
-    keys.groq       && { name: 'Groq',       endpoint: ENDPOINTS.GROQ,       apiKey: keys.groq,       model: MODELS.GROQ       },
+    keys.gemini     && { name: 'Gemini',               endpoint: ENDPOINTS.GEMINI,     apiKey: keys.gemini,     model: MODELS.GEMINI              },
+    keys.openrouter && { name: 'OpenRouter (Gemma)',   endpoint: ENDPOINTS.OPENROUTER, apiKey: keys.openrouter, model: MODELS.OPENROUTER_GEMMA    },
+    keys.openrouter && { name: 'OpenRouter (Qwen)',    endpoint: ENDPOINTS.OPENROUTER, apiKey: keys.openrouter, model: MODELS.OPENROUTER_QWEN     },
+    keys.openrouter && { name: 'OpenRouter (DeepSeek)',endpoint: ENDPOINTS.OPENROUTER, apiKey: keys.openrouter, model: MODELS.OPENROUTER_DEEPSEEK },
+    keys.groq       && { name: 'Groq',                 endpoint: ENDPOINTS.GROQ,       apiKey: keys.groq,       model: MODELS.GROQ                },
   ].filter(Boolean) as ProviderConfig[];
 
   if (providers.length === 0) {
