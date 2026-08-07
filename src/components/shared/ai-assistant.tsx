@@ -1,4 +1,4 @@
-import { useState, useRef, useEffect } from "react";
+import { useState, useRef, useEffect, useCallback } from "react";
 import { m as motion, AnimatePresence } from "framer-motion";
 import { Bot, X, Send, Loader2, Sparkles } from "lucide-react";
 import { Button } from "@/components/ui/button";
@@ -6,32 +6,102 @@ import { Input } from "@/components/ui/input";
 import { cn } from "@/lib/utils";
 import { supabase } from "@/lib/supabase";
 import { useQueryClient } from "@tanstack/react-query";
+import { buildContextBlock, updateContext } from "@/lib/ai-context";
+
+// ─── Types ───────────────────────────────────────────────────────────────────
 
 interface Message {
   role: "user" | "assistant" | "system";
   content: string;
 }
 
+// ─── Constants ────────────────────────────────────────────────────────────────
+
+/** Short-term memory: only the last N non-system messages are sent per request */
+const MAX_HISTORY_MESSAGES = 10;
+
+/**
+ * Map native table names returned in the `mutatedTable` tool result hint
+ * to the React Query cache keys used by dashboard pages.
+ * Only tables whose pages use useQuery need to be listed here.
+ */
+const TABLE_TO_QUERY_KEY: Record<string, string> = {
+  clients:          "clients",
+  leads:            "leads",
+  projects:         "projects",
+  tasks:            "tasks",
+  expenses:         "expenses",
+  documents:        "documents",
+  dynamic_records:  "dynamic_records",
+};
+
+// ─── Helpers ──────────────────────────────────────────────────────────────────
+
+/**
+ * Converts a raw error (possibly raw JSON from an AI provider) into a
+ * clean, user-readable string. The user should never see raw JSON.
+ */
+function extractUserFriendlyError(err: any): string {
+  const raw: string = err?.message ?? String(err);
+
+  // If the message looks like raw JSON (starts with '{'), try to parse it
+  // and pull out just the human message portion.
+  if (raw.trimStart().startsWith("{")) {
+    try {
+      const parsed = JSON.parse(raw);
+      const inner  = parsed?.error?.message ?? parsed?.message;
+      if (inner && typeof inner === "string") {
+        // Strip the rate-limit upgrade CTA that Groq appends
+        return inner.split(". Need more tokens?")[0];
+      }
+    } catch {
+      // Not valid JSON — fall through to default below
+    }
+  }
+
+  // Generic provider errors
+  if (raw.includes("rate_limit_exceeded") || raw.includes("Rate limit")) {
+    return "The AI is handling a lot of requests right now. Please wait a few seconds and try again.";
+  }
+  if (raw.includes("timeout")) {
+    return "The AI took too long to respond. Please try again.";
+  }
+  if (raw.includes("All AI providers failed")) {
+    return "All AI providers are temporarily unavailable. Please try again in a minute.";
+  }
+
+  return raw;
+}
+
+// ─── Component ────────────────────────────────────────────────────────────────
+
 export function AiAssistant() {
   const queryClient = useQueryClient();
-  const [isOpen, setIsOpen] = useState(false);
-  const [messages, setMessages] = useState<Message[]>([
-    {
-      role: 'assistant',
-      content: "Hi! I'm your duo-AI Business Assistant. How can I help you today?",
-    },
-  ]);
-  const [input, setInput] = useState("");
-  const [isLoading, setIsLoading] = useState(false);
-  const messagesEndRef = useRef<HTMLDivElement>(null);
 
+  const [isOpen,     setIsOpen]     = useState(false);
+  const [messages,   setMessages]   = useState<Message[]>([
+    { role: "assistant", content: "Hi! I'm your duo-AI Business Assistant. How can I help you today?" },
+  ]);
+  const [input,      setInput]      = useState("");
+  const [isLoading,  setIsLoading]  = useState(false);
+
+  const messagesEndRef = useRef<HTMLDivElement>(null);
+  // Holds the AbortController for the current in-flight request
+  const abortRef = useRef<AbortController | null>(null);
+
+  // Auto-scroll to bottom whenever messages change or window opens
   useEffect(() => {
-    if (messagesEndRef.current) {
-      messagesEndRef.current.scrollIntoView({ behavior: "smooth" });
-    }
+    messagesEndRef.current?.scrollIntoView({ behavior: "smooth" });
   }, [messages, isOpen]);
 
-  const handleSend = async () => {
+  // Cancel any in-flight request when the component unmounts
+  useEffect(() => {
+    return () => {
+      abortRef.current?.abort();
+    };
+  }, []);
+
+  const handleSend = useCallback(async () => {
     if (!input.trim() || isLoading) return;
 
     const userMsg: Message = { role: "user", content: input.trim() };
@@ -39,50 +109,126 @@ export function AiAssistant() {
     setInput("");
     setIsLoading(true);
 
+    // Cancel any previous in-flight request before starting a new one
+    abortRef.current?.abort();
+    const controller  = new AbortController();
+    abortRef.current  = controller;
+
     try {
-      // Build the message history to send to Gemini
-      // Short-term memory optimization: only keep the last 10 messages (5 turns)
-      const recentMessages = messages.filter(m => m.role !== "system").slice(-10);
+      // Build conversation: system prompt is set server-side,
+      // so we only send the recent user/assistant history.
+      // We prepend a lightweight context block to the placeholder system message
+      // so the server can inject it at the top of the authoritative system prompt.
+      const contextBlock  = buildContextBlock(window.location.pathname);
+      const recentMessages = messages
+        .filter((m) => m.role !== "system")
+        .slice(-MAX_HISTORY_MESSAGES);
+
       const conversation = [
-        { role: "system", content: "You are a helpful business assistant for DuoKarma Business Hub. Keep your answers concise, professional, and formatted nicely." },
+        {
+          role:    "system",
+          // The server overwrites this with its authoritative SYSTEM_PROMPT,
+          // but it reads the `contextBlock` prefix from the first system message
+          // to inject current-page / focused-entity context.
+          content: contextBlock + "You are a helpful business assistant for DuoKarma Business Hub.",
+        },
         ...recentMessages,
-        userMsg
+        userMsg,
       ];
 
+      // Attach Supabase JWT when available (enables RLS-aware queries)
       const { data: { session } } = await supabase.auth.getSession();
       const token = session?.access_token;
 
-      const response = await fetch('/api/ai', {
-        method: "POST",
-        headers: { 
+      const response = await fetch("/api/ai", {
+        method:  "POST",
+        signal:  controller.signal,
+        headers: {
           "Content-Type": "application/json",
-          ...(token ? { Authorization: `Bearer ${token}` } : {})
+          ...(token ? { Authorization: `Bearer ${token}` } : {}),
         },
         body: JSON.stringify({ action: "chat", messages: conversation }),
       });
 
+      // The refactored api/ai.ts always returns 200 with a choices[] structure.
+      // Network failures (no connection, DNS failure) still throw.
       const data = await response.json();
-      if (!response.ok) throw new Error(data.error || "Failed to fetch");
-      
-      // Invalidate queries to refresh data in real-time if AI modified anything
-      queryClient.invalidateQueries();
 
-      const aiResponse = data.choices[0].message.content || "Hmm, I tried to process that but something went wrong. Let's try again.";
-      
+      if (!response.ok) {
+        // Unexpected non-200 — surface the error field if present
+        throw new Error(data?.error ?? `Server error ${response.status}`);
+      }
+
+      const aiContent = data?.choices?.[0]?.message?.content;
+      if (!aiContent) {
+        throw new Error("Received an empty response from the AI.");
+      }
+
+      // ── Working memory + targeted cache invalidation ──────────────────────
+      // `_context.touchedRecords` is the primary, reliable source:
+      //   - Set by the server tool loop for search/insert/update operations.
+      //   - Used to update the context manager AND invalidate specific caches.
+      // Text-heuristic scan is the fallback for conversational turns with no tools.
+      try {
+        const touchedRecords: Array<{ id: string; name: string; table: string }> =
+          data?._context?.touchedRecords ?? [];
+
+        // Update lightweight working memory
+        if (touchedRecords.length > 0) {
+          updateContext(touchedRecords);
+        }
+
+        // Targeted cache invalidation from server hints
+        const mutatedTables = new Set<string>(
+          touchedRecords
+            .map((r) => TABLE_TO_QUERY_KEY[r.table])
+            .filter(Boolean)
+        );
+
+        // Fallback: heuristic text scan if server sent no hints
+        if (mutatedTables.size === 0) {
+          const lower = aiContent.toLowerCase();
+          for (const [table, queryKey] of Object.entries(TABLE_TO_QUERY_KEY)) {
+            if (lower.includes(table.replace("_", " ")) || lower.includes(table)) {
+              mutatedTables.add(queryKey);
+            }
+          }
+        }
+
+        if (mutatedTables.size > 0) {
+          for (const key of mutatedTables) {
+            queryClient.invalidateQueries({ queryKey: [key] });
+          }
+        }
+        // No invalidation needed for purely conversational turns
+      } catch {
+        // Never let context logic break the chat
+        queryClient.invalidateQueries();
+      }
+
       setMessages((prev) => [
         ...prev,
-        { role: "assistant", content: aiResponse },
+        { role: "assistant", content: aiContent },
       ]);
+
     } catch (err: any) {
+      // Ignore AbortError — user or unmount triggered the cancel
+      if (err?.name === "AbortError") return;
+
       console.error("AI Error:", err);
+
       setMessages((prev) => [
         ...prev,
-        { role: "assistant", content: `❌ Error: ${err.message || "Failed to connect to AI."}` },
+        {
+          role:    "assistant",
+          content: `❌ ${extractUserFriendlyError(err)}`,
+        },
       ]);
     } finally {
       setIsLoading(false);
+      abortRef.current = null;
     }
-  };
+  }, [input, isLoading, messages, queryClient]);
 
   return (
     <>
@@ -161,6 +307,7 @@ export function AiAssistant() {
                   </span>
                 </div>
               ))}
+
               {isLoading && (
                 <div className="flex items-center gap-2 text-ink-faint mr-auto">
                   <div className="flex h-8 w-8 items-center justify-center rounded-full bg-graphite border border-edge">
@@ -169,6 +316,7 @@ export function AiAssistant() {
                   <span className="text-xs">Thinking...</span>
                 </div>
               )}
+
               <div ref={messagesEndRef} />
             </div>
 
