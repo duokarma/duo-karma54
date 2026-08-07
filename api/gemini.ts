@@ -152,7 +152,7 @@ async function fetchWithFallback(geminiApiKey: string, groqApiKey: string, paylo
   if (groqApiKey) {
     console.log("All Gemini models failed. Falling back to Groq Llama 3...");
     try {
-      payload.model = 'llama3-70b-8192'; // or llama-3.1-8b-instant
+      payload.model = 'llama-3.3-70b-versatile'; // Use valid Groq model
       const res = await fetch("https://api.groq.com/openai/v1/chat/completions", {
         method: "POST",
         headers: { "Authorization": `Bearer ${groqApiKey}`, "Content-Type": "application/json" },
