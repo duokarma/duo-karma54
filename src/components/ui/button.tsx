@@ -2,8 +2,7 @@ import * as React from "react";
 import { Slot } from "@radix-ui/react-slot";
 import { cva, type VariantProps } from "class-variance-authority";
 import { cn } from "@/lib/utils";
-import { m as motion } from "framer-motion";
-import { MagneticWrapper } from "@/components/premium";
+// imports removed
 
 const buttonVariants = cva(
   "inline-flex items-center justify-center gap-2 whitespace-nowrap rounded-[var(--radius-control)] text-sm font-medium transition-all duration-200 disabled:pointer-events-none disabled:opacity-40 [&_svg]:pointer-events-none [&_svg]:shrink-0",
@@ -40,11 +39,9 @@ export interface ButtonProps
   asChild?: boolean;
 }
 
-const MotionSlot = motion.create(Slot);
-
 const Button = React.forwardRef<HTMLButtonElement, ButtonProps>(
   ({ className, variant, size, asChild = false, children, ...props }, ref) => {
-    const Comp = asChild ? MotionSlot : motion.button;
+    const Comp = asChild ? Slot : "button";
 
     const content = asChild ? children : (
       <>
@@ -54,18 +51,13 @@ const Button = React.forwardRef<HTMLButtonElement, ButtonProps>(
     );
 
     return (
-      <MagneticWrapper strength={0.15}>
-        <Comp
-          className={cn(buttonVariants({ variant, size, className }), "relative overflow-hidden group")}
-          ref={ref}
-          whileHover={{ scale: 1.02 }}
-          whileTap={{ scale: 0.97 }}
-          transition={{ type: "spring", stiffness: 400, damping: 25 }}
-          {...(props as any)}
-        >
-          {content}
-        </Comp>
-      </MagneticWrapper>
+      <Comp
+        className={cn(buttonVariants({ variant, size, className }), "relative overflow-hidden group")}
+        ref={ref}
+        {...props}
+      >
+        {content}
+      </Comp>
     );
   }
 );
