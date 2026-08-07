@@ -70,10 +70,10 @@ const NATIVE_FIELDS: Record<string, Array<{ name: string; type: string }>> = {
 };
 
 // ─────────────────────────────────────────────────────────────────────────────
-// TOOLS  (unchanged — same schema the AI already knows)
+// CRUD TOOLS  — fine-grained record-level operations
 // ─────────────────────────────────────────────────────────────────────────────
 
-const TOOLS = [
+const CRUD_TOOLS = [
   {
     type: 'function',
     function: {
@@ -161,6 +161,104 @@ const TOOLS = [
 ];
 
 // ─────────────────────────────────────────────────────────────────────────────
+// BUSINESS ANALYTICS TOOLS  — pre-computed summaries (zero raw-record noise)
+// ─────────────────────────────────────────────────────────────────────────────
+
+const BUSINESS_TOOLS = [
+  {
+    type: 'function',
+    function: {
+      name: 'get_dashboard_summary',
+      description: 'Get a complete high-level business overview: total clients, revenue collected, outstanding, net profit, lead pipeline value, active projects, task counts. Use this for general business health questions like "How is my business?", "Give me a dashboard overview", "What are my key metrics?".',
+      parameters: { type: 'object', properties: {}, required: [] },
+    },
+  },
+  {
+    type: 'function',
+    function: {
+      name: 'get_revenue_summary',
+      description: 'Get revenue analytics: total contract value, total collected, outstanding balance, top clients by revenue, and income type breakdown (recurring vs one-time). Use for questions about income, revenue, earnings, payments received.',
+      parameters: {
+        type: 'object',
+        properties: {
+          top_n: { type: 'number', description: 'Number of top clients to include. Default 5.' },
+        },
+        required: [],
+      },
+    },
+  },
+  {
+    type: 'function',
+    function: {
+      name: 'get_expense_summary',
+      description: 'Get expense analytics: total spend, breakdown by category, top expense categories, and recent expenses. Use for questions about costs, spending, expenses, burn rate.',
+      parameters: {
+        type: 'object',
+        properties: {
+          top_n: { type: 'number', description: 'Number of recent expenses to list. Default 5.' },
+        },
+        required: [],
+      },
+    },
+  },
+  {
+    type: 'function',
+    function: {
+      name: 'get_profit_summary',
+      description: 'Get profit analytics: total revenue collected, total expenses, net profit, profit margin %. Use for questions about profit, margins, net income, how much money is left.',
+      parameters: { type: 'object', properties: {}, required: [] },
+    },
+  },
+  {
+    type: 'function',
+    function: {
+      name: 'get_client_summary',
+      description: 'Get client analytics: total count, active vs inactive, top clients by contract value and amount paid, clients with outstanding balances, recently added clients. Use for questions about clients, customers, accounts.',
+      parameters: {
+        type: 'object',
+        properties: {
+          top_n: { type: 'number', description: 'Number of top clients to return. Default 5.' },
+        },
+        required: [],
+      },
+    },
+  },
+  {
+    type: 'function',
+    function: {
+      name: 'get_lead_summary',
+      description: 'Get lead/pipeline analytics: total leads, weighted pipeline value, leads by stage (new/negotiation/won), top leads by value, conversion insights. Use for questions about leads, pipeline, prospects, sales.',
+      parameters: {
+        type: 'object',
+        properties: {
+          top_n: { type: 'number', description: 'Number of top leads to return. Default 5.' },
+        },
+        required: [],
+      },
+    },
+  },
+  {
+    type: 'function',
+    function: {
+      name: 'get_project_summary',
+      description: 'Get project analytics: total projects, status breakdown (planning/in-progress/completed/on-hold), average progress %, budget vs spent analysis, over-budget projects, top projects by budget. Use for questions about projects, deliverables, work status.',
+      parameters: { type: 'object', properties: {}, required: [] },
+    },
+  },
+  {
+    type: 'function',
+    function: {
+      name: 'get_task_summary',
+      description: 'Get task analytics: total tasks, status breakdown (todo/in-progress/review/completed), priority breakdown (low/medium/high/urgent), tasks per assignee. Use for questions about tasks, workload, to-do items, team capacity.',
+      parameters: { type: 'object', properties: {}, required: [] },
+    },
+  },
+];
+
+/** All tools exposed to the AI — business tools listed first so the AI prefers them for analytics. */
+const ALL_TOOLS = [...BUSINESS_TOOLS, ...CRUD_TOOLS];
+
+// ─────────────────────────────────────────────────────────────────────────────
 // LOGGER  — structured, tagged with per-request ID
 // ─────────────────────────────────────────────────────────────────────────────
 
@@ -211,6 +309,31 @@ function parseToolArgs(raw: string, toolName: string): Record<string, any> {
     throw new Error(`Invalid arguments for tool "${toolName}": ${err.message}`);
   }
 }
+
+// ─────────────────────────────────────────────────────────────────────────────
+// SHARED ANALYTICS HELPERS
+// ─────────────────────────────────────────────────────────────────────────────
+
+/** Groups an array of objects by the value of a string key. */
+function groupBy<T extends Record<string, any>>(arr: T[], key: string): Record<string, T[]> {
+  return arr.reduce((acc, item) => {
+    const k = String(item[key] ?? 'unknown');
+    (acc[k] = acc[k] ?? []).push(item);
+    return acc;
+  }, {} as Record<string, T[]>);
+}
+
+/** Sums a numeric field across an array, safely coercing to 0. */
+function sumField<T extends Record<string, any>>(arr: T[], field: string): number {
+  return arr.reduce((s, item) => s + (Number(item[field]) || 0), 0);
+}
+
+/** Rounds a number to 2 decimal places (for currency/percentage display). */
+const r2 = (n: number) => Math.round(n * 100) / 100;
+
+// ─────────────────────────────────────────────────────────────────────────────
+// UTILITIES
+// ─────────────────────────────────────────────────────────────────────────────
 
 /**
  * Collision-resistant ID generator.
@@ -513,11 +636,398 @@ async function executeToolCall(
         return { success: true, mutatedTable: 'dynamic_records' };
       }
 
+      // ─────────────────────────────────────────────────────────────────────
+      // BUSINESS ANALYTICS TOOLS
+      // ─────────────────────────────────────────────────────────────────────
+
+      // ── get_dashboard_summary ─────────────────────────────────────────────
+      case 'get_dashboard_summary': {
+        const [
+          { data: clients },
+          { data: leads },
+          { data: projects },
+          { data: tasks },
+          { data: expenses },
+        ] = await Promise.all([
+          supabase.from('clients').select('status, totalValue, amountPaid'),
+          supabase.from('leads').select('stage, value, probability'),
+          supabase.from('projects').select('status, budget, spent, progress'),
+          supabase.from('tasks').select('status, priority'),
+          supabase.from('expenses').select('amount'),
+        ]);
+
+        const c  = clients  ?? [];
+        const l  = leads    ?? [];
+        const p  = projects ?? [];
+        const t  = tasks    ?? [];
+        const ex = expenses ?? [];
+
+        const totalContractValue = sumField(c, 'totalValue');
+        const totalCollected     = sumField(c, 'amountPaid');
+        const totalExpenses      = sumField(ex, 'amount');
+        const netProfit          = totalCollected - totalExpenses;
+        const pipelineValue      = l.reduce((s, lead) =>
+          s + (Number(lead.value) || 0) * (Number(lead.probability) || 0) / 100, 0);
+
+        const clientStatus  = groupBy(c, 'status');
+        const projectStatus = groupBy(p, 'status');
+        const taskStatus    = groupBy(t, 'status');
+
+        return {
+          clients: {
+            total:    c.length,
+            active:   (clientStatus['active']   ?? []).length,
+            inactive: (clientStatus['inactive'] ?? []).length,
+          },
+          revenue: {
+            totalContractValue: r2(totalContractValue),
+            collected:          r2(totalCollected),
+            outstanding:        r2(totalContractValue - totalCollected),
+          },
+          expenses:  { total: r2(totalExpenses) },
+          profit: {
+            net:    r2(netProfit),
+            margin: totalCollected > 0 ? r2((netProfit / totalCollected) * 100) : 0,
+          },
+          leads: {
+            total:         l.length,
+            won:           (groupBy(l, 'stage')['won'] ?? []).length,
+            pipelineValue: r2(pipelineValue),
+          },
+          projects: {
+            total:       p.length,
+            inProgress:  (projectStatus['in-progress'] ?? []).length,
+            completed:   (projectStatus['completed']   ?? []).length,
+            planning:    (projectStatus['planning']    ?? []).length,
+            onHold:      (projectStatus['on-hold']     ?? []).length,
+          },
+          tasks: {
+            total:      t.length,
+            todo:       (taskStatus['todo']         ?? []).length,
+            inProgress: (taskStatus['in-progress']  ?? []).length,
+            inReview:   (taskStatus['review']       ?? []).length,
+            completed:  (taskStatus['completed']    ?? []).length,
+          },
+        };
+      }
+
+      // ── get_revenue_summary ───────────────────────────────────────────────
+      case 'get_revenue_summary': {
+        const topN = Math.max(1, Math.min(Number(args.top_n) || 5, 20));
+
+        const { data: clients } = await supabase
+          .from('clients')
+          .select('id, name, company, status, totalValue, amountPaid, incomeType');
+
+        const c = clients ?? [];
+        const totalContract  = sumField(c, 'totalValue');
+        const totalCollected = sumField(c, 'amountPaid');
+        const outstanding    = totalContract - totalCollected;
+
+        const byIncomeType = groupBy(c, 'incomeType');
+        const incomeBreakdown = Object.entries(byIncomeType).map(([type, rows]) => ({
+          type,
+          clients:   rows.length,
+          revenue:   r2(sumField(rows, 'totalValue')),
+          collected: r2(sumField(rows, 'amountPaid')),
+        }));
+
+        const topClients = [...c]
+          .sort((a, b) => (b.totalValue || 0) - (a.totalValue || 0))
+          .slice(0, topN)
+          .map(cl => ({
+            name:      cl.name || cl.company,
+            status:    cl.status,
+            contract:  r2(cl.totalValue   || 0),
+            collected: r2(cl.amountPaid   || 0),
+            outstanding: r2((cl.totalValue || 0) - (cl.amountPaid || 0)),
+          }));
+
+        return {
+          summary: {
+            totalContractValue: r2(totalContract),
+            totalCollected:     r2(totalCollected),
+            totalOutstanding:   r2(outstanding),
+            collectionRate:     totalContract > 0 ? r2((totalCollected / totalContract) * 100) : 0,
+          },
+          incomeBreakdown,
+          topClientsByRevenue: topClients,
+        };
+      }
+
+      // ── get_expense_summary ───────────────────────────────────────────────
+      case 'get_expense_summary': {
+        const topN = Math.max(1, Math.min(Number(args.top_n) || 5, 20));
+
+        const { data: expenses } = await supabase
+          .from('expenses')
+          .select('id, description, category, amount, date')
+          .order('date', { ascending: false });
+
+        const ex = expenses ?? [];
+        const total = sumField(ex, 'amount');
+
+        const byCategory = groupBy(ex, 'category');
+        const categoryBreakdown = Object.entries(byCategory)
+          .map(([cat, rows]) => ({
+            category:   cat,
+            count:      rows.length,
+            total:      r2(sumField(rows, 'amount')),
+            percentage: total > 0 ? r2((sumField(rows, 'amount') / total) * 100) : 0,
+          }))
+          .sort((a, b) => b.total - a.total);
+
+        const recent = ex.slice(0, topN).map(e => ({
+          description: e.description,
+          category:    e.category,
+          amount:      r2(e.amount || 0),
+          date:        e.date,
+        }));
+
+        return {
+          summary: { total: r2(total), count: ex.length },
+          byCategory: categoryBreakdown,
+          recentExpenses: recent,
+        };
+      }
+
+      // ── get_profit_summary ────────────────────────────────────────────────
+      case 'get_profit_summary': {
+        const [{ data: clients }, { data: expenses }] = await Promise.all([
+          supabase.from('clients').select('amountPaid'),
+          supabase.from('expenses').select('amount'),
+        ]);
+
+        const totalRevenue  = sumField(clients  ?? [], 'amountPaid');
+        const totalExpenses = sumField(expenses ?? [], 'amount');
+        const netProfit     = totalRevenue - totalExpenses;
+        const margin        = totalRevenue > 0 ? r2((netProfit / totalRevenue) * 100) : 0;
+
+        // Monthly breakdown from financial_metrics chart table if available
+        const { data: monthly } = await supabase
+          .from('financial_metrics')
+          .select('month, revenue, expenses, profit')
+          .order('orderIndex');
+
+        return {
+          summary: {
+            totalRevenue:  r2(totalRevenue),
+            totalExpenses: r2(totalExpenses),
+            netProfit:     r2(netProfit),
+            profitMargin:  margin,
+            status:        netProfit >= 0 ? 'profitable' : 'loss',
+          },
+          monthlyTrend: (monthly ?? []).map(m => ({
+            month:    m.month,
+            revenue:  r2(m.revenue  || 0),
+            expenses: r2(m.expenses || 0),
+            profit:   r2(m.profit   || 0),
+          })),
+        };
+      }
+
+      // ── get_client_summary ────────────────────────────────────────────────
+      case 'get_client_summary': {
+        const topN = Math.max(1, Math.min(Number(args.top_n) || 5, 20));
+
+        const { data: clients } = await supabase
+          .from('clients')
+          .select('id, name, company, status, totalValue, amountPaid, incomeType, joinedDate')
+          .order('joinedDate', { ascending: false });
+
+        const c = clients ?? [];
+        const byStatus = groupBy(c, 'status');
+
+        const withOutstanding = c.filter(cl => (cl.totalValue || 0) > (cl.amountPaid || 0));
+
+        const topByValue = [...c]
+          .sort((a, b) => (b.totalValue || 0) - (a.totalValue || 0))
+          .slice(0, topN)
+          .map(cl => ({
+            name:        cl.name || cl.company,
+            status:      cl.status,
+            totalValue:  r2(cl.totalValue  || 0),
+            amountPaid:  r2(cl.amountPaid  || 0),
+            outstanding: r2((cl.totalValue || 0) - (cl.amountPaid || 0)),
+            incomeType:  cl.incomeType,
+          }));
+
+        const recentlyAdded = c.slice(0, topN).map(cl => ({
+          name:       cl.name || cl.company,
+          status:     cl.status,
+          joinedDate: cl.joinedDate,
+        }));
+
+        return {
+          summary: {
+            total:           c.length,
+            active:          (byStatus['active']   ?? []).length,
+            inactive:        (byStatus['inactive'] ?? []).length,
+            withOutstanding: withOutstanding.length,
+          },
+          topClientsByValue: topByValue,
+          recentlyAdded,
+        };
+      }
+
+      // ── get_lead_summary ──────────────────────────────────────────────────
+      case 'get_lead_summary': {
+        const topN = Math.max(1, Math.min(Number(args.top_n) || 5, 20));
+
+        const { data: leads } = await supabase
+          .from('leads')
+          .select('id, name, company, stage, value, probability, source');
+
+        const l = leads ?? [];
+        const byStage = groupBy(l, 'stage');
+
+        // Weighted pipeline: sum of (value * probability / 100)
+        const weightedPipeline = l.reduce(
+          (s, lead) => s + (Number(lead.value) || 0) * (Number(lead.probability) || 0) / 100, 0);
+        const totalPipelineValue = sumField(l, 'value');
+
+        const stageBreakdown = Object.entries(byStage).map(([stage, rows]) => ({
+          stage,
+          count: rows.length,
+          value: r2(sumField(rows, 'value')),
+        }));
+
+        const topLeads = [...l]
+          .sort((a, b) => (b.value || 0) - (a.value || 0))
+          .slice(0, topN)
+          .map(lead => ({
+            name:        lead.name || lead.company,
+            company:     lead.company,
+            stage:       lead.stage,
+            value:       r2(lead.value || 0),
+            probability: lead.probability,
+            source:      lead.source,
+          }));
+
+        const bySource = groupBy(l, 'source');
+        const sourceBreakdown = Object.entries(bySource)
+          .map(([source, rows]) => ({ source, count: rows.length }))
+          .sort((a, b) => b.count - a.count);
+
+        return {
+          summary: {
+            total:               l.length,
+            won:                 (byStage['won']         ?? []).length,
+            inNegotiation:       (byStage['negotiation'] ?? []).length,
+            new:                 (byStage['new']         ?? []).length,
+            totalPipelineValue:  r2(totalPipelineValue),
+            weightedPipeline:    r2(weightedPipeline),
+          },
+          stageBreakdown,
+          sourceBreakdown,
+          topLeadsByValue: topLeads,
+        };
+      }
+
+      // ── get_project_summary ───────────────────────────────────────────────
+      case 'get_project_summary': {
+        const { data: projects } = await supabase
+          .from('projects')
+          .select('id, name, client, status, progress, budget, spent, priority');
+
+        const p = projects ?? [];
+        const byStatus   = groupBy(p, 'status');
+        const byPriority = groupBy(p, 'priority');
+
+        const totalBudget = sumField(p, 'budget');
+        const totalSpent  = sumField(p, 'spent');
+        const avgProgress = p.length > 0
+          ? r2(p.reduce((s, proj) => s + (Number(proj.progress) || 0), 0) / p.length)
+          : 0;
+
+        const overBudget = p.filter(proj => (proj.spent || 0) > (proj.budget || 0));
+
+        const topByBudget = [...p]
+          .sort((a, b) => (b.budget || 0) - (a.budget || 0))
+          .slice(0, 5)
+          .map(proj => ({
+            name:       proj.name,
+            client:     proj.client,
+            status:     proj.status,
+            progress:   proj.progress,
+            budget:     r2(proj.budget || 0),
+            spent:      r2(proj.spent  || 0),
+            remaining:  r2((proj.budget || 0) - (proj.spent || 0)),
+            overBudget: (proj.spent || 0) > (proj.budget || 0),
+          }));
+
+        return {
+          summary: {
+            total:       p.length,
+            inProgress:  (byStatus['in-progress'] ?? []).length,
+            completed:   (byStatus['completed']   ?? []).length,
+            planning:    (byStatus['planning']    ?? []).length,
+            onHold:      (byStatus['on-hold']     ?? []).length,
+            avgProgress,
+            totalBudget: r2(totalBudget),
+            totalSpent:  r2(totalSpent),
+            overBudgetCount: overBudget.length,
+          },
+          priorityBreakdown: Object.entries(byPriority).map(([priority, rows]) => ({
+            priority, count: rows.length,
+          })),
+          topProjectsByBudget: topByBudget,
+          overBudgetProjects: overBudget.map(proj => ({
+            name:    proj.name,
+            client:  proj.client,
+            budget:  r2(proj.budget || 0),
+            spent:   r2(proj.spent  || 0),
+            overrun: r2((proj.spent || 0) - (proj.budget || 0)),
+          })),
+        };
+      }
+
+      // ── get_task_summary ──────────────────────────────────────────────────
+      case 'get_task_summary': {
+        const { data: tasks } = await supabase
+          .from('tasks')
+          .select('id, title, project, assignee, status, priority');
+
+        const t = tasks ?? [];
+        const byStatus   = groupBy(t, 'status');
+        const byPriority = groupBy(t, 'priority');
+        const byAssignee = groupBy(t, 'assignee');
+
+        const assigneeWorkload = Object.entries(byAssignee)
+          .map(([assignee, rows]) => ({
+            assignee,
+            total:      rows.length,
+            inProgress: rows.filter(r => r.status === 'in-progress').length,
+            completed:  rows.filter(r => r.status === 'completed').length,
+          }))
+          .sort((a, b) => b.total - a.total)
+          .slice(0, 10);
+
+        const urgentPending = t.filter(
+          task => task.priority === 'urgent' && task.status !== 'completed'
+        ).map(task => ({ title: task.title, project: task.project, assignee: task.assignee }));
+
+        return {
+          summary: {
+            total:      t.length,
+            todo:       (byStatus['todo']        ?? []).length,
+            inProgress: (byStatus['in-progress'] ?? []).length,
+            inReview:   (byStatus['review']      ?? []).length,
+            completed:  (byStatus['completed']   ?? []).length,
+          },
+          priorityBreakdown: Object.entries(byPriority).map(([priority, rows]) => ({
+            priority, count: rows.length,
+          })),
+          assigneeWorkload,
+          urgentPendingTasks: urgentPending,
+        };
+      }
+
       // ── unknown tool ──────────────────────────────────────────────────────
       default:
         log.warn(`Unknown tool called: "${name}"`);
         return {
-          error: `Unknown tool "${name}". Available tools: list_schemas, get_schema_fields, search_records, insert_record, update_record, delete_record`,
+          error: `Unknown tool "${name}". Available tools: get_dashboard_summary, get_revenue_summary, get_expense_summary, get_profit_summary, get_client_summary, get_lead_summary, get_project_summary, get_task_summary, list_schemas, get_schema_fields, search_records, insert_record, update_record, delete_record`,
         };
     }
   } catch (err: any) {
@@ -636,21 +1146,46 @@ async function fetchWithFallback(
 // MAIN HANDLER
 // ─────────────────────────────────────────────────────────────────────────────
 
-const SYSTEM_PROMPT = `You are duo-AI, a highly intelligent, proactive, Tony Stark JARVIS-like business assistant for DuoKarma. You are deeply integrated into the admin dashboard.
+const SYSTEM_PROMPT = `You are duo-AI, a Tony Stark JARVIS-like business intelligence assistant deeply integrated into the DuoKarma admin dashboard. You are sharp, professional, and slightly witty. You have live access to all business data.
 
-IMPORTANT: If the user asks a casual question or greets you, respond conversationally with a sharp, professional, and slightly witty JARVIS-like tone. DO NOT call any tools.
+## Conversational Turn
+If the user greets you or asks a casual question, respond naturally in JARVIS style. Do NOT call tools.
 
-IF the user asks about their business data (e.g. 'Which client paid the most?', 'What are my projects?', 'list incomplete records'), you MUST act as an elite data analyst:
-1. Call \`list_schemas\` to find the exact \`schema_id\`.
-2. Call \`search_records\` using that \`schema_id\` to fetch the data.
-3. **CRITICAL**: Analyze the data logically. If they ask for incomplete records, filter the data to find missing fields. Provide a precise, accurate answer.
+## Business Analytics Questions (PREFERRED PATH)
+For ANY business question — revenue, profit, expenses, clients, leads, projects, tasks — use the dedicated analytics tools FIRST. These return pre-computed, structured data and are far more efficient than raw record fetches:
 
-IF the user asks to ADD, UPDATE, or DELETE something (e.g. 'add a client', 'set Hatim to inactive', 'set Hatim to 5000', 'delete project X'):
-1. Call \`list_schemas\` to find the schema_id.
-2. **CRITICAL**: Call \`get_schema_fields\` to find the exact column names (like \`totalValue\`, \`amountPaid\`, \`status\`) so you don't guess the wrong names!
-3. If updating or deleting, call \`search_records\` first to find the exact \`id\` of the specific record.
-4. Call \`insert_record\`, \`update_record\`, or \`delete_record\` using the correct column names from step 2.
-5. Check the tool response. If there is an error, YOU MUST tell the user the exact error message. Only confirm success if the tool succeeded and returned data.`;
+| Question type                        | Tool to call              |
+|--------------------------------------|---------------------------|
+| Dashboard overview / business health | get_dashboard_summary     |
+| Revenue, income, earnings, payments  | get_revenue_summary       |
+| Expenses, costs, spending, burn rate | get_expense_summary       |
+| Profit, margins, net income          | get_profit_summary        |
+| Clients, customers, accounts         | get_client_summary        |
+| Leads, pipeline, prospects, sales    | get_lead_summary          |
+| Projects, deliverables, work status  | get_project_summary       |
+| Tasks, workload, to-do, team load    | get_task_summary          |
+
+Present analytics results in a clear, executive-style summary. Use bullet points or a table when comparing data. Always highlight the most important insight.
+
+## Specific Record Lookup (use raw CRUD tools only when targeting a specific named record)
+If the user asks about a specific named entity (e.g. "Tell me about Hatim's project", "What is the status of Project Alpha?"):
+1. Call \`list_schemas\` → get schema_id.
+2. Call \`search_records\` with a search_term to find that specific record.
+3. Report precisely what you find.
+
+## Write Operations (ADD / UPDATE / DELETE)
+If the user wants to create, modify, or delete something:
+1. Call \`list_schemas\` → get schema_id.
+2. Call \`get_schema_fields\` → get exact column names (critical: use \`totalValue\`, \`amountPaid\`, etc. exactly).
+3. If updating/deleting: call \`search_records\` to find the record's exact \`id\`.
+4. Call \`insert_record\`, \`update_record\`, or \`delete_record\` with correct column names.
+5. Report the result. If the tool returns an error, report it verbatim — never pretend success.
+
+## Response Style
+- Lead with the answer, not the process.
+- Format currency as ₹X or ₹X,XXX.
+- Use percentages for rates and margins.
+- Be concise. Executives want the insight, not the raw numbers dump.`;
 
 export default async function handler(req: any, res: any) {
   // ── CORS pre-flight ──────────────────────────────────────────────────────
@@ -745,7 +1280,7 @@ export default async function handler(req: any, res: any) {
     ];
 
     const chatPayload = {
-      tools:       TOOLS,
+      tools:       ALL_TOOLS,
       tool_choice: 'auto',
       temperature: 0.2,
     };
