@@ -5,6 +5,7 @@ import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
 import { cn } from "@/lib/utils";
 import { supabase } from "@/lib/supabase";
+import { useQueryClient } from "@tanstack/react-query";
 
 interface Message {
   role: "user" | "assistant" | "system";
@@ -12,6 +13,7 @@ interface Message {
 }
 
 export function AiAssistant() {
+  const queryClient = useQueryClient();
   const [isOpen, setIsOpen] = useState(false);
   const [messages, setMessages] = useState<Message[]>([
     {
@@ -59,6 +61,9 @@ export function AiAssistant() {
 
       const data = await response.json();
       if (!response.ok) throw new Error(data.error || "Failed to fetch");
+      
+      // Invalidate queries to refresh data in real-time if AI modified anything
+      queryClient.invalidateQueries();
 
       const aiResponse = data.choices[0].message.content || "Hmm, I tried to process that but something went wrong. Let's try again.";
       

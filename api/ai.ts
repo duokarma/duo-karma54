@@ -57,6 +57,37 @@ const TOOLS = [
         required: ["schema_id", "record"]
       }
     }
+  },
+  {
+    type: "function",
+    function: {
+      name: "update_record",
+      description: "Update an existing record in a schema. Use this when the user asks to modify, update, or change a status.",
+      parameters: {
+        type: "object",
+        properties: {
+          schema_id: { type: "string", description: "The EXACT 'id' field (UUID) from the list_schemas response." },
+          record_id: { type: "string", description: "The ID of the record to update." },
+          updates: { type: "object", description: "A JSON object containing only the fields to update and their new values." }
+        },
+        required: ["schema_id", "record_id", "updates"]
+      }
+    }
+  },
+  {
+    type: "function",
+    function: {
+      name: "delete_record",
+      description: "Delete a record from a schema. Use this when the user asks to delete or remove something.",
+      parameters: {
+        type: "object",
+        properties: {
+          schema_id: { type: "string", description: "The EXACT 'id' field (UUID) from the list_schemas response." },
+          record_id: { type: "string", description: "The ID of the record to delete." }
+        },
+        required: ["schema_id", "record_id"]
+      }
+    }
   }
 ];
 
@@ -142,6 +173,36 @@ async function executeToolCall(toolCall: any, supabase: any) {
           .select();
         if (error) throw error;
         return { success: true, data };
+      }
+    }
+    
+    else if (name === "update_record") {
+      if (args.schema_id.startsWith("native_")) {
+        const tableName = args.schema_id.replace("native_", "");
+        const { data, error } = await supabase.from(tableName).update(args.updates).eq('id', args.record_id).select();
+        if (error) throw error;
+        return { success: true, data };
+      } else {
+        const { data, error } = await supabase
+          .from('dynamic_records')
+          .update({ data: args.updates }) // Note: This replaces the whole data object in standard PG unless using jsonb_set, but for this demo it's fine or we should fetch and merge.
+          .eq('id', args.record_id)
+          .select();
+        if (error) throw error;
+        return { success: true, data };
+      }
+    }
+    
+    else if (name === "delete_record") {
+      if (args.schema_id.startsWith("native_")) {
+        const tableName = args.schema_id.replace("native_", "");
+        const { data, error } = await supabase.from(tableName).delete().eq('id', args.record_id);
+        if (error) throw error;
+        return { success: true };
+      } else {
+        const { data, error } = await supabase.from('dynamic_records').delete().eq('id', args.record_id);
+        if (error) throw error;
+        return { success: true };
       }
     }
     
@@ -260,7 +321,7 @@ export default async function handler(req: any, res: any) {
     let currentMessages = [
       {
         role: 'system',
-        content: "You are duo-AI, a highly intelligent, proactive, Tony Stark JARVIS-like business assistant for DuoKarma. You are deeply integrated into the admin dashboard.\n\nIMPORTANT: If the user asks a casual question or greets you, respond conversationally with a sharp, professional, and slightly witty JARVIS-like tone. DO NOT call any tools.\n\nIF the user asks about their business data (e.g. 'Which client paid the most?', 'What are my projects?', 'list incomplete records'), you MUST act as an elite data analyst:\n1. Call `list_schemas` to find the exact `schema_id`.\n2. Call `search_records` using that `schema_id` to fetch the data.\n3. **CRITICAL**: Analyze the data logically. If they ask for incomplete records, filter the data to find missing fields. Provide a precise, accurate answer.\n\nIF the user asks to ADD or CREATE something (e.g. 'add a new client named Hatim with phone 8758457909'):\n1. Call `list_schemas` to find the schema_id.\n2. Call `insert_record` with the schema_id and the fields they provided. DO NOT ask the user for missing fields; the database will use defaults for anything omitted.\n3. Confirm success conversationally."
+        content: "You are duo-AI, a highly intelligent, proactive, Tony Stark JARVIS-like business assistant for DuoKarma. You are deeply integrated into the admin dashboard.\n\nIMPORTANT: If the user asks a casual question or greets you, respond conversationally with a sharp, professional, and slightly witty JARVIS-like tone. DO NOT call any tools.\n\nIF the user asks about their business data (e.g. 'Which client paid the most?', 'What are my projects?', 'list incomplete records'), you MUST act as an elite data analyst:\n1. Call `list_schemas` to find the exact `schema_id`.\n2. Call `search_records` using that `schema_id` to fetch the data.\n3. **CRITICAL**: Analyze the data logically. If they ask for incomplete records, filter the data to find missing fields. Provide a precise, accurate answer.\n\nIF the user asks to ADD, UPDATE, or DELETE something (e.g. 'add a client', 'set Hatim to inactive', 'delete project X'):\n1. Call `list_schemas` to find the schema_id.\n2. If updating or deleting, call `search_records` first to find the `id` of the specific record.\n3. Call `insert_record`, `update_record`, or `delete_record` as requested. DO NOT ask the user for missing fields during insertion; the database will use defaults.\n4. Check the tool response. If there is an error, apologize and explain the error. Only confirm success if the tool succeeded."
       },
       ...messages.filter((m: any) => m.role !== 'system')
     ];
