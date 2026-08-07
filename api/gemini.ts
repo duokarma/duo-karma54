@@ -115,6 +115,40 @@ async function executeToolCall(toolCall: any) {
   }
 }
 
+async function fetchWithFallback(geminiApiKey: string, payload: any) {
+  const models = ['gemini-3.6-flash', 'gemini-flash-latest', 'gemini-2.5-flash', 'gemini-2.0-flash'];
+  let lastError = null;
+
+  for (const model of models) {
+    try {
+      // Overwrite the model in the payload for each attempt
+      payload.model = model;
+      const res = await fetch("https://generativelanguage.googleapis.com/v1beta/openai/chat/completions", {
+        method: "POST",
+        headers: { "Authorization": `Bearer ${geminiApiKey}`, "Content-Type": "application/json" },
+        body: JSON.stringify(payload)
+      });
+      
+      if (!res.ok) {
+        const text = await res.text();
+        if (res.status === 429 || res.status === 503) {
+          lastError = text;
+          continue; // Try next model
+        }
+        throw new Error(text);
+      }
+      return res; // Success
+    } catch (err: any) {
+      if (err.message.includes("429") || err.message.includes("503") || err.message.includes("UNAVAILABLE")) {
+        lastError = err.message;
+        continue;
+      }
+      throw err;
+    }
+  }
+  throw new Error(`All models failed due to high demand. Last error: ${lastError}`);
+}
+
 export default async function handler(req: any, res: any) {
   // CORS handling
   if (req.method === 'OPTIONS') {
@@ -146,11 +180,7 @@ export default async function handler(req: any, res: any) {
           { role: "user", content: prompt }
         ]
       };
-      const r = await fetch("https://generativelanguage.googleapis.com/v1beta/openai/chat/completions", {
-        method: "POST",
-        headers: { "Authorization": `Bearer ${geminiApiKey}`, "Content-Type": "application/json" },
-        body: JSON.stringify(payload)
-      });
+      const r = await fetchWithFallback(geminiApiKey, payload);
       return res.status(200).json(await r.json());
     }
 
@@ -168,21 +198,13 @@ export default async function handler(req: any, res: any) {
       ...messages.filter((m: any) => m.role !== 'system')
     ];
 
-    const apiUrl = "https://generativelanguage.googleapis.com/v1beta/openai/chat/completions";
-    
-    let aiRes = await fetch(apiUrl, {
-      method: "POST",
-      headers: { "Authorization": `Bearer ${geminiApiKey}`, "Content-Type": "application/json" },
-      body: JSON.stringify({
-        model: "gemini-3.6-flash",
-        messages: currentMessages,
-        tools: TOOLS,
-        tool_choice: "auto",
-        temperature: 0.2
-      })
+    let aiRes = await fetchWithFallback(geminiApiKey, {
+      messages: currentMessages,
+      tools: TOOLS,
+      tool_choice: "auto",
+      temperature: 0.2
     });
 
-    if (!aiRes.ok) throw new Error(await aiRes.text());
     let data = await aiRes.json();
     let responseMessage = data.choices[0].message;
 
@@ -211,19 +233,13 @@ export default async function handler(req: any, res: any) {
       currentMessages.push(...toolResults);
 
       // Call Gemini again with the tool results
-      aiRes = await fetch(apiUrl, {
-        method: "POST",
-        headers: { "Authorization": `Bearer ${geminiApiKey}`, "Content-Type": "application/json" },
-        body: JSON.stringify({
-          model: "gemini-3.6-flash",
-          messages: currentMessages,
-          tools: TOOLS,
-          tool_choice: "auto",
-          temperature: 0.2
-        })
+      aiRes = await fetchWithFallback(geminiApiKey, {
+        messages: currentMessages,
+        tools: TOOLS,
+        tool_choice: "auto",
+        temperature: 0.2
       });
 
-      if (!aiRes.ok) throw new Error(await aiRes.text());
       data = await aiRes.json();
       responseMessage = data.choices[0].message;
     }
