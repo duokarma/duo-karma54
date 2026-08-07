@@ -421,7 +421,7 @@ export function LeadsPage() {
                   <Plus className="h-4 w-4" /> New Lead
                 </Button>
               </DialogTrigger>
-              <DialogContent className="max-w-xl">
+              <DialogContent className="sm:max-w-xl">
                 <DialogHeader>
                   <DialogTitle>{selectedLead ? "Edit Lead" : "Add New Lead"}</DialogTitle>
                 </DialogHeader>

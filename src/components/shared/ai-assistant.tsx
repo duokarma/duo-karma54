@@ -2,7 +2,6 @@ import { useState, useRef, useEffect, useCallback } from "react";
 import { m as motion, AnimatePresence } from "framer-motion";
 import { Bot, X, Send, Loader2, Sparkles } from "lucide-react";
 import { Button } from "@/components/ui/button";
-import { Input } from "@/components/ui/input";
 import { cn } from "@/lib/utils";
 import { supabase } from "@/lib/supabase";
 import { useQueryClient } from "@tanstack/react-query";
