@@ -120,8 +120,37 @@ async function executeToolCall(toolCall: any, supabase: any) {
     
     else if (name === "get_schema_fields") {
       if (args.schema_id.startsWith("native_")) {
-        return { message: "Built-in tables do not have dynamic fields. You can proceed to call search_records directly." };
+        const tableName = args.schema_id.replace("native_", "");
+        const schemas: Record<string, any> = {
+          clients: [
+            { name: "id", type: "string" }, { name: "name", type: "string" }, { name: "company", type: "string" }, 
+            { name: "email", type: "string" }, { name: "phone", type: "string" }, { name: "status", type: "string" }, 
+            { name: "totalValue", type: "number" }, { name: "projectsCount", type: "number" }, { name: "joinedDate", type: "string" }, 
+            { name: "location", type: "string" }, { name: "amountPaid", type: "number" }, { name: "incomeType", type: "string" }
+          ],
+          leads: [
+            { name: "id", type: "string" }, { name: "name", type: "string" }, { name: "company", type: "string" },
+            { name: "email", type: "string" }, { name: "phone", type: "string" }, { name: "source", type: "string" },
+            { name: "value", type: "number" }, { name: "stage", type: "string" }, { name: "probability", type: "number" },
+            { name: "assignedTo", type: "string" }
+          ],
+          projects: [
+            { name: "id", type: "string" }, { name: "name", type: "string" }, { name: "client", type: "string" },
+            { name: "status", type: "string" }, { name: "progress", type: "number" }, { name: "budget", type: "number" },
+            { name: "spent", type: "number" }, { name: "priority", type: "string" }
+          ],
+          tasks: [
+            { name: "id", type: "string" }, { name: "title", type: "string" }, { name: "project", type: "string" },
+            { name: "assignee", type: "string" }, { name: "priority", type: "string" }, { name: "status", type: "string" }
+          ],
+          expenses: [
+            { name: "id", type: "string" }, { name: "description", type: "string" }, { name: "category", type: "string" },
+            { name: "amount", type: "number" }, { name: "date", type: "string" }
+          ]
+        };
+        return schemas[tableName] || { message: "Fields for this table are not explicitly defined, but you can guess based on its name." };
       }
+      
       const { data, error } = await supabase
         .from('dynamic_schema_fields')
         .select('*')
@@ -321,7 +350,7 @@ export default async function handler(req: any, res: any) {
     let currentMessages = [
       {
         role: 'system',
-        content: "You are duo-AI, a highly intelligent, proactive, Tony Stark JARVIS-like business assistant for DuoKarma. You are deeply integrated into the admin dashboard.\n\nIMPORTANT: If the user asks a casual question or greets you, respond conversationally with a sharp, professional, and slightly witty JARVIS-like tone. DO NOT call any tools.\n\nIF the user asks about their business data (e.g. 'Which client paid the most?', 'What are my projects?', 'list incomplete records'), you MUST act as an elite data analyst:\n1. Call `list_schemas` to find the exact `schema_id`.\n2. Call `search_records` using that `schema_id` to fetch the data.\n3. **CRITICAL**: Analyze the data logically. If they ask for incomplete records, filter the data to find missing fields. Provide a precise, accurate answer.\n\nIF the user asks to ADD, UPDATE, or DELETE something (e.g. 'add a client', 'set Hatim to inactive', 'delete project X'):\n1. Call `list_schemas` to find the schema_id.\n2. If updating or deleting, call `search_records` first to find the `id` of the specific record.\n3. Call `insert_record`, `update_record`, or `delete_record` as requested. DO NOT ask the user for missing fields during insertion; the database will use defaults.\n4. Check the tool response. If there is an error, apologize and explain the error. Only confirm success if the tool succeeded."
+        content: "You are duo-AI, a highly intelligent, proactive, Tony Stark JARVIS-like business assistant for DuoKarma. You are deeply integrated into the admin dashboard.\n\nIMPORTANT: If the user asks a casual question or greets you, respond conversationally with a sharp, professional, and slightly witty JARVIS-like tone. DO NOT call any tools.\n\nIF the user asks about their business data (e.g. 'Which client paid the most?', 'What are my projects?', 'list incomplete records'), you MUST act as an elite data analyst:\n1. Call `list_schemas` to find the exact `schema_id`.\n2. Call `search_records` using that `schema_id` to fetch the data.\n3. **CRITICAL**: Analyze the data logically. If they ask for incomplete records, filter the data to find missing fields. Provide a precise, accurate answer.\n\nIF the user asks to ADD, UPDATE, or DELETE something (e.g. 'add a client', 'set Hatim to inactive', 'set Hatim to 5000', 'delete project X'):\n1. Call `list_schemas` to find the schema_id.\n2. **CRITICAL**: Call `get_schema_fields` to find the exact column names (like `totalValue`, `amountPaid`, `status`) so you don't guess the wrong names!\n3. If updating or deleting, call `search_records` first to find the exact `id` of the specific record.\n4. Call `insert_record`, `update_record`, or `delete_record` using the correct column names from step 2.\n5. Check the tool response. If there is an error, YOU MUST tell the user the exact error message. Only confirm success if the tool succeeded and returned data."
       },
       ...messages.filter((m: any) => m.role !== 'system')
     ];
