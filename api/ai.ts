@@ -9,14 +9,14 @@ const PROVIDER_TIMEOUT_MS = 25_000; // 25 s per provider call
 const DEFAULT_SEARCH_LIMIT = 50;
 const MAX_SEARCH_LIMIT = 100;
 
-/** HTTP statuses that mean "try next provider"; anything else is fatal. */
-const RETRIABLE_STATUSES = new Set([402, 429, 502, 503, 504]);
+/** We now fallback on ALL errors (even 404 or 401) so one bad provider configuration never brings down the whole system. */
+const RETRIABLE_STATUSES = new Set([400, 401, 402, 403, 404, 429, 500, 502, 503, 504]);
 
 const MODELS = {
   GEMINI:              'gemini-1.5-flash',
-  OPENROUTER_GEMMA:    'google/gemma-3-27b-it:free',
-  OPENROUTER_QWEN:     'qwen/qwen3-32b:free',
-  OPENROUTER_DEEPSEEK: 'deepseek/deepseek-r1-distill-llama-70b:free',
+  OPENROUTER_GEMMA:    'google/gemma-4-31b-it:free',
+  OPENROUTER_QWEN:     'nvidia/nemotron-3-super-120b-a12b:free',
+  OPENROUTER_DEEPSEEK: 'openrouter/free',
   GROQ:                'llama-3.3-70b-versatile',
 } as const;
 
@@ -1234,6 +1234,8 @@ async function callProvider(
         headers: {
           Authorization:  `Bearer ${provider.apiKey}`,
           'Content-Type': 'application/json',
+          'HTTP-Referer': 'https://duo-karma54.vercel.app',
+          'X-Title':      'DuoKarma',
         },
         body,
       },
@@ -1260,9 +1262,12 @@ async function callProvider(
     );
   }
 
-  // 401 / 403 / 400 etc. — fatal, do not continue to next provider
-  log.error(`Provider ${provider.name} fatal error`, { status: res.status, body: text });
-  throw new Error(`${provider.name} fatal error [${res.status}]: ${text}`);
+  // Fallback on everything (400, 401, 403, 404, etc.) to ensure maximum resilience
+  log.warn(`Provider ${provider.name} error`, { status: res.status, body: text });
+  throw Object.assign(
+    new Error(`${provider.name} [${res.status}]: ${text}`),
+    { retriable: true }
+  );
 }
 
 /**
@@ -1302,11 +1307,8 @@ async function fetchWithFallback(
       return await callProvider(provider, payload, log);
     } catch (err: any) {
       errors.push(`${provider.name}: ${err.message}`);
-      if (!err.retriable) {
-        // Fatal error — surface immediately without trying the rest
-        throw err;
-      }
-      log.warn(`Falling back from ${provider.name} to next provider. Initiating 60s cooldown.`);
+      log.warn(`Falling back from ${provider.name} to next provider.`);
+      // Cooldown to prevent spamming broken or rate-limited endpoints repeatedly
       providerCooldowns.set(provider.name, Date.now() + 60000);
     }
   }
