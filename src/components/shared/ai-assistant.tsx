@@ -259,10 +259,10 @@ export function AiAssistant() {
             initial={{ opacity: 0, y: 20, scale: 0.95 }}
             animate={{ opacity: 1, y: 0, scale: 1 }}
             exit={{ opacity: 0, y: 20, scale: 0.95 }}
-            className="fixed bottom-6 right-6 z-[999] pointer-events-auto flex h-[500px] max-h-[80vh] w-[350px] max-w-[calc(100vw-3rem)] flex-col overflow-hidden rounded-[var(--radius-panel)] border border-edge bg-[#0c0c0c] shadow-2xl"
+            className="fixed bottom-6 right-6 z-[999] pointer-events-auto flex h-[500px] max-h-[80vh] w-[350px] max-w-[calc(100vw-3rem)] flex-col overflow-hidden rounded-[var(--radius-panel)] border border-white/10 bg-black/60 backdrop-blur-2xl shadow-2xl"
           >
             {/* Header */}
-            <div className="flex items-center justify-between border-b border-edge bg-graphite px-4 py-3">
+            <div className="flex items-center justify-between border-b border-white/10 bg-white/5 px-4 py-3">
               <div className="flex items-center gap-2">
                 <div className="flex h-8 w-8 items-center justify-center rounded-full bg-electric/20 text-electric">
                   <Bot className="h-4 w-4" />
@@ -294,10 +294,10 @@ export function AiAssistant() {
                 >
                   <div
                     className={cn(
-                      "px-3 py-2 rounded-2xl text-sm leading-relaxed whitespace-pre-wrap",
+                      "px-3 py-2 rounded-2xl text-sm leading-relaxed whitespace-pre-wrap shadow-md",
                       msg.role === "user"
-                        ? "bg-electric text-white rounded-br-sm"
-                        : "bg-graphite text-ink rounded-bl-sm border border-edge"
+                        ? "bg-electric text-black rounded-br-sm font-medium shadow-[0_0_15px_rgba(45,212,191,0.2)]"
+                        : "bg-white/10 text-ink rounded-bl-sm border border-white/10 backdrop-blur-md"
                     )}
                   >
                     {msg.content}
@@ -321,28 +321,35 @@ export function AiAssistant() {
             </div>
 
             {/* Input */}
-            <div className="border-t border-edge bg-graphite p-3">
+            <div className="border-t border-white/10 bg-black/40 p-3 backdrop-blur-md">
               <form
                 onSubmit={(e) => {
                   e.preventDefault();
                   handleSend();
                 }}
-                className="flex items-center gap-2"
+                className="flex items-end gap-2"
               >
-                <Input
+                <textarea
                   value={input}
                   onChange={(e) => setInput(e.target.value)}
+                  onKeyDown={(e) => {
+                    if (e.key === 'Enter' && !e.shiftKey) {
+                      e.preventDefault();
+                      handleSend();
+                    }
+                  }}
                   placeholder="Ask anything..."
-                  className="flex-1 bg-void border-edge h-10"
+                  className="flex-1 bg-white/5 border border-white/10 rounded-xl p-3 text-sm text-ink placeholder:text-ink-faint focus:outline-none focus:ring-1 focus:ring-electric resize-none min-h-[44px] max-h-[120px] custom-scrollbar leading-relaxed"
+                  rows={2}
                   disabled={isLoading}
                 />
                 <Button
                   type="submit"
                   size="icon"
                   disabled={!input.trim() || isLoading}
-                  className="h-10 w-10 shrink-0 bg-electric text-black hover:bg-electric/90"
+                  className="h-11 w-11 rounded-xl shrink-0 bg-electric text-black hover:bg-electric/90 shadow-[0_0_15px_rgba(45,212,191,0.3)] transition-all mb-0.5"
                 >
-                  <Send className="h-4 w-4" />
+                  <Send className="h-5 w-5 ml-0.5" />
                 </Button>
               </form>
             </div>
