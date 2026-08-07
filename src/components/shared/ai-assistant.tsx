@@ -15,7 +15,7 @@ export function AiAssistant() {
   const [messages, setMessages] = useState<Message[]>([
     {
       role: "assistant",
-      content: "Hi! I'm your AI Business Assistant powered by Groq. How can I help you today?",
+      content: "Hi! I'm your AI Business Assistant powered by Gemini. How can I help you today?",
     },
   ]);
   const [input, setInput] = useState("");
@@ -37,14 +37,14 @@ export function AiAssistant() {
     setIsLoading(true);
 
     try {
-      // Build the message history to send to Groq
+      // Build the message history to send to Gemini
       const conversation = [
         { role: "system", content: "You are a helpful business assistant for DuoKarma Business Hub. Keep your answers concise, professional, and formatted nicely." },
         ...messages.filter(m => m.role !== "system"),
         userMsg
       ];
 
-      const response = await fetch("/api/groq", {
+      const response = await fetch("/api/gemini", {
         method: "POST",
         headers: { "Content-Type": "application/json" },
         body: JSON.stringify({ action: "chat", messages: conversation }),
@@ -109,7 +109,7 @@ export function AiAssistant() {
                 </div>
                 <div>
                   <h3 className="text-sm font-semibold text-ink">AI Assistant</h3>
-                  <p className="text-[10px] text-ink-faint">Powered by Groq</p>
+                  <p className="text-[10px] text-ink-faint">Powered by Gemini</p>
                 </div>
               </div>
               <Button

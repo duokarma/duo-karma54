@@ -436,7 +436,7 @@ export function SchemaBuilderPage() {
     
     setIsGeneratingAi(true);
     try {
-      const response = await fetch("/api/groq", {
+      const response = await fetch("/api/gemini", {
         method: "POST",
         headers: { "Content-Type": "application/json" },
         body: JSON.stringify({

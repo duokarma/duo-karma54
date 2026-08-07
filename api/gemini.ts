@@ -129,16 +129,16 @@ export default async function handler(req: any, res: any) {
   }
 
   try {
-    const groqApiKey = process.env.GROQ_API_KEY;
-    if (!groqApiKey) {
-      return res.status(500).json({ error: 'Missing GROQ_API_KEY environment variable' });
+    const geminiApiKey = process.env.VITE_GEMINI_API_KEY;
+    if (!geminiApiKey) {
+      return res.status(500).json({ error: 'Missing VITE_GEMINI_API_KEY environment variable' });
     }
 
     const { action, prompt, messages, systemPrompt } = req.body;
 
     if (action === "schema") {
       const payload = {
-        model: "llama-3.1-8b-instant",
+        model: "gemini-1.5-flash",
         temperature: 0.7,
         response_format: { type: "json_object" },
         messages: [
@@ -146,9 +146,9 @@ export default async function handler(req: any, res: any) {
           { role: "user", content: prompt }
         ]
       };
-      const r = await fetch("https://api.groq.com/openai/v1/chat/completions", {
+      const r = await fetch("https://generativelanguage.googleapis.com/v1beta/openai/chat/completions", {
         method: "POST",
-        headers: { "Authorization": `Bearer ${groqApiKey}`, "Content-Type": "application/json" },
+        headers: { "Authorization": `Bearer ${geminiApiKey}`, "Content-Type": "application/json" },
         body: JSON.stringify(payload)
       });
       return res.status(200).json(await r.json());
@@ -158,7 +158,7 @@ export default async function handler(req: any, res: any) {
       return res.status(400).json({ error: "Invalid action" });
     }
 
-    // 1. Initial Call to Groq with Tools
+    // 1. Initial Call to Gemini with Tools
     // Enforce the backend Agent system prompt (filter out any basic frontend system prompts)
     let currentMessages = [
       {
@@ -168,13 +168,13 @@ export default async function handler(req: any, res: any) {
       ...messages.filter((m: any) => m.role !== 'system')
     ];
 
-    const apiUrl = "https://api.groq.com/openai/v1/chat/completions";
+    const apiUrl = "https://generativelanguage.googleapis.com/v1beta/openai/chat/completions";
     
-    let groqRes = await fetch(apiUrl, {
+    let aiRes = await fetch(apiUrl, {
       method: "POST",
-      headers: { "Authorization": `Bearer ${groqApiKey}`, "Content-Type": "application/json" },
+      headers: { "Authorization": `Bearer ${geminiApiKey}`, "Content-Type": "application/json" },
       body: JSON.stringify({
-        model: "llama-3.3-70b-versatile",
+        model: "gemini-1.5-flash",
         messages: currentMessages,
         tools: TOOLS,
         tool_choice: "auto",
@@ -182,8 +182,8 @@ export default async function handler(req: any, res: any) {
       })
     });
 
-    if (!groqRes.ok) throw new Error(await groqRes.text());
-    let data = await groqRes.json();
+    if (!aiRes.ok) throw new Error(await aiRes.text());
+    let data = await aiRes.json();
     let responseMessage = data.choices[0].message;
 
     // 2. Loop if the model wants to call tools
@@ -210,12 +210,12 @@ export default async function handler(req: any, res: any) {
       // Append tool results to history
       currentMessages.push(...toolResults);
 
-      // Call Groq again with the tool results
-      groqRes = await fetch(apiUrl, {
+      // Call Gemini again with the tool results
+      aiRes = await fetch(apiUrl, {
         method: "POST",
-        headers: { "Authorization": `Bearer ${groqApiKey}`, "Content-Type": "application/json" },
+        headers: { "Authorization": `Bearer ${geminiApiKey}`, "Content-Type": "application/json" },
         body: JSON.stringify({
-          model: "llama-3.3-70b-versatile",
+          model: "gemini-1.5-flash",
           messages: currentMessages,
           tools: TOOLS,
           tool_choice: "auto",
@@ -223,14 +223,14 @@ export default async function handler(req: any, res: any) {
         })
       });
 
-      if (!groqRes.ok) throw new Error(await groqRes.text());
-      data = await groqRes.json();
+      if (!aiRes.ok) throw new Error(await aiRes.text());
+      data = await aiRes.json();
       responseMessage = data.choices[0].message;
     }
 
     return res.status(200).json(data);
   } catch (error: any) {
-    console.error("Groq Handler Error:", error);
+    console.error("Gemini Handler Error:", error);
     return res.status(400).json({ error: error.message });
   }
 }
