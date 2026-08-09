@@ -38,7 +38,7 @@ import {
 
 // ─── CRM Kanban ──────────────────────────────────────────────────────────────
 
-const stages: { key: Lead["stage"]; label: string; color: string }[] = [
+const stages: { key: NonNullable<Lead["stage"]>; label: string; color: string }[] = [
   { key: "new", label: "New", color: "bg-violet" },
   { key: "negotiation", label: "Negotiation", color: "bg-amber" },
   { key: "won", label: "Won", color: "bg-emerald" },
@@ -453,11 +453,11 @@ export function LeadsPage() {
                   <div className="grid grid-cols-1 sm:grid-cols-2 gap-3 sm:gap-4">
                     <div className="space-y-2">
                       <Label htmlFor="name">Contact Name</Label>
-                      <Input id="name" required value={formData.name} onChange={(e) => setFormData({...formData, name: e.target.value})} />
+                      <Input id="name" value={formData.name} onChange={(e) => setFormData({...formData, name: e.target.value})} />
                     </div>
                     <div className="space-y-2">
                       <Label htmlFor="company">Company / Business</Label>
-                      <Input id="company" required value={formData.company} onChange={(e) => setFormData({...formData, company: e.target.value})} />
+                      <Input id="company" value={formData.company} onChange={(e) => setFormData({...formData, company: e.target.value})} />
                     </div>
                     <div className="space-y-2">
                       <Label htmlFor="email">Email</Label>
@@ -465,7 +465,7 @@ export function LeadsPage() {
                     </div>
                     <div className="space-y-2">
                       <Label htmlFor="phone">Phone</Label>
-                      <Input id="phone" type="tel" required value={formData.phone} onChange={(e) => setFormData({...formData, phone: e.target.value})} />
+                      <Input id="phone" type="tel" value={formData.phone} onChange={(e) => setFormData({...formData, phone: e.target.value})} />
                     </div>
                     
                     <div className="space-y-2">
@@ -483,7 +483,7 @@ export function LeadsPage() {
                     </div>
                     <div className="space-y-2">
                       <Label htmlFor="value">Estimated Value (₹)</Label>
-                      <Input id="value" type="number" required min="0" value={formData.value || ""} onChange={(e) => setFormData({...formData, value: Number(e.target.value)})} />
+                      <Input id="value" type="number" min="0" value={formData.value || ""} onChange={(e) => setFormData({...formData, value: Number(e.target.value)})} />
                     </div>
                     
                     {/* Extra Details */}
