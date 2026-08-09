@@ -34,17 +34,17 @@ export interface Client {
 
 export interface Lead {
   id: string;
-  name: string;
-  company: string;
-  phone: string;
+  name?: string;
+  company?: string;
+  phone?: string;
   email?: string;
-  source: string;
-  value: number;
-  stage: "new" | "negotiation" | "won" | "lost";
-  probability: number;
-  assignedTo: string;
-  createdDate: string;
-  lastContact: string;
+  source?: string;
+  value?: number;
+  stage?: "new" | "negotiation" | "won" | "lost";
+  probability?: number;
+  assignedTo?: string;
+  createdDate?: string;
+  lastContact?: string;
   // Enriched fields from conversation flow (optional)
   businessType?: string;
   branches?: string;
@@ -52,6 +52,7 @@ export interface Lead {
   challenge?: string;
   timeline?: string;
   leadScore?: number;
+  notes?: string;
 }
 
 export interface WebsiteInquiry {

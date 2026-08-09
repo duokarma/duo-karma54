@@ -160,6 +160,52 @@ const CRUD_TOOLS = [
       },
     },
   },
+  // ─────────────────────────────────────────────────────────────────────────────
+  // SCHEMA MANAGEMENT TOOLS — create tables and add fields dynamically
+  // ─────────────────────────────────────────────────────────────────────────────
+  {
+    type: 'function',
+    function: {
+      name: 'create_schema',
+      description: 'Create a new database schema (table) with optional fields.',
+      parameters: {
+        type: 'object',
+        properties: {
+          schema_name: { type: 'string', description: 'Name of the new schema/table.' },
+          fields: {
+            type: 'array',
+            description: 'Optional array of field definitions.',
+            items: {
+              type: 'object',
+              properties: {
+                name: { type: 'string', description: 'Field name.' },
+                type: { type: 'string', description: 'SQL type, e.g., text, integer, boolean.' }
+              },
+              required: ['name', 'type']
+            }
+          }
+        },
+        required: ['schema_name']
+      }
+    }
+  },
+  {
+    type: 'function',
+    function: {
+      name: 'add_schema_field',
+      description: 'Add a new field/column to an existing schema/table.',
+      parameters: {
+        type: 'object',
+        properties: {
+          schema_name: { type: 'string', description: 'Existing schema/table name.' },
+          field_name: { type: 'string', description: 'Name of the new field.' },
+          field_type: { type: 'string', description: 'SQL type for the field.' }
+        },
+        required: ['schema_name', 'field_name', 'field_type']
+      }
+    }
+  },
+
 ];
 
 // ─────────────────────────────────────────────────────────────────────────────

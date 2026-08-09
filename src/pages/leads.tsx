@@ -77,14 +77,14 @@ function LeadCard({ lead, index, onClick, onEdit, onDelete }: { lead: Lead; inde
         </div>
         <p className="mt-0.5 text-xs text-ink-faint cursor-pointer" onClick={onClick}>{lead.name}</p>
         <p className="mt-2 font-display text-base font-semibold text-ink tabular cursor-pointer" onClick={onClick}>
-          {formatCurrency(lead.value)}
+          {formatCurrency(lead.value ?? 0)}
         </p>
         <div className="mt-3 flex items-center justify-between cursor-pointer" onClick={onClick}>
           <div className="flex items-center gap-1.5">
-            <Avatar seed={lead.assignedTo} size="xs" />
+            <Avatar seed={lead.assignedTo ?? ""} size="xs" />
             <span className="text-[11px] text-ink-faint">{lead.assignedTo}</span>
           </div>
-          <span className="text-[11px] font-medium px-1.5 py-0.5 rounded-md bg-surface text-ink-faint border border-edge">{lead.source}</span>
+          <span className="text-[11px] font-medium px-1.5 py-0.5 rounded-md bg-surface text-ink-faint border border-edge">{lead.source ?? ""}</span>
         </div>
       </Card>
     </motion.div>
@@ -106,11 +106,13 @@ function InquiryCard({
   index,
   onConvert,
   onStatusChange,
+  onDelete,
 }: {
   inquiry: WebsiteInquiry;
   index: number;
   onConvert: () => void;
   onStatusChange: (status: "new" | "contacted") => void;
+  onDelete?: (id: string) => void;
 }) {
   const badge = scoreLabel(inquiry.lead_score);
   const createdAt = new Date(inquiry.created_at);
@@ -196,6 +198,15 @@ function InquiryCard({
             >
               <ArrowRight className="h-2.5 w-2.5 mr-1" /> Convert
             </Button>
+            {/* Delete button */}
+            <Button
+              variant="ghost"
+              size="sm"
+              className="h-6 text-[11px] px-2 text-rose-600 hover:text-rose-700"
+              onClick={() => onDelete && onDelete(inquiry.id)}
+            >
+              <Trash2 className="h-2.5 w-2.5 mr-1" /> Delete
+            </Button>
           </div>
         </div>
       </Card>
@@ -219,7 +230,8 @@ const defaultFormData = {
   interestedIn: "",
   challenge: "",
   timeline: "",
-  leadScore: 0
+  leadScore: 0,
+  notes: "",
 };
 
 export function LeadsPage() {
@@ -298,6 +310,17 @@ export function LeadsPage() {
     }
   });
 
+  // Delete mutation for website inquiries
+  const deleteInquiryMutation = useMutation({
+    mutationFn: async (id: string) => {
+      const { error } = await supabase.from("website_inquiries").delete().eq("id", id);
+      if (error) throw error;
+    },
+    onSuccess: () => {
+      queryClient.invalidateQueries({ queryKey: ["website_inquiries"] });
+    }
+  });
+
   const updateInquiryStatus = useMutation({
     mutationFn: async ({ id, status }: { id: string; status: "new" | "contacted" }) => {
       const { error } = await supabase.from("website_inquiries").update({ status }).eq("id", id);
@@ -355,28 +378,29 @@ export function LeadsPage() {
   const openEditDialog = (lead: Lead) => {
     setSelectedLead(lead);
     setFormData({
-      name: lead.name,
-      company: lead.company,
-      email: lead.email || "",
-      phone: lead.phone || "",
-      source: lead.source,
-      value: lead.value,
-      stage: lead.stage,
-      probability: lead.probability,
-      assignedTo: lead.assignedTo,
-      businessType: lead.businessType || "",
-      branches: lead.branches || "",
-      interestedIn: lead.interestedIn || "",
-      challenge: lead.challenge || "",
-      timeline: lead.timeline || "",
-      leadScore: lead.leadScore || 0,
+        name: lead.name ?? "",
+        company: lead.company ?? "",
+        email: lead.email ?? "",
+        phone: lead.phone ?? "",
+        source: lead.source ?? "",
+        value: lead.value ?? 0,
+        stage: lead.stage ?? "new",
+        probability: lead.probability ?? 0,
+        assignedTo: lead.assignedTo ?? "",
+        businessType: lead.businessType ?? "",
+        branches: lead.branches ?? "",
+        interestedIn: lead.interestedIn ?? "",
+        challenge: lead.challenge ?? "",
+        timeline: lead.timeline ?? "",
+        leadScore: lead.leadScore ?? 0,
+        notes: lead.notes ?? "",
     });
     setIsDialogOpen(true);
   };
 
   const totalPipelineValue = leads
     .filter((l) => l.stage !== "lost" && l.stage !== "won")
-    .reduce((sum, l) => sum + l.value, 0);
+    .reduce((sum, l) => sum + (l.value ?? 0), 0);
 
   const filteredInquiries = inquiries.filter((inq) => {
     if (inquiryFilter === "all") return inq.status !== "converted";
@@ -653,6 +677,7 @@ export function LeadsPage() {
                   index={i}
                   onConvert={() => convertInquiry.mutate(inq)}
                   onStatusChange={(status) => updateInquiryStatus.mutate({ id: inq.id, status })}
+                  onDelete={() => deleteInquiryMutation.mutate(inq.id)}
                 />
               ))}
             </div>
