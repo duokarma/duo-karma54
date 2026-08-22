@@ -1,9 +1,12 @@
-import { useRef } from 'react';
+import { useRef, useEffect, useState } from 'react';
 import { m as motion, useScroll, useTransform } from 'framer-motion';
 import { COLORS } from './ui/theme';
 
 export function CinematicOutro() {
   const containerRef = useRef<HTMLDivElement>(null);
+  const videoRef = useRef<HTMLVideoElement>(null);
+  
+  const [hasPlayedOnce, setHasPlayedOnce] = useState(false);
   
   // Parallax mapping for the background to give natural depth
   const { scrollYProgress } = useScroll({
@@ -13,12 +16,53 @@ export function CinematicOutro() {
   
   const y = useTransform(scrollYProgress, [0, 1], ['-8%', '8%']);
 
+  useEffect(() => {
+    const observer = new IntersectionObserver(
+      (entries) => {
+        const [entry] = entries;
+        if (entry.isIntersecting && !hasPlayedOnce) {
+          // Section is fully in view, lock scroll and play video
+          document.body.style.overflow = 'hidden';
+          if (videoRef.current) {
+            videoRef.current.currentTime = 0;
+            videoRef.current.play().catch(console.error);
+          }
+        }
+      },
+      {
+        threshold: 0.9, // Trigger when 90% of the section is visible
+      }
+    );
+
+    if (containerRef.current) {
+      observer.observe(containerRef.current);
+    }
+
+    return () => {
+      observer.disconnect();
+      document.body.style.overflow = '';
+    };
+  }, [hasPlayedOnce]);
+
+  const handleVideoEnded = () => {
+    if (!hasPlayedOnce) {
+      setHasPlayedOnce(true);
+      document.body.style.overflow = '';
+      
+      // Set to loop and play again for background ambient movement
+      if (videoRef.current) {
+        videoRef.current.loop = true;
+        videoRef.current.play().catch(console.error);
+      }
+    }
+  };
+
   return (
     <section
       ref={containerRef}
       style={{
         position: 'relative',
-        minHeight: '100vh', // Shorter than before for better UX
+        height: '100vh',
         display: 'flex',
         flexDirection: 'column',
         justifyContent: 'center', // Centered vertically
@@ -28,7 +72,7 @@ export function CinematicOutro() {
         overflow: 'hidden',
       }}
     >
-      {/* Background Image Layer */}
+      {/* Background Video Layer */}
       <motion.div
         style={{
           position: 'absolute',
@@ -36,11 +80,17 @@ export function CinematicOutro() {
           y,
         }}
       >
-        <img
-          src="/start.png"
-          alt=""
-          style={{ width: '100%', height: '100%', objectFit: 'cover', opacity: 0.3 }}
-        />
+        <video
+          ref={videoRef}
+          playsInline
+          muted
+          onEnded={handleVideoEnded}
+          poster="/videos/outro-poster.webp"
+          style={{ width: '100%', height: '100%', objectFit: 'cover', opacity: hasPlayedOnce ? 0.3 : 1, transition: 'opacity 1s ease' }}
+        >
+          <source src="/videos/outro-video.webm" type="video/webm" />
+          <source src="/videos/outro-video.mp4" type="video/mp4" />
+        </video>
       </motion.div>
 
       {/* Gradients and Overlays for depth and blending */}
@@ -50,11 +100,22 @@ export function CinematicOutro() {
           inset: 0,
           background: `linear-gradient(180deg, ${COLORS.bg} 0%, rgba(10,9,8,0.2) 20%, rgba(10,9,8,0.2) 80%, ${COLORS.bg} 100%)`,
           pointerEvents: 'none',
+          opacity: hasPlayedOnce ? 1 : 0.3,
+          transition: 'opacity 1s ease',
         }}
       />
 
       {/* Centered Glass CTA Panel */}
-      <div style={{ position: 'relative', zIndex: 10, width: '100%', display: 'flex', justifyContent: 'center' }}>
+      <div style={{ 
+        position: 'relative', 
+        zIndex: 10, 
+        width: '100%', 
+        display: 'flex', 
+        justifyContent: 'center',
+        opacity: hasPlayedOnce ? 1 : 0,
+        pointerEvents: hasPlayedOnce ? 'auto' : 'none',
+        transition: 'opacity 1s ease 0.5s',
+      }}>
         <motion.div
           initial={{ opacity: 0, y: 40 }}
           whileInView={{ opacity: 1, y: 0 }}
