@@ -23,5 +23,3 @@ dist-ssr
 *.sln
 *.sw?
 
-# Large video assets — deployed via Vercel, not tracked in git
-public/videos/
