@@ -7,6 +7,16 @@ export function CinematicOutro() {
   const videoRef = useRef<HTMLVideoElement>(null);
   
   const [hasPlayedOnce, setHasPlayedOnce] = useState(false);
+  const [isMobile, setIsMobile] = useState(false);
+
+  useEffect(() => {
+    const checkMobile = () => {
+      setIsMobile(window.innerWidth < 768);
+    };
+    checkMobile();
+    window.addEventListener('resize', checkMobile);
+    return () => window.removeEventListener('resize', checkMobile);
+  }, []);
   
   // Parallax mapping for the background to give natural depth
   const { scrollYProgress } = useScroll({
@@ -17,6 +27,11 @@ export function CinematicOutro() {
   const y = useTransform(scrollYProgress, [0, 1], ['-8%', '8%']);
 
   useEffect(() => {
+    if (isMobile) {
+      setHasPlayedOnce(true);
+      return;
+    }
+
     let timeoutId: NodeJS.Timeout;
 
     const observer = new IntersectionObserver(
@@ -85,26 +100,28 @@ export function CinematicOutro() {
       }}
     >
       {/* Background Video Layer */}
-      <motion.div
-        style={{
-          position: 'absolute',
-          inset: -150, // extend bounds significantly to allow for both scroll parallax and animated drift
-          y,
-        }}
-      >
-        <video
-          ref={videoRef}
-          playsInline
-          muted
-          onEnded={handleVideoEnded}
-          onError={handleVideoEnded}
-          poster="/videos/outro-poster.webp"
-          style={{ width: '100%', height: '100%', objectFit: 'cover', opacity: hasPlayedOnce ? 0.3 : 1, transition: 'opacity 1s ease' }}
+      {!isMobile && (
+        <motion.div
+          style={{
+            position: 'absolute',
+            inset: -150, // extend bounds significantly to allow for both scroll parallax and animated drift
+            y,
+          }}
         >
-          <source src="/videos/outro-video.webm" type="video/webm" />
-          <source src="/videos/outro-video.mp4" type="video/mp4" />
-        </video>
-      </motion.div>
+          <video
+            ref={videoRef}
+            playsInline
+            muted
+            onEnded={handleVideoEnded}
+            onError={handleVideoEnded}
+            poster="/videos/outro-poster.webp"
+            style={{ width: '100%', height: '100%', objectFit: 'cover', opacity: hasPlayedOnce ? 0.3 : 1, transition: 'opacity 1s ease' }}
+          >
+            <source src="/videos/outro-video.webm" type="video/webm" />
+            <source src="/videos/outro-video.mp4" type="video/mp4" />
+          </video>
+        </motion.div>
+      )}
 
       {/* Gradients and Overlays for depth and blending */}
       <div
