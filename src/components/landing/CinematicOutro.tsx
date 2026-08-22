@@ -17,15 +17,26 @@ export function CinematicOutro() {
   const y = useTransform(scrollYProgress, [0, 1], ['-8%', '8%']);
 
   useEffect(() => {
+    let timeoutId: NodeJS.Timeout;
+
     const observer = new IntersectionObserver(
       (entries) => {
         const [entry] = entries;
         if (entry.isIntersecting && !hasPlayedOnce) {
           // Section is fully in view, lock scroll and play video
           document.body.style.overflow = 'hidden';
+          
+          // Fallback: If video takes longer than 12s, unlock scroll automatically to prevent getting stuck
+          timeoutId = setTimeout(() => {
+            if (!hasPlayedOnce) handleVideoEnded();
+          }, 12000);
+
           if (videoRef.current) {
             videoRef.current.currentTime = 0;
-            videoRef.current.play().catch(console.error);
+            videoRef.current.play().catch((err) => {
+              console.error("Video failed to play:", err);
+              handleVideoEnded(); // unlock immediately if play fails
+            });
           }
         }
       },
@@ -41,6 +52,7 @@ export function CinematicOutro() {
     return () => {
       observer.disconnect();
       document.body.style.overflow = '';
+      if (timeoutId) clearTimeout(timeoutId);
     };
   }, [hasPlayedOnce]);
 
@@ -52,7 +64,7 @@ export function CinematicOutro() {
       // Set to loop and play again for background ambient movement
       if (videoRef.current) {
         videoRef.current.loop = true;
-        videoRef.current.play().catch(console.error);
+        videoRef.current.play().catch(() => {});
       }
     }
   };
@@ -85,6 +97,7 @@ export function CinematicOutro() {
           playsInline
           muted
           onEnded={handleVideoEnded}
+          onError={handleVideoEnded}
           poster="/videos/outro-poster.webp"
           style={{ width: '100%', height: '100%', objectFit: 'cover', opacity: hasPlayedOnce ? 0.3 : 1, transition: 'opacity 1s ease' }}
         >
