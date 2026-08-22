@@ -1,5 +1,5 @@
 import { AnimatePresence, m as motion } from 'framer-motion';
-import { useEffect } from 'react';
+import { useEffect, useState } from 'react';
 import { IntroVideo } from './IntroVideo';
 import { useIntroContext } from '@/context/IntroContext';
 
@@ -15,9 +15,19 @@ const EASE_OUT_EXPO: [number, number, number, number] = [0.19, 1, 0.22, 1];
  */
 export function IntroOverlay() {
   const { introDone, onIntroDone } = useIntroContext();
+  const [isMobile] = useState(() => typeof window !== 'undefined' ? window.innerWidth < 768 : false);
+
+  // If mobile, instantly finish the intro
+  useEffect(() => {
+    if (isMobile && !introDone) {
+      onIntroDone();
+    }
+  }, [isMobile, introDone, onIntroDone]);
 
   // Lock scroll while intro is playing; release on completion
   useEffect(() => {
+    if (isMobile) return;
+
     if (!introDone) {
       document.body.style.overflow = 'hidden';
     } else {
@@ -26,7 +36,9 @@ export function IntroOverlay() {
     return () => {
       document.body.style.overflow = '';
     };
-  }, [introDone]);
+  }, [introDone, isMobile]);
+
+  if (isMobile) return null;
 
   return (
     <AnimatePresence>
