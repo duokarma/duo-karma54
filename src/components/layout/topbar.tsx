@@ -36,7 +36,7 @@ export function Topbar() {
   const { setOpen } = useCommandPalette();
   const [notifOpen, setNotifOpen] = useState(false);
   const notifRef = useRef<HTMLDivElement>(null);
-  const { signOut } = useAuth();
+  const { signOut, user, displayName } = useAuth();
 
   const currentItem = navItems.find((item) =>
     item.path === "/admin" ? (location.pathname === "/admin" || location.pathname === "/admin/") : location.pathname.startsWith(item.path)
@@ -170,17 +170,17 @@ export function Topbar() {
               whileTap={{ scale: 0.95 }}
               className="flex items-center gap-1.5 rounded-md px-2 py-1 text-xs text-ink-faint transition-colors hover:bg-[var(--color-charcoal)] hover:text-ink-dim focus:outline-none"
             >
-              <span className="hidden sm:block">"Admin"</span>
+              <span className="hidden sm:block">{displayName}</span>
               <div className="h-5 w-5 rounded-full bg-[var(--color-accent)] flex items-center justify-center text-[10px] font-semibold text-white shadow-sm ring-1 ring-white/10">
-                "A"
+                {displayName[0]?.toUpperCase() ?? "A"}
               </div>
             </motion.button>
           </DropdownMenuTrigger>
           <DropdownMenuContent align="end" className="w-52">
             <DropdownMenuLabel className="font-normal">
               <div className="flex flex-col gap-0.5">
-                <p className="text-xs font-medium text-ink">"Admin"</p>
-                <p className="text-[10px] text-ink-faint">"admin@duokarrma.com"</p>
+                <p className="text-xs font-medium text-ink">{displayName}</p>
+                <p className="text-[10px] text-ink-faint">{user?.email ?? ""}</p>
               </div>
             </DropdownMenuLabel>
             <DropdownMenuSeparator />
