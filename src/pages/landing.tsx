@@ -7,6 +7,8 @@ import { LoadingScreen } from '@/components/landing/ui/LoadingScreen';
 import { COLORS, FONT_IMPORT } from '@/components/landing/ui/theme';
 import { BottomDock } from '@/components/landing/BottomDock';
 import { CommandPalette } from '@/components/landing/CommandPalette';
+import { IntroProvider } from '@/context/IntroContext';
+import { useIntro } from '@/hooks/use-intro';
 
 // Lazy load below-the-fold components
 const About = React.lazy(() => import('@/components/landing/About').then(m => ({ default: m.About })));
@@ -20,7 +22,8 @@ const Contact = React.lazy(() => import('@/components/landing/Contact').then(m =
 const Footer = React.lazy(() => import('@/components/landing/Footer').then(m => ({ default: m.Footer })));
 // AmbientEffects removed to improve performance and remove particle effects
 
-export function LandingPage() {
+// Inner component that consumes intro context for the fade-in effect
+function LandingPageInner() {
   const [cmdOpen, setCmdOpen] = useState(false);
 
   // ── Mouse-light tracking — Framer Motion value system ──────────────────────
@@ -63,8 +66,20 @@ export function LandingPage() {
     return () => window.removeEventListener('keydown', onKey);
   }, []);
 
+  const { introDone } = useIntro();
+
   return (
-    <main style={{ background: COLORS.bg, minHeight: '100vh', position: 'relative', overflowX: 'hidden' }}>
+    <main
+      style={{
+        background: COLORS.bg,
+        minHeight: '100vh',
+        position: 'relative',
+        overflowX: 'hidden',
+        opacity: introDone ? 1 : 0,
+        filter: introDone ? 'blur(0px)' : 'blur(4px)',
+        transition: 'opacity 0.8s cubic-bezier(0.16,1,0.3,1), filter 0.8s cubic-bezier(0.16,1,0.3,1)',
+      }}
+    >
       <style>{FONT_IMPORT}</style>
       <style>{`
         * { box-sizing: border-box; }
@@ -118,7 +133,6 @@ export function LandingPage() {
         }}
       />
 
-      <LoadingScreen />
       <Cursor />
       <Nav />
       <BottomDock />
@@ -139,5 +153,14 @@ export function LandingPage() {
         <Footer />
       </Suspense>
     </main>
+  );
+}
+
+export function LandingPage() {
+  return (
+    <IntroProvider>
+      <LoadingScreen />
+      <LandingPageInner />
+    </IntroProvider>
   );
 }

@@ -22,11 +22,10 @@ const ICON_EMOJI: Record<string, string> = {
 export function Sidebar() {
   const { collapsed, toggleCollapsed, mobileOpen, setMobileOpen } = useSidebar();
   const { setOpen } = useCommandPalette();
-  const { signOut } = useAuth();
+  const { signOut, user, displayName } = useAuth();
   const navigate = useNavigate();
 
-  const userEmail = "admin@duokarrma.com";
-  const displayName = userEmail.split("@")[0].replace(/[._-]/g, " ").replace(/\b\w/g, (l) => l.toUpperCase());
+  const userEmail = user?.email ?? "";
 
   // Fetch user-created schemas for the dynamic sidebar section
   const { data: dynamicSchemas = [] } = useQuery({

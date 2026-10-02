@@ -44,53 +44,58 @@ export default async function handler(req: any, res: any) {
   }
 
   try {
-    const apiKey = process.env.GROQ_API_KEY;
+    const apiKey = process.env.GEMINI_API_KEY;
     if (!apiKey) {
-      return res.status(500).json({ error: 'GROQ_API_KEY is not configured on the server.' });
+      return res.status(500).json({ error: 'GEMINI_API_KEY is not configured on the server.' });
     }
 
     const { messages = [] } = req.body || {};
 
-    const chatMessages = [
-      { role: 'system', content: SYSTEM_INSTRUCTION },
-      ...messages.map((m: any) => ({
-        role: m.role === 'assistant' ? 'assistant' : 'user',
-        content: m.content || m.text || '',
-      })),
-    ];
+    const contents = messages.map((m: any) => ({
+      role: m.role === 'assistant' ? 'model' : 'user',
+      parts: [{ text: m.content || m.text || '' }]
+    }));
 
-    const response = await fetch('https://api.groq.com/openai/v1/chat/completions', {
-      method: 'POST',
-      headers: {
-        'Authorization': `Bearer ${apiKey}`,
-        'Content-Type': 'application/json',
-      },
-      body: JSON.stringify({
-        model: 'llama-3.3-70b-versatile',
-        messages: chatMessages,
-        temperature: 0.3,
-        max_tokens: 800,
-      }),
-    });
+    const { GoogleGenAI } = await import('@google/genai');
+    const ai = new GoogleGenAI({ apiKey });
+    const models = ['gemini-2.0-flash', 'gemini-1.5-flash'];
+    
+    let text = '';
+    let success = false;
+    let isRateLimit = false;
 
-    if (response.status === 429) {
-      return res.status(200).json({ text: RATE_LIMIT_MESSAGE });
+    for (const m of models) {
+      try {
+        const response = await ai.models.generateContent({
+          model: m,
+          contents,
+          config: {
+            systemInstruction: SYSTEM_INSTRUCTION,
+            temperature: 0.7,
+            maxOutputTokens: 1000,
+          },
+        });
+        if (response.text) {
+          text = response.text;
+          success = true;
+          break;
+        }
+      } catch (err: any) {
+        const msg = err.message || String(err);
+        if (msg.includes('429') || msg.includes('RESOURCE_EXHAUSTED') || msg.includes('quota')) {
+          isRateLimit = true;
+        }
+        console.error(`Gemini API error with model ${m}:`, msg);
+      }
     }
 
-    if (!response.ok) {
-      const errText = await response.text();
-      console.error('Groq API error:', response.status, errText);
+    if (success) {
+      return res.status(200).json({ text });
+    } else if (isRateLimit) {
+      return res.status(200).json({ text: RATE_LIMIT_MESSAGE });
+    } else {
       return res.status(200).json({ text: "Sorry, I'm having trouble connecting right now. Please try again in a moment!" });
     }
-
-    const data = await response.json();
-    const text = data.choices?.[0]?.message?.content || '';
-
-    if (!text) {
-      return res.status(200).json({ text: "I didn't get a response. Please try again!" });
-    }
-
-    return res.status(200).json({ text });
   } catch (error: any) {
     console.error('AI Handler Error:', error);
     return res.status(200).json({ text: "Something went wrong on my end. Please try again shortly!" });

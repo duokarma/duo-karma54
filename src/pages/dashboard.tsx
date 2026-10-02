@@ -27,6 +27,7 @@ import { useQuery } from "@tanstack/react-query";
 import { supabase } from "@/lib/supabase";
 import { formatCurrency } from "@/lib/utils";
 import type { Client, Project, ChartPoint } from "@/types";
+import { useAuth } from "@/hooks/use-auth";
 
 // ── Helpers ────────────────────────────────────────────────
 const activityIconMap = {
@@ -122,7 +123,7 @@ export function DashboardPage() {
   const topActiveProjects = useMemo(() => activeProjects.slice(0, 5), [activeProjects]);
   const recentClients = useMemo(() => [...clients].sort((a, b) => b.joinedDate.localeCompare(a.joinedDate)).slice(0, 5), [clients]);
 
-  const displayName = "Admin";
+  const { displayName } = useAuth();
 
   const totalRevenue = useMemo(() => clients.reduce((sum, c) => sum + (c.amountPaid || 0), 0), [clients]);
   const netProfit = totalRevenue * 0.42; 

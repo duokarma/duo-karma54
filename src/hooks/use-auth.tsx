@@ -2,8 +2,21 @@ import { createContext, useContext, useEffect, useState } from "react";
 import type { User } from "@supabase/supabase-js";
 import { supabase } from "@/lib/supabase";
 
+// Map known co-founder emails → display names
+const FOUNDER_NAMES: Record<string, string> = {
+  "hatimsuttar@gmail.com": "Hatim",
+  "moizdhilawala99@gmail.com": "Moiz",
+};
+
+function getDisplayName(email: string | undefined): string {
+  if (!email) return "Admin";
+  if (FOUNDER_NAMES[email.toLowerCase()]) return FOUNDER_NAMES[email.toLowerCase()];
+  return email.split("@")[0].replace(/[._-]/g, " ").replace(/\b\w/g, (l) => l.toUpperCase());
+}
+
 type AuthContextType = {
   user: User | null;
+  displayName: string;
   isAuthenticated: boolean;
   isLoading: boolean;
   signOut: () => Promise<void>;
@@ -35,10 +48,13 @@ export function AuthProvider({ children }: { children: React.ReactNode }) {
     await supabase.auth.signOut();
   };
 
+  const displayName = getDisplayName(user?.email);
+
   return (
     <AuthContext.Provider 
       value={{ 
-        user, 
+        user,
+        displayName,
         isAuthenticated: !!user, 
         isLoading, 
         signOut 
