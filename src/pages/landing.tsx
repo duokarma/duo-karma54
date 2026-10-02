@@ -16,7 +16,6 @@ const Services = React.lazy(() => import('@/components/landing/Services').then(m
 const GlobalPresence = React.lazy(() => import('@/components/landing/GlobalPresence').then(m => ({ default: m.GlobalPresence })));
 const Process = React.lazy(() => import('@/components/landing/Process').then(m => ({ default: m.Process })));
 const Stats = React.lazy(() => import('@/components/landing/Stats').then(m => ({ default: m.Stats })));
-const CinematicOutro = React.lazy(() => import('@/components/landing/CinematicOutro').then(m => ({ default: m.CinematicOutro })));
 const Contact = React.lazy(() => import('@/components/landing/Contact').then(m => ({ default: m.Contact })));
 const Footer = React.lazy(() => import('@/components/landing/Footer').then(m => ({ default: m.Footer })));
 // AmbientEffects removed to improve performance and remove particle effects
@@ -136,7 +135,6 @@ export function LandingPage() {
         <GlobalPresence />
         <Process />
         <Stats />
-        <CinematicOutro />
         <Contact />
         <Footer />
       </Suspense>

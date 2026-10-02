@@ -45,7 +45,7 @@ export function LoadingScreen({ done }: { done?: boolean }) {
             // Mobile: Cinematic luxury vignette. Avoids severe cropping of the logo while blending flawlessly into the dark background.
             <div className="relative w-full h-full flex items-center justify-center">
               <video
-                src="/homepage-new.mp4"
+                src="/landing-page.mp4"
                 autoPlay
                 muted
                 playsInline
@@ -61,7 +61,7 @@ export function LoadingScreen({ done }: { done?: boolean }) {
           ) : (
             // Desktop/Laptop: full cover
             <video
-              src="/homepage-new.mp4"
+              src="/landing-page.mp4"
               autoPlay
               muted
               playsInline
