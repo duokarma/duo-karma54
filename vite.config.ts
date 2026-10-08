@@ -15,6 +15,106 @@ export default defineConfig({
         server.middlewares.use(async (req, res, next) => {
           if (req.url) {
             const url = new URL(req.url, 'http://localhost');
+            if (url.pathname === '/api/ai' && req.method === 'POST') {
+              let body = '';
+              req.on('data', (chunk) => { body += chunk; });
+              req.on('end', async () => {
+                try {
+                  const dotenv = await import('dotenv');
+                  dotenv.config({ path: path.resolve(__dirname, '.env.local') });
+                  const mod = await server.ssrLoadModule('/api/ai.ts');
+                  const handler = mod.default;
+
+                  const reqMock = {
+                    method: 'POST',
+                    headers: req.headers,
+                    body: JSON.parse(body || '{}'),
+                  };
+
+                  const resMock = {
+                    statusCode: 200,
+                    headers: {} as Record<string, string>,
+                    setHeader(name: string, val: string) {
+                      this.headers[name] = val;
+                      res.setHeader(name, val);
+                    },
+                    status(code: number) {
+                      this.statusCode = code;
+                      res.statusCode = code;
+                      return this;
+                    },
+                    json(data: any) {
+                      res.statusCode = this.statusCode;
+                      res.setHeader('Content-Type', 'application/json');
+                      res.end(JSON.stringify(data));
+                    },
+                    end() {
+                      res.end();
+                    },
+                  };
+
+                  await handler(reqMock, resMock);
+                } catch (err: any) {
+                  console.error('Vite /api/ai error:', err);
+                  res.statusCode = 500;
+                  res.setHeader('Content-Type', 'application/json');
+                  res.end(JSON.stringify({ error: err.message || 'Internal dev server error' }));
+                }
+              });
+              return;
+            }
+
+            if (url.pathname === '/api/upload') {
+              let body = '';
+              req.on('data', (chunk) => { body += chunk; });
+              req.on('end', async () => {
+                try {
+                  const dotenv = await import('dotenv');
+                  dotenv.config({ path: path.resolve(__dirname, '.env.local') });
+                  const mod = await server.ssrLoadModule('/api/upload.ts');
+                  const handler = mod.default;
+
+                  const reqMock = {
+                    method: req.method,
+                    headers: req.headers,
+                    body: body ? JSON.parse(body) : {},
+                    query: Object.fromEntries(url.searchParams),
+                  };
+
+                  const resMock = {
+                    statusCode: 200,
+                    headers: {} as Record<string, string>,
+                    setHeader(name: string, val: string) {
+                      this.headers[name] = val;
+                      res.setHeader(name, val);
+                    },
+                    status(code: number) {
+                      this.statusCode = code;
+                      res.statusCode = code;
+                      return this;
+                    },
+                    json(data: any) {
+                      res.statusCode = this.statusCode;
+                      res.setHeader('Content-Type', 'application/json');
+                      res.end(JSON.stringify(data));
+                    },
+                    end(data?: any) {
+                      if (data) res.end(data);
+                      else res.end();
+                    },
+                  };
+
+                  await handler(reqMock, resMock);
+                } catch (err: any) {
+                  console.error('Vite /api/upload error:', err);
+                  res.statusCode = 500;
+                  res.setHeader('Content-Type', 'application/json');
+                  res.end(JSON.stringify({ error: err.message || 'Internal dev server error' }));
+                }
+              });
+              return;
+            }
+
             if (url.pathname === '/api/chat' && req.method === 'POST') {
               let body = '';
               req.on('data', (chunk) => { body += chunk; });
@@ -22,19 +122,8 @@ export default defineConfig({
                 try {
                   const dotenv = await import('dotenv');
                   dotenv.config({ path: path.resolve(__dirname, '.env.local') });
-                  const apiKey = process.env.GEMINI_API_KEY;
-                  if (!apiKey) {
-                    res.statusCode = 500;
-                    res.setHeader('Content-Type', 'application/json');
-                    res.end(JSON.stringify({ error: 'GEMINI_API_KEY is not configured in .env.local' }));
-                    return;
-                  }
                   const parsed = JSON.parse(body || '{}');
                   const messages = parsed.messages || [];
-                  const contents = messages.map((m: any) => ({
-                    role: m.role === 'assistant' ? 'model' : 'user',
-                    parts: [{ text: m.content || m.text || '' }]
-                  }));
 
                   const systemPrompt = `You are DuoKarma Assistant, an expert AI business consultant for DuoKarma Business Hub.
 DuoKarma specializes in building custom digital solutions, high-converting websites, admin management software, automated booking systems, CRM systems, and AI workflows for businesses (Salons, Medical Clinics, Gyms, Restaurants, Farmhouses, and Service Enterprises).
@@ -50,6 +139,57 @@ Guidelines:
 - Keep responses clear, professional, concise, and structured with clean formatting or short bullet points.
 - Be helpful and energetic. Avoid overly verbose explanations.
 - NEVER provide raw calendar links or URLs. Instead, tell them to use the "Book a Strategy Call" button below the chat.`;
+
+                  // ── Groq high-speed provider (Primary) ────────────────
+                  const groqKey = process.env.GROQ_API_KEY || process.env.VITE_GROQ_API_KEY;
+                  if (groqKey) {
+                    try {
+                      const groqRes = await fetch('https://api.groq.com/openai/v1/chat/completions', {
+                        method: 'POST',
+                        headers: {
+                          'Authorization': `Bearer ${groqKey}`,
+                          'Content-Type': 'application/json',
+                        },
+                        body: JSON.stringify({
+                          model: 'llama-3.3-70b-versatile',
+                          messages: [
+                            { role: 'system', content: systemPrompt },
+                            ...messages.map((m: any) => ({
+                              role: m.role === 'model' || m.role === 'assistant' ? 'assistant' : 'user',
+                              content: m.content || m.text || '',
+                            })),
+                          ],
+                          temperature: 0.7,
+                          max_tokens: 1000,
+                        }),
+                      });
+                      if (groqRes.ok) {
+                        const groqData: any = await groqRes.json();
+                        const groqText = groqData?.choices?.[0]?.message?.content;
+                        if (groqText) {
+                          res.statusCode = 200;
+                          res.setHeader('Content-Type', 'application/json');
+                          res.end(JSON.stringify({ text: groqText }));
+                          return;
+                        }
+                      }
+                    } catch (gErr) {
+                      // Fall through to Gemini
+                    }
+                  }
+
+                  const apiKey = process.env.GEMINI_API_KEY;
+                  if (!apiKey && !groqKey) {
+                    res.statusCode = 500;
+                    res.setHeader('Content-Type', 'application/json');
+                    res.end(JSON.stringify({ error: 'Neither GROQ_API_KEY nor GEMINI_API_KEY is configured in .env.local' }));
+                    return;
+                  }
+
+                  const contents = messages.map((m: any) => ({
+                    role: m.role === 'assistant' ? 'model' : 'user',
+                    parts: [{ text: m.content || m.text || '' }]
+                  }));
 
                   // @ts-ignore: TS doesn't find types for this package
                   const { GoogleGenAI } = await import('@google/genai');
@@ -128,6 +268,7 @@ Guidelines:
     },
   },
   build: {
+    sourcemap: false,
     chunkSizeWarningLimit: 700,
     rollupOptions: {
       output: {

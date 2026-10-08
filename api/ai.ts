@@ -1317,7 +1317,7 @@ async function callProvider(
 }
 
 /**
- * Tries providers in order: Gemini → Groq → Cerebras.
+ * Tries providers in order: Groq (Primary high-speed) → Gemini → OpenRouter.
  * Skips providers whose API key is not configured.
  * Propagates fatal errors immediately.
  * Falls through to the next provider only on retriable errors.
@@ -1328,11 +1328,11 @@ async function fetchWithFallback(
   log: Logger,
 ): Promise<Response> {
   const providers: ProviderConfig[] = [
+    keys.groq       && { name: 'Groq',                 endpoint: ENDPOINTS.GROQ,       apiKey: keys.groq,       model: MODELS.GROQ                },
     keys.gemini     && { name: 'Gemini',               endpoint: ENDPOINTS.GEMINI,     apiKey: keys.gemini,     model: MODELS.GEMINI              },
     keys.openrouter && { name: 'OpenRouter (Gemma)',   endpoint: ENDPOINTS.OPENROUTER, apiKey: keys.openrouter, model: MODELS.OPENROUTER_GEMMA    },
     keys.openrouter && { name: 'OpenRouter (Qwen)',    endpoint: ENDPOINTS.OPENROUTER, apiKey: keys.openrouter, model: MODELS.OPENROUTER_QWEN     },
     keys.openrouter && { name: 'OpenRouter (DeepSeek)',endpoint: ENDPOINTS.OPENROUTER, apiKey: keys.openrouter, model: MODELS.OPENROUTER_DEEPSEEK },
-    keys.groq       && { name: 'Groq',                 endpoint: ENDPOINTS.GROQ,       apiKey: keys.groq,       model: MODELS.GROQ                },
   ].filter(Boolean) as ProviderConfig[];
 
   if (providers.length === 0) {
@@ -1447,9 +1447,9 @@ export default async function handler(req: any, res: any) {
   try {
     // ── API keys ─────────────────────────────────────────────────────────
     const keys = {
+      groq:       process.env.GROQ_API_KEY       || process.env.VITE_GROQ_API_KEY || '',
       gemini:     process.env.GEMINI_API_KEY     ?? '',
       openrouter: process.env.OPENROUTER_API_KEY ?? '',
-      groq:       process.env.GROQ_API_KEY       ?? '',
     };
 
     if (!keys.gemini && !keys.groq && !keys.openrouter) {

@@ -35,6 +35,7 @@ import { useForm } from "react-hook-form";
 import { zodResolver } from "@hookform/resolvers/zod";
 import * as z from "zod";
 import { supabase } from "@/lib/supabase";
+import { useAuth } from "@/hooks/use-auth";
 import type { Project } from "@/types";
 
 
@@ -54,8 +55,13 @@ type ProjectFormValues = z.infer<typeof projectSchema>;
 
 export function ProjectsPage() {
   const queryClient = useQueryClient();
+  const { displayName } = useAuth();
   const [query, setQuery] = useState("");
   const [statusFilter, setStatusFilter] = useState("all");
+  const [partnerFilter, setPartnerFilter] = useState<"all" | "Hatim" | "Moiz">("all");
+  const [assignedPartner, setAssignedPartner] = useState<"Hatim" | "Moiz" | "Both">(
+    displayName === "Moiz" ? "Moiz" : "Hatim"
+  );
   const [addOpen, setAddOpen] = useState(false);
   const [selectedProject, setSelectedProject] = useState<Project | null>(null);
 
@@ -65,6 +71,7 @@ export function ProjectsPage() {
 
   const createMutation = useMutation({
     mutationFn: async (values: ProjectFormValues) => {
+      const team = assignedPartner === "Both" ? ["Hatim", "Moiz"] : [assignedPartner];
       const newProject = {
         id: Math.random().toString(36).substring(2, 9),
         ...values,
@@ -73,7 +80,7 @@ export function ProjectsPage() {
         spent: 0,
         startDate: new Date().toISOString().split("T")[0],
         dueDate: new Date(Date.now() + 30 * 24 * 60 * 60 * 1000).toISOString().split("T")[0],
-        team: ["Hatim"],
+        team,
         priority: "medium",
       };
       const { error } = await supabase.from("projects").insert([newProject]);
@@ -88,8 +95,9 @@ export function ProjectsPage() {
 
   const editMutation = useMutation({
     mutationFn: async (values: ProjectFormValues & { id: string }) => {
+      const team = assignedPartner === "Both" ? ["Hatim", "Moiz"] : [assignedPartner];
       const { id, ...rest } = values;
-      const { error } = await supabase.from("projects").update(rest).eq("id", id);
+      const { error } = await supabase.from("projects").update({ ...rest, team }).eq("id", id);
       if (error) throw error;
     },
     onSuccess: () => {
@@ -122,6 +130,13 @@ export function ProjectsPage() {
 
   const openEditDrawer = (project: Project) => {
     setSelectedProject(project);
+    if (project.team?.includes("Hatim") && project.team?.includes("Moiz")) {
+      setAssignedPartner("Both");
+    } else if (project.team?.includes("Moiz")) {
+      setAssignedPartner("Moiz");
+    } else {
+      setAssignedPartner("Hatim");
+    }
     reset({
       name: project.name,
       client: project.client,
@@ -149,9 +164,14 @@ export function ProjectsPage() {
         p.name.toLowerCase().includes(query.toLowerCase()) ||
         p.client.toLowerCase().includes(query.toLowerCase());
       const matchesStatus = statusFilter === "all" || p.status === statusFilter;
-      return matchesQuery && matchesStatus;
+      const teamStr = Array.isArray(p.team) ? p.team.join(" ").toLowerCase() : "";
+      const matchesPartner =
+        partnerFilter === "all" ||
+        (partnerFilter === "Hatim" && (teamStr.includes("hatim") || !teamStr)) ||
+        (partnerFilter === "Moiz" && teamStr.includes("moiz"));
+      return matchesQuery && matchesStatus && matchesPartner;
     });
-  }, [projects, query, statusFilter]);
+  }, [projects, query, statusFilter, partnerFilter]);
 
   return (
     <div>
@@ -170,8 +190,48 @@ export function ProjectsPage() {
           <Search className="absolute left-3 top-1/2 h-4 w-4 -translate-y-1/2 text-ink-faint" />
           <Input placeholder="Search projects..." className="pl-10" value={query} onChange={(e) => setQuery(e.target.value)} />
         </div>
+
+        {/* Partner Quick-Filter */}
+        <div className="flex items-center rounded-xl border border-white/10 bg-white/3 p-0.5 text-xs">
+          <button
+            type="button"
+            onClick={() => setPartnerFilter("all")}
+            className={`rounded-lg px-2.5 py-1 text-xs font-medium transition-all ${
+              partnerFilter === "all"
+                ? "bg-white/15 text-white shadow-sm"
+                : "text-ink/40 hover:text-ink/80"
+            }`}
+          >
+            All
+          </button>
+          <button
+            type="button"
+            onClick={() => setPartnerFilter("Hatim")}
+            className={`flex items-center gap-1.5 rounded-lg px-2.5 py-1 text-xs font-medium transition-all ${
+              partnerFilter === "Hatim"
+                ? "border border-indigo-500/40 bg-indigo-500/20 text-indigo-300 shadow-sm"
+                : "text-ink/40 hover:text-ink/80"
+            }`}
+          >
+            <span className="h-1.5 w-1.5 rounded-full bg-indigo-400" />
+            Hatim{displayName === "Hatim" ? " (Me)" : ""}
+          </button>
+          <button
+            type="button"
+            onClick={() => setPartnerFilter("Moiz")}
+            className={`flex items-center gap-1.5 rounded-lg px-2.5 py-1 text-xs font-medium transition-all ${
+              partnerFilter === "Moiz"
+                ? "border border-emerald-500/40 bg-emerald-500/20 text-emerald-300 shadow-sm"
+                : "text-ink/40 hover:text-ink/80"
+            }`}
+          >
+            <span className="h-1.5 w-1.5 rounded-full bg-emerald-400" />
+            Moiz{displayName === "Moiz" ? " (Me)" : ""}
+          </button>
+        </div>
+
         <Select value={statusFilter} onValueChange={setStatusFilter}>
-          <SelectTrigger className="w-44">
+          <SelectTrigger className="w-40">
             <SelectValue />
           </SelectTrigger>
           <SelectContent>
@@ -214,7 +274,43 @@ export function ProjectsPage() {
                 <GlowBorder color="rgba(37,99,235,0.4)" className="h-full w-full rounded-[var(--radius-card)]">
                   <Card className="h-full border-none shadow-none bg-[var(--color-card)] relative z-10">
                     <CardContent className="p-5">
-                  <div className="flex items-start justify-end gap-2">
+                  <div className="flex items-start justify-between gap-2">
+                    <div className="flex items-center gap-1.5 flex-wrap">
+                      {project.team && project.team.length > 0 && (
+                        <span
+                          className="text-[10px] rounded px-2 py-0.5 border font-medium flex items-center gap-1"
+                          style={{
+                            borderColor: project.team.includes("Moiz") && !project.team.includes("Hatim")
+                              ? "#10B98150"
+                              : project.team.includes("Hatim") && !project.team.includes("Moiz")
+                              ? "#6366F150"
+                              : "#8B5CF650",
+                            color: project.team.includes("Moiz") && !project.team.includes("Hatim")
+                              ? "#34D399"
+                              : project.team.includes("Hatim") && !project.team.includes("Moiz")
+                              ? "#818CF8"
+                              : "#C084FC",
+                            backgroundColor: project.team.includes("Moiz") && !project.team.includes("Hatim")
+                              ? "#10B98115"
+                              : project.team.includes("Hatim") && !project.team.includes("Moiz")
+                              ? "#6366F115"
+                              : "#8B5CF615",
+                          }}
+                        >
+                          <span
+                            className="h-1.5 w-1.5 rounded-full"
+                            style={{
+                              backgroundColor: project.team.includes("Moiz") && !project.team.includes("Hatim")
+                                ? "#34D399"
+                                : project.team.includes("Hatim") && !project.team.includes("Moiz")
+                                ? "#818CF8"
+                                : "#C084FC",
+                            }}
+                          />
+                          {project.team.join(" & ")}
+                        </span>
+                      )}
+                    </div>
                     <div className="flex items-center gap-2">
                       <DropdownMenu>
                         <DropdownMenuTrigger className="focus:outline-none">
@@ -289,6 +385,7 @@ export function ProjectsPage() {
         setAddOpen(open);
         if (!open) {
           setSelectedProject(null);
+          setAssignedPartner(displayName === "Moiz" ? "Moiz" : "Hatim");
           reset({ name: "", client: "", budget: 0, websiteLink: "", vercelLink: "", githubLink: "", databaseLink: "" });
         }
       }}>
@@ -318,6 +415,20 @@ export function ProjectsPage() {
               <label className="mb-1.5 block text-xs font-medium text-ink-dim">Budget</label>
               <Input placeholder="50000" type="number" {...register("budget")} />
               {errors.budget && <p className="mt-1 text-[10px] text-rose">{errors.budget.message}</p>}
+            </div>
+
+            <div>
+              <label className="mb-1.5 block text-xs font-medium text-ink-dim">Lead Partner</label>
+              <Select value={assignedPartner} onValueChange={(v: any) => setAssignedPartner(v)}>
+                <SelectTrigger>
+                  <SelectValue />
+                </SelectTrigger>
+                <SelectContent>
+                  <SelectItem value="Hatim">Hatim (Co-founder)</SelectItem>
+                  <SelectItem value="Moiz">Moiz (Co-founder)</SelectItem>
+                  <SelectItem value="Both">Both (Hatim & Moiz)</SelectItem>
+                </SelectContent>
+              </Select>
             </div>
 
             <div className="grid grid-cols-1 sm:grid-cols-2 gap-3 sm:gap-4">

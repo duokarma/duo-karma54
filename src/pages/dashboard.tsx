@@ -8,7 +8,6 @@ import {
   Plus,
   FileText,
   UserPlus,
-  Calendar,
   CheckSquare,
   CreditCard,
   Target,
@@ -340,7 +339,7 @@ export function DashboardPage() {
         <Card>
           <CardHeader className="flex-row items-center justify-between space-y-0">
             <CardTitle>Recent Clients</CardTitle>
-            <Link to="/admin/clients" className="flex items-center gap-1 text-xs text-[var(--color-accent)] hover:underline">
+            <Link to="/admin/pipeline" className="flex items-center gap-1 text-xs text-[var(--color-accent)] hover:underline">
               View all <ArrowUpRight className="h-3 w-3" />
             </Link>
           </CardHeader>
@@ -374,11 +373,10 @@ export function DashboardPage() {
           <CardContent>
             <div className="space-y-1.5">
               {[
-                { label: "Add Client",        icon: UserPlus,   to: "/admin/clients",  desc: "Onboard a new client" },
-                
-                { label: "New Project",       icon: FolderKanban, to: "/admin/projects", desc: "Start tracking work" },
-                { label: "Schedule Meeting",  icon: Calendar,   to: "/admin/calendar", desc: "Block calendar time" },
-                { label: "Add Task",          icon: CheckSquare, to: "/admin/tasks",   desc: "Track a to-do" },
+                { label: "Add Lead / Client",  icon: UserPlus,    to: "/admin/pipeline", desc: "Open pipeline" },
+                { label: "New Project",        icon: FolderKanban, to: "/admin/projects", desc: "Start tracking work" },
+                { label: "Track Payment",      icon: CreditCard,  to: "/admin/finance",  desc: "Payments & expenses" },
+                { label: "Add Task",           icon: CheckSquare, to: "/admin/tasks",    desc: "Track a to-do" },
               ].map((action) => (
                 <Link
                   key={action.label}

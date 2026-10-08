@@ -1,11 +1,12 @@
 import { useLocation, Link } from "react-router-dom";
-import { Bell, Menu, ChevronRight, Search, LogOut, LayoutGrid } from "lucide-react";
+import { Bell, Menu, ChevronRight, Search, LogOut, LayoutGrid, KeyRound } from "lucide-react";
 import { m as motion, AnimatePresence } from "framer-motion";
 import { useSidebar } from "@/hooks/use-sidebar";
 import { useCommandPalette } from "@/hooks/use-command-palette";
 import { navItems } from "@/lib/nav-config";
 import { Button } from "@/components/ui/button";
 import { NotificationPanel } from "@/components/layout/notification-panel";
+import { PartnerSettingsDialog } from "@/components/layout/partner-settings-dialog";
 import { useState, useRef, useEffect } from "react";
 import { useAuth } from "@/hooks/use-auth";
 import {
@@ -35,6 +36,7 @@ export function Topbar() {
   const { setMobileOpen } = useSidebar();
   const { setOpen } = useCommandPalette();
   const [notifOpen, setNotifOpen] = useState(false);
+  const [settingsOpen, setSettingsOpen] = useState(false);
   const notifRef = useRef<HTMLDivElement>(null);
   const { signOut, user, displayName } = useAuth();
 
@@ -184,6 +186,14 @@ export function Topbar() {
               </div>
             </DropdownMenuLabel>
             <DropdownMenuSeparator />
+            <DropdownMenuItem
+              onClick={() => setSettingsOpen(true)}
+              className="cursor-pointer text-xs text-ink-dim hover:text-ink focus:text-ink"
+            >
+              <KeyRound className="mr-2 h-3.5 w-3.5 text-ink-faint" />
+              Partner Settings / Password
+            </DropdownMenuItem>
+            <DropdownMenuSeparator />
             <DropdownMenuItem onClick={signOut} className="cursor-pointer text-xs text-[#EF4444] focus:text-[#EF4444]">
               <LogOut className="mr-2 h-3.5 w-3.5" />
               Sign out
@@ -191,6 +201,8 @@ export function Topbar() {
           </DropdownMenuContent>
         </DropdownMenu>
       </div>
+
+      <PartnerSettingsDialog open={settingsOpen} onOpenChange={setSettingsOpen} />
     </header>
   );
 }

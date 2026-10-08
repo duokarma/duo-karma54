@@ -33,6 +33,7 @@ import type { Document } from "@/types";
 import { useQuery, useMutation, useQueryClient } from "@tanstack/react-query";
 import { supabase } from "@/lib/supabase";
 import { useToast } from "@/components/ui/toast";
+import { uploadToStorage } from "@/lib/storage";
 
 const typeIcon: Record<string, typeof FileText> = {
   pdf: FileText,
@@ -81,41 +82,19 @@ export function DocumentsPage() {
       else if (file.name.endsWith(".doc") || file.name.endsWith(".docx") || file.type.includes("word")) type = "doc";
       else if (file.name.endsWith(".xls") || file.name.endsWith(".xlsx") || file.type.includes("excel")) type = "xls";
 
-      let sizeStr = "";
-      if (file.size < 1024 * 1024) {
-        sizeStr = (file.size / 1024).toFixed(0) + " KB";
-      } else {
-        sizeStr = (file.size / 1024 / 1024).toFixed(1) + " MB";
-      }
-      
-      const fileExt = file.name.split('.').pop();
-      const uniqueFileName = `${Date.now()}-${Math.random().toString(36).substring(7)}.${fileExt}`;
+      // 1. Upload directly to Cloudflare R2
+      const uploaded = await uploadToStorage(file, { folder: "documents" });
 
-      // 1. Upload to Supabase Storage bucket 'DUO-KARMA files'
-      const { error: storageError } = await supabase.storage
-        .from("DUO-KARMA files")
-        .upload(uniqueFileName, file, { cacheControl: '3600', upsert: false });
-
-      if (storageError) {
-        console.error("Storage upload error:", storageError);
-        throw new Error(storageError.message || "Failed to upload file to storage.");
-      }
-
-      // 2. Get Public URL
-      const { data: { publicUrl } } = supabase.storage
-        .from("DUO-KARMA files")
-        .getPublicUrl(uniqueFileName);
-
-      // 3. Save to database
+      // 2. Save document record to Supabase database
       const newDoc = {
         id: crypto.randomUUID(),
-        name: file.name,
+        name: uploaded.fileName,
         type,
-        size: sizeStr,
+        size: uploaded.fileSize,
         modifiedDate: new Date().toISOString(),
         folder: "Uploads",
         sharedWith: 0,
-        url: publicUrl, // Store the public URL
+        url: uploaded.publicUrl,
       };
 
       const { error: dbError } = await supabase.from("documents").insert(newDoc);

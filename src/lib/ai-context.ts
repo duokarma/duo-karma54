@@ -49,16 +49,11 @@ const MAX_RECENT_RECORDS = 5;
  */
 const PATH_LABELS: Record<string, string> = {
   dashboard:  'Main Dashboard',
-  clients:    'Clients',
-  leads:      'Leads',
+  pipeline:   'Pipeline (Leads & Clients)',
+  finance:    'Finance (Payments, Expenses, Profit)',
   projects:   'Projects',
   tasks:      'Tasks',
-  expenses:   'Expenses',
   documents:  'Documents',
-  analytics:  'Analytics',
-  revenue:    'Revenue',
-  profit:     'Profit',
-  reports:    'Reports',
   calendar:   'Calendar',
 };
 

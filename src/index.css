@@ -301,4 +301,15 @@
   .status-dot-active  { background-color: var(--color-success); }
   .status-dot-pending { background-color: var(--color-warning); }
   .status-dot-danger  { background-color: var(--color-danger); }
+
+  /* Form field labels — used in Pipeline and Finance forms */
+  .field-label {
+    display: block;
+    margin-bottom: 0.375rem;
+    font-size: 0.6875rem;
+    font-weight: 500;
+    text-transform: uppercase;
+    letter-spacing: 0.06em;
+    color: rgba(255, 255, 255, 0.45);
+  }
 }

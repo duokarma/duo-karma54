@@ -2,16 +2,24 @@ import { createContext, useContext, useEffect, useState } from "react";
 import type { User } from "@supabase/supabase-js";
 import { supabase } from "@/lib/supabase";
 
-// Map known co-founder emails → display names
-const FOUNDER_NAMES: Record<string, string> = {
-  "hatimsuttar@gmail.com": "Hatim",
+// Map known partner emails → display names
+const PARTNER_MAP: Record<string, string> = {
+  "hatimsuttar@gmail.com":  "Hatim",
   "moizdhilawala99@gmail.com": "Moiz",
 };
 
 function getDisplayName(email: string | undefined): string {
   if (!email) return "Admin";
-  if (FOUNDER_NAMES[email.toLowerCase()]) return FOUNDER_NAMES[email.toLowerCase()];
+  const lower = email.toLowerCase();
+  if (PARTNER_MAP[lower]) return PARTNER_MAP[lower];
   return email.split("@")[0].replace(/[._-]/g, " ").replace(/\b\w/g, (l) => l.toUpperCase());
+}
+
+/** Returns initials (1-2 chars) for the avatar circle */
+export function getInitials(name: string): string {
+  const parts = name.trim().split(" ");
+  if (parts.length >= 2) return (parts[0][0] + parts[1][0]).toUpperCase();
+  return name.slice(0, 2).toUpperCase();
 }
 
 type AuthContextType = {
@@ -29,13 +37,11 @@ export function AuthProvider({ children }: { children: React.ReactNode }) {
   const [isLoading, setIsLoading] = useState(true);
 
   useEffect(() => {
-    // Get initial session
     supabase.auth.getSession().then(({ data: { session } }) => {
       setUser(session?.user ?? null);
       setIsLoading(false);
     });
 
-    // Listen for auth changes
     const { data: { subscription } } = supabase.auth.onAuthStateChange((_event, session) => {
       setUser(session?.user ?? null);
       setIsLoading(false);
@@ -51,14 +57,8 @@ export function AuthProvider({ children }: { children: React.ReactNode }) {
   const displayName = getDisplayName(user?.email);
 
   return (
-    <AuthContext.Provider 
-      value={{ 
-        user,
-        displayName,
-        isAuthenticated: !!user, 
-        isLoading, 
-        signOut 
-      }}
+    <AuthContext.Provider
+      value={{ user, displayName, isAuthenticated: !!user, isLoading, signOut }}
     >
       {children}
     </AuthContext.Provider>

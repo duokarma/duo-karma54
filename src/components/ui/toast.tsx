@@ -3,13 +3,13 @@ import { CheckCircle2, XCircle, Info, X } from "lucide-react";
 import { m as motion, AnimatePresence, useMotionValue, useTransform } from "framer-motion";
 import { cn } from "@/lib/utils";
 
-type ToastVariant = "success" | "error" | "info";
+type ToastVariant = "success" | "error" | "info" | "destructive";
 
 interface ToastItem {
   id: string;
   title: string;
   description?: string;
-  variant: ToastVariant;
+  variant?: ToastVariant;
 }
 
 interface ToastContextValue {
@@ -21,6 +21,7 @@ const ToastContext = React.createContext<ToastContextValue | undefined>(undefine
 const variantConfig: Record<ToastVariant, { icon: React.ComponentType<{ className?: string }>; className: string }> = {
   success: { icon: CheckCircle2, className: "text-emerald" },
   error: { icon: XCircle, className: "text-rose" },
+  destructive: { icon: XCircle, className: "text-rose" },
   info: { icon: Info, className: "text-electric" },
 };
 
@@ -37,7 +38,7 @@ function ToastCard({
   total: number;
   onDismiss: (id: string) => void;
 }) {
-  const config = variantConfig[t.variant];
+  const config = variantConfig[t.variant || "info"] || variantConfig.info;
   const Icon = config.icon;
   const isFront = index === 0;
 
@@ -121,7 +122,7 @@ export function ToastProvider({ children }: { children: React.ReactNode }) {
   const toast = React.useCallback((t: Omit<ToastItem, "id">) => {
     const id = Math.random().toString(36).slice(2);
     // Add new toasts to the front of the array
-    setToasts((prev) => [{ ...t, id }, ...prev]);
+    setToasts((prev) => [{ variant: "info", ...t, id }, ...prev]);
   }, []);
 
   const dismiss = React.useCallback((id: string) => {
