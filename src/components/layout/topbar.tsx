@@ -1,5 +1,5 @@
 import { useLocation, Link } from "react-router-dom";
-import { Bell, Menu, ChevronRight, Search, LogOut, LayoutGrid, KeyRound, X } from "lucide-react";
+import { Bell, Menu, ChevronRight, Search, LogOut, LayoutGrid, KeyRound, X, Boxes, Plus, Pencil, ArrowUpRight } from "lucide-react";
 import { m as motion, AnimatePresence } from "framer-motion";
 import { useSidebar } from "@/hooks/use-sidebar";
 import { useCommandPalette } from "@/hooks/use-command-palette";
@@ -7,6 +7,9 @@ import { navItems } from "@/lib/nav-config";
 import { Button } from "@/components/ui/button";
 import { NotificationPanel } from "@/components/layout/notification-panel";
 import { PartnerSettingsDialog } from "@/components/layout/partner-settings-dialog";
+import { ManageAppsDialog } from "@/components/layout/manage-apps-dialog";
+import { useEcosystemApps } from "@/hooks/use-ecosystem-apps";
+import { cn } from "@/lib/utils";
 import { useState, useRef, useEffect } from "react";
 import { useAuth } from "@/hooks/use-auth";
 import {
@@ -38,6 +41,11 @@ export function Topbar() {
   const [notifOpen, setNotifOpen] = useState(false);
   const [widgetsPanelOpen, setWidgetsPanelOpen] = useState(false);
   const [settingsOpen, setSettingsOpen] = useState(false);
+  const { apps } = useEcosystemApps();
+  const [appsMenuOpen, setAppsMenuOpen] = useState(false);
+  const [manageAppsOpen, setManageAppsOpen] = useState(false);
+  const [selectedEditAppId, setSelectedEditAppId] = useState<string | null>(null);
+  const appsMenuRef = useRef<HTMLDivElement>(null);
   const notifRef = useRef<HTMLDivElement>(null);
   const { signOut, user, displayName, avatarUrl } = useAuth();
 
@@ -49,6 +57,9 @@ export function Topbar() {
     function handleClick(e: MouseEvent | TouchEvent) {
       if (notifRef.current && !notifRef.current.contains(e.target as Node)) {
         setNotifOpen(false);
+      }
+      if (appsMenuRef.current && !appsMenuRef.current.contains(e.target as Node)) {
+        setAppsMenuOpen(false);
       }
     }
     document.addEventListener("mousedown", handleClick);
@@ -179,6 +190,175 @@ export function Topbar() {
           </Button>
         </motion.div>
 
+        {/* Workspace & Client Apps Quick Launcher (beside notification bell) */}
+        <div className="relative" ref={appsMenuRef}>
+          <motion.div whileHover={{ scale: 1.1 }} whileTap={{ scale: 0.95 }}>
+            <Button
+              variant="ghost"
+              size="icon"
+              onClick={() => {
+                setAppsMenuOpen((o) => !o);
+                setNotifOpen(false);
+              }}
+              aria-label="Workspace & Client Apps"
+              title="Workspace Apps Launcher"
+              className={cn(
+                "relative h-7 w-7 transition-colors rounded-md",
+                appsMenuOpen
+                  ? "bg-blue-500/20 text-blue-400 border border-blue-500/40 hover:bg-blue-500/30 hover:text-white"
+                  : "text-ink-faint hover:bg-white/10 hover:text-white"
+              )}
+            >
+              <Boxes className="h-3.5 w-3.5" />
+              {apps.length > 0 && (
+                <span className="absolute -top-0.5 -right-0.5 flex h-3.5 min-w-[14px] items-center justify-center rounded-full bg-blue-600 px-1 text-[8px] font-bold text-white shadow-sm ring-1 ring-[var(--color-void)]">
+                  {apps.length}
+                </span>
+              )}
+            </Button>
+          </motion.div>
+
+          {appsMenuOpen && (
+            <div className="fixed inset-x-2 top-12 sm:inset-x-auto sm:right-0 sm:top-full sm:mt-1.5 z-50 w-80 max-w-[calc(100vw-1rem)]">
+              <div className="rounded-2xl border border-white/10 bg-[var(--color-void)]/95 backdrop-blur-2xl p-3 shadow-2xl ring-1 ring-black/50 space-y-2.5">
+                {/* Header */}
+                <div className="flex items-center justify-between pb-2 border-b border-white/10">
+                  <div className="flex items-center gap-2">
+                    <div className="h-6 w-6 rounded-lg bg-blue-500/15 border border-blue-400/25 flex items-center justify-center text-blue-400 shrink-0">
+                      <Boxes className="h-3.5 w-3.5" />
+                    </div>
+                    <div>
+                      <p className="text-xs font-semibold text-white leading-none">Workspace Apps</p>
+                      <p className="text-[10px] text-ink-faint mt-0.5">Quick access & portals</p>
+                    </div>
+                  </div>
+                  <button
+                    type="button"
+                    onClick={() => {
+                      setSelectedEditAppId(null);
+                      setManageAppsOpen(true);
+                      setAppsMenuOpen(false);
+                    }}
+                    className="h-6 px-2 rounded-lg bg-blue-500/15 hover:bg-blue-500/25 border border-blue-500/30 text-blue-400 text-[10px] font-semibold flex items-center gap-1 transition-all cursor-pointer touch-manipulation"
+                  >
+                    <Plus className="h-3 w-3" />
+                    <span>Add</span>
+                  </button>
+                </div>
+
+                {/* Apps List */}
+                <div className="max-h-[300px] overflow-y-auto space-y-1.5 pr-0.5 custom-scrollbar">
+                  {apps.length === 0 ? (
+                    <div className="p-4 text-center rounded-xl bg-white/[0.02] border border-white/5">
+                      <p className="text-xs text-ink-faint">No apps added yet.</p>
+                      <button
+                        type="button"
+                        onClick={() => {
+                          setSelectedEditAppId(null);
+                          setManageAppsOpen(true);
+                          setAppsMenuOpen(false);
+                        }}
+                        className="mt-2 text-xs text-blue-400 hover:underline font-medium inline-flex items-center gap-1 cursor-pointer"
+                      >
+                        <Plus className="h-3 w-3" /> Add your first app
+                      </button>
+                    </div>
+                  ) : (
+                    apps.map((app) => (
+                      <div
+                        key={app.id}
+                        className="group flex items-center justify-between rounded-xl p-2 border border-white/5 bg-white/[0.02] hover:border-white/15 hover:bg-white/[0.06] transition-all gap-2"
+                      >
+                        <a
+                          href={app.url}
+                          target="_blank"
+                          rel="noopener noreferrer"
+                          onClick={() => setAppsMenuOpen(false)}
+                          className="flex-1 min-w-0 flex items-center gap-2.5 cursor-pointer"
+                        >
+                          <div className="relative h-8 w-8 rounded-xl overflow-hidden border border-white/15 bg-black/60 flex items-center justify-center shrink-0 shadow-md group-hover:scale-105 transition-transform">
+                            <img
+                              src={app.imageUrl || "/logo.jpeg"}
+                              alt={app.title}
+                              className="h-full w-full object-cover"
+                              onError={(e) => {
+                                (e.target as HTMLImageElement).src = "/logo.jpeg";
+                              }}
+                            />
+                          </div>
+                          <div className="min-w-0 flex-1">
+                            <p className="truncate text-xs font-semibold text-white group-hover:text-blue-400 transition-colors">
+                              {app.title}
+                            </p>
+                            <p className="truncate text-[10px] text-ink-faint flex items-center gap-1 mt-0.5">
+                              <span className="h-1.5 w-1.5 rounded-full bg-emerald-400 shrink-0" />
+                              <span className="truncate">{app.category || "Client App"}</span>
+                            </p>
+                          </div>
+                        </a>
+
+                        <div className="flex items-center gap-1 shrink-0">
+                          <a
+                            href={app.url}
+                            target="_blank"
+                            rel="noopener noreferrer"
+                            onClick={() => setAppsMenuOpen(false)}
+                            className="px-2 py-0.5 rounded-full border border-blue-500/30 bg-blue-500/10 text-blue-400 hover:bg-blue-500/20 text-[10px] font-semibold tracking-wide flex items-center gap-0.5 transition-colors cursor-pointer"
+                          >
+                            <span>OPEN</span>
+                            <ArrowUpRight className="h-2.5 w-2.5" />
+                          </a>
+
+                          <button
+                            type="button"
+                            onClick={() => {
+                              setSelectedEditAppId(app.id);
+                              setManageAppsOpen(true);
+                              setAppsMenuOpen(false);
+                            }}
+                            className="p-1 rounded-lg text-ink-faint hover:text-white hover:bg-white/10 transition-all cursor-pointer"
+                            title={`Edit ${app.title}`}
+                            aria-label={`Edit ${app.title}`}
+                          >
+                            <Pencil className="h-3 w-3" />
+                          </button>
+                        </div>
+                      </div>
+                    ))
+                  )}
+                </div>
+
+                {/* Footer */}
+                <div className="pt-2 border-t border-white/10 flex items-center justify-between text-[11px]">
+                  <button
+                    type="button"
+                    onClick={() => {
+                      setSelectedEditAppId(null);
+                      setManageAppsOpen(true);
+                      setAppsMenuOpen(false);
+                    }}
+                    className="text-xs text-ink-faint hover:text-white flex items-center gap-1 transition-colors cursor-pointer"
+                  >
+                    <Plus className="h-3 w-3" />
+                    <span>Add New App</span>
+                  </button>
+                  <button
+                    type="button"
+                    onClick={() => {
+                      setSelectedEditAppId(null);
+                      setManageAppsOpen(true);
+                      setAppsMenuOpen(false);
+                    }}
+                    className="text-xs text-blue-400 hover:text-blue-300 font-medium transition-colors cursor-pointer"
+                  >
+                    Manage All →
+                  </button>
+                </div>
+              </div>
+            </div>
+          )}
+        </div>
+
         {/* Notifications */}
         <div className="relative" ref={notifRef}>
           <motion.div whileHover={{ scale: 1.1 }} whileTap={{ scale: 0.95 }}>
@@ -264,6 +444,11 @@ export function Topbar() {
       </div>
 
       <PartnerSettingsDialog open={settingsOpen} onOpenChange={setSettingsOpen} />
+      <ManageAppsDialog
+        open={manageAppsOpen}
+        onOpenChange={setManageAppsOpen}
+        initialEditAppId={selectedEditAppId}
+      />
     </header>
   );
 }

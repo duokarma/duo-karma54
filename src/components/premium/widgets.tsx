@@ -3,13 +3,14 @@ import {
   Clock, CheckSquare, Activity, Pin, ArrowUpRight,
   IndianRupee, Users, Target, Zap, Database, Server,
   TrendingUp, AlertCircle, CheckCircle2, Loader2,
-  Briefcase,
+  Briefcase, Boxes, Plus, Pencil,
 } from "lucide-react";
 import { Link } from "react-router-dom";
 import { m as motion } from "framer-motion";
 import { useQuery } from "@tanstack/react-query";
 import { supabase } from "@/lib/supabase";
 import { formatCurrency } from "@/lib/utils";
+import { useEcosystemApps } from "@/hooks/use-ecosystem-apps";
 
 // ── Live Clock ────────────────────────────────────────────────────────────────
 export function LiveClock() {
@@ -473,6 +474,122 @@ export function ServerStatus() {
           Verified live at {lastChecked.toLocaleTimeString("en-IN", { hour: "2-digit", minute: "2-digit", second: "2-digit" })}
         </p>
       )}
+    </div>
+  );
+}
+
+// ── Workspace & Ecosystem Apps Widget ─────────────────────────────────────────
+export function EcosystemAppsWidget({
+  onClose,
+  onAddApp,
+  onEditApp,
+}: {
+  onClose?: () => void;
+  onAddApp?: () => void;
+  onEditApp?: (id: string) => void;
+}) {
+  const { apps } = useEcosystemApps();
+
+  return (
+    <div className="rounded-[var(--radius-card)] border border-[var(--color-edge)] bg-[var(--color-card)] p-3 shadow-sm space-y-2.5">
+      <div className="flex items-center justify-between">
+        <div className="flex items-center gap-1.5">
+          <div className="flex h-6 w-6 items-center justify-center rounded-lg bg-blue-500/15 border border-blue-400/25 text-blue-400">
+            <Boxes className="h-3.5 w-3.5" />
+          </div>
+          <div>
+            <p className="text-xs font-semibold text-ink leading-none">Workspace Apps</p>
+            <p className="text-[10px] text-ink-faint mt-0.5">Quick access portals</p>
+          </div>
+        </div>
+        {onAddApp && (
+          <button
+            type="button"
+            onClick={onAddApp}
+            className="flex items-center gap-1 rounded-lg bg-blue-500/15 hover:bg-blue-500/25 border border-blue-500/30 px-2 py-1 text-[10px] font-semibold text-blue-400 transition-colors cursor-pointer touch-manipulation"
+          >
+            <Plus className="h-3 w-3" />
+            <span>Add</span>
+          </button>
+        )}
+      </div>
+
+      <div className="space-y-1.5">
+        {apps.length === 0 ? (
+          <div className="rounded-lg border border-white/5 bg-white/[0.02] p-3 text-center">
+            <p className="text-[11px] text-ink-faint">No apps added yet.</p>
+            {onAddApp && (
+              <button
+                type="button"
+                onClick={onAddApp}
+                className="mt-1 text-xs text-blue-400 hover:underline font-medium inline-flex items-center gap-1 cursor-pointer"
+              >
+                <Plus className="h-3 w-3" /> Add app
+              </button>
+            )}
+          </div>
+        ) : (
+          apps.map((app) => (
+            <div
+              key={app.id}
+              className="group flex items-center justify-between rounded-xl border border-white/5 bg-white/[0.02] p-2 hover:border-white/15 hover:bg-white/[0.05] transition-all gap-2"
+            >
+              <a
+                href={app.url}
+                target="_blank"
+                rel="noopener noreferrer"
+                onClick={onClose}
+                className="flex items-center gap-2.5 min-w-0 flex-1 cursor-pointer"
+              >
+                <div className="relative h-8 w-8 rounded-xl overflow-hidden border border-white/15 bg-black/60 flex items-center justify-center shrink-0 shadow-sm group-hover:scale-105 transition-transform">
+                  <img
+                    src={app.imageUrl || "/logo.jpeg"}
+                    alt={app.title}
+                    className="h-full w-full object-cover"
+                    onError={(e) => {
+                      (e.target as HTMLImageElement).src = "/logo.jpeg";
+                    }}
+                  />
+                </div>
+                <div className="min-w-0 flex-1">
+                  <p className="truncate text-xs font-semibold text-white group-hover:text-blue-400 transition-colors">
+                    {app.title}
+                  </p>
+                  <p className="truncate text-[10px] text-ink-faint flex items-center gap-1 mt-0.5">
+                    <span className="h-1.5 w-1.5 rounded-full bg-emerald-400 shrink-0" />
+                    <span className="truncate">{app.category || "Client App"}</span>
+                  </p>
+                </div>
+              </a>
+
+              <div className="flex items-center gap-1 shrink-0">
+                <a
+                  href={app.url}
+                  target="_blank"
+                  rel="noopener noreferrer"
+                  onClick={onClose}
+                  className="px-2 py-0.5 rounded-full border border-blue-500/30 bg-blue-500/10 text-blue-400 hover:bg-blue-500/20 text-[10px] font-semibold tracking-wide flex items-center gap-0.5 transition-colors cursor-pointer"
+                >
+                  <span>OPEN</span>
+                  <ArrowUpRight className="h-2.5 w-2.5" />
+                </a>
+
+                {onEditApp && (
+                  <button
+                    type="button"
+                    onClick={() => onEditApp(app.id)}
+                    className="p-1 rounded-lg text-ink-faint hover:text-white hover:bg-white/10 transition-all cursor-pointer"
+                    title={`Edit ${app.title}`}
+                    aria-label={`Edit ${app.title}`}
+                  >
+                    <Pencil className="h-3 w-3" />
+                  </button>
+                )}
+              </div>
+            </div>
+          ))
+        )}
+      </div>
     </div>
   );
 }

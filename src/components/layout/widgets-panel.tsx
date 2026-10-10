@@ -4,6 +4,7 @@ import { X, Sparkles, XCircle } from "lucide-react";
 import { Button } from "@/components/ui/button";
 import {
   LiveClock,
+  EcosystemAppsWidget,
   QuickActions,
   BusinessKPIs,
   PinnedProjects,
@@ -11,9 +12,12 @@ import {
   QuickNotes,
   ServerStatus,
 } from "@/components/premium/widgets";
+import { ManageAppsDialog } from "@/components/layout/manage-apps-dialog";
 
 export function WidgetsPanel() {
   const [isOpen, setIsOpen] = useState(false);
+  const [manageAppsOpen, setManageAppsOpen] = useState(false);
+  const [selectedEditAppId, setSelectedEditAppId] = useState<string | null>(null);
 
   // Sync state outwards whenever isOpen changes
   useEffect(() => {
@@ -59,7 +63,8 @@ export function WidgetsPanel() {
   const handleClose = () => setIsOpen(false);
 
   return (
-    <AnimatePresence>
+    <>
+      <AnimatePresence>
       {isOpen && (
         <>
           {/* Complete background blur overlay — gives 100% focus and attention to the sidebar */}
@@ -108,6 +113,17 @@ export function WidgetsPanel() {
             {/* Scrollable Widgets Area */}
             <div className="flex-1 overflow-y-auto p-4 space-y-4 scrollbar-thin scrollbar-thumb-white/10 scrollbar-track-transparent">
               <LiveClock />
+              <EcosystemAppsWidget
+                onClose={handleClose}
+                onAddApp={() => {
+                  setSelectedEditAppId(null);
+                  setManageAppsOpen(true);
+                }}
+                onEditApp={(appId) => {
+                  setSelectedEditAppId(appId);
+                  setManageAppsOpen(true);
+                }}
+              />
               <QuickActions onClose={handleClose} />
               <BusinessKPIs />
               <PinnedProjects onClose={handleClose} />
@@ -134,5 +150,12 @@ export function WidgetsPanel() {
         </>
       )}
     </AnimatePresence>
+
+    <ManageAppsDialog
+      open={manageAppsOpen}
+      onOpenChange={setManageAppsOpen}
+      initialEditAppId={selectedEditAppId}
+    />
+  </>
   );
 }

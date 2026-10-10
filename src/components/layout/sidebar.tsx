@@ -1,6 +1,6 @@
 import { useState } from "react";
 import { NavLink, useNavigate } from "react-router-dom";
-import { m as motion, AnimatePresence } from "framer-motion";
+import { m as motion } from "framer-motion";
 import { ChevronsLeft, Search, LogOut, ArrowUpRight, Plus, Pencil, ChevronDown, LayoutGrid } from "lucide-react";
 import { cn } from "@/lib/utils";
 import { navGroups, navItems } from "@/lib/nav-config";
@@ -30,23 +30,12 @@ export function Sidebar() {
   const navigate = useNavigate();
 
   const { apps } = useEcosystemApps();
-  const [appsOpen, setAppsOpen] = useState(() => {
-    const saved = localStorage.getItem("duokarma_sidebar_apps_open");
-    return saved !== null ? saved === "true" : true;
-  });
+  const [appsOpen, setAppsOpen] = useState(true);
   const [manageAppsOpen, setManageAppsOpen] = useState(false);
   const [selectedEditAppId, setSelectedEditAppId] = useState<string | null>(null);
 
-  const toggleAppsOpen = (e?: React.SyntheticEvent) => {
-    if (e) {
-      e.preventDefault();
-      e.stopPropagation();
-    }
-    setAppsOpen((prev) => {
-      const next = !prev;
-      localStorage.setItem("duokarma_sidebar_apps_open", String(next));
-      return next;
-    });
+  const handleToggleApps = () => {
+    setAppsOpen((prev) => !prev);
   };
 
   const userEmail = user?.email ?? "";
@@ -238,19 +227,22 @@ export function Sidebar() {
           <div className="mt-4 pt-3 border-t border-white/[0.08]">
             {!collapsed ? (
               <div className="space-y-1.5">
-                {/* Play Store Section Header Banner with Generous 44px Touch Target */}
-                <div
-                  role="button"
-                  tabIndex={0}
-                  onClick={toggleAppsOpen}
-                  className="w-full flex items-center justify-between rounded-xl px-2.5 py-2 bg-white/[0.03] border border-white/5 hover:bg-white/[0.07] active:bg-white/15 cursor-pointer touch-manipulation select-none transition-all group"
-                  aria-expanded={appsOpen}
-                >
-                  <div className="flex items-center gap-2 min-w-0">
-                    <div className="h-6 w-6 rounded-lg bg-blue-500/15 border border-blue-400/25 flex items-center justify-center text-blue-400 shrink-0 group-hover:scale-105 transition-transform">
-                      <LayoutGrid className="h-3.5 w-3.5" />
-                    </div>
-                    <div className="min-w-0 flex items-center gap-1.5">
+                {/* Play Store Section Header */}
+                <div className="w-full flex items-center justify-between rounded-xl p-1 bg-white/[0.03] border border-white/5">
+                  {/* Dropdown toggle button */}
+                  <button
+                    type="button"
+                    onClick={(e) => {
+                      e.stopPropagation();
+                      handleToggleApps();
+                    }}
+                    className="flex-1 min-w-0 flex items-center justify-between px-2 py-1.5 rounded-lg hover:bg-white/[0.05] active:bg-white/10 transition-colors cursor-pointer touch-manipulation text-left"
+                    aria-expanded={appsOpen}
+                  >
+                    <div className="flex items-center gap-2 min-w-0">
+                      <div className="h-6 w-6 rounded-lg bg-blue-500/15 border border-blue-400/25 flex items-center justify-center text-blue-400 shrink-0">
+                        <LayoutGrid className="h-3.5 w-3.5" />
+                      </div>
                       <span className="text-xs font-semibold text-white tracking-wide truncate">
                         Workspace Apps
                       </span>
@@ -260,23 +252,7 @@ export function Sidebar() {
                         </span>
                       )}
                     </div>
-                  </div>
-
-                  <div className="flex items-center gap-1 shrink-0">
-                    <button
-                      type="button"
-                      onClick={(e) => {
-                        e.stopPropagation();
-                        setSelectedEditAppId(null);
-                        setManageAppsOpen(true);
-                      }}
-                      className="h-6 px-2 rounded-md bg-white/10 hover:bg-white/20 active:bg-white/30 text-[10px] font-medium text-white flex items-center gap-1 transition-all touch-manipulation cursor-pointer"
-                      title="Add app"
-                    >
-                      <Plus className="h-3 w-3" />
-                      <span>Add</span>
-                    </button>
-                    <div className="h-6 w-6 rounded-md flex items-center justify-center text-ink-faint">
+                    <div className="h-6 w-6 rounded-md flex items-center justify-center text-ink-faint shrink-0">
                       <ChevronDown
                         className={cn(
                           "h-3.5 w-3.5 transition-transform duration-200",
@@ -284,35 +260,44 @@ export function Sidebar() {
                         )}
                       />
                     </div>
-                  </div>
+                  </button>
+
+                  {/* Dedicated Add Button */}
+                  <button
+                    type="button"
+                    onClick={(e) => {
+                      e.stopPropagation();
+                      setSelectedEditAppId(null);
+                      setManageAppsOpen(true);
+                    }}
+                    className="h-7 px-2.5 rounded-lg bg-white/10 hover:bg-white/20 active:bg-white/30 text-xs font-medium text-white flex items-center gap-1 transition-all touch-manipulation cursor-pointer shrink-0 ml-1"
+                    title="Add app"
+                  >
+                    <Plus className="h-3.5 w-3.5" />
+                    <span>Add</span>
+                  </button>
                 </div>
 
                 {/* Play Store App Cards Showcase */}
-                <AnimatePresence initial={false}>
-                  {appsOpen && (
-                    <motion.div
-                      initial={{ opacity: 0, height: 0 }}
-                      animate={{ opacity: 1, height: "auto" }}
-                      exit={{ opacity: 0, height: 0 }}
-                      transition={{ duration: 0.2 }}
-                      className="overflow-hidden space-y-1.5 pt-1"
-                    >
-                      {apps.length === 0 ? (
-                        <div className="p-3 text-center rounded-xl bg-white/[0.02] border border-white/5">
-                          <p className="text-[11px] text-ink-faint">No apps added yet.</p>
-                          <button
-                            type="button"
-                            onClick={() => {
-                              setSelectedEditAppId(null);
-                              setManageAppsOpen(true);
-                            }}
-                            className="mt-1.5 text-xs text-blue-400 hover:underline font-medium inline-flex items-center gap-1"
-                          >
-                            <Plus className="h-3 w-3" /> Add your first app
-                          </button>
-                        </div>
-                      ) : (
-                        apps.map((app) => (
+                {appsOpen && (
+                  <div className="space-y-1.5 pt-1">
+                    {apps.length === 0 ? (
+                      <div className="p-3 text-center rounded-xl bg-white/[0.02] border border-white/5">
+                        <p className="text-[11px] text-ink-faint">No apps added yet.</p>
+                        <button
+                          type="button"
+                          onClick={() => {
+                            setSelectedEditAppId(null);
+                            setManageAppsOpen(true);
+                          }}
+                          className="mt-1.5 text-xs text-blue-400 hover:underline font-medium inline-flex items-center gap-1 cursor-pointer touch-manipulation"
+                        >
+                          <Plus className="h-3 w-3" /> Add your first app
+                        </button>
+                      </div>
+                    ) : (
+                      <>
+                        {apps.map((app) => (
                           <div
                             key={app.id}
                             className="group relative flex items-center justify-between rounded-xl p-2 border border-white/5 bg-white/[0.02] hover:border-white/15 hover:bg-white/[0.06] active:bg-white/10 transition-all gap-2"
@@ -322,7 +307,7 @@ export function Sidebar() {
                               target="_blank"
                               rel="noopener noreferrer"
                               onClick={() => setMobileOpen(false)}
-                              className="flex-1 min-w-0 flex items-center gap-2.5"
+                              className="flex-1 min-w-0 flex items-center gap-2.5 cursor-pointer"
                             >
                               {/* Squircle App Icon (Play Store style) */}
                               <div className="relative h-9 w-9 rounded-xl overflow-hidden border border-white/15 bg-black/60 flex items-center justify-center shrink-0 shadow-md group-hover:scale-105 transition-transform">
@@ -355,7 +340,7 @@ export function Sidebar() {
                                 target="_blank"
                                 rel="noopener noreferrer"
                                 onClick={() => setMobileOpen(false)}
-                                className="px-2 py-0.5 rounded-full border border-blue-500/30 bg-blue-500/10 text-blue-400 hover:bg-blue-500/20 text-[10px] font-semibold tracking-wide flex items-center gap-0.5 transition-colors"
+                                className="px-2 py-0.5 rounded-full border border-blue-500/30 bg-blue-500/10 text-blue-400 hover:bg-blue-500/20 text-[10px] font-semibold tracking-wide flex items-center gap-0.5 transition-colors cursor-pointer"
                               >
                                 <span>OPEN</span>
                                 <ArrowUpRight className="h-2.5 w-2.5" />
@@ -363,8 +348,7 @@ export function Sidebar() {
 
                               <button
                                 type="button"
-                                onClick={(e) => {
-                                  e.stopPropagation();
+                                onClick={() => {
                                   setSelectedEditAppId(app.id);
                                   setManageAppsOpen(true);
                                 }}
@@ -376,11 +360,23 @@ export function Sidebar() {
                               </button>
                             </div>
                           </div>
-                        ))
-                      )}
-                    </motion.div>
-                  )}
-                </AnimatePresence>
+                        ))}
+
+                        <button
+                          type="button"
+                          onClick={() => {
+                            setSelectedEditAppId(null);
+                            setManageAppsOpen(true);
+                          }}
+                          className="w-full flex items-center justify-center gap-1.5 rounded-xl border border-dashed border-white/10 py-2 text-xs text-ink-faint hover:text-white hover:border-white/20 hover:bg-white/[0.03] active:bg-white/10 transition-colors cursor-pointer touch-manipulation mt-1"
+                        >
+                          <Plus className="h-3.5 w-3.5" />
+                          <span>Add New App</span>
+                        </button>
+                      </>
+                    )}
+                  </div>
+                )}
               </div>
             ) : (
               <div className="flex flex-col items-center gap-1.5 pb-2">
