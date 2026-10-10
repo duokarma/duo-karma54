@@ -105,11 +105,20 @@ export function QuickNotes() {
           <CheckSquare className="h-4 w-4 text-ink-faint" />
           <h3 className="text-sm font-medium text-ink">Scratchpad</h3>
         </div>
-        {saved && (
-          <span className="text-[10px] text-emerald-400 flex items-center gap-1">
-            <CheckCircle2 className="h-3 w-3" /> Saved
-          </span>
-        )}
+        <div className="flex items-center gap-2">
+          {saved && (
+            <span className="text-[10px] text-emerald-400 flex items-center gap-1">
+              <CheckCircle2 className="h-3 w-3" /> Saved
+            </span>
+          )}
+          <Link
+            to="/admin/notes"
+            className="text-[10px] text-ink-faint hover:text-white transition-colors flex items-center gap-0.5"
+            title="Open Notes & Playbooks"
+          >
+            All Notes <ArrowUpRight className="h-3 w-3" />
+          </Link>
+        </div>
       </div>
       <textarea
         value={note}

@@ -6,6 +6,7 @@ import {
   CheckSquare,
   Calendar,
   FolderOpen,
+  StickyNote,
   Sparkles,
   type LucideIcon,
 } from "lucide-react";
@@ -25,6 +26,7 @@ export const navItems: NavItem[] = [
   { label: "Tasks",          path: "/admin/tasks",          icon: CheckSquare,     group: "Workspace" },
   { label: "Calendar",       path: "/admin/calendar",       icon: Calendar,        group: "Workspace" },
   { label: "Documents",      path: "/admin/documents",      icon: FolderOpen,      group: "Workspace" },
+  { label: "Notes",          path: "/admin/notes",          icon: StickyNote,      group: "Workspace" },
   { label: "Schema Builder", path: "/admin/schema-builder", icon: Sparkles,        group: "Custom" },
 ];
 

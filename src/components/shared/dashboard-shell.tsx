@@ -24,6 +24,7 @@ const ProjectsPage = lazy(() => import("@/pages/projects").then((m) => ({ defaul
 const TasksPage = lazy(() => import("@/pages/tasks").then((m) => ({ default: m.TasksPage })));
 const CalendarPage = lazy(() => import("@/pages/calendar").then((m) => ({ default: m.CalendarPage })));
 const DocumentsPage = lazy(() => import("@/pages/documents").then((m) => ({ default: m.DocumentsPage })));
+const NotesPage = lazy(() => import("@/pages/notes").then((m) => ({ default: m.NotesPage })));
 const SchemaBuilderPage = lazy(() => import("@/pages/schema-builder").then((m) => ({ default: m.SchemaBuilderPage })));
 const DynamicCollectionPage = lazy(() => import("@/pages/dynamic-collection").then((m) => ({ default: m.DynamicCollectionPage })));
 const NotFoundPage = lazy(() => import("@/pages/not-found").then((m) => ({ default: m.NotFoundPage })));
@@ -52,6 +53,7 @@ function DashboardRoutes() {
             { path: "tasks",                        element: <TasksPage /> },
             { path: "calendar",                     element: <CalendarPage /> },
             { path: "documents",                    element: <DocumentsPage /> },
+            { path: "notes",                        element: <NotesPage /> },
             { path: "schema-builder",               element: <SchemaBuilderPage /> },
             { path: "custom/:schemaSlug",            element: <DynamicCollectionPage /> },
             // Legacy redirects so old links don't 404
