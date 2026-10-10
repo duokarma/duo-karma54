@@ -1,4 +1,4 @@
-import { useMemo, useEffect } from "react";
+import { useState, useMemo, useEffect } from "react";
 import { m as motion } from "framer-motion";
 import {
   IndianRupee,
@@ -24,7 +24,7 @@ import { StatusBadge } from "@/components/shared/status-badge";
 import { Link } from "react-router-dom";
 import { useQuery, useQueryClient } from "@tanstack/react-query";
 import { supabase } from "@/lib/supabase";
-import { formatCurrency } from "@/lib/utils";
+import { formatCurrency, cn } from "@/lib/utils";
 import type { Client, Project, Expense, Task } from "@/types";
 import { useAuth } from "@/hooks/use-auth";
 
@@ -78,6 +78,7 @@ const projectsSparkline = [3, 4, 4, 5, 6, 6, 7];
 export function DashboardPage() {
   const queryClient = useQueryClient();
   const { displayName } = useAuth();
+  const [activityFilter, setActivityFilter] = useState<"all" | "payment" | "client" | "project" | "expense">("all");
 
   // 1. Projects Query
   const { data: projects = [] } = useQuery({
@@ -208,7 +209,10 @@ export function DashboardPage() {
   }).length, [clients]);
 
   const activeProjects = useMemo(() => {
-    return projects.filter((p) => p.status === "in-progress" || p.status === "pending");
+    return projects.filter((p) => {
+      const s = (p.status || "").toLowerCase().trim();
+      return s === "in-progress" || s === "pending" || s === "active" || s === "in_progress";
+    });
   }, [projects]);
 
   const tasksDueToday = useMemo(() => {
@@ -221,59 +225,61 @@ export function DashboardPage() {
       .slice(0, 5);
   }, [clients]);
 
-  // ── Unified Real-Time Activity Feed ───────────────────────
-  // Combines explicit database activities with synthesized events from latest changes
+  // ── Unified High-Impact Activity Feed ──────────────────────
+  // Prioritizes genuine payments, client additions, expenses, and logged audit events
   const liveActivities = useMemo(() => {
-    const syntheticList: any[] = [];
+    const importantList: any[] = [];
 
-    // Synthesize latest client additions
-    clients.slice(-5).forEach((c) => {
-      if (c.name) {
-        syntheticList.push({
-          id: `syn_c_${c.id}`,
-          type: "client",
-          message: `Client "${c.name}" (${c.company || "Company"}) added to workspace`,
-          actor: (c as any).assignedTo || "Partner",
-          timestamp: c.joinedDate ? new Date(c.joinedDate).toISOString() : new Date().toISOString(),
-        });
-      }
-      if ((c as any).advance_paid > 0) {
-        syntheticList.push({
-          id: `syn_pay_${c.id}`,
+    // 1. High-value client payment advances
+    clients.forEach((c) => {
+      const adv = Number((c as any).advance_paid) || 0;
+      if (adv > 0) {
+        importantList.push({
+          id: `pay_${c.id}`,
           type: "payment",
-          message: `Received advance of ${formatCurrency((c as any).advance_paid)} from ${c.name}`,
+          message: `Received advance of ${formatCurrency(adv)} from ${c.name}`,
           actor: "System",
           timestamp: c.joinedDate ? new Date(c.joinedDate).toISOString() : new Date().toISOString(),
+          highlight: formatCurrency(adv),
         });
       }
     });
 
-    // Synthesize latest projects
-    projects.slice(-5).forEach((p) => {
-      syntheticList.push({
-        id: `syn_pr_${p.id}`,
-        type: "project",
-        message: `Project "${p.name}" active (${p.progress || 0}% progress)`,
-        actor: p.team?.[0] || "Team",
-        timestamp: p.startDate ? new Date(p.startDate).toISOString() : new Date().toISOString(),
-      });
+    // 2. High-value client workspace additions
+    clients.slice(-5).forEach((c) => {
+      if (c.name) {
+        importantList.push({
+          id: `cli_${c.id}`,
+          type: "client",
+          message: `Client "${c.name}" (${c.company || "Client"}) signed to pipeline`,
+          actor: (c as any).assignedTo || (c as any).assigned_to || "Partner",
+          timestamp: c.joinedDate ? new Date(c.joinedDate).toISOString() : new Date().toISOString(),
+          highlight: c.company || "Signed",
+        });
+      }
     });
 
-    // Synthesize latest expenses
+    // 3. Recorded financial expenses
     expenses.slice(-5).forEach((e) => {
-      syntheticList.push({
-        id: `syn_exp_${e.id}`,
-        type: "expense",
-        message: `Expense recorded: ${e.description} (${formatCurrency(e.amount)})`,
-        actor: "Finance",
-        timestamp: e.date ? new Date(e.date).toISOString() : new Date().toISOString(),
-      });
+      if (Number(e.amount) > 0) {
+        importantList.push({
+          id: `exp_${e.id}`,
+          type: "expense",
+          message: `Expense recorded: ${e.description} (${formatCurrency(e.amount)})`,
+          actor: "Finance",
+          timestamp: e.date ? new Date(e.date).toISOString() : new Date().toISOString(),
+          highlight: formatCurrency(e.amount),
+        });
+      }
     });
 
-    // Merge database activities and synthetic events, deduplicating similar messages
-    const merged = [...rawActivities, ...syntheticList];
+    // 4. Merge with explicit activities from database
+    const merged = [...rawActivities, ...importantList];
     const seen = new Set<string>();
-    const unique = merged.filter((item) => {
+    const filtered = merged.filter((item) => {
+      // Exclude boilerplate spam or 0% progress notices
+      if (!item.message) return false;
+      if (item.message.includes("0% progress")) return false;
       const key = `${item.type}_${item.message}`;
       if (seen.has(key)) return false;
       seen.add(key);
@@ -281,10 +287,13 @@ export function DashboardPage() {
     });
 
     // Sort descending by timestamp
-    return unique
-      .sort((a, b) => new Date(b.timestamp).getTime() - new Date(a.timestamp).getTime())
-      .slice(0, 8);
-  }, [rawActivities, clients, projects, expenses]);
+    const sorted = filtered.sort(
+      (a, b) => new Date(b.timestamp).getTime() - new Date(a.timestamp).getTime()
+    );
+
+    if (activityFilter === "all") return sorted.slice(0, 8);
+    return sorted.filter((item) => item.type === activityFilter).slice(0, 8);
+  }, [rawActivities, clients, expenses, activityFilter]);
 
   return (
     <div className="space-y-5 pb-6">
@@ -306,30 +315,30 @@ export function DashboardPage() {
           </div>
 
           {/* Operational health badges */}
-          <div className="flex flex-wrap items-center gap-2">
-            <span className="inline-flex items-center gap-1.5 rounded-full border border-emerald-500/30 bg-emerald-500/10 px-3 py-1 text-xs font-medium text-emerald-400">
+          <div className="flex items-center gap-1.5 overflow-x-auto scrollbar-none pb-1 max-w-full sm:flex-wrap">
+            <span className="inline-flex items-center gap-1.5 rounded-full border border-emerald-500/30 bg-emerald-500/10 px-2.5 py-1 text-xs font-medium text-emerald-400 shrink-0">
               <span className="relative flex h-2 w-2">
                 <span className="animate-ping absolute inline-flex h-full w-full rounded-full bg-emerald-400 opacity-75" />
                 <span className="relative inline-flex rounded-full h-2 w-2 bg-emerald-500" />
               </span>
-              Real-Time Sync Active
+              Real-Time Sync
             </span>
-            <span className="inline-flex items-center gap-1.5 rounded-full border border-[var(--color-edge)] bg-[var(--color-card)] px-3 py-1 text-xs text-ink-dim">
+            <span className="inline-flex items-center gap-1.5 rounded-full border border-[var(--color-edge)] bg-[var(--color-card)] px-2.5 py-1 text-xs text-ink-dim shrink-0">
               <Users className="h-3 w-3 text-cyan-400" />
-              {activeClientsCount} active client{activeClientsCount === 1 ? "" : "s"}
+              {activeClientsCount} active
             </span>
-            <span className="inline-flex items-center gap-1.5 rounded-full border border-[var(--color-edge)] bg-[var(--color-card)] px-3 py-1 text-xs text-ink-dim">
+            <span className="inline-flex items-center gap-1.5 rounded-full border border-[var(--color-edge)] bg-[var(--color-card)] px-2.5 py-1 text-xs text-ink-dim shrink-0">
               <CreditCard className="h-3 w-3 text-amber-400" />
-              {dueClientsCount} with dues
+              {dueClientsCount} dues
             </span>
-            <span className="inline-flex items-center gap-1.5 rounded-full border border-[var(--color-edge)] bg-[var(--color-card)] px-3 py-1 text-xs text-ink-dim">
+            <span className="inline-flex items-center gap-1.5 rounded-full border border-[var(--color-edge)] bg-[var(--color-card)] px-2.5 py-1 text-xs text-ink-dim shrink-0">
               <FolderKanban className="h-3 w-3 text-blue-400" />
-              {activeProjects.length} active deliver{activeProjects.length === 1 ? "y" : "ies"}
+              {activeProjects.length} deliveries
             </span>
             {tasksDueToday > 0 && (
-              <span className="inline-flex items-center gap-1.5 rounded-full border border-[var(--color-edge)] bg-[var(--color-card)] px-3 py-1 text-xs text-ink-dim">
+              <span className="inline-flex items-center gap-1.5 rounded-full border border-[var(--color-edge)] bg-[var(--color-card)] px-2.5 py-1 text-xs text-ink-dim shrink-0">
                 <CheckSquare className="h-3 w-3 text-emerald-400" />
-                {tasksDueToday} task{tasksDueToday === 1 ? "" : "s"} due today
+                {tasksDueToday} due today
               </span>
             )}
           </div>
@@ -379,11 +388,11 @@ export function DashboardPage() {
         />
       </div>
 
-      {/* ── Main Operations Grid ── */}
-      <div className="grid grid-cols-1 gap-4 lg:grid-cols-12">
+      {/* ── Main Operations Columns ── */}
+      <div className="flex flex-col gap-4 lg:grid lg:grid-cols-12">
 
-        {/* ── Left Column: Active Projects & Financial Snapshot (8 Cols) ── */}
-        <div className="lg:col-span-7 xl:col-span-8 space-y-4">
+        {/* ── Primary Column: Deliveries & Financial Snapshot (7-8 Cols) ── */}
+        <div className="space-y-4 lg:col-span-7 xl:col-span-8">
 
           {/* Active Deliveries Card */}
           <Card className="overflow-hidden border-[var(--color-edge)]">
@@ -572,44 +581,83 @@ export function DashboardPage() {
           </Card>
         </div>
 
-        {/* ── Right Column: Real-Time Activity & Recent Clients (4-5 Cols) ── */}
-        <div className="lg:col-span-5 xl:col-span-4 space-y-4">
+        {/* ── Operations Feed & Accounts: Important Activity & Clients (4-5 Cols) ── */}
+        <div className="space-y-4 lg:col-span-5 xl:col-span-4">
 
-          {/* Real-Time Recent Activity Feed */}
+          {/* Important Recent Activity Feed */}
           <Card className="border-[var(--color-edge)]">
-            <CardHeader className="flex-row items-center justify-between space-y-0 pb-3 border-b border-white/5">
-              <div className="flex items-center gap-2">
-                <CardTitle className="text-base font-semibold">Recent Activity</CardTitle>
-                <span className="flex h-2 w-2 relative">
-                  <span className="animate-ping absolute inline-flex h-full w-full rounded-full bg-emerald-400 opacity-75" />
-                  <span className="relative inline-flex rounded-full h-2 w-2 bg-emerald-500" />
+            <CardHeader className="flex-col gap-2.5 space-y-0 pb-3 border-b border-white/5">
+              <div className="flex items-center justify-between w-full">
+                <div className="flex items-center gap-2">
+                  <CardTitle className="text-base font-semibold">Important Activity</CardTitle>
+                  <span className="flex h-2 w-2 relative">
+                    <span className="animate-ping absolute inline-flex h-full w-full rounded-full bg-emerald-400 opacity-75" />
+                    <span className="relative inline-flex rounded-full h-2 w-2 bg-emerald-500" />
+                  </span>
+                </div>
+                <span className="text-[10px] text-ink-faint flex items-center gap-1 bg-emerald-500/10 text-emerald-400 px-2 py-0.5 rounded-full border border-emerald-500/20">
+                  <Radio className="h-2.5 w-2.5 text-emerald-400 animate-pulse" /> Live Feed
                 </span>
               </div>
-              <span className="text-[10px] text-ink-faint flex items-center gap-1">
-                <Radio className="h-3 w-3 text-emerald-400" /> Live
-              </span>
+
+              {/* Filter Tabs */}
+              <div className="flex items-center gap-1 overflow-x-auto scrollbar-none pt-0.5 w-full">
+                {[
+                  { key: "all", label: "All Logs" },
+                  { key: "payment", label: "Payments (₹)" },
+                  { key: "client", label: "Clients" },
+                  { key: "expense", label: "Expenses" },
+                ].map((tab) => (
+                  <button
+                    key={tab.key}
+                    type="button"
+                    onClick={() => setActivityFilter(tab.key as any)}
+                    className={cn(
+                      "px-2.5 py-1 rounded-lg text-[11px] font-medium transition-all shrink-0 touch-manipulation",
+                      activityFilter === tab.key
+                        ? "bg-white/15 text-white border border-white/20 shadow-sm"
+                        : "text-ink-faint hover:text-ink-dim hover:bg-white/5"
+                    )}
+                  >
+                    {tab.label}
+                  </button>
+                ))}
+              </div>
             </CardHeader>
-            <CardContent className="pt-4">
-              <div className="space-y-3.5">
+            <CardContent className="pt-3">
+              <div className="space-y-2.5">
                 {liveActivities.length === 0 ? (
-                  <p className="py-6 text-center text-xs text-ink-faint">No recent activity recorded.</p>
+                  <div className="py-8 text-center text-xs text-ink-faint space-y-1">
+                    <p>No {activityFilter !== "all" ? activityFilter : "recent"} logs to show.</p>
+                    <p className="text-[10px] text-ink-faint/60">New operational activity will sync here automatically.</p>
+                  </div>
                 ) : (
                   liveActivities.map((activity, i) => {
                     const Icon = activityIconMap[activity.type as keyof typeof activityIconMap] || CheckSquare;
                     const colorClass = activityColorMap[activity.type as keyof typeof activityColorMap] || "text-ink-dim";
                     return (
-                      <div key={activity.id || i} className="flex items-start gap-3 relative">
-                        <div className="flex h-7 w-7 shrink-0 items-center justify-center rounded-lg border border-white/10 bg-white/5">
+                      <div
+                        key={activity.id || i}
+                        className="flex items-start gap-2.5 rounded-xl border border-white/5 bg-white/[0.015] p-2.5 transition-colors hover:bg-white/[0.04]"
+                      >
+                        <div className="flex h-7 w-7 shrink-0 items-center justify-center rounded-lg border border-white/10 bg-white/5 mt-0.5">
                           <Icon className={`h-3.5 w-3.5 ${colorClass}`} />
                         </div>
                         <div className="min-w-0 flex-1">
-                          <p className="text-xs leading-snug text-ink-dim font-medium">{activity.message}</p>
-                          <div className="mt-1 flex items-center gap-1.5 text-[10px] text-ink-faint">
+                          <p className="text-xs leading-snug text-ink font-medium break-words">
+                            {activity.message}
+                          </p>
+                          <div className="mt-1 flex items-center gap-1.5 text-[10px] text-ink-faint flex-wrap">
                             <span className="rounded bg-white/5 px-1 py-0.2 font-mono text-ink-dim">
                               {activity.actor || "Partner"}
                             </span>
                             <span>·</span>
                             <span>{timeAgo(activity.timestamp)}</span>
+                            {activity.highlight && (
+                              <span className="ml-auto font-medium text-emerald-400">
+                                {activity.highlight}
+                              </span>
+                            )}
                           </div>
                         </div>
                       </div>

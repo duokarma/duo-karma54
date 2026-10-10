@@ -40,42 +40,44 @@ export const KPICard = memo(function KPICard({
   const colors = accentMap[accent];
 
   return (
-    <div className="group relative bg-[var(--color-card)] border border-[var(--color-edge)] rounded-[var(--radius-card)] p-4 transition-all duration-300 hover:-translate-y-1 hover:shadow-lg hover:border-[var(--color-edge-hover)] hover:bg-[var(--color-charcoal)] overflow-hidden">
+    <div className="group relative bg-[var(--color-card)] border border-[var(--color-edge)] rounded-[var(--radius-card)] p-3 sm:p-4 transition-all duration-300 hover:-translate-y-1 hover:shadow-lg hover:border-[var(--color-edge-hover)] hover:bg-[var(--color-charcoal)] overflow-hidden">
       {/* Top row: label + icon */}
       <div className="flex items-center justify-between relative z-10">
-        <p className="text-xs font-medium text-ink-faint uppercase tracking-wide">{label}</p>
-        <div className={cn("flex h-7 w-7 items-center justify-center rounded-md relative", colors.bg)}>
-          <Icon className={cn("h-3.5 w-3.5", colors.text)} />
-          <span className={cn("absolute -top-1 -right-1 h-2 w-2 rounded-full opacity-0 group-hover:opacity-100 group-hover:animate-ping", colors.bg.replace("0.1", "1"))} />
-          <span className={cn("absolute -top-1 -right-1 h-2 w-2 rounded-full opacity-0 group-hover:opacity-100", colors.bg.replace("0.1", "1"))} />
+        <p className="text-[11px] sm:text-xs font-medium text-ink-faint uppercase tracking-wide truncate">{label}</p>
+        <div className={cn("flex h-6 w-6 sm:h-7 sm:w-7 items-center justify-center rounded-md relative shrink-0", colors.bg)}>
+          <Icon className={cn("h-3 w-3 sm:h-3.5 sm:w-3.5", colors.text)} />
+          <span className={cn("absolute -top-1 -right-1 h-1.5 w-1.5 rounded-full opacity-0 group-hover:opacity-100 group-hover:animate-ping", colors.bg.replace("0.1", "1"))} />
+          <span className={cn("absolute -top-1 -right-1 h-1.5 w-1.5 rounded-full opacity-0 group-hover:opacity-100", colors.bg.replace("0.1", "1"))} />
         </div>
       </div>
 
       {/* Value */}
-      <p className="mt-2.5 font-display text-2xl font-semibold tracking-tight text-ink tabular relative z-10">
+      <p className="mt-2 font-display text-lg sm:text-2xl font-semibold tracking-tight text-ink tabular relative z-10 truncate">
         {prefix}
         <AnimatedCounter value={value} duration={1.5} />
         {suffix}
       </p>
 
       {/* Sparkline + change */}
-      <div className="mt-3 flex items-end justify-between gap-2">
-        <div className="flex items-center gap-1 text-xs">
-          {isPositive ? (
-            <TrendingUp className="h-3.5 w-3.5 text-[#10B981]" />
-          ) : (
-            <TrendingDown className="h-3.5 w-3.5 text-[#EF4444]" />
-          )}
-          <span className={isPositive ? "text-[#10B981]" : "text-[#EF4444]"}>
-            {isPositive ? "+" : ""}
-            {change.toFixed(1)}%
-          </span>
-          <span className="text-ink-faint">{secondaryLabel}</span>
+      <div className="mt-2.5 flex items-end justify-between gap-1.5">
+        <div className="flex flex-col sm:flex-row sm:items-center gap-0.5 sm:gap-1 text-[11px] sm:text-xs min-w-0">
+          <div className="flex items-center gap-1 shrink-0">
+            {isPositive ? (
+              <TrendingUp className="h-3 w-3 text-[#10B981]" />
+            ) : (
+              <TrendingDown className="h-3 w-3 text-[#EF4444]" />
+            )}
+            <span className={cn("font-medium", isPositive ? "text-[#10B981]" : "text-[#EF4444]")}>
+              {isPositive ? "+" : ""}
+              {change.toFixed(1)}%
+            </span>
+          </div>
+          <span className="text-[10px] sm:text-[11px] text-ink-faint truncate">{secondaryLabel}</span>
         </div>
 
         {sparklineData.length > 0 && (
-          <div className="w-24 shrink-0">
-            <Sparkline data={sparklineData} color={colors.sparkColor} height={32} />
+          <div className="hidden sm:block w-16 md:w-20 shrink-0">
+            <Sparkline data={sparklineData} color={colors.sparkColor} height={26} />
           </div>
         )}
       </div>
