@@ -8,18 +8,32 @@ export interface PushNotificationData {
 }
 
 /**
- * Check if the browser supports push notifications and service workers
+ * Check safely if the browser supports push notifications and service workers
  */
 export function isPushNotificationSupported(): boolean {
-  return typeof window !== "undefined" && "Notification" in window && "serviceWorker" in navigator;
+  try {
+    return (
+      typeof window !== "undefined" &&
+      "Notification" in window &&
+      typeof window.Notification !== "undefined" &&
+      "serviceWorker" in navigator &&
+      typeof navigator.serviceWorker !== "undefined"
+    );
+  } catch {
+    return false;
+  }
 }
 
 /**
- * Get current notification permission state
+ * Safely get current notification permission state
  */
 export function getNotificationPermissionState(): NotificationPermission | "unsupported" {
-  if (!isPushNotificationSupported()) return "unsupported";
-  return Notification.permission;
+  try {
+    if (!isPushNotificationSupported()) return "unsupported";
+    return window.Notification?.permission ?? "unsupported";
+  } catch {
+    return "unsupported";
+  }
 }
 
 /**
@@ -30,33 +44,33 @@ export async function registerPushServiceWorker(): Promise<ServiceWorkerRegistra
 
   try {
     const registration = await navigator.serviceWorker.register("/sw.js", { scope: "/" });
-    console.log("[PushNotifications] Service worker registered:", registration.scope);
     return registration;
   } catch (error) {
-    console.error("[PushNotifications] Service worker registration failed:", error);
+    console.warn("[PushNotifications] Service worker registration bypassed:", error);
     return null;
   }
 }
 
 /**
- * Request notification permission from user and save state
+ * Request notification permission from user safely
  */
 export async function requestNotificationPermission(): Promise<boolean> {
   if (!isPushNotificationSupported()) {
-    alert("Push notifications are not supported on this browser/device.");
     return false;
   }
 
   try {
     const permission = await Notification.requestPermission();
-    localStorage.setItem("duo_push_permission", permission);
+    try {
+      localStorage.setItem("duo_push_permission", permission);
+    } catch {}
 
     if (permission === "granted") {
       await registerPushServiceWorker();
-      
+
       // Save push token / device registration to Supabase push_subscriptions table
       try {
-        const userAgent = navigator.userAgent;
+        const userAgent = navigator?.userAgent || "mobile";
         await supabase.from("push_subscriptions").upsert(
           {
             id: `device_${Date.now()}`,
@@ -78,30 +92,26 @@ export async function requestNotificationPermission(): Promise<boolean> {
       });
 
       return true;
-    } else if (permission === "denied") {
-      alert("Notification permission was denied. Please enable notifications in your phone's browser settings.");
     }
   } catch (error) {
-    console.error("[PushNotifications] Error requesting permission:", error);
+    console.warn("[PushNotifications] Error requesting permission:", error);
   }
 
   return false;
 }
 
 /**
- * Display a push notification to user's screen (mobile phone or desktop)
+ * Display a push notification safely without throwing
  */
 export async function showPushNotification(data: PushNotificationData): Promise<void> {
-  if (!isPushNotificationSupported() || Notification.permission !== "granted") {
-    console.log("[PushNotifications] Cannot show notification - permission not granted or unsupported.");
-    return;
-  }
-
   try {
+    if (!isPushNotificationSupported() || getNotificationPermissionState() !== "granted") {
+      return;
+    }
+
     const registration = await navigator.serviceWorker.getRegistration();
-    
+
     if (registration && registration.active) {
-      // Use service worker to trigger mobile lockscreen push notification
       const options = {
         body: data.body,
         icon: data.icon || "/logo.jpeg",
@@ -114,14 +124,13 @@ export async function showPushNotification(data: PushNotificationData): Promise<
         renotify: true,
       };
       await registration.showNotification(data.title, options as unknown as NotificationOptions);
-    } else {
-      // Fallback native Notification
+    } else if (typeof window.Notification === "function") {
       new Notification(data.title, {
         body: data.body,
         icon: data.icon || "/logo.jpeg",
       });
     }
   } catch (error) {
-    console.error("[PushNotifications] Error showing notification:", error);
+    console.warn("[PushNotifications] Error showing notification:", error);
   }
 }

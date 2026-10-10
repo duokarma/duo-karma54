@@ -13,13 +13,15 @@ const DropdownMenuRadioGroup = DropdownMenuPrimitive.RadioGroup;
 const DropdownMenuContent = React.forwardRef<
   React.ElementRef<typeof DropdownMenuPrimitive.Content>,
   React.ComponentPropsWithoutRef<typeof DropdownMenuPrimitive.Content>
->(({ className, sideOffset = 6, ...props }, ref) => (
+>(({ className, sideOffset = 6, align = "end", collisionPadding = 12, ...props }, ref) => (
   <DropdownMenuPrimitive.Portal>
     <DropdownMenuPrimitive.Content
       ref={ref}
       sideOffset={sideOffset}
+      align={align}
+      collisionPadding={collisionPadding}
       className={cn(
-        "z-[100] min-w-[10rem] overflow-hidden rounded-[var(--radius-control)] glass-panel-strong p-1 shadow-[var(--shadow-panel)] dialog-content-anim",
+        "z-[100] min-w-[10rem] max-w-[calc(100vw-1.5rem)] overflow-hidden rounded-[var(--radius-control)] glass-panel-strong p-1 shadow-2xl popover-content-anim",
         className
       )}
       {...props}
@@ -131,11 +133,12 @@ DropdownMenuSubTrigger.displayName = DropdownMenuPrimitive.SubTrigger.displayNam
 const DropdownMenuSubContent = React.forwardRef<
   React.ElementRef<typeof DropdownMenuPrimitive.SubContent>,
   React.ComponentPropsWithoutRef<typeof DropdownMenuPrimitive.SubContent>
->(({ className, ...props }, ref) => (
+>(({ className, collisionPadding = 12, ...props }, ref) => (
   <DropdownMenuPrimitive.SubContent
     ref={ref}
+    collisionPadding={collisionPadding}
     className={cn(
-      "z-[100] min-w-[8rem] overflow-hidden rounded-[var(--radius-control)] glass-panel-strong p-1 shadow-[var(--shadow-panel)] dialog-content-anim",
+      "z-[100] min-w-[8rem] max-w-[calc(100vw-1.5rem)] overflow-hidden rounded-[var(--radius-control)] glass-panel-strong p-1 shadow-2xl popover-content-anim",
       className
     )}
     {...props}

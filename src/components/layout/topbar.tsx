@@ -46,13 +46,17 @@ export function Topbar() {
   );
 
   useEffect(() => {
-    function handleClick(e: MouseEvent) {
+    function handleClick(e: MouseEvent | TouchEvent) {
       if (notifRef.current && !notifRef.current.contains(e.target as Node)) {
         setNotifOpen(false);
       }
     }
     document.addEventListener("mousedown", handleClick);
-    return () => document.removeEventListener("mousedown", handleClick);
+    document.addEventListener("touchstart", handleClick, { passive: true });
+    return () => {
+      document.removeEventListener("mousedown", handleClick);
+      document.removeEventListener("touchstart", handleClick);
+    };
   }, []);
 
   // Track widgets panel state to toggle icon visual
@@ -68,25 +72,39 @@ export function Topbar() {
     };
   }, []);
 
-  const [lastViewed, setLastViewed] = useState(() => localStorage.getItem("lastViewedNotifications") || "0");
+  const [lastViewed, setLastViewed] = useState(() => {
+    try {
+      return localStorage.getItem("lastViewedNotifications") || "0";
+    } catch {
+      return "0";
+    }
+  });
 
   const { data: latestActivity } = useQuery({
     queryKey: ["latest_activity"],
     queryFn: async () => {
-      const { data, error } = await supabase.from("activities").select("timestamp").order("timestamp", { ascending: false }).limit(1);
-      if (error) throw error;
-      return data[0];
+      try {
+        const { data, error } = await supabase.from("activities").select("timestamp").order("timestamp", { ascending: false }).limit(1);
+        if (error) throw error;
+        return data?.[0];
+      } catch {
+        return undefined;
+      }
     },
   });
 
-  const hasNewNotifications = latestActivity && new Date(latestActivity.timestamp).getTime() > Number(lastViewed);
+  const hasNewNotifications = Boolean(
+    latestActivity?.timestamp && new Date(latestActivity.timestamp).getTime() > Number(lastViewed)
+  );
 
   const handleOpenNotifications = () => {
     setNotifOpen((o) => !o);
     if (!notifOpen) {
-      const now = Date.now().toString();
-      localStorage.setItem("lastViewedNotifications", now);
-      setLastViewed(now);
+      try {
+        const now = Date.now().toString();
+        localStorage.setItem("lastViewedNotifications", now);
+        setLastViewed(now);
+      } catch {}
     }
   };
 
@@ -178,7 +196,7 @@ export function Topbar() {
             </Button>
           </motion.div>
           {notifOpen && (
-            <div className="fixed right-2 sm:absolute sm:right-0 top-12 sm:top-full sm:mt-1.5 z-50">
+            <div className="fixed inset-x-2 top-12 sm:inset-x-auto sm:right-0 sm:top-full sm:mt-1.5 z-50 flex justify-end">
               <NotificationPanel onClose={() => setNotifOpen(false)} />
             </div>
           )}
@@ -208,7 +226,7 @@ export function Topbar() {
               )}
             </motion.button>
           </DropdownMenuTrigger>
-          <DropdownMenuContent align="end" className="w-56">
+          <DropdownMenuContent align="end" collisionPadding={12} sideOffset={8} className="w-56 max-w-[calc(100vw-1.5rem)]">
             <DropdownMenuLabel className="font-normal">
               <div className="flex items-center gap-2.5 py-1">
                 {avatarUrl ? (

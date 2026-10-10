@@ -13,16 +13,23 @@ export function usePushNotifications() {
   const [isSupported, setIsSupported] = useState(false);
 
   useEffect(() => {
-    const supported = isPushNotificationSupported();
-    setIsSupported(supported);
+    try {
+      const supported = isPushNotificationSupported();
+      setIsSupported(supported);
 
-    if (supported) {
-      const state = getNotificationPermissionState();
-      setPermission(state);
+      if (supported) {
+        const state = getNotificationPermissionState();
+        setPermission(state);
 
-      if (state === "granted") {
-        registerPushServiceWorker();
+        if (state === "granted") {
+          registerPushServiceWorker().catch(() => {});
+        }
+      } else {
+        setPermission("unsupported");
       }
+    } catch {
+      setIsSupported(false);
+      setPermission("unsupported");
     }
   }, []);
 
@@ -30,78 +37,89 @@ export function usePushNotifications() {
   useEffect(() => {
     if (!isSupported || permission !== "granted") return;
 
-    // Listen to activities table (where all new booking/lead events log)
-    const activitiesChannel = supabase
-      .channel("push-notifications-activities")
-      .on(
-        "postgres_changes",
-        { event: "INSERT", schema: "public", table: "activities" },
-        (payload) => {
-          const newActivity = payload.new;
-          if (newActivity) {
-            showPushNotification({
-              title: getNotificationTitle(newActivity.type),
-              body: newActivity.message || "New activity recorded in Duo Karma Admin.",
-              url: getNotificationUrl(newActivity.type),
-            });
-          }
-        }
-      )
-      .subscribe();
+    let activitiesChannel: any = null;
+    let leadsChannel: any = null;
+    let inquiriesChannel: any = null;
 
-    // Listen to leads table directly (when a booking form creates a new lead)
-    const leadsChannel = supabase
-      .channel("push-notifications-leads")
-      .on(
-        "postgres_changes",
-        { event: "INSERT", schema: "public", table: "leads" },
-        (payload) => {
-          const newLead = payload.new;
-          if (newLead) {
-            showPushNotification({
-              title: "🔔 New Website Booking Request!",
-              body: `New lead from ${newLead.name || "a visitor"} (${newLead.company || newLead.email || "Website"}).`,
-              url: "/admin/leads",
-            });
+    try {
+      activitiesChannel = supabase
+        .channel("push-notifications-activities")
+        .on(
+          "postgres_changes",
+          { event: "INSERT", schema: "public", table: "activities" },
+          (payload) => {
+            const newActivity = payload.new;
+            if (newActivity) {
+              showPushNotification({
+                title: getNotificationTitle(newActivity.type),
+                body: newActivity.message || "New activity recorded in Duo Karma Admin.",
+                url: getNotificationUrl(newActivity.type),
+              });
+            }
           }
-        }
-      )
-      .subscribe();
+        )
+        .subscribe();
 
-    // Listen to website_inquiries table (when someone submits via website chat flow)
-    const inquiriesChannel = supabase
-      .channel("push-notifications-inquiries")
-      .on(
-        "postgres_changes",
-        { event: "INSERT", schema: "public", table: "website_inquiries" },
-        (payload) => {
-          const newInquiry = payload.new;
-          if (newInquiry) {
-            showPushNotification({
-              title: "🔔 New Website Booking Request!",
-              body: `New booking inquiry from ${newInquiry.name || "Visitor"} (${newInquiry.phone || newInquiry.email || "Website"}).`,
-              url: "/admin/leads",
-            });
+      leadsChannel = supabase
+        .channel("push-notifications-leads")
+        .on(
+          "postgres_changes",
+          { event: "INSERT", schema: "public", table: "leads" },
+          (payload) => {
+            const newLead = payload.new;
+            if (newLead) {
+              showPushNotification({
+                title: "🔔 New Website Booking Request!",
+                body: `New lead from ${newLead.name || "a visitor"} (${newLead.company || newLead.email || "Website"}).`,
+                url: "/admin/leads",
+              });
+            }
           }
-        }
-      )
-      .subscribe();
+        )
+        .subscribe();
+
+      inquiriesChannel = supabase
+        .channel("push-notifications-inquiries")
+        .on(
+          "postgres_changes",
+          { event: "INSERT", schema: "public", table: "website_inquiries" },
+          (payload) => {
+            const newInquiry = payload.new;
+            if (newInquiry) {
+              showPushNotification({
+                title: "🔔 New Website Booking Request!",
+                body: `New booking inquiry from ${newInquiry.name || "Visitor"} (${newInquiry.phone || newInquiry.email || "Website"}).`,
+                url: "/admin/leads",
+              });
+            }
+          }
+        )
+        .subscribe();
+    } catch (e) {
+      console.warn("[PushNotifications] Realtime channel setup skipped:", e);
+    }
 
     return () => {
-      supabase.removeChannel(activitiesChannel);
-      supabase.removeChannel(leadsChannel);
-      supabase.removeChannel(inquiriesChannel);
+      try {
+        if (activitiesChannel) supabase.removeChannel(activitiesChannel);
+        if (leadsChannel) supabase.removeChannel(leadsChannel);
+        if (inquiriesChannel) supabase.removeChannel(inquiriesChannel);
+      } catch {}
     };
   }, [isSupported, permission]);
 
   const enableNotifications = async () => {
-    const success = await requestNotificationPermission();
-    if (success) {
-      setPermission("granted");
-    } else {
-      setPermission(getNotificationPermissionState());
+    try {
+      const success = await requestNotificationPermission();
+      if (success) {
+        setPermission("granted");
+      } else {
+        setPermission(getNotificationPermissionState());
+      }
+      return success;
+    } catch {
+      return false;
     }
-    return success;
   };
 
   return {
