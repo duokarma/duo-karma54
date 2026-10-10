@@ -37,7 +37,17 @@ const LEAD_STAGES = [
   { key: "won",         label: "Won",         color: "#10B981", bg: "#10B98115" },
   { key: "lost",        label: "Lost",        color: "#EF4444", bg: "#EF444415" },
 ] as const;
-type LeadStage = (typeof LEAD_STAGES)[number]["key"];
+export type LeadStage = (typeof LEAD_STAGES)[number]["key"];
+
+export function normalizeLeadStage(rawStage?: string): LeadStage {
+  if (!rawStage) return "new";
+  const s = rawStage.toLowerCase().trim();
+  if (s === "new" || s === "contacted" || s === "qualified" || s === "lead" || s === "inquiry" || s === "discovery") return "new";
+  if (s === "negotiation" || s === "proposal" || s === "in_progress" || s === "in-progress" || s === "discussion" || s === "meeting") return "negotiation";
+  if (s === "won" || s === "converted" || s === "closed_won" || s === "closed" || s === "client") return "won";
+  if (s === "lost" || s === "rejected" || s === "cancelled" || s === "closed_lost" || s === "archive") return "lost";
+  return "new";
+}
 
 const CLIENT_STATUSES = [
   { key: "active",           label: "Active" },
@@ -204,7 +214,8 @@ function LeadDrawer({
   onConvert: (lead: Lead) => void;
 }) {
   if (!lead) return null;
-  const stage = LEAD_STAGES.find((s) => s.key === lead.stage);
+  const stageKey = normalizeLeadStage(lead.stage);
+  const stage = LEAD_STAGES.find((s) => s.key === stageKey);
   return (
     <Drawer open={open} onOpenChange={(v) => !v && onClose()}>
       <DrawerContent className="max-h-[92vh]">
@@ -219,7 +230,7 @@ function LeadDrawer({
               className="inline-flex items-center gap-1.5 rounded-full px-3 py-1 text-xs font-medium"
               style={{ background: stage?.bg, color: stage?.color, border: `1px solid ${stage?.color}40` }}
             >
-              {lead.stage?.toUpperCase()}
+              {stage?.label?.toUpperCase() ?? "NEW"}
             </span>
           </div>
 
@@ -432,7 +443,7 @@ function LeadForm({
   onClose,
   isSaving,
 }: {
-  initial?: Partial<Lead & { commission_applicable?: boolean; commission_amount?: number; commission_to?: string }>;
+  initial?: Partial<Lead & { commission_applicable?: boolean; commission_amount?: number; commission_to?: string; advance_paid?: number; remaining_amount?: number }>;
   onSave: (data: any) => void;
   onClose: () => void;
   isSaving: boolean;
@@ -444,10 +455,12 @@ function LeadForm({
     phone:                   initial?.phone ?? "",
     email:                   initial?.email ?? "",
     value:                   initial?.value ?? 0,
-    stage:                   initial?.stage ?? "new",
+    stage:                   normalizeLeadStage(initial?.stage),
     probability:             initial?.probability ?? 50,
     source:                  initial?.source ?? "Referral",
     interestedIn:            initial?.interestedIn ?? "",
+    advance_paid:            (initial as any)?.advance_paid ?? 0,
+    remaining_amount:        (initial as any)?.remaining_amount ?? (initial?.value ?? 0),
     notes:                   initial?.notes ?? "",
     commission_applicable:   initial?.commission_applicable ?? false,
     commission_amount:       initial?.commission_amount ?? 0,
@@ -478,7 +491,38 @@ function LeadForm({
         </div>
         <div>
           <label className="field-label">Deal Value (₹)</label>
-          <Input type="number" placeholder="0" value={form.value} onChange={(e) => set("value", +e.target.value)} />
+          <Input
+            type="number"
+            placeholder="0"
+            value={form.value}
+            onChange={(e) => {
+              const val = +e.target.value;
+              set("value", val);
+              set("remaining_amount", Math.max(0, val - (form.advance_paid || 0)));
+            }}
+          />
+        </div>
+        <div>
+          <label className="field-label">Advance Paid (₹)</label>
+          <Input
+            type="number"
+            placeholder="0"
+            value={form.advance_paid}
+            onChange={(e) => {
+              const adv = +e.target.value;
+              set("advance_paid", adv);
+              set("remaining_amount", Math.max(0, (form.value || 0) - adv));
+            }}
+          />
+        </div>
+        <div>
+          <label className="field-label">Remaining Due (₹)</label>
+          <Input
+            type="number"
+            placeholder="0"
+            value={form.remaining_amount}
+            onChange={(e) => set("remaining_amount", +e.target.value)}
+          />
         </div>
         <div>
           <label className="field-label">Probability (%)</label>
@@ -951,13 +995,20 @@ export function PipelinePage() {
   const leadsByStage = useMemo(() => {
     const map: Record<string, Lead[]> = {};
     for (const s of LEAD_STAGES) map[s.key] = [];
-    for (const l of filteredLeads) map[l.stage ?? "new"]?.push(l);
+    for (const l of filteredLeads) {
+      const stageKey = normalizeLeadStage(l.stage);
+      if (map[stageKey]) {
+        map[stageKey].push(l);
+      } else {
+        map["new"].push(l);
+      }
+    }
     return map;
   }, [filteredLeads]);
 
   // ── KPIs ──────────────────────────────────────────────────────────────────
   const totalLeadValue = leads.reduce((s, l) => s + (l.value ?? 0), 0);
-  const wonLeads       = leads.filter((l) => l.stage === "won").length;
+  const wonLeads       = leads.filter((l) => normalizeLeadStage(l.stage) === "won").length;
   const totalClients   = clients.length;
   const totalRevenue   = clients.reduce((s, c) => s + (c.totalValue ?? 0), 0);
   const totalPending   = clients.reduce((s, c) => s + Math.max(0, (c.totalValue ?? 0) - ((c as any).advance_paid ?? 0)), 0);

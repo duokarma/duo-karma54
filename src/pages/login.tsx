@@ -43,13 +43,46 @@ export function LoginPage() {
   const [isLoading, setIsLoading]   = useState(false);
   const [error, setError]           = useState<string | null>(null);
 
-  // On mount: if device remembers a partner, pre-select them
+  // Partner avatars loaded from localStorage cache and synced from Supabase
+  const [avatars, setAvatars] = useState<Record<string, string>>(() => {
+    const initial: Record<string, string> = {};
+    PARTNERS.forEach((p) => {
+      const cached = localStorage.getItem(`dk_avatar_${p.id}`);
+      if (cached) initial[p.id] = cached;
+    });
+    return initial;
+  });
+
+  // On mount: if device remembers a partner, pre-select them, and fetch latest avatars
   useEffect(() => {
     const saved = localStorage.getItem(STORAGE_KEY) as PartnerId | null;
     if (saved && PARTNERS.some((p) => p.id === saved)) {
       setSelectedId(saved);
       setStep("password");
     }
+
+    // Fetch latest partner avatars from Supabase partner_profiles table
+    const loadAvatars = async () => {
+      try {
+        const { data } = await supabase
+          .from("partner_profiles")
+          .select("id, avatar_url");
+
+        if (data && Array.isArray(data)) {
+          const updated: Record<string, string> = {};
+          data.forEach((row: any) => {
+            if (row.id && row.avatar_url) {
+              updated[row.id] = row.avatar_url;
+              localStorage.setItem(`dk_avatar_${row.id}`, row.avatar_url);
+            }
+          });
+          setAvatars((prev) => ({ ...prev, ...updated }));
+        }
+      } catch {
+        // Fallback cleanly to cached avatars
+      }
+    };
+    loadAvatars();
   }, []);
 
   const selectedPartner = PARTNERS.find((p) => p.id === selectedId);
@@ -140,16 +173,25 @@ export function LoginPage() {
                   whileHover={{ scale: 1.03, y: -2 }}
                   whileTap={{ scale: 0.97 }}
                   onClick={() => handleSelectPartner(partner.id)}
-                  className="flex flex-col items-center gap-3 rounded-2xl border border-white/10 bg-white/5 px-6 py-8 text-center shadow-lg transition-colors hover:border-white/20 hover:bg-white/8 focus:outline-none"
+                  className="flex flex-col items-center gap-3 rounded-2xl border border-white/10 bg-white/5 px-6 py-8 text-center shadow-lg transition-colors hover:border-white/20 hover:bg-white/8 focus:outline-none cursor-pointer"
                   style={{ boxShadow: `0 0 0 0 ${partner.color}` }}
                 >
-                  {/* Avatar circle */}
-                  <div
-                    className="flex h-16 w-16 items-center justify-center rounded-full text-2xl font-bold text-white shadow-lg"
-                    style={{ background: `${partner.color}33`, border: `2px solid ${partner.color}66` }}
-                  >
-                    <span style={{ color: partner.color }}>{partner.initial}</span>
-                  </div>
+                  {/* Avatar circle or photo */}
+                  {avatars[partner.id] ? (
+                    <img
+                      src={avatars[partner.id]}
+                      alt={partner.name}
+                      className="h-16 w-16 rounded-full object-cover shadow-lg"
+                      style={{ border: `2px solid ${partner.color}` }}
+                    />
+                  ) : (
+                    <div
+                      className="flex h-16 w-16 items-center justify-center rounded-full text-2xl font-bold text-white shadow-lg"
+                      style={{ background: `${partner.color}33`, border: `2px solid ${partner.color}66` }}
+                    >
+                      <span style={{ color: partner.color }}>{partner.initial}</span>
+                    </div>
+                  )}
                   <div>
                     <p className="text-base font-semibold text-white">{partner.name}</p>
                     <p className="text-[11px] text-white/40">{partner.tagline}</p>
@@ -170,7 +212,7 @@ export function LoginPage() {
           >
             <button
               onClick={handleBack}
-              className="mb-6 flex items-center gap-1.5 text-xs text-white/40 transition-colors hover:text-white/70"
+              className="mb-6 flex items-center gap-1.5 text-xs text-white/40 transition-colors hover:text-white/70 cursor-pointer"
             >
               <ChevronLeft className="h-3.5 w-3.5" />
               Switch partner
@@ -179,16 +221,25 @@ export function LoginPage() {
             {/* Partner identity */}
             {selectedPartner && (
               <div className="mb-8 flex flex-col items-center gap-3">
-                <div
-                  className="flex h-16 w-16 items-center justify-center rounded-full text-2xl font-bold shadow-lg"
-                  style={{
-                    background: `${selectedPartner.color}22`,
-                    border:     `2px solid ${selectedPartner.color}55`,
-                    color:       selectedPartner.color,
-                  }}
-                >
-                  {selectedPartner.initial}
-                </div>
+                {avatars[selectedPartner.id] ? (
+                  <img
+                    src={avatars[selectedPartner.id]}
+                    alt={selectedPartner.name}
+                    className="h-16 w-16 rounded-full object-cover shadow-lg"
+                    style={{ border: `2px solid ${selectedPartner.color}` }}
+                  />
+                ) : (
+                  <div
+                    className="flex h-16 w-16 items-center justify-center rounded-full text-2xl font-bold shadow-lg"
+                    style={{
+                      background: `${selectedPartner.color}22`,
+                      border:     `2px solid ${selectedPartner.color}55`,
+                      color:       selectedPartner.color,
+                    }}
+                  >
+                    {selectedPartner.initial}
+                  </div>
+                )}
                 <div className="text-center">
                   <p className="text-lg font-semibold text-white">
                     Welcome back, {selectedPartner.name}
@@ -210,7 +261,7 @@ export function LoginPage() {
 
             <form onSubmit={handleLogin} className="space-y-4">
               <div className="relative">
-                <Lock className="absolute left-3.5 top-1/2 h-3.5 w-3.5 -translate-y-1/2 text-white/30" />
+                <Lock className="pointer-events-none absolute left-3.5 top-1/2 h-3.5 w-3.5 -translate-y-1/2 text-white/30 z-20" />
                 <Input
                   type={showPw ? "text" : "password"}
                   placeholder="Your password"
@@ -223,9 +274,11 @@ export function LoginPage() {
                 <button
                   type="button"
                   onClick={() => setShowPw((v) => !v)}
-                  className="absolute right-3.5 top-1/2 -translate-y-1/2 text-white/30 hover:text-white/60"
+                  className="absolute right-2.5 top-1/2 -translate-y-1/2 z-20 flex h-7 w-7 items-center justify-center rounded-md text-white/40 hover:text-white transition-colors cursor-pointer"
+                  tabIndex={-1}
+                  aria-label={showPw ? "Hide password" : "Show password"}
                 >
-                  {showPw ? <EyeOff className="h-3.5 w-3.5" /> : <Eye className="h-3.5 w-3.5" />}
+                  {showPw ? <EyeOff className="h-4 w-4" /> : <Eye className="h-4 w-4" />}
                 </button>
               </div>
 

@@ -22,7 +22,7 @@ const ICON_EMOJI: Record<string, string> = {
 export function Sidebar() {
   const { collapsed, toggleCollapsed, mobileOpen, setMobileOpen } = useSidebar();
   const { setOpen } = useCommandPalette();
-  const { signOut, user, displayName } = useAuth();
+  const { signOut, user, displayName, avatarUrl } = useAuth();
   const navigate = useNavigate();
 
   const userEmail = user?.email ?? "";
@@ -216,7 +216,17 @@ export function Sidebar() {
           {/* User row */}
           {!collapsed && (
             <div className="flex items-center gap-2.5 px-3 py-2.5">
-              <img src="/logo.jpeg" alt="Admin Logo" className="h-7 w-7 shrink-0 rounded-md object-cover" />
+              {avatarUrl ? (
+                <img
+                  src={avatarUrl}
+                  alt={displayName}
+                  className="h-7 w-7 shrink-0 rounded-full object-cover border border-white/10"
+                />
+              ) : (
+                <div className="flex h-7 w-7 shrink-0 items-center justify-center rounded-full bg-[var(--color-accent)] text-xs font-semibold text-white shadow-sm ring-1 ring-white/10">
+                  {displayName[0]?.toUpperCase() ?? "A"}
+                </div>
+              )}
               <div className="min-w-0 flex-1">
                 <p className="truncate text-xs font-medium text-ink">{displayName}</p>
                 <p className="truncate text-[10px] text-ink-faint">{userEmail}</p>

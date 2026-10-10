@@ -38,7 +38,7 @@ export function Topbar() {
   const [notifOpen, setNotifOpen] = useState(false);
   const [settingsOpen, setSettingsOpen] = useState(false);
   const notifRef = useRef<HTMLDivElement>(null);
-  const { signOut, user, displayName } = useAuth();
+  const { signOut, user, displayName, avatarUrl } = useAuth();
 
   const currentItem = navItems.find((item) =>
     item.path === "/admin" ? (location.pathname === "/admin" || location.pathname === "/admin/") : location.pathname.startsWith(item.path)
@@ -170,19 +170,40 @@ export function Topbar() {
             <motion.button 
               whileHover={{ scale: 1.05 }}
               whileTap={{ scale: 0.95 }}
-              className="flex items-center gap-1.5 rounded-md px-2 py-1 text-xs text-ink-faint transition-colors hover:bg-[var(--color-charcoal)] hover:text-ink-dim focus:outline-none"
+              className="flex items-center gap-1.5 rounded-md px-2 py-1 text-xs text-ink-faint transition-colors hover:bg-[var(--color-charcoal)] hover:text-ink-dim focus:outline-none cursor-pointer"
             >
               <span className="hidden sm:block">{displayName}</span>
-              <div className="h-5 w-5 rounded-full bg-[var(--color-accent)] flex items-center justify-center text-[10px] font-semibold text-white shadow-sm ring-1 ring-white/10">
-                {displayName[0]?.toUpperCase() ?? "A"}
-              </div>
+              {avatarUrl ? (
+                <img
+                  src={avatarUrl}
+                  alt={displayName}
+                  className="h-5 w-5 rounded-full object-cover shadow-sm ring-1 ring-white/10"
+                />
+              ) : (
+                <div className="h-5 w-5 rounded-full bg-[var(--color-accent)] flex items-center justify-center text-[10px] font-semibold text-white shadow-sm ring-1 ring-white/10">
+                  {displayName[0]?.toUpperCase() ?? "A"}
+                </div>
+              )}
             </motion.button>
           </DropdownMenuTrigger>
-          <DropdownMenuContent align="end" className="w-52">
+          <DropdownMenuContent align="end" className="w-56">
             <DropdownMenuLabel className="font-normal">
-              <div className="flex flex-col gap-0.5">
-                <p className="text-xs font-medium text-ink">{displayName}</p>
-                <p className="text-[10px] text-ink-faint">{user?.email ?? ""}</p>
+              <div className="flex items-center gap-2.5 py-1">
+                {avatarUrl ? (
+                  <img
+                    src={avatarUrl}
+                    alt={displayName}
+                    className="h-8 w-8 rounded-full object-cover border border-white/10"
+                  />
+                ) : (
+                  <div className="h-8 w-8 rounded-full bg-[var(--color-accent)] flex items-center justify-center text-xs font-semibold text-white">
+                    {displayName[0]?.toUpperCase() ?? "A"}
+                  </div>
+                )}
+                <div className="flex flex-col gap-0.5 min-w-0">
+                  <p className="text-xs font-medium text-ink truncate">{displayName}</p>
+                  <p className="text-[10px] text-ink-faint truncate">{user?.email ?? ""}</p>
+                </div>
               </div>
             </DropdownMenuLabel>
             <DropdownMenuSeparator />

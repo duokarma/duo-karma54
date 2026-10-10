@@ -39,10 +39,17 @@ import { useAuth } from "@/hooks/use-auth";
 import type { Project } from "@/types";
 
 
+import { formatCurrency } from "@/lib/utils";
+
 const projectSchema = z.object({
   name: z.string().min(2, "Name is required"),
   client: z.string().min(2, "Client is required"),
   budget: z.coerce.number().min(0, "Budget must be a number"),
+  spent: z.coerce.number().min(0).default(0),
+  progress: z.coerce.number().min(0).max(100).default(0),
+  status: z.enum(["pending", "in-progress", "completed", "on-hold"]).default("pending"),
+  priority: z.enum(["low", "medium", "high", "urgent"]).default("medium"),
+  dueDate: z.string().optional().or(z.literal("")),
   websiteLink: z.string().optional().or(z.literal("")),
   vercelLink: z.string().optional().or(z.literal("")),
   githubLink: z.string().optional().or(z.literal("")),
@@ -65,9 +72,26 @@ export function ProjectsPage() {
   const [addOpen, setAddOpen] = useState(false);
   const [selectedProject, setSelectedProject] = useState<Project | null>(null);
 
-  const { register, handleSubmit, reset, formState: { errors } } = useForm<ProjectFormValues>({
+  const { register, handleSubmit, reset, setValue, watch, formState: { errors } } = useForm<ProjectFormValues>({
     resolver: zodResolver(projectSchema) as any,
+    defaultValues: {
+      name: "",
+      client: "",
+      budget: 0,
+      spent: 0,
+      progress: 0,
+      status: "pending",
+      priority: "medium",
+      dueDate: "",
+      websiteLink: "",
+      vercelLink: "",
+      githubLink: "",
+      databaseLink: "",
+    },
   });
+
+  const currentStatus = watch("status");
+  const currentPriority = watch("priority");
 
   const createMutation = useMutation({
     mutationFn: async (values: ProjectFormValues) => {
@@ -75,13 +99,9 @@ export function ProjectsPage() {
       const newProject = {
         id: Math.random().toString(36).substring(2, 9),
         ...values,
-        status: "pending",
-        progress: 0,
-        spent: 0,
         startDate: new Date().toISOString().split("T")[0],
-        dueDate: new Date(Date.now() + 30 * 24 * 60 * 60 * 1000).toISOString().split("T")[0],
+        dueDate: values.dueDate || new Date(Date.now() + 30 * 24 * 60 * 60 * 1000).toISOString().split("T")[0],
         team,
-        priority: "medium",
       };
       const { error } = await supabase.from("projects").insert([newProject]);
       if (error) throw error;
@@ -141,6 +161,11 @@ export function ProjectsPage() {
       name: project.name,
       client: project.client,
       budget: project.budget,
+      spent: project.spent || 0,
+      progress: project.progress || 0,
+      status: project.status || "pending",
+      priority: project.priority || "medium",
+      dueDate: project.dueDate || "",
       websiteLink: project.websiteLink || "",
       vercelLink: project.vercelLink || "",
       githubLink: project.githubLink || "",
@@ -346,6 +371,45 @@ export function ProjectsPage() {
                   <p className="mt-3 font-display text-xl font-semibold text-ink">{project.name}</p>
                   <p className="text-sm text-ink-faint">{project.client}</p>
 
+                  <div className="mt-3 flex items-center justify-between text-xs">
+                    <div>
+                      <span className="text-ink-faint">Budget: </span>
+                      <span className="font-semibold text-ink">{formatCurrency(project.budget || 0)}</span>
+                    </div>
+                    {project.spent !== undefined && project.spent > 0 && (
+                      <div>
+                        <span className="text-ink-faint">Spent: </span>
+                        <span className="font-semibold text-amber-400">{formatCurrency(project.spent)}</span>
+                      </div>
+                    )}
+                  </div>
+
+                  <div className="mt-2.5">
+                    <div className="flex items-center justify-between text-[11px] mb-1">
+                      <span className="text-ink-faint">Progress</span>
+                      <span className="font-medium text-ink">{project.progress || 0}%</span>
+                    </div>
+                    <div className="h-1.5 w-full rounded-full bg-white/10 overflow-hidden">
+                      <div
+                        className="h-full rounded-full bg-indigo-500 transition-all"
+                        style={{ width: `${Math.min(100, Math.max(0, project.progress || 0))}%` }}
+                      />
+                    </div>
+                  </div>
+
+                  {(project.priority || project.dueDate) && (
+                    <div className="mt-3 flex items-center justify-between text-[11px] text-ink-faint">
+                      {project.priority && (
+                        <span className="capitalize px-1.5 py-0.5 rounded border border-white/10 bg-white/5 text-[10px]">
+                          {project.priority} priority
+                        </span>
+                      )}
+                      {project.dueDate && (
+                        <span>Due {project.dueDate}</span>
+                      )}
+                    </div>
+                  )}
+
                   {(project.websiteLink || project.vercelLink || project.githubLink || project.databaseLink) && (
                     <div className="mt-4 flex flex-wrap gap-2">
                       {project.websiteLink && (
@@ -386,73 +450,138 @@ export function ProjectsPage() {
         if (!open) {
           setSelectedProject(null);
           setAssignedPartner(displayName === "Moiz" ? "Moiz" : "Hatim");
-          reset({ name: "", client: "", budget: 0, websiteLink: "", vercelLink: "", githubLink: "", databaseLink: "" });
+          reset({
+            name: "",
+            client: "",
+            budget: 0,
+            spent: 0,
+            progress: 0,
+            status: "pending",
+            priority: "medium",
+            dueDate: "",
+            websiteLink: "",
+            vercelLink: "",
+            githubLink: "",
+            databaseLink: "",
+          });
         }
       }}>
-        <DrawerContent>
+        <DrawerContent className="max-h-[92vh]">
           <DrawerHeader>
             <DrawerTitle>{selectedProject ? "Edit Project" : "Create New Project"}</DrawerTitle>
-            <DrawerDescription>{selectedProject ? "Update project details." : "Set up a new project tracking space."}</DrawerDescription>
+            <DrawerDescription>{selectedProject ? "Update all project details." : "Set up a new project tracking space."}</DrawerDescription>
           </DrawerHeader>
-          <form onSubmit={handleSubmit((data) => {
-            if (selectedProject) {
-              editMutation.mutate({ ...data, id: selectedProject.id });
-            } else {
-              createMutation.mutate(data);
-            }
-          })} className="space-y-4">
-            <div>
-              <label className="mb-1.5 block text-xs font-medium text-ink-dim">Project Name</label>
-              <Input placeholder="Rebranding Q3" {...register("name")} />
-              {errors.name && <p className="mt-1 text-[10px] text-rose">{errors.name.message}</p>}
-            </div>
-            <div>
-              <label className="mb-1.5 block text-xs font-medium text-ink-dim">Client</label>
-              <Input placeholder="Acme Corp" {...register("client")} />
-              {errors.client && <p className="mt-1 text-[10px] text-rose">{errors.client.message}</p>}
-            </div>
-            <div>
-              <label className="mb-1.5 block text-xs font-medium text-ink-dim">Budget</label>
-              <Input placeholder="50000" type="number" {...register("budget")} />
-              {errors.budget && <p className="mt-1 text-[10px] text-rose">{errors.budget.message}</p>}
-            </div>
+          <div className="overflow-y-auto px-4 pb-8">
+            <form onSubmit={handleSubmit((data) => {
+              if (selectedProject) {
+                editMutation.mutate({ ...data, id: selectedProject.id });
+              } else {
+                createMutation.mutate(data);
+              }
+            })} className="space-y-4">
+              <div className="grid grid-cols-1 sm:grid-cols-2 gap-3 sm:gap-4">
+                <div>
+                  <label className="mb-1.5 block text-xs font-medium text-ink-dim">Project Name</label>
+                  <Input placeholder="Rebranding Q3" {...register("name")} />
+                  {errors.name && <p className="mt-1 text-[10px] text-rose">{errors.name.message}</p>}
+                </div>
+                <div>
+                  <label className="mb-1.5 block text-xs font-medium text-ink-dim">Client</label>
+                  <Input placeholder="Acme Corp" {...register("client")} />
+                  {errors.client && <p className="mt-1 text-[10px] text-rose">{errors.client.message}</p>}
+                </div>
+              </div>
 
-            <div>
-              <label className="mb-1.5 block text-xs font-medium text-ink-dim">Lead Partner</label>
-              <Select value={assignedPartner} onValueChange={(v: any) => setAssignedPartner(v)}>
-                <SelectTrigger>
-                  <SelectValue />
-                </SelectTrigger>
-                <SelectContent>
-                  <SelectItem value="Hatim">Hatim (Co-founder)</SelectItem>
-                  <SelectItem value="Moiz">Moiz (Co-founder)</SelectItem>
-                  <SelectItem value="Both">Both (Hatim & Moiz)</SelectItem>
-                </SelectContent>
-              </Select>
-            </div>
+              <div className="grid grid-cols-1 sm:grid-cols-2 gap-3 sm:gap-4">
+                <div>
+                  <label className="mb-1.5 block text-xs font-medium text-ink-dim">Status</label>
+                  <Select value={currentStatus || "pending"} onValueChange={(v: any) => setValue("status", v)}>
+                    <SelectTrigger>
+                      <SelectValue placeholder="Status" />
+                    </SelectTrigger>
+                    <SelectContent>
+                      <SelectItem value="pending">Pending</SelectItem>
+                      <SelectItem value="in-progress">In Progress</SelectItem>
+                      <SelectItem value="completed">Completed</SelectItem>
+                      <SelectItem value="on-hold">On Hold</SelectItem>
+                    </SelectContent>
+                  </Select>
+                </div>
+                <div>
+                  <label className="mb-1.5 block text-xs font-medium text-ink-dim">Priority</label>
+                  <Select value={currentPriority || "medium"} onValueChange={(v: any) => setValue("priority", v)}>
+                    <SelectTrigger>
+                      <SelectValue placeholder="Priority" />
+                    </SelectTrigger>
+                    <SelectContent>
+                      <SelectItem value="low">Low</SelectItem>
+                      <SelectItem value="medium">Medium</SelectItem>
+                      <SelectItem value="high">High</SelectItem>
+                      <SelectItem value="urgent">Urgent</SelectItem>
+                    </SelectContent>
+                  </Select>
+                </div>
+              </div>
 
-            <div className="grid grid-cols-1 sm:grid-cols-2 gap-3 sm:gap-4">
-              <div>
-                <label className="mb-1.5 block text-xs font-medium text-ink-dim">Website Link</label>
-                <Input placeholder="https://..." {...register("websiteLink")} />
+              <div className="grid grid-cols-1 sm:grid-cols-3 gap-3 sm:gap-4">
+                <div>
+                  <label className="mb-1.5 block text-xs font-medium text-ink-dim">Budget (₹)</label>
+                  <Input placeholder="50000" type="number" {...register("budget")} />
+                  {errors.budget && <p className="mt-1 text-[10px] text-rose">{errors.budget.message}</p>}
+                </div>
+                <div>
+                  <label className="mb-1.5 block text-xs font-medium text-ink-dim">Spent (₹)</label>
+                  <Input placeholder="0" type="number" {...register("spent")} />
+                </div>
+                <div>
+                  <label className="mb-1.5 block text-xs font-medium text-ink-dim">Progress (%)</label>
+                  <Input placeholder="0" type="number" min={0} max={100} {...register("progress")} />
+                </div>
               </div>
-              <div>
-                <label className="mb-1.5 block text-xs font-medium text-ink-dim">Vercel Link</label>
-                <Input placeholder="https://..." {...register("vercelLink")} />
+
+              <div className="grid grid-cols-1 sm:grid-cols-2 gap-3 sm:gap-4">
+                <div>
+                  <label className="mb-1.5 block text-xs font-medium text-ink-dim">Due Date</label>
+                  <Input type="date" {...register("dueDate")} />
+                </div>
+                <div>
+                  <label className="mb-1.5 block text-xs font-medium text-ink-dim">Lead Partner</label>
+                  <Select value={assignedPartner} onValueChange={(v: any) => setAssignedPartner(v)}>
+                    <SelectTrigger>
+                      <SelectValue />
+                    </SelectTrigger>
+                    <SelectContent>
+                      <SelectItem value="Hatim">Hatim (Co-founder)</SelectItem>
+                      <SelectItem value="Moiz">Moiz (Co-founder)</SelectItem>
+                      <SelectItem value="Both">Both (Hatim & Moiz)</SelectItem>
+                    </SelectContent>
+                  </Select>
+                </div>
               </div>
-              <div>
-                <label className="mb-1.5 block text-xs font-medium text-ink-dim">GitHub Link</label>
-                <Input placeholder="https://..." {...register("githubLink")} />
+
+              <div className="grid grid-cols-1 sm:grid-cols-2 gap-3 sm:gap-4">
+                <div>
+                  <label className="mb-1.5 block text-xs font-medium text-ink-dim">Website Link</label>
+                  <Input placeholder="https://..." {...register("websiteLink")} />
+                </div>
+                <div>
+                  <label className="mb-1.5 block text-xs font-medium text-ink-dim">Vercel Link</label>
+                  <Input placeholder="https://..." {...register("vercelLink")} />
+                </div>
+                <div>
+                  <label className="mb-1.5 block text-xs font-medium text-ink-dim">GitHub Link</label>
+                  <Input placeholder="https://..." {...register("githubLink")} />
+                </div>
+                <div>
+                  <label className="mb-1.5 block text-xs font-medium text-ink-dim">Database Link</label>
+                  <Input placeholder="https://..." {...register("databaseLink")} />
+                </div>
               </div>
-              <div>
-                <label className="mb-1.5 block text-xs font-medium text-ink-dim">Database Link</label>
-                <Input placeholder="https://..." {...register("databaseLink")} />
-              </div>
-            </div>
-            <Button className="w-full" type="submit" disabled={createMutation.isPending || editMutation.isPending}>
-              {createMutation.isPending || editMutation.isPending ? "Saving..." : selectedProject ? "Save Changes" : "Create Project"}
-            </Button>
-          </form>
+              <Button className="w-full mt-2" type="submit" disabled={createMutation.isPending || editMutation.isPending}>
+                {createMutation.isPending || editMutation.isPending ? "Saving..." : selectedProject ? "Save Changes" : "Create Project"}
+              </Button>
+            </form>
+          </div>
         </DrawerContent>
       </Drawer>
     </div>

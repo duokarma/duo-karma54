@@ -290,5 +290,76 @@ ON CONFLICT (code) DO UPDATE SET
   last_audited_at = now();
 
 -- =============================================================================
--- Migration Complete! Supabase Storage & Security Hub Configured!
+-- 10. Partner Profiles & Custom Avatars
+-- =============================================================================
+CREATE TABLE IF NOT EXISTS partner_profiles (
+  id TEXT PRIMARY KEY,
+  email TEXT UNIQUE NOT NULL,
+  display_name TEXT NOT NULL,
+  avatar_url TEXT DEFAULT '',
+  updated_at TIMESTAMPTZ DEFAULT now()
+);
+
+-- Enable Row Level Security
+ALTER TABLE partner_profiles ENABLE ROW LEVEL SECURITY;
+
+-- Allow public read so the /login page can display partner photos
+DROP POLICY IF EXISTS "Allow public read for partner_profiles" ON partner_profiles;
+CREATE POLICY "Allow public read for partner_profiles" 
+  ON partner_profiles FOR SELECT 
+  USING (true);
+
+-- Allow authenticated partners to insert and update their profile
+DROP POLICY IF EXISTS "Allow authenticated insert update for partner_profiles" ON partner_profiles;
+CREATE POLICY "Allow authenticated insert update for partner_profiles" 
+  ON partner_profiles FOR ALL 
+  TO authenticated 
+  USING (true) 
+  WITH CHECK (true);
+
+-- Allow anon update for initial setup if needed
+DROP POLICY IF EXISTS "Allow anon update for partner_profiles" ON partner_profiles;
+CREATE POLICY "Allow anon update for partner_profiles" 
+  ON partner_profiles FOR ALL 
+  TO anon 
+  USING (true) 
+  WITH CHECK (true);
+
+-- Seed initial records for Hatim and Moiz
+INSERT INTO partner_profiles (id, email, display_name, avatar_url)
+VALUES 
+  ('hatim', 'hatimsuttar@gmail.com', 'Hatim', ''),
+  ('moiz', 'moizdhilawala99@gmail.com', 'Moiz', '')
+ON CONFLICT (id) DO UPDATE SET
+  email = EXCLUDED.email,
+  display_name = EXCLUDED.display_name;
+
+-- =============================================================================
+-- 11. Supabase Storage: 'duokarma-files' Bucket & Policies
+-- =============================================================================
+-- Ensure duokarma-files storage bucket exists and is public
+INSERT INTO storage.buckets (id, name, public)
+VALUES ('duokarma-files', 'duokarma-files', true)
+ON CONFLICT (id) DO UPDATE SET public = true;
+
+-- Allow public read access to storage files
+DROP POLICY IF EXISTS "Public Read duokarma-files" ON storage.objects;
+CREATE POLICY "Public Read duokarma-files" 
+  ON storage.objects FOR SELECT 
+  USING (bucket_id = 'duokarma-files');
+
+-- Allow uploads to duokarma-files
+DROP POLICY IF EXISTS "Allow uploads to duokarma-files" ON storage.objects;
+CREATE POLICY "Allow uploads to duokarma-files" 
+  ON storage.objects FOR INSERT 
+  WITH CHECK (bucket_id = 'duokarma-files');
+
+-- Allow updates to duokarma-files
+DROP POLICY IF EXISTS "Allow updates to duokarma-files" ON storage.objects;
+CREATE POLICY "Allow updates to duokarma-files" 
+  ON storage.objects FOR UPDATE 
+  USING (bucket_id = 'duokarma-files');
+
+-- =============================================================================
+-- Migration Complete! Supabase Storage & Partner Profiles Configured!
 -- =============================================================================

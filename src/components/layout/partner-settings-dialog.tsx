@@ -12,7 +12,7 @@ import { Button } from "@/components/ui/button";
 import { useAuth } from "@/hooks/use-auth";
 import { useToast } from "@/components/ui/toast";
 import { supabase } from "@/lib/supabase";
-import { checkStorageStatus, type StorageStatus } from "@/lib/storage";
+import { checkStorageStatus, uploadToStorage, type StorageStatus } from "@/lib/storage";
 import {
   Lock,
   Eye,
@@ -27,6 +27,9 @@ import {
   Cloud,
   FileCheck,
   Search,
+  Camera,
+  Link2,
+  Trash2,
 } from "lucide-react";
 
 interface PartnerSettingsDialogProps {
@@ -237,10 +240,15 @@ export function PartnerSettingsDialog({
   open,
   onOpenChange,
 }: PartnerSettingsDialogProps) {
-  const { user, displayName } = useAuth();
+  const { user, displayName, avatarUrl, updateAvatarUrl } = useAuth();
   const { toast } = useToast();
 
   const [activeTab, setActiveTab] = useState("account");
+
+  // Avatar state
+  const [uploadingAvatar, setUploadingAvatar] = useState(false);
+  const [avatarInputUrl, setAvatarInputUrl] = useState("");
+  const [showUrlInput, setShowUrlInput] = useState(false);
 
   // Password state
   const [newPassword, setNewPassword] = useState("");
@@ -289,6 +297,68 @@ export function PartnerSettingsDialog({
     color: "#8B5CF6",
     tagline: "Partner & Administrator",
     initial: displayName ? displayName[0].toUpperCase() : "P",
+  };
+
+  const handleAvatarFileUpload = async (e: React.ChangeEvent<HTMLInputElement>) => {
+    const file = e.target.files?.[0];
+    if (!file) return;
+    if (!file.type.startsWith("image/")) {
+      toast({
+        title: "Invalid File Type",
+        description: "Please select an image file (PNG, JPG, JPEG, WebP).",
+      });
+      return;
+    }
+    setUploadingAvatar(true);
+    try {
+      const result = await uploadToStorage(file, { folder: "general" });
+      await updateAvatarUrl(result.publicUrl);
+      toast({
+        title: "Profile Picture Updated",
+        description: "Your partner profile photo has been updated across the system.",
+      });
+    } catch (err: any) {
+      toast({
+        title: "Upload Failed",
+        description: err.message || "Could not upload image to storage. Try pasting an image link.",
+      });
+    } finally {
+      setUploadingAvatar(false);
+      e.target.value = "";
+    }
+  };
+
+  const handleSaveAvatarUrl = async () => {
+    if (!avatarInputUrl.trim()) return;
+    try {
+      await updateAvatarUrl(avatarInputUrl.trim());
+      setAvatarInputUrl("");
+      setShowUrlInput(false);
+      toast({
+        title: "Profile Picture Updated",
+        description: "Your partner avatar URL has been saved.",
+      });
+    } catch (err: any) {
+      toast({
+        title: "Update Failed",
+        description: err.message || "Could not save avatar URL.",
+      });
+    }
+  };
+
+  const handleRemoveAvatar = async () => {
+    try {
+      await updateAvatarUrl(null);
+      toast({
+        title: "Profile Picture Reset",
+        description: "Your profile has returned to the default initial badge.",
+      });
+    } catch (err: any) {
+      toast({
+        title: "Reset Failed",
+        description: err.message,
+      });
+    }
   };
 
   const handleUpdatePassword = async (e: React.FormEvent) => {
@@ -404,37 +474,114 @@ export function PartnerSettingsDialog({
 
           {/* ══════════════ TAB 1: ACCOUNT & PASSWORD ══════════════ */}
           <TabsContent value="account" className="mt-4 space-y-4">
-            {/* Partner Profile Card */}
-            <div className="rounded-xl border border-white/10 bg-white/4 p-3.5 flex items-center justify-between">
-              <div className="flex items-center gap-3">
-                <div
-                  className="flex h-11 w-11 items-center justify-center rounded-full text-base font-bold shadow-md ring-2 ring-white/10"
-                  style={{
-                    backgroundColor: `${partnerInfo.color}25`,
-                    color: partnerInfo.color,
-                    border: `1.5px solid ${partnerInfo.color}60`,
-                  }}
-                >
-                  {partnerInfo.initial}
-                </div>
-                <div>
-                  <div className="flex items-center gap-2">
-                    <p className="text-sm font-semibold text-white">{displayName}</p>
-                    <span
-                      className="rounded-full px-2 py-0.5 text-[10px] font-medium"
-                      style={{
-                        backgroundColor: `${partnerInfo.color}20`,
-                        color: partnerInfo.color,
-                        border: `1px solid ${partnerInfo.color}40`,
-                      }}
-                    >
-                      Partner
-                    </span>
+            {/* Partner Profile Card with Avatar Option */}
+            <div className="rounded-xl border border-white/10 bg-white/4 p-4 space-y-3">
+              <div className="flex flex-col sm:flex-row sm:items-center justify-between gap-3">
+                <div className="flex items-center gap-3">
+                  <div className="relative group shrink-0">
+                    {avatarUrl ? (
+                      <img
+                        src={avatarUrl}
+                        alt={displayName}
+                        className="h-14 w-14 rounded-full object-cover shadow-lg"
+                        style={{ border: `2px solid ${partnerInfo.color}` }}
+                      />
+                    ) : (
+                      <div
+                        className="flex h-14 w-14 items-center justify-center rounded-full text-xl font-bold shadow-md ring-2 ring-white/10"
+                        style={{
+                          backgroundColor: `${partnerInfo.color}25`,
+                          color: partnerInfo.color,
+                          border: `1.5px solid ${partnerInfo.color}60`,
+                        }}
+                      >
+                        {partnerInfo.initial}
+                      </div>
+                    )}
                   </div>
-                  <p className="text-[11px] text-white/40">{user?.email ?? ""}</p>
-                  <p className="text-[10px] text-white/50 mt-0.5">{partnerInfo.tagline}</p>
+                  <div>
+                    <div className="flex items-center gap-2">
+                      <p className="text-sm font-semibold text-white">{displayName}</p>
+                      <span
+                        className="rounded-full px-2 py-0.5 text-[10px] font-medium"
+                        style={{
+                          backgroundColor: `${partnerInfo.color}20`,
+                          color: partnerInfo.color,
+                          border: `1px solid ${partnerInfo.color}40`,
+                        }}
+                      >
+                        Partner
+                      </span>
+                    </div>
+                    <p className="text-[11px] text-white/40">{user?.email ?? ""}</p>
+                    <p className="text-[10px] text-white/50 mt-0.5">{partnerInfo.tagline}</p>
+                  </div>
+                </div>
+
+                {/* Avatar actions */}
+                <div className="flex items-center gap-1.5 flex-wrap">
+                  <label className="flex items-center gap-1.5 cursor-pointer rounded-lg border border-white/15 bg-white/5 px-2.5 py-1.5 text-xs font-medium text-white hover:bg-white/10 hover:border-white/25 transition-colors">
+                    {uploadingAvatar ? (
+                      <Loader2 className="h-3.5 w-3.5 animate-spin" />
+                    ) : (
+                      <Camera className="h-3.5 w-3.5 text-white/70" />
+                    )}
+                    <span>{uploadingAvatar ? "Uploading..." : "Upload Photo"}</span>
+                    <input
+                      type="file"
+                      accept="image/*"
+                      className="hidden"
+                      disabled={uploadingAvatar}
+                      onChange={handleAvatarFileUpload}
+                    />
+                  </label>
+
+                  <Button
+                    type="button"
+                    variant="ghost"
+                    size="sm"
+                    onClick={() => setShowUrlInput((v) => !v)}
+                    className="h-7 px-2 text-xs text-white/60 hover:text-white hover:bg-white/5"
+                  >
+                    <Link2 className="h-3.5 w-3.5 mr-1 text-white/50" />
+                    {showUrlInput ? "Hide Link" : "Image Link"}
+                  </Button>
+
+                  {avatarUrl && (
+                    <Button
+                      type="button"
+                      variant="ghost"
+                      size="sm"
+                      onClick={handleRemoveAvatar}
+                      className="h-7 px-2 text-xs text-red-400 hover:text-red-300 hover:bg-red-500/10"
+                      title="Reset to default initial circle"
+                    >
+                      <Trash2 className="h-3.5 w-3.5" />
+                    </Button>
+                  )}
                 </div>
               </div>
+
+              {/* URL paste input if toggled */}
+              {showUrlInput && (
+                <div className="pt-2 border-t border-white/10 flex items-center gap-2">
+                  <Input
+                    placeholder="https://example.com/my-profile-pic.jpg"
+                    value={avatarInputUrl}
+                    onChange={(e) => setAvatarInputUrl(e.target.value)}
+                    className="h-8 text-xs border-white/10 bg-white/5 text-white placeholder:text-white/30"
+                  />
+                  <Button
+                    type="button"
+                    size="sm"
+                    onClick={handleSaveAvatarUrl}
+                    disabled={!avatarInputUrl.trim()}
+                    className="h-8 text-xs bg-indigo-600 hover:bg-indigo-500 text-white shrink-0"
+                  >
+                    Save URL
+                  </Button>
+                </div>
+              )}
             </div>
 
             {/* Password Change Form */}
@@ -474,7 +621,9 @@ export function PartnerSettingsDialog({
                   <button
                     type="button"
                     onClick={() => setShowNewPassword(!showNewPassword)}
-                    className="absolute right-2.5 top-1/2 -translate-y-1/2 text-white/40 hover:text-white/80"
+                    className="absolute right-2.5 top-1/2 -translate-y-1/2 z-20 flex h-6 w-6 items-center justify-center rounded text-white/40 hover:text-white transition-colors cursor-pointer"
+                    tabIndex={-1}
+                    aria-label={showNewPassword ? "Hide password" : "Show password"}
                   >
                     {showNewPassword ? <EyeOff className="h-3.5 w-3.5" /> : <Eye className="h-3.5 w-3.5" />}
                   </button>
@@ -492,7 +641,9 @@ export function PartnerSettingsDialog({
                   <button
                     type="button"
                     onClick={() => setShowConfirmPassword(!showConfirmPassword)}
-                    className="absolute right-2.5 top-1/2 -translate-y-1/2 text-white/40 hover:text-white/80"
+                    className="absolute right-2.5 top-1/2 -translate-y-1/2 z-20 flex h-6 w-6 items-center justify-center rounded text-white/40 hover:text-white transition-colors cursor-pointer"
+                    tabIndex={-1}
+                    aria-label={showConfirmPassword ? "Hide password" : "Show password"}
                   >
                     {showConfirmPassword ? <EyeOff className="h-3.5 w-3.5" /> : <Eye className="h-3.5 w-3.5" />}
                   </button>
