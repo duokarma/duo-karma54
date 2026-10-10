@@ -1,5 +1,5 @@
 import { useLocation, Link } from "react-router-dom";
-import { Bell, Menu, ChevronRight, Search, LogOut, LayoutGrid, KeyRound } from "lucide-react";
+import { Bell, Menu, ChevronRight, Search, LogOut, LayoutGrid, KeyRound, X } from "lucide-react";
 import { m as motion, AnimatePresence } from "framer-motion";
 import { useSidebar } from "@/hooks/use-sidebar";
 import { useCommandPalette } from "@/hooks/use-command-palette";
@@ -36,6 +36,7 @@ export function Topbar() {
   const { setMobileOpen } = useSidebar();
   const { setOpen } = useCommandPalette();
   const [notifOpen, setNotifOpen] = useState(false);
+  const [widgetsPanelOpen, setWidgetsPanelOpen] = useState(false);
   const [settingsOpen, setSettingsOpen] = useState(false);
   const notifRef = useRef<HTMLDivElement>(null);
   const { signOut, user, displayName, avatarUrl } = useAuth();
@@ -52,6 +53,19 @@ export function Topbar() {
     }
     document.addEventListener("mousedown", handleClick);
     return () => document.removeEventListener("mousedown", handleClick);
+  }, []);
+
+  // Track widgets panel state to toggle icon visual
+  useEffect(() => {
+    const handleState = (e: any) => {
+      if (typeof e.detail?.open === "boolean") {
+        setWidgetsPanelOpen(e.detail.open);
+      }
+    };
+    window.addEventListener("widgets-panel-state", handleState);
+    return () => {
+      window.removeEventListener("widgets-panel-state", handleState);
+    };
   }, []);
 
   const [lastViewed, setLastViewed] = useState(() => localStorage.getItem("lastViewedNotifications") || "0");
@@ -77,7 +91,6 @@ export function Topbar() {
   };
 
   const handleOpenWidgets = () => {
-    // We will emit an event or use context, but for now we can just dispatch a custom event
     window.dispatchEvent(new CustomEvent("toggle-widgets-panel"));
   };
 
@@ -130,16 +143,21 @@ export function Topbar() {
           <kbd className="hidden rounded border border-[var(--color-edge)] bg-[var(--color-void)] px-1 text-[10px] sm:block">⌘K</kbd>
         </motion.button>
 
-        {/* Widgets Panel Trigger */}
-        <motion.div whileHover={{ scale: 1.1 }} whileTap={{ scale: 0.95 }}>
+        {/* Widgets Panel Trigger - z-[130] ensures it remains accessible and clickable above blur backdrop */}
+        <motion.div whileHover={{ scale: 1.08 }} whileTap={{ scale: 0.95 }} className="relative z-[130]">
           <Button
             variant="ghost"
             size="icon"
             onClick={handleOpenWidgets}
-            aria-label="Widgets"
-            className="h-7 w-7 transition-colors hover:bg-white/10 hover:text-white"
+            aria-label={widgetsPanelOpen ? "Close Productivity Hub" : "Open Productivity Hub"}
+            title={widgetsPanelOpen ? "Close Productivity Hub (Esc)" : "Open Productivity Hub"}
+            className={`h-7 w-7 transition-all rounded-md ${
+              widgetsPanelOpen
+                ? "bg-rose-500/20 text-rose-400 border border-rose-500/40 hover:bg-rose-500/30 hover:text-white"
+                : "text-ink-faint hover:bg-white/10 hover:text-white"
+            }`}
           >
-            <LayoutGrid className="h-3.5 w-3.5" />
+            {widgetsPanelOpen ? <X className="h-3.5 w-3.5" /> : <LayoutGrid className="h-3.5 w-3.5" />}
           </Button>
         </motion.div>
 
@@ -153,13 +171,17 @@ export function Topbar() {
               aria-label="Notifications"
               className="relative h-7 w-7 transition-colors hover:bg-white/10 hover:text-white"
             >
-            <Bell className="h-3.5 w-3.5" />
+              <Bell className="h-3.5 w-3.5" />
               {hasNewNotifications && (
                 <span className="absolute right-1.5 top-1.5 h-1.5 w-1.5 rounded-full bg-[#EF4444]" />
               )}
             </Button>
           </motion.div>
-          {notifOpen && <NotificationPanel onClose={() => setNotifOpen(false)} />}
+          {notifOpen && (
+            <div className="fixed right-2 sm:absolute sm:right-0 top-12 sm:top-full sm:mt-1.5 z-50">
+              <NotificationPanel onClose={() => setNotifOpen(false)} />
+            </div>
+          )}
         </div>
 
         <div className="h-4 w-px bg-[var(--color-edge)] mx-1" />

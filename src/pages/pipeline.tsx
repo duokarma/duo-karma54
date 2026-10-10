@@ -589,10 +589,10 @@ function LeadForm({
           <button
             type="button"
             onClick={() => set("commission_applicable", !form.commission_applicable)}
-            className={`relative h-5 w-9 rounded-full transition-colors ${form.commission_applicable ? "bg-amber-500" : "bg-white/10"}`}
+            className={`relative h-5 w-9 rounded-full transition-colors duration-200 ${form.commission_applicable ? "bg-amber-500" : "bg-white/10"}`}
           >
             <span
-              className={`absolute top-0.5 h-4 w-4 rounded-full bg-white shadow transition-transform ${form.commission_applicable ? "translate-x-4" : "translate-x-0.5"}`}
+              className={`block absolute top-0.5 left-0.5 h-4 w-4 rounded-full bg-white shadow-sm transition-transform duration-200 ${form.commission_applicable ? "translate-x-4" : "translate-x-0"}`}
             />
           </button>
         </div>
@@ -749,9 +749,9 @@ function ClientForm({
           <button
             type="button"
             onClick={() => set("gst_applicable", !form.gst_applicable)}
-            className={`relative h-5 w-9 rounded-full transition-colors ${form.gst_applicable ? "bg-blue-500" : "bg-white/10"}`}
+            className={`relative h-5 w-9 rounded-full transition-colors duration-200 ${form.gst_applicable ? "bg-blue-500" : "bg-white/10"}`}
           >
-            <span className={`absolute top-0.5 h-4 w-4 rounded-full bg-white shadow transition-transform ${form.gst_applicable ? "translate-x-4" : "translate-x-0.5"}`} />
+            <span className={`block absolute top-0.5 left-0.5 h-4 w-4 rounded-full bg-white shadow-sm transition-transform duration-200 ${form.gst_applicable ? "translate-x-4" : "translate-x-0"}`} />
           </button>
         </div>
         {form.gst_applicable && (
@@ -772,9 +772,9 @@ function ClientForm({
           <button
             type="button"
             onClick={() => set("commission_applicable", !form.commission_applicable)}
-            className={`relative h-5 w-9 rounded-full transition-colors ${form.commission_applicable ? "bg-amber-500" : "bg-white/10"}`}
+            className={`relative h-5 w-9 rounded-full transition-colors duration-200 ${form.commission_applicable ? "bg-amber-500" : "bg-white/10"}`}
           >
-            <span className={`absolute top-0.5 h-4 w-4 rounded-full bg-white shadow transition-transform ${form.commission_applicable ? "translate-x-4" : "translate-x-0.5"}`} />
+            <span className={`block absolute top-0.5 left-0.5 h-4 w-4 rounded-full bg-white shadow-sm transition-transform duration-200 ${form.commission_applicable ? "translate-x-4" : "translate-x-0"}`} />
           </button>
         </div>
         {form.commission_applicable && (

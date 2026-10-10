@@ -86,11 +86,9 @@ export function NotificationPanel({ onClose }: { onClose: () => void }) {
     <motion.div
       initial={{ opacity: 0, y: -6, scale: 0.98 }}
       animate={{ opacity: 1, y: 0, scale: 1 }}
-      exit={{ opacity: 0, y: -6, scale: 0.98 }}
       transition={{ duration: 0.15 }}
-      className="absolute -right-12 sm:right-0 top-9 z-50 w-[calc(100vw-2rem)] max-w-[340px] sm:w-84 rounded-[var(--radius-card)] border border-[var(--color-edge)] bg-[var(--color-card)] shadow-[var(--shadow-dropdown)] overflow-hidden"
+      className="w-[calc(100vw-1.5rem)] max-w-[360px] sm:w-[360px] rounded-[var(--radius-card)] border border-[var(--color-edge)] bg-[var(--color-card)] shadow-2xl overflow-hidden"
     >
-      {/* Header */}
       <div className="flex items-center justify-between border-b border-[var(--color-edge)] px-3.5 py-2.5">
         <div className="flex items-center gap-1.5">
           <p className="text-xs sm:text-sm font-medium text-ink">Notifications</p>

@@ -454,10 +454,10 @@ function PaymentsTab({ clients }: { clients: Client[] }) {
                 <button
                   type="button"
                   onClick={() => setField("gst_applicable", !form.gst_applicable)}
-                  className={`relative h-5 w-9 rounded-full transition-colors ${form.gst_applicable ? "bg-blue-600" : "bg-white/15"}`}
+                  className={`relative h-5 w-9 rounded-full transition-colors duration-200 ${form.gst_applicable ? "bg-blue-600" : "bg-white/15"}`}
                 >
                   <span
-                    className={`absolute top-0.5 h-4 w-4 rounded-full bg-white shadow transition-transform ${form.gst_applicable ? "translate-x-4" : "translate-x-0.5"}`}
+                    className={`block absolute top-0.5 left-0.5 h-4 w-4 rounded-full bg-white shadow-sm transition-transform duration-200 ${form.gst_applicable ? "translate-x-4" : "translate-x-0"}`}
                   />
                 </button>
               </div>
@@ -485,10 +485,10 @@ function PaymentsTab({ clients }: { clients: Client[] }) {
                 <button
                   type="button"
                   onClick={() => setField("commission_applicable", !form.commission_applicable)}
-                  className={`relative h-5 w-9 rounded-full transition-colors ${form.commission_applicable ? "bg-amber-600" : "bg-white/15"}`}
+                  className={`relative h-5 w-9 rounded-full transition-colors duration-200 ${form.commission_applicable ? "bg-amber-600" : "bg-white/15"}`}
                 >
                   <span
-                    className={`absolute top-0.5 h-4 w-4 rounded-full bg-white shadow transition-transform ${form.commission_applicable ? "translate-x-4" : "translate-x-0.5"}`}
+                    className={`block absolute top-0.5 left-0.5 h-4 w-4 rounded-full bg-white shadow-sm transition-transform duration-200 ${form.commission_applicable ? "translate-x-4" : "translate-x-0"}`}
                   />
                 </button>
               </div>
