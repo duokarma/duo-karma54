@@ -379,5 +379,33 @@ DROP POLICY IF EXISTS "Allow all for notes" ON notes;
 CREATE POLICY "Allow all for notes" ON notes FOR ALL USING (true) WITH CHECK (true);
 
 -- =============================================================================
--- Migration Complete! Supabase Storage, Partner Profiles & Notes Configured!
+-- 10. Ecosystem Apps & Real-Time Links Table
+-- =============================================================================
+CREATE TABLE IF NOT EXISTS ecosystem_apps (
+  id TEXT PRIMARY KEY,
+  title TEXT NOT NULL,
+  url TEXT NOT NULL,
+  image_url TEXT,
+  category TEXT DEFAULT 'Client Admin',
+  order_index INTEGER DEFAULT 0,
+  created_at TIMESTAMPTZ DEFAULT now(),
+  updated_at TIMESTAMPTZ DEFAULT now()
+);
+
+ALTER TABLE ecosystem_apps ENABLE ROW LEVEL SECURITY;
+
+DROP POLICY IF EXISTS "Allow all for ecosystem_apps" ON ecosystem_apps;
+CREATE POLICY "Allow all for ecosystem_apps" ON ecosystem_apps FOR ALL USING (true) WITH CHECK (true);
+
+-- Insert initial ecosystem apps if not already present
+INSERT INTO ecosystem_apps (id, title, url, image_url, category, order_index)
+VALUES 
+  ('ten11', 'Ten11 Salon Admin', 'https://tens-11.vercel.app/', '/apps/ten11-logo.jpg', 'Client Admin', 0),
+  ('wow-salon', 'WOW Salon', 'https://wowsalon.in', '/apps/wow-salon-logo.webp', 'Live Website', 1),
+  ('wow-salon-admin', 'WOW Salon Admin', 'https://wowsalon.in/admin', '/apps/wow-salon-logo.webp', 'Admin Portal', 2),
+  ('duokarma-main', 'DuoKarma Main', 'https://duokarma.com', '/logo.jpeg', 'Official Hub', 3)
+ON CONFLICT (id) DO NOTHING;
+
+-- =============================================================================
+-- Migration Complete! Supabase Storage, Partner Profiles, Notes & Ecosystem Apps Configured!
 -- =============================================================================
