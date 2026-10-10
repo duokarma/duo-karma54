@@ -1,13 +1,14 @@
-import { useState, useEffect, useMemo } from "react";
+import { useState, useEffect, useMemo, useCallback } from "react";
 import {
   StickyNote, Plus, Search, Trash2, Pin, PinOff,
   Copy, Check, Download, Folder, ChevronLeft,
+  Pencil, Eye, Cloud, CheckCircle2, Loader2,
 } from "lucide-react";
 import { PageHeader } from "@/components/shared/page-header";
 import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
-import { Card } from "@/components/ui/card";
 import { useToast } from "@/components/ui/toast";
+import { supabase } from "@/lib/supabase";
 
 export interface NoteItem {
   id: string;
@@ -154,6 +155,7 @@ const STORAGE_KEY = "dk_partner_notes_v1";
 
 export function NotesPage() {
   const { toast } = useToast();
+
   const [notes, setNotes] = useState<NoteItem[]>(() => {
     try {
       const saved = localStorage.getItem(STORAGE_KEY);
@@ -170,8 +172,86 @@ export function NotesPage() {
   const [selectedCategory, setSelectedCategory] = useState("all");
   const [copied, setCopied] = useState(false);
   const [mobileDetailView, setMobileDetailView] = useState(false);
+  const [isEditing, setIsEditing] = useState(false);
+  const [isSaving, setIsSaving] = useState(false);
+  const [syncStatus, setSyncStatus] = useState<"synced" | "saving" | "local">("local");
 
-  // Sync notes to localStorage
+  // Sync state to Supabase
+  const syncToSupabase = useCallback(async (noteToSync: NoteItem) => {
+    setIsSaving(true);
+    setSyncStatus("saving");
+    try {
+      const { error } = await supabase.from("notes").upsert({
+        id: noteToSync.id,
+        title: noteToSync.title,
+        category: noteToSync.category,
+        content: noteToSync.content,
+        pinned: noteToSync.pinned,
+        updated_at: new Date().toISOString(),
+      });
+
+      if (!error) {
+        setSyncStatus("synced");
+      } else {
+        // Table may not exist yet or network error -> fallback to local
+        setSyncStatus("local");
+      }
+    } catch {
+      setSyncStatus("local");
+    } finally {
+      setIsSaving(false);
+    }
+  }, []);
+
+  // Fetch initial notes from Supabase
+  useEffect(() => {
+    async function loadSupabaseNotes() {
+      try {
+        const { data, error } = await supabase
+          .from("notes")
+          .select("*")
+          .order("pinned", { ascending: false })
+          .order("updated_at", { ascending: false });
+
+        if (!error && data && data.length > 0) {
+          const mapped: NoteItem[] = data.map((d: any) => ({
+            id: d.id,
+            title: d.title,
+            category: d.category || "General",
+            content: d.content || "",
+            pinned: Boolean(d.pinned),
+            updatedAt: d.updated_at || new Date().toISOString(),
+          }));
+          setNotes(mapped);
+          setSyncStatus("synced");
+          if (!selectedId && mapped[0]) {
+            setSelectedId(mapped[0].id);
+          }
+        } else if (!error && data && data.length === 0) {
+          // Empty table: seed default notes
+          for (const def of DEFAULT_NOTES) {
+            await supabase.from("notes").upsert({
+              id: def.id,
+              title: def.title,
+              category: def.category,
+              content: def.content,
+              pinned: def.pinned,
+              updated_at: def.updatedAt,
+            });
+          }
+          setSyncStatus("synced");
+        } else {
+          // Table doesn't exist yet -> keep local notes
+          setSyncStatus("local");
+        }
+      } catch {
+        setSyncStatus("local");
+      }
+    }
+    loadSupabaseNotes();
+  }, []);
+
+  // Sync notes to localStorage cache
   useEffect(() => {
     try {
       localStorage.setItem(STORAGE_KEY, JSON.stringify(notes));
@@ -206,7 +286,7 @@ export function NotesPage() {
 
   const activeNote = notes.find((n) => n.id === selectedId) || notes[0];
 
-  const handleCreateNote = () => {
+  const handleCreateNote = async () => {
     const newNote: NoteItem = {
       id: `note-${Date.now()}`,
       title: "Untitled Note",
@@ -217,7 +297,9 @@ export function NotesPage() {
     };
     setNotes((prev) => [newNote, ...prev]);
     setSelectedId(newNote.id);
+    setIsEditing(true);
     setMobileDetailView(true);
+    await syncToSupabase(newNote);
     toast({
       title: "New note created",
       description: "Give your note a title and start jotting down thoughts.",
@@ -226,16 +308,29 @@ export function NotesPage() {
 
   const handleUpdateActiveNote = (fields: Partial<NoteItem>) => {
     if (!activeNote) return;
+    const updated = {
+      ...activeNote,
+      ...fields,
+      updatedAt: new Date().toISOString(),
+    };
     setNotes((prev) =>
-      prev.map((n) =>
-        n.id === activeNote.id
-          ? { ...n, ...fields, updatedAt: new Date().toISOString() }
-          : n
-      )
+      prev.map((n) => (n.id === activeNote.id ? updated : n))
     );
   };
 
-  const handleDeleteNote = (id: string, e?: React.MouseEvent) => {
+  const handleSaveActiveNote = async () => {
+    if (!activeNote) return;
+    await syncToSupabase(activeNote);
+    setIsEditing(false);
+    toast({
+      title: "Note Saved",
+      description: syncStatus === "synced" 
+        ? "Note changes saved to Supabase." 
+        : "Note saved locally (run migration in Supabase SQL editor to sync to cloud).",
+    });
+  };
+
+  const handleDeleteNote = async (id: string, e?: React.MouseEvent) => {
     e?.stopPropagation();
     if (notes.length <= 1) {
       toast({
@@ -251,17 +346,27 @@ export function NotesPage() {
       setSelectedId(nextList[0]?.id || "");
     }
     setMobileDetailView(false);
+    setIsEditing(false);
+
+    try {
+      await supabase.from("notes").delete().eq("id", id);
+    } catch {}
+
     toast({
       title: "Note deleted",
       description: "Note removed from workspace.",
     });
   };
 
-  const handleTogglePin = (id: string, e?: React.MouseEvent) => {
+  const handleTogglePin = async (id: string, e?: React.MouseEvent) => {
     e?.stopPropagation();
+    const target = notes.find((n) => n.id === id);
+    if (!target) return;
+    const updated = { ...target, pinned: !target.pinned, updatedAt: new Date().toISOString() };
     setNotes((prev) =>
-      prev.map((n) => (n.id === id ? { ...n, pinned: !n.pinned } : n))
+      prev.map((n) => (n.id === id ? updated : n))
     );
+    await syncToSupabase(updated);
   };
 
   const handleCopyContent = () => {
@@ -295,10 +400,18 @@ export function NotesPage() {
         title="Notes & Playbooks"
         description="Organize company audit logs, engineering checklists, client SOPs, and partner scratchpads."
         actions={
-          <Button onClick={handleCreateNote} className="gap-1.5 text-xs">
-            <Plus className="h-3.5 w-3.5" />
-            New Note
-          </Button>
+          <div className="flex items-center gap-2">
+            {syncStatus === "synced" && (
+              <span className="hidden sm:inline-flex items-center gap-1.5 text-[11px] text-emerald-400 bg-emerald-500/10 border border-emerald-500/20 px-2.5 py-1 rounded-md">
+                <Cloud className="h-3.5 w-3.5" />
+                Supabase Connected
+              </span>
+            )}
+            <Button onClick={handleCreateNote} className="gap-1.5 text-xs touch-manipulation font-medium">
+              <Plus className="h-3.5 w-3.5" />
+              New Note
+            </Button>
+          </div>
         }
       />
 
@@ -324,7 +437,7 @@ export function NotesPage() {
             <Button
               size="sm"
               onClick={handleCreateNote}
-              className="h-8 px-2.5 gap-1 text-xs shrink-0"
+              className="h-8 px-2.5 gap-1 text-xs shrink-0 touch-manipulation"
               title="Create new note"
             >
               <Plus className="h-3.5 w-3.5" />
@@ -336,9 +449,9 @@ export function NotesPage() {
           <div className="flex items-center gap-1 overflow-x-auto pb-1 scrollbar-none">
             <button
               onClick={() => setSelectedCategory("all")}
-              className={`px-2.5 py-1 rounded-md text-[11px] font-medium transition-colors shrink-0 ${
+              className={`px-2.5 py-1 rounded-md text-[11px] font-medium transition-colors shrink-0 touch-manipulation ${
                 selectedCategory === "all"
-                  ? "bg-[var(--color-accent)] text-white"
+                  ? "bg-white/15 text-white border border-white/20 shadow-sm"
                   : "bg-white/5 text-ink-dim hover:text-white"
               }`}
             >
@@ -348,9 +461,9 @@ export function NotesPage() {
               <button
                 key={cat}
                 onClick={() => setSelectedCategory(cat)}
-                className={`px-2.5 py-1 rounded-md text-[11px] font-medium transition-colors shrink-0 ${
+                className={`px-2.5 py-1 rounded-md text-[11px] font-medium transition-colors shrink-0 touch-manipulation ${
                   selectedCategory === cat
-                    ? "bg-[var(--color-accent)] text-white"
+                    ? "bg-white/15 text-white border border-white/20 shadow-sm"
                     : "bg-white/5 text-ink-dim hover:text-white"
                 }`}
               >
@@ -359,12 +472,12 @@ export function NotesPage() {
             ))}
           </div>
 
-          {/* Note List Cards */}
+          {/* Note List Items (Static crisp cards, no 3D tilt jitter) */}
           <div className="space-y-2 overflow-y-auto max-h-[580px] pr-1">
             {filteredNotes.length === 0 ? (
-              <Card className="p-6 text-center text-xs text-ink-faint">
+              <div className="rounded-xl border border-[var(--color-edge)] bg-[var(--color-card)]/50 p-6 text-center text-xs text-ink-faint">
                 No notes found matching your search.
-              </Card>
+              </div>
             ) : (
               filteredNotes.map((note) => {
                 const isSelected = note.id === activeNote?.id;
@@ -375,16 +488,16 @@ export function NotesPage() {
                       setSelectedId(note.id);
                       setMobileDetailView(true);
                     }}
-                    className={`rounded-xl border p-3 cursor-pointer transition-all ${
+                    className={`rounded-xl border p-3 cursor-pointer transition-all touch-manipulation ${
                       isSelected
-                        ? "bg-white/6 border-[var(--color-accent)]/50 shadow-md ring-1 ring-[var(--color-accent)]/20"
-                        : "bg-[var(--color-card)]/50 border-[var(--color-edge)] hover:bg-white/4 hover:border-white/10"
+                        ? "bg-white/[0.08] border-white/25 shadow-md ring-1 ring-white/10"
+                        : "bg-[var(--color-card)]/60 border-[var(--color-edge)] hover:bg-white/[0.04] hover:border-white/15"
                     }`}
                   >
                     <div className="flex items-start justify-between gap-2 mb-1.5">
                       <div className="flex items-center gap-1.5 min-w-0">
                         {note.pinned && (
-                          <Pin className="h-3 w-3 text-amber-400 shrink-0 fill-amber-400/20" />
+                          <Pin className="h-3 w-3 text-amber-400 shrink-0 fill-amber-400" />
                         )}
                         <h4 className="text-xs font-semibold text-ink truncate">
                           {note.title || "Untitled Note"}
@@ -403,15 +516,17 @@ export function NotesPage() {
                       <span>{new Date(note.updatedAt).toLocaleDateString("en-IN", { month: "short", day: "numeric" })}</span>
                       <div className="flex items-center gap-1">
                         <button
+                          type="button"
                           onClick={(e) => handleTogglePin(note.id, e)}
-                          className="p-1 hover:text-amber-400 transition-colors"
+                          className="p-1 hover:text-amber-400 transition-colors touch-manipulation"
                           title={note.pinned ? "Unpin" : "Pin note"}
                         >
-                          {note.pinned ? <PinOff className="h-3 w-3" /> : <Pin className="h-3 w-3" />}
+                          {note.pinned ? <PinOff className="h-3 w-3 text-amber-400" /> : <Pin className="h-3 w-3" />}
                         </button>
                         <button
+                          type="button"
                           onClick={(e) => handleDeleteNote(note.id, e)}
-                          className="p-1 hover:text-rose-400 transition-colors"
+                          className="p-1 hover:text-rose-400 transition-colors touch-manipulation"
                           title="Delete note"
                         >
                           <Trash2 className="h-3 w-3" />
@@ -425,22 +540,22 @@ export function NotesPage() {
           </div>
         </div>
 
-        {/* ── Right Content Editor / Reader ── */}
+        {/* ── Right Content Editor / Reader Panel (Static crisp surface, zero 3D tilt blur) ── */}
         <div
           className={`lg:col-span-8 flex flex-col ${
             !mobileDetailView ? "hidden lg:flex" : "flex"
           }`}
         >
           {activeNote ? (
-            <Card className="flex flex-col flex-1 p-4 sm:p-6 bg-[var(--color-card)]/80 border-[var(--color-edge)]">
+            <div className="flex flex-col flex-1 p-4 sm:p-6 bg-[#111114]/95 border border-[var(--color-edge)] rounded-xl shadow-lg relative transform-none">
               {/* Top Controls Bar */}
-              <div className="flex items-center justify-between pb-3 border-b border-[var(--color-edge)] mb-4 gap-2">
+              <div className="flex items-center justify-between pb-3.5 border-b border-[var(--color-edge)] mb-4 gap-2 flex-wrap">
                 <div className="flex items-center gap-2">
                   <Button
                     variant="ghost"
                     size="sm"
                     onClick={() => setMobileDetailView(false)}
-                    className="lg:hidden h-7 px-2 text-xs text-ink-faint"
+                    className="lg:hidden h-7 px-2 text-xs text-ink-faint touch-manipulation"
                   >
                     <ChevronLeft className="h-3.5 w-3.5 mr-1" />
                     Back
@@ -448,82 +563,279 @@ export function NotesPage() {
                   <span className="text-[10px] text-ink-faint">
                     Last edited {new Date(activeNote.updatedAt).toLocaleTimeString("en-IN", { hour: "2-digit", minute: "2-digit" })}
                   </span>
+                  {syncStatus === "synced" && (
+                    <span className="text-[10px] text-emerald-400 flex items-center gap-1 font-medium">
+                      <CheckCircle2 className="h-3 w-3" /> Cloud Saved
+                    </span>
+                  )}
+                  {syncStatus === "saving" && (
+                    <span className="text-[10px] text-amber-300 flex items-center gap-1">
+                      <Loader2 className="h-3 w-3 animate-spin" /> Saving...
+                    </span>
+                  )}
                 </div>
 
-                <div className="flex items-center gap-1.5">
-                  <Button
-                    variant="ghost"
-                    size="sm"
+                {/* Action Buttons: Razor sharp rendering without 3D tilt or filter blur */}
+                <div className="flex items-center gap-1.5 flex-wrap">
+                  {/* Mode Switcher: Preview vs Edit */}
+                  <div className="flex items-center rounded-lg border border-white/10 bg-white/5 p-0.5 mr-1">
+                    <button
+                      type="button"
+                      onClick={() => setIsEditing(false)}
+                      className={`h-6 px-2.5 rounded-md text-[11px] font-medium flex items-center gap-1 transition-colors touch-manipulation ${
+                        !isEditing
+                          ? "bg-white/15 text-white font-semibold shadow-sm"
+                          : "text-ink-faint hover:text-white"
+                      }`}
+                      title="View formatted note"
+                    >
+                      <Eye className="h-3 w-3" />
+                      <span>Preview</span>
+                    </button>
+                    <button
+                      type="button"
+                      onClick={() => setIsEditing(true)}
+                      className={`h-6 px-2.5 rounded-md text-[11px] font-medium flex items-center gap-1 transition-colors touch-manipulation ${
+                        isEditing
+                          ? "bg-white/15 text-white font-semibold shadow-sm"
+                          : "text-ink-faint hover:text-white"
+                      }`}
+                      title="Edit note title and content"
+                    >
+                      <Pencil className="h-3 w-3" />
+                      <span>Edit</span>
+                    </button>
+                  </div>
+
+                  {/* Save to Supabase Button (when in edit mode) */}
+                  {isEditing && (
+                    <Button
+                      size="sm"
+                      onClick={handleSaveActiveNote}
+                      disabled={isSaving}
+                      className="h-7 px-2.5 text-xs bg-white text-black hover:bg-white/90 font-medium gap-1 touch-manipulation shadow-sm"
+                      title="Save note to Supabase"
+                    >
+                      {isSaving ? <Loader2 className="h-3 w-3 animate-spin" /> : <Cloud className="h-3 w-3" />}
+                      <span>Save</span>
+                    </Button>
+                  )}
+
+                  {/* Razor Sharp Pin Button (Never Blurs) */}
+                  <button
+                    type="button"
                     onClick={() => handleTogglePin(activeNote.id)}
-                    className={`h-7 px-2 text-xs gap-1 ${activeNote.pinned ? "text-amber-400" : "text-ink-faint"}`}
-                    title={activeNote.pinned ? "Pinned to top" : "Pin note"}
+                    className={`h-7 px-2.5 rounded-md text-xs font-medium inline-flex items-center gap-1.5 transition-colors touch-manipulation cursor-pointer ${
+                      activeNote.pinned
+                        ? "bg-amber-500/15 text-amber-300 border border-amber-500/30 shadow-sm"
+                        : "text-ink-faint hover:text-white hover:bg-white/5 border border-transparent"
+                    }`}
+                    title={activeNote.pinned ? "Pinned to top" : "Pin note to top"}
                   >
-                    <Pin className="h-3 w-3" />
-                    <span className="hidden sm:inline">{activeNote.pinned ? "Pinned" : "Pin"}</span>
-                  </Button>
-                  <Button
-                    variant="ghost"
-                    size="sm"
+                    <Pin className={`h-3.5 w-3.5 shrink-0 ${activeNote.pinned ? "fill-amber-400 text-amber-400" : "text-ink-faint"}`} />
+                    <span className="hidden sm:inline font-medium">{activeNote.pinned ? "Pinned" : "Pin"}</span>
+                  </button>
+
+                  {/* Copy Button */}
+                  <button
+                    type="button"
                     onClick={handleCopyContent}
-                    className="h-7 px-2 text-xs text-ink-faint hover:text-ink gap-1"
+                    className="h-7 px-2 text-xs text-ink-faint hover:text-ink hover:bg-white/5 rounded-md inline-flex items-center gap-1 transition-colors touch-manipulation cursor-pointer"
                     title="Copy full note"
                   >
                     {copied ? <Check className="h-3 w-3 text-emerald-400" /> : <Copy className="h-3 w-3" />}
                     <span className="hidden sm:inline">{copied ? "Copied" : "Copy"}</span>
-                  </Button>
-                  <Button
-                    variant="ghost"
-                    size="sm"
+                  </button>
+
+                  {/* Export Button */}
+                  <button
+                    type="button"
                     onClick={handleDownloadMarkdown}
-                    className="h-7 px-2 text-xs text-ink-faint hover:text-ink gap-1"
+                    className="h-7 px-2 text-xs text-ink-faint hover:text-ink hover:bg-white/5 rounded-md inline-flex items-center gap-1 transition-colors touch-manipulation cursor-pointer"
                     title="Download as .md file"
                   >
                     <Download className="h-3 w-3" />
                     <span className="hidden sm:inline">Export</span>
-                  </Button>
-                  <Button
-                    variant="ghost"
-                    size="sm"
+                  </button>
+
+                  {/* Delete Button */}
+                  <button
+                    type="button"
                     onClick={(e) => handleDeleteNote(activeNote.id, e)}
-                    className="h-7 px-2 text-xs text-rose-400/80 hover:text-rose-400 hover:bg-rose-500/10"
+                    className="h-7 px-2 text-xs text-rose-400/80 hover:text-rose-400 hover:bg-rose-500/10 rounded-md inline-flex items-center transition-colors touch-manipulation cursor-pointer"
                     title="Delete note"
                   >
                     <Trash2 className="h-3 w-3" />
-                  </Button>
+                  </button>
                 </div>
               </div>
 
-              {/* Title & Category Input Row */}
-              <div className="space-y-2 mb-4">
-                <input
-                  type="text"
-                  value={activeNote.title}
-                  onChange={(e) => handleUpdateActiveNote({ title: e.target.value })}
-                  placeholder="Note Title..."
-                  className="w-full text-lg sm:text-xl font-bold text-ink bg-transparent outline-none placeholder:text-ink-faint"
-                />
-                <div className="flex items-center gap-2">
-                  <Folder className="h-3 w-3 text-ink-faint" />
-                  <input
-                    type="text"
-                    value={activeNote.category}
-                    onChange={(e) => handleUpdateActiveNote({ category: e.target.value })}
-                    placeholder="Category (e.g. Engineering & Security, Client, Operations)..."
-                    className="text-xs text-ink-dim bg-transparent outline-none placeholder:text-ink-faint"
-                  />
-                </div>
-              </div>
+              {/* ══════════════ EDIT MODE ══════════════ */}
+              {isEditing ? (
+                <div className="flex flex-col flex-1 space-y-3.5">
+                  {/* Note Title Input with prominent edit styling */}
+                  <div className="space-y-1">
+                    <label className="text-[11px] font-semibold text-white/80 flex items-center justify-between">
+                      <span>Note Title</span>
+                      <span className="text-[10px] text-amber-400/80 font-normal">Editing title</span>
+                    </label>
+                    <input
+                      type="text"
+                      value={activeNote.title}
+                      onChange={(e) => handleUpdateActiveNote({ title: e.target.value })}
+                      placeholder="e.g. System & Security Hardening Checklist"
+                      className="w-full text-base sm:text-lg font-bold text-white bg-black/40 border border-white/15 focus:border-[#C9A876] focus:ring-1 focus:ring-[#C9A876]/40 rounded-lg px-3.5 py-2 outline-none transition-all placeholder:text-white/20"
+                    />
+                  </div>
 
-              {/* Note Content Textarea */}
-              <textarea
-                value={activeNote.content}
-                onChange={(e) => handleUpdateActiveNote({ content: e.target.value })}
-                placeholder="Start typing your note, SOP, checklist, or documentation here..."
-                className="flex-1 w-full min-h-[440px] resize-none bg-transparent font-mono text-xs text-ink placeholder:text-ink-faint outline-none scrollbar-thin scrollbar-thumb-white/10 leading-relaxed"
-              />
-            </Card>
+                  {/* Category Input */}
+                  <div className="space-y-1">
+                    <label className="text-[11px] font-semibold text-white/80">Category</label>
+                    <div className="relative">
+                      <Folder className="absolute left-3 top-1/2 -translate-y-1/2 h-3.5 w-3.5 text-ink-faint" />
+                      <input
+                        type="text"
+                        value={activeNote.category}
+                        onChange={(e) => handleUpdateActiveNote({ category: e.target.value })}
+                        placeholder="e.g. Engineering & Security, Client Policy, Operations"
+                        className="w-full text-xs text-ink bg-black/40 border border-white/15 focus:border-[#C9A876] focus:ring-1 focus:ring-[#C9A876]/40 rounded-lg pl-9 pr-3 py-2 outline-none transition-all placeholder:text-white/20"
+                      />
+                    </div>
+                  </div>
+
+                  {/* Content Textarea */}
+                  <div className="space-y-1 flex-1 flex flex-col">
+                    <div className="flex items-center justify-between text-[11px] font-semibold text-white/80">
+                      <span>Note Content & Checklist</span>
+                      <span className="text-[10px] text-ink-faint font-mono">
+                        {activeNote.content.length} characters &bull; {activeNote.content.split(/\s+/).filter(Boolean).length} words
+                      </span>
+                    </div>
+                    <textarea
+                      value={activeNote.content}
+                      onChange={(e) => handleUpdateActiveNote({ content: e.target.value })}
+                      placeholder="Type your notes, checklist items, policies, or documentation..."
+                      className="flex-1 w-full min-h-[380px] sm:min-h-[460px] p-3.5 font-mono text-xs text-ink bg-black/40 border border-white/15 focus:border-[#C9A876] focus:ring-1 focus:ring-[#C9A876]/40 rounded-lg outline-none leading-relaxed resize-none scrollbar-thin scrollbar-thumb-white/10"
+                    />
+                  </div>
+
+                  {/* Save Action Footer */}
+                  <div className="flex items-center justify-between pt-2 border-t border-white/5">
+                    <span className="text-[11px] text-ink-faint">
+                      Changes auto-sync locally. Click Save to push to Supabase backend.
+                    </span>
+                    <div className="flex items-center gap-2">
+                      <Button
+                        type="button"
+                        variant="ghost"
+                        size="sm"
+                        onClick={() => setIsEditing(false)}
+                        className="text-xs h-8 text-ink-faint hover:text-white"
+                      >
+                        Preview
+                      </Button>
+                      <Button
+                        type="button"
+                        size="sm"
+                        onClick={handleSaveActiveNote}
+                        disabled={isSaving}
+                        className="text-xs h-8 bg-white text-black hover:bg-white/90 font-medium px-4 shadow-sm"
+                      >
+                        {isSaving ? <Loader2 className="h-3 w-3 animate-spin mr-1" /> : <Cloud className="h-3 w-3 mr-1" />}
+                        Save to Supabase
+                      </Button>
+                    </div>
+                  </div>
+                </div>
+              ) : (
+                /* ══════════════ PREVIEW / READING MODE ══════════════ */
+                <div className="flex flex-col flex-1 space-y-4 overflow-y-auto max-h-[700px] pr-1">
+                  {/* Title & Metadata Banner */}
+                  <div className="space-y-1.5 pb-3 border-b border-white/5">
+                    <div className="flex items-center justify-between gap-3">
+                      <h2 className="text-xl sm:text-2xl font-bold tracking-tight text-white">
+                        {activeNote.title || "Untitled Note"}
+                      </h2>
+                      <Button
+                        size="sm"
+                        variant="outline"
+                        onClick={() => setIsEditing(true)}
+                        className="h-7 text-xs border-white/15 bg-white/5 hover:bg-white/10 text-white shrink-0 gap-1 touch-manipulation"
+                      >
+                        <Pencil className="h-3 w-3" />
+                        Edit Note
+                      </Button>
+                    </div>
+                    <div className="flex items-center gap-2 text-xs text-ink-dim">
+                      <span className="inline-flex items-center gap-1 text-[11px] text-ink-dim px-2 py-0.5 rounded bg-white/5 border border-white/10">
+                        <Folder className="h-3 w-3 text-ink-faint" />
+                        {activeNote.category}
+                      </span>
+                    </div>
+                  </div>
+
+                  {/* Formatted Markdown Content Reader */}
+                  <div className="font-mono text-xs leading-relaxed text-ink space-y-2.5 whitespace-pre-wrap select-text">
+                    {activeNote.content ? (
+                      activeNote.content.split("\n").map((line, idx) => {
+                        if (line.startsWith("# ")) {
+                          return (
+                            <h3 key={idx} className="font-sans text-lg font-bold text-white pt-2 pb-1 border-b border-white/10">
+                              {line.replace("# ", "")}
+                            </h3>
+                          );
+                        }
+                        if (line.startsWith("### ")) {
+                          return (
+                            <h4 key={idx} className="font-sans text-sm font-semibold text-amber-300 pt-2 pb-0.5">
+                              {line.replace("### ", "")}
+                            </h4>
+                          );
+                        }
+                        if (line.startsWith("## ")) {
+                          return (
+                            <h4 key={idx} className="font-sans text-base font-semibold text-white pt-2 pb-0.5">
+                              {line.replace("## ", "")}
+                            </h4>
+                          );
+                        }
+                        if (line.trim() === "---") {
+                          return <hr key={idx} className="border-white/10 my-2" />;
+                        }
+                        if (line.startsWith("- **")) {
+                          return (
+                            <div key={idx} className="text-white/95 font-medium pl-2 border-l-2 border-[#C9A876]/40 my-1">
+                              {line}
+                            </div>
+                          );
+                        }
+                        if (line.startsWith("  → ")) {
+                          return (
+                            <div key={idx} className="text-ink-faint pl-4 italic text-[11px]">
+                              {line}
+                            </div>
+                          );
+                        }
+                        return <div key={idx} className="text-ink-dim">{line || "\u00A0"}</div>;
+                      })
+                    ) : (
+                      <div className="py-12 text-center text-ink-faint">
+                        <p>This note is empty.</p>
+                        <Button
+                          size="sm"
+                          onClick={() => setIsEditing(true)}
+                          className="mt-3 text-xs gap-1"
+                        >
+                          <Pencil className="h-3 w-3" /> Start Writing
+                        </Button>
+                      </div>
+                    )}
+                  </div>
+                </div>
+              )}
+            </div>
           ) : (
-            <Card className="flex flex-col items-center justify-center flex-1 p-8 text-center text-ink-faint">
+            <div className="rounded-xl border border-[var(--color-edge)] bg-[var(--color-card)]/50 flex flex-col items-center justify-center flex-1 p-8 text-center text-ink-faint">
               <StickyNote className="h-10 w-10 text-ink-faint/40 mb-3" />
               <p className="text-sm font-medium text-ink">No note selected</p>
               <p className="text-xs text-ink-dim mt-1">Select a note from the left or create a new one.</p>
@@ -531,7 +843,7 @@ export function NotesPage() {
                 <Plus className="h-3.5 w-3.5" />
                 Create Note
               </Button>
-            </Card>
+            </div>
           )}
         </div>
       </div>

@@ -290,5 +290,23 @@ ON CONFLICT (code) DO UPDATE SET
   last_audited_at = now();
 
 -- =============================================================================
--- Migration Complete! Supabase Storage & Security Hub Configured!
+-- 9. Notes & Playbooks Storage Table
+-- =============================================================================
+CREATE TABLE IF NOT EXISTS notes (
+  id TEXT PRIMARY KEY,
+  title TEXT NOT NULL,
+  category TEXT DEFAULT 'General',
+  content TEXT DEFAULT '',
+  pinned BOOLEAN DEFAULT false,
+  updated_at TIMESTAMPTZ DEFAULT now(),
+  created_at TIMESTAMPTZ DEFAULT now()
+);
+
+ALTER TABLE notes ENABLE ROW LEVEL SECURITY;
+
+DROP POLICY IF EXISTS "Allow all for notes" ON notes;
+CREATE POLICY "Allow all for notes" ON notes FOR ALL USING (true) WITH CHECK (true);
+
+-- =============================================================================
+-- Migration Complete! Supabase Storage, Security Hub & Notes Configured!
 -- =============================================================================
