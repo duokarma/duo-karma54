@@ -156,21 +156,33 @@ export function useEcosystemApps() {
 
     syncFromSupabase();
 
-    // Supabase Realtime channel
-    const channel = supabase
-      .channel("public:ecosystem_apps")
-      .on(
-        "postgres_changes",
-        { event: "*", schema: "public", table: "ecosystem_apps" },
-        () => {
-          syncFromSupabase();
-        }
-      )
-      .subscribe();
+    // Supabase Realtime channel (safe per-subscriber channel with try-catch)
+    let channel: ReturnType<typeof supabase.channel> | null = null;
+    try {
+      const channelId = `ecosystem_apps_${Math.random().toString(36).substring(2, 9)}`;
+      channel = supabase
+        .channel(channelId)
+        .on(
+          "postgres_changes",
+          { event: "*", schema: "public", table: "ecosystem_apps" },
+          () => {
+            syncFromSupabase();
+          }
+        );
+      channel.subscribe();
+    } catch (err) {
+      console.warn("Realtime channel initialization bypassed:", err);
+    }
 
     return () => {
       mounted = false;
-      supabase.removeChannel(channel);
+      if (channel) {
+        try {
+          supabase.removeChannel(channel);
+        } catch {
+          // Safe ignore cleanup error
+        }
+      }
     };
   }, []);
 
