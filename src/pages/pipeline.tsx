@@ -29,6 +29,7 @@ import {
 } from "@/components/ui/select";
 import type { Lead, Client } from "@/types";
 import { uploadToStorage } from "@/lib/storage";
+import { logActivity } from "@/lib/activity-logger";
 
 // ── Stage config ─────────────────────────────────────────────────────────────
 const LEAD_STAGES = [
@@ -322,6 +323,11 @@ function ClientDrawer({
   const markAdvance = async () => {
     await supabase.from("clients").update({ advance_paid: totalValue, remaining_amount: 0 }).eq("id", client.id);
     qc.invalidateQueries({ queryKey: ["clients"] });
+    qc.invalidateQueries({ queryKey: ["activities"] });
+    logActivity({
+      type: "payment",
+      message: `Advance marked fully received (${formatCurrency(totalValue)}) for ${client.name}`,
+    });
     toast({ title: "Advance marked as fully received" });
   };
 
@@ -931,6 +937,10 @@ export function PipelinePage() {
       if (editingClient) {
         const { error } = await supabase.from("clients").update(data).eq("id", editingClient.id);
         if (error) throw error;
+        logActivity({
+          type: "client",
+          message: `Client "${data.name}" details updated`,
+        });
       } else {
         const id = `client_${Date.now()}`;
         const { error } = await supabase.from("clients").insert({
@@ -943,10 +953,15 @@ export function PipelinePage() {
           amountPaid:   data.advance_paid ?? 0,
         });
         if (error) throw error;
+        logActivity({
+          type: "client",
+          message: `Client "${data.name}" (${data.company || "Company"}) added to pipeline`,
+        });
       }
     },
     onSuccess: () => {
       qc.invalidateQueries({ queryKey: ["clients"] });
+      qc.invalidateQueries({ queryKey: ["activities"] });
       toast({ title: editingClient ? "Client updated" : "Client added" });
       setClientFormOpen(false);
       setEditingClient(null);
@@ -957,9 +972,14 @@ export function PipelinePage() {
   const deleteClient = useMutation({
     mutationFn: async (id: string) => {
       await supabase.from("clients").delete().eq("id", id);
+      logActivity({
+        type: "client",
+        message: `Client removed from pipeline`,
+      });
     },
     onSuccess: () => {
       qc.invalidateQueries({ queryKey: ["clients"] });
+      qc.invalidateQueries({ queryKey: ["activities"] });
       toast({ title: "Client deleted" });
     },
   });

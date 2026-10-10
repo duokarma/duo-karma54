@@ -40,6 +40,7 @@ import type { Project } from "@/types";
 
 
 import { formatCurrency } from "@/lib/utils";
+import { logActivity } from "@/lib/activity-logger";
 
 const projectSchema = z.object({
   name: z.string().min(2, "Name is required"),
@@ -104,9 +105,15 @@ export function ProjectsPage() {
       };
       const { error } = await supabase.from("projects").insert([newProject]);
       if (error) throw error;
+      logActivity({
+        type: "project",
+        message: `Project "${values.name}" created for ${values.client || "Client"}`,
+        actor: assignedPartner === "Both" ? "Partners" : assignedPartner,
+      });
     },
     onSuccess: () => {
       queryClient.invalidateQueries({ queryKey: ["projects"] });
+      queryClient.invalidateQueries({ queryKey: ["activities"] });
       setAddOpen(false);
       reset();
     },
@@ -118,9 +125,15 @@ export function ProjectsPage() {
       const { id, ...rest } = values;
       const { error } = await supabase.from("projects").update({ ...rest, team }).eq("id", id);
       if (error) throw error;
+      logActivity({
+        type: "project",
+        message: `Project "${values.name}" details updated`,
+        actor: assignedPartner === "Both" ? "Partners" : assignedPartner,
+      });
     },
     onSuccess: () => {
       queryClient.invalidateQueries({ queryKey: ["projects"] });
+      queryClient.invalidateQueries({ queryKey: ["activities"] });
       setAddOpen(false);
       setSelectedProject(null);
       reset();
@@ -131,9 +144,15 @@ export function ProjectsPage() {
     mutationFn: async (id: string) => {
       const { error } = await supabase.from("projects").delete().eq("id", id);
       if (error) throw error;
+      logActivity({
+        type: "project",
+        message: `Project removed from workspace`,
+        actor: "Partner",
+      });
     },
     onSuccess: () => {
       queryClient.invalidateQueries({ queryKey: ["projects"] });
+      queryClient.invalidateQueries({ queryKey: ["activities"] });
     },
   });
 
@@ -141,9 +160,15 @@ export function ProjectsPage() {
     mutationFn: async ({ id, status }: { id: string; status: Project["status"] }) => {
       const { error } = await supabase.from("projects").update({ status }).eq("id", id);
       if (error) throw error;
+      logActivity({
+        type: "project",
+        message: `Project status updated to ${status}`,
+        actor: "Partner",
+      });
     },
     onSuccess: () => {
       queryClient.invalidateQueries({ queryKey: ["projects"] });
+      queryClient.invalidateQueries({ queryKey: ["activities"] });
     },
   });
 

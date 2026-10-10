@@ -407,5 +407,25 @@ VALUES
 ON CONFLICT (id) DO NOTHING;
 
 -- =============================================================================
--- Migration Complete! Supabase Storage, Partner Profiles, Notes & Ecosystem Apps Configured!
+-- 11. Activities Feed Table (Real-Time Synchronized)
 -- =============================================================================
+CREATE TABLE IF NOT EXISTS activities (
+  id TEXT PRIMARY KEY DEFAULT gen_random_uuid()::text,
+  type TEXT NOT NULL,
+  message TEXT NOT NULL,
+  actor TEXT DEFAULT 'System',
+  timestamp TIMESTAMPTZ DEFAULT now()
+);
+
+ALTER TABLE activities ENABLE ROW LEVEL SECURITY;
+
+DROP POLICY IF EXISTS "Allow all for activities" ON activities;
+CREATE POLICY "Allow all for activities" ON activities FOR ALL USING (true) WITH CHECK (true);
+
+-- Enable Supabase Realtime publication on activities if not already enabled
+ALTER PUBLICATION supabase_realtime ADD TABLE activities;
+
+-- =============================================================================
+-- Migration Complete! Supabase Storage, Partner Profiles, Notes, Ecosystem Apps & Activities Configured!
+-- =============================================================================
+

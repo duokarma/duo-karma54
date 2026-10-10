@@ -12,6 +12,8 @@ import { PageHeader } from "@/components/shared/page-header";
 import { StatusBadge } from "@/components/shared/status-badge";
 import { formatCurrency } from "@/lib/utils";
 import { FinancialsAreaChart } from "@/components/charts/financials-area-chart";
+import { ProfitLineChart } from "@/components/charts/profit-line-chart";
+import { logActivity } from "@/lib/activity-logger";
 import { useQuery, useMutation, useQueryClient } from "@tanstack/react-query";
 import { supabase } from "@/lib/supabase";
 import { useToast } from "@/components/ui/toast";
@@ -156,6 +158,13 @@ function PaymentsTab({ clients }: { clients: Client[] }) {
     },
     onSuccess: () => {
       qc.invalidateQueries({ queryKey: ["clients"] });
+      qc.invalidateQueries({ queryKey: ["activities"] });
+      logActivity({
+        type: "payment",
+        message: isAddMode
+          ? `Client "${form.name}" registered (Value: ${formatCurrency(form.totalValue)})`
+          : `Payment details updated for "${form.name}" (Advance: ${formatCurrency(form.advance_paid)})`,
+      });
       toast({ title: isAddMode ? "Client added" : "Financial details saved to Supabase" });
       setDialogOpen(false);
       setEditingClient(null);
@@ -172,6 +181,13 @@ function PaymentsTab({ clients }: { clients: Client[] }) {
         : { advance_paid: (client as any).advance_paid || Math.round((client.totalValue || 0) / 2) };
     await supabase.from("clients").update(updates).eq("id", client.id);
     qc.invalidateQueries({ queryKey: ["clients"] });
+    qc.invalidateQueries({ queryKey: ["activities"] });
+    logActivity({
+      type: "payment",
+      message: field === "full"
+        ? `Full payment of ${formatCurrency(client.totalValue)} marked received for ${client.name}`
+        : `Advance payment updated for ${client.name}`,
+    });
     toast({ title: field === "full" ? "Marked fully paid" : "Advance updated" });
   };
 
@@ -603,6 +619,13 @@ function ExpensesTab({ expenses }: { expenses: Expense[] }) {
     },
     onSuccess: () => {
       qc.invalidateQueries({ queryKey: ["expenses"] });
+      qc.invalidateQueries({ queryKey: ["activities"] });
+      logActivity({
+        type: "expense",
+        message: editingExpense
+          ? `Expense updated: ${form.description} (${formatCurrency(form.amount)})`
+          : `Expense logged: ${form.description} (${formatCurrency(form.amount)}) - ${form.category}`,
+      });
       toast({ title: editingExpense ? "Expense updated" : "Expense added" });
       setDialogOpen(false);
     },
@@ -615,6 +638,11 @@ function ExpensesTab({ expenses }: { expenses: Expense[] }) {
     },
     onSuccess: () => {
       qc.invalidateQueries({ queryKey: ["expenses"] });
+      qc.invalidateQueries({ queryKey: ["activities"] });
+      logActivity({
+        type: "expense",
+        message: `Expense record deleted`,
+      });
       toast({ title: "Expense deleted" });
     },
   });
@@ -788,21 +816,73 @@ function SummaryTab({
         </Card>
       </div>
 
-      {/* Revenue & Profit chart */}
-      <Card>
-        <CardHeader>
-          <CardTitle>Revenue vs Profit (12 months)</CardTitle>
-        </CardHeader>
-        <CardContent>
-          {financials.length === 0 ? (
-            <div className="flex items-center gap-2 text-ink/40 text-sm py-8 justify-center">
-              <AlertCircle className="h-4 w-4" />
-              No financial data yet. Add expenses and client payments to see trends.
+      {/* Analytics Suite: Revenue vs Profit + Profit Trend */}
+      <div className="grid grid-cols-1 lg:grid-cols-2 gap-4">
+        {/* Revenue & Profit chart */}
+        <Card>
+          <CardHeader className="flex-row items-center justify-between space-y-0">
+            <div>
+              <CardTitle>Revenue & Profit</CardTitle>
+              <p className="mt-0.5 text-[10px] text-ink/50">Last 12 months financial performance</p>
             </div>
-          ) : (
-            <FinancialsAreaChart data={financials} height={280} />
-          )}
-        </CardContent>
+            <div className="flex items-center gap-3 text-[10px] text-ink/50">
+              <span className="flex items-center gap-1"><span className="h-2 w-2 rounded-full bg-[#2563EB]" />Revenue</span>
+              <span className="flex items-center gap-1"><span className="h-2 w-2 rounded-full bg-[#10B981]" />Profit</span>
+            </div>
+          </CardHeader>
+          <CardContent>
+            {financials.length === 0 ? (
+              <div className="flex items-center gap-2 text-ink/40 text-sm py-8 justify-center">
+                <AlertCircle className="h-4 w-4" />
+                No financial data yet. Add expenses and client payments to see trends.
+              </div>
+            ) : (
+              <FinancialsAreaChart data={financials} height={240} />
+            )}
+          </CardContent>
+        </Card>
+
+        {/* Profit Trend Chart */}
+        <Card>
+          <CardHeader>
+            <CardTitle>Profit Trend</CardTitle>
+            <p className="mt-0.5 text-[10px] text-ink/50">Net trajectory over the past 12 months</p>
+          </CardHeader>
+          <CardContent>
+            {financials.length === 0 ? (
+              <div className="flex items-center gap-2 text-ink/40 text-sm py-8 justify-center">
+                <AlertCircle className="h-4 w-4" />
+                No profit data to plot yet.
+              </div>
+            ) : (
+              <ProfitLineChart data={financials} height={240} />
+            )}
+          </CardContent>
+        </Card>
+      </div>
+
+      {/* Collection Progress & Ratio */}
+      <Card className="p-4 sm:p-5">
+        <div className="flex flex-col sm:flex-row sm:items-center justify-between gap-3 mb-3">
+          <div>
+            <h3 className="text-sm font-semibold text-ink">Cash Collection Progress</h3>
+            <p className="text-xs text-ink/50">Actual received vs total booked client contracts</p>
+          </div>
+          <span className="text-xs font-semibold text-[#10B981]">
+            {totalRevenue > 0 ? Math.round((totalCollected / totalRevenue) * 100) : 0}% Collected
+          </span>
+        </div>
+        <div className="h-2.5 w-full bg-white/10 rounded-full overflow-hidden mb-3">
+          <div
+            className="h-full bg-gradient-to-r from-[#2563EB] to-[#10B981] rounded-full transition-all duration-500"
+            style={{ width: `${totalRevenue > 0 ? Math.min(100, Math.round((totalCollected / totalRevenue) * 100)) : 0}%` }}
+          />
+        </div>
+        <div className="flex flex-wrap items-center justify-between gap-2 text-xs text-ink/60">
+          <span>Collected: <strong className="text-white">{formatCurrency(totalCollected)}</strong></span>
+          <span>Pending Dues: <strong className="text-amber-400">{formatCurrency(totalPending)}</strong></span>
+          <span>Total Contracted: <strong className="text-ink">{formatCurrency(totalRevenue)}</strong></span>
+        </div>
       </Card>
     </div>
   );

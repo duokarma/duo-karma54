@@ -36,6 +36,7 @@ import { zodResolver } from "@hookform/resolvers/zod";
 import * as z from "zod";
 import { supabase } from "@/lib/supabase";
 import { cn } from "@/lib/utils";
+import { logActivity } from "@/lib/activity-logger";
 import type { Task } from "@/types";
 
 const taskSchema = z.object({
@@ -131,9 +132,15 @@ export function TasksPage() {
       };
       const { error } = await supabase.from("tasks").insert([newTask]);
       if (error) throw error;
+      logActivity({
+        type: "task",
+        message: `Task "${values.title}" created for ${values.project}`,
+        actor: values.assignee,
+      });
     },
     onSuccess: () => {
       queryClient.invalidateQueries({ queryKey: ["tasks"] });
+      queryClient.invalidateQueries({ queryKey: ["activities"] });
       setIsDialogOpen(false);
       reset();
     },
@@ -144,9 +151,15 @@ export function TasksPage() {
       const { id, ...rest } = values;
       const { error } = await supabase.from("tasks").update(rest).eq("id", id);
       if (error) throw error;
+      logActivity({
+        type: "task",
+        message: `Task "${values.title}" updated`,
+        actor: values.assignee,
+      });
     },
     onSuccess: () => {
       queryClient.invalidateQueries({ queryKey: ["tasks"] });
+      queryClient.invalidateQueries({ queryKey: ["activities"] });
       setIsDialogOpen(false);
       setSelectedTask(null);
       reset();
@@ -157,9 +170,14 @@ export function TasksPage() {
     mutationFn: async (id: string) => {
       const { error } = await supabase.from("tasks").delete().eq("id", id);
       if (error) throw error;
+      logActivity({
+        type: "task",
+        message: `Task deleted`,
+      });
     },
     onSuccess: () => {
       queryClient.invalidateQueries({ queryKey: ["tasks"] });
+      queryClient.invalidateQueries({ queryKey: ["activities"] });
     },
   });
 
@@ -167,9 +185,14 @@ export function TasksPage() {
     mutationFn: async ({ id, status }: { id: string; status: Task["status"] }) => {
       const { error } = await supabase.from("tasks").update({ status }).eq("id", id);
       if (error) throw error;
+      logActivity({
+        type: "task",
+        message: `Task status updated to ${status}`,
+      });
     },
     onSuccess: () => {
       queryClient.invalidateQueries({ queryKey: ["tasks"] });
+      queryClient.invalidateQueries({ queryKey: ["activities"] });
     },
   });
 
