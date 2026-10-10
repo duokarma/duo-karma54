@@ -36,7 +36,7 @@ interface PartnerSettingsDialogProps {
 
 const PARTNER_META: Record<string, { color: string; tagline: string; initial: string }> = {
   Hatim: {
-    color: "#6366F1",
+    color: "#C9A876",
     tagline: "Co-Founder · Tech & Product",
     initial: "H",
   },
@@ -103,7 +103,7 @@ export function PartnerSettingsDialog({
   };
 
   const partnerInfo = PARTNER_META[displayName] || {
-    color: "#8B5CF6",
+    color: "#C9A876",
     tagline: "Partner & Administrator",
     initial: displayName ? displayName[0].toUpperCase() : "P",
   };
@@ -250,7 +250,7 @@ export function PartnerSettingsDialog({
 
   return (
     <Dialog open={open} onOpenChange={onOpenChange}>
-      <DialogContent className="max-w-2xl border border-white/10 bg-[#121215]/95 backdrop-blur-2xl p-6 shadow-2xl text-white">
+      <DialogContent className="w-[calc(100vw-1.5rem)] sm:max-w-2xl border border-white/10 bg-[#121215]/98 backdrop-blur-2xl p-4 sm:p-6 shadow-2xl text-white overflow-hidden">
         <DialogHeader className="space-y-1">
           <div className="flex items-center justify-between">
             <div className="flex items-center gap-2">
@@ -378,7 +378,7 @@ export function PartnerSettingsDialog({
                     size="sm"
                     onClick={handleSaveUrlAvatar}
                     disabled={!avatarInputUrl.trim() || uploadingAvatar}
-                    className="h-8 text-xs bg-indigo-600 hover:bg-indigo-500 text-white shrink-0"
+                    className="h-8 text-xs bg-white text-black hover:bg-white/90 font-medium shrink-0 touch-manipulation"
                   >
                     {uploadingAvatar ? <Loader2 className="h-3.5 w-3.5 animate-spin" /> : "Save Link"}
                   </Button>
@@ -437,13 +437,13 @@ export function PartnerSettingsDialog({
                       placeholder="Confirm password"
                       value={confirmPassword}
                       onChange={(e) => setConfirmPassword(e.target.value)}
-                      className="border-white/10 bg-white/5 pr-9 text-xs text-white placeholder:text-white/30 focus-visible:ring-1 focus-visible:ring-indigo-500"
+                      className="border-white/10 bg-white/5 pr-9 text-xs text-white placeholder:text-white/30 focus-visible:ring-1 focus-visible:ring-white/30"
                       disabled={isLoading}
                     />
                     <button
                       type="button"
                       onClick={() => setShowConfirmPassword(!showConfirmPassword)}
-                      className="absolute right-2.5 top-1/2 -translate-y-1/2 z-20 flex h-6 w-6 items-center justify-center rounded text-white/40 hover:text-white transition-colors cursor-pointer"
+                      className="absolute right-2.5 top-1/2 -translate-y-1/2 z-20 flex h-6 w-6 items-center justify-center rounded text-white/40 hover:text-white transition-colors cursor-pointer touch-manipulation"
                       tabIndex={-1}
                       aria-label={showConfirmPassword ? "Hide password" : "Show password"}
                     >
@@ -455,7 +455,7 @@ export function PartnerSettingsDialog({
                 <Button
                   type="submit"
                   disabled={isLoading || !newPassword || !confirmPassword}
-                  className="w-full text-xs h-8 bg-indigo-600 hover:bg-indigo-500 text-white font-medium"
+                  className="w-full text-xs h-9 sm:h-8 bg-white text-black hover:bg-white/90 font-medium rounded-lg transition-all shadow-sm touch-manipulation"
                 >
                   {isLoading ? (
                     <>
@@ -470,7 +470,7 @@ export function PartnerSettingsDialog({
             </div>
 
             {/* Remember Device Preference */}
-            <div className="rounded-xl border border-white/10 bg-white/2 p-4">
+            <div className="rounded-xl border border-white/10 bg-white/2 p-3.5 sm:p-4">
               <div className="flex items-center justify-between mb-2">
                 <div className="flex items-center gap-1.5">
                   <Smartphone className="h-3.5 w-3.5 text-white/40" />
@@ -485,39 +485,50 @@ export function PartnerSettingsDialog({
               <p className="text-[11px] text-white/40 mb-3">
                 Auto-select partner identity on this device to streamline login without prompting.
               </p>
-              <div className="flex gap-2">
+              <div className="grid grid-cols-1 sm:grid-cols-2 gap-2">
                 <Button
                   type="button"
                   size="sm"
                   variant="outline"
                   onClick={() => handleSetDevicePartner("hatim")}
-                  className={`flex-1 text-xs h-8 ${savedDevicePartner === "hatim" ? "border-indigo-500 text-indigo-400 bg-indigo-500/10" : "border-white/10 text-white/70"}`}
+                  className={`w-full text-xs h-9 sm:h-8 touch-manipulation justify-center ${
+                    savedDevicePartner === "hatim"
+                      ? "border-[#C9A876]/60 text-[#C9A876] bg-[#C9A876]/10 shadow-sm"
+                      : "border-white/10 text-white/70 hover:bg-white/5"
+                  }`}
                 >
-                  <UserCheck className="mr-1.5 h-3.5 w-3.5 text-indigo-400" />
-                  Set Hatim as Default
+                  <UserCheck className="mr-1.5 h-3.5 w-3.5 text-[#C9A876] shrink-0" />
+                  <span className="truncate">Set Hatim as Default</span>
                 </Button>
                 <Button
                   type="button"
                   size="sm"
                   variant="outline"
                   onClick={() => handleSetDevicePartner("moiz")}
-                  className={`flex-1 text-xs h-8 ${savedDevicePartner === "moiz" ? "border-emerald-500 text-emerald-400 bg-emerald-500/10" : "border-white/10 text-white/70"}`}
+                  className={`w-full text-xs h-9 sm:h-8 touch-manipulation justify-center ${
+                    savedDevicePartner === "moiz"
+                      ? "border-emerald-500/50 text-emerald-300 bg-emerald-500/10 shadow-sm"
+                      : "border-white/10 text-white/70 hover:bg-white/5"
+                  }`}
                 >
-                  <UserCheck className="mr-1.5 h-3.5 w-3.5 text-emerald-400" />
-                  Set Moiz as Default
+                  <UserCheck className="mr-1.5 h-3.5 w-3.5 text-emerald-400 shrink-0" />
+                  <span className="truncate">Set Moiz as Default</span>
                 </Button>
-                {savedDevicePartner && (
-                  <Button
-                    type="button"
-                    size="sm"
-                    variant="ghost"
-                    onClick={handleClearDevicePreference}
-                    className="text-xs h-8 text-white/40 hover:text-white"
-                  >
-                    Clear
-                  </Button>
-                )}
               </div>
+              {savedDevicePartner && (
+                <div className="mt-2.5 flex items-center justify-between pt-2 border-t border-white/5 text-[11px]">
+                  <span className="text-white/40 text-[10px]">
+                    Current default: <strong className="text-white capitalize">{savedDevicePartner}</strong>
+                  </span>
+                  <button
+                    type="button"
+                    onClick={handleClearDevicePreference}
+                    className="text-white/60 hover:text-white underline underline-offset-2 transition-colors py-1 px-1.5 touch-manipulation"
+                  >
+                    Clear preference
+                  </button>
+                </div>
+              )}
             </div>
           </TabsContent>
 

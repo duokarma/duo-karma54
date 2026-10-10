@@ -20,7 +20,7 @@ const Progress = React.forwardRef<React.ElementRef<typeof ProgressPrimitive.Root
         animate={{ width: `${value}%` }}
         transition={{ type: "spring", stiffness: 100, damping: 15 }}
         className={cn(
-          "h-full rounded-full bg-gradient-to-r from-electric to-violet",
+          "h-full rounded-full bg-gradient-to-r from-[#C9A876] to-[#E5C992]",
           indicatorClassName
         )}
       />

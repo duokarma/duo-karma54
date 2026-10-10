@@ -103,6 +103,11 @@
     -webkit-font-smoothing: antialiased;
     -moz-osx-font-smoothing: grayscale;
     overflow-x: hidden;
+    -webkit-tap-highlight-color: transparent;
+  }
+
+  button, input, select, textarea, a {
+    touch-action: manipulation;
   }
 
   ::selection {

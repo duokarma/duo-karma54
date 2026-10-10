@@ -200,10 +200,10 @@ function PaymentsTab({ clients }: { clients: Client[] }) {
             placeholder="Search clients or business..."
             value={search}
             onChange={(e) => setSearch(e.target.value)}
-            className="h-8 text-xs border-white/10 bg-white/5 pl-3"
+            className="h-9 sm:h-8 text-xs border-white/10 bg-white/5 pl-3 w-full"
           />
         </div>
-        <Button size="sm" className="h-8 gap-1.5 text-xs bg-indigo-600 hover:bg-indigo-500" onClick={openAddNew}>
+        <Button size="sm" className="h-9 sm:h-8 gap-1.5 text-xs shrink-0 touch-manipulation font-medium px-3.5" onClick={openAddNew}>
           <Plus className="h-3.5 w-3.5" /> Add Client / Payment
         </Button>
       </div>
@@ -748,42 +748,42 @@ function SummaryTab({
 
   return (
     <div className="space-y-4">
-      <div className="grid grid-cols-2 gap-3 lg:grid-cols-4">
-        <SummaryCard label="Total Contracted" value={formatCurrency(totalRevenue)} icon={IndianRupee} color="#6366F1" />
+      <div className="grid grid-cols-2 gap-2.5 sm:gap-3 lg:grid-cols-4">
+        <SummaryCard label="Total Contracted" value={formatCurrency(totalRevenue)} icon={IndianRupee} color="#C9A876" />
         <SummaryCard label="Total Collected" value={formatCurrency(totalCollected)} icon={CheckCircle2} color="#10B981" />
         <SummaryCard label="Still Pending" value={formatCurrency(totalPending)} icon={Clock} color="#F59E0B" />
         <SummaryCard label="Net Profit" value={formatCurrency(netProfit)} icon={TrendingUp} color={netProfit >= 0 ? "#10B981" : "#EF4444"} />
       </div>
 
       {/* Special rows */}
-      <div className="grid grid-cols-1 gap-3 sm:grid-cols-3">
-        <Card className="px-4 py-3 flex items-center gap-3">
+      <div className="grid grid-cols-1 gap-2.5 sm:gap-3 sm:grid-cols-3">
+        <Card className="px-3.5 sm:px-4 py-3 flex items-center gap-3 min-w-0 overflow-hidden">
           <div className="h-8 w-8 rounded-lg bg-blue-500/10 border border-blue-500/20 flex items-center justify-center shrink-0">
             <ReceiptText className="h-3.5 w-3.5 text-blue-400" />
           </div>
-          <div>
-            <p className="text-[10px] text-ink/50">GST Total</p>
-            <p className="text-sm font-bold text-blue-400">{formatCurrency(totalGST)}</p>
-            <p className="text-[10px] text-ink/30">{clients.filter((c) => (c as any).gst_applicable).length} GST project(s)</p>
+          <div className="min-w-0 flex-1">
+            <p className="text-[10px] text-ink/50 truncate">GST Total</p>
+            <p className="text-sm font-bold text-blue-400 truncate">{formatCurrency(totalGST)}</p>
+            <p className="text-[10px] text-ink/30 truncate">{clients.filter((c) => (c as any).gst_applicable).length} GST project(s)</p>
           </div>
         </Card>
-        <Card className="px-4 py-3 flex items-center gap-3">
+        <Card className="px-3.5 sm:px-4 py-3 flex items-center gap-3 min-w-0 overflow-hidden">
           <div className="h-8 w-8 rounded-lg bg-amber-500/10 border border-amber-500/20 flex items-center justify-center shrink-0">
             <Percent className="h-3.5 w-3.5 text-amber-400" />
           </div>
-          <div>
-            <p className="text-[10px] text-ink/50">Total Commissions</p>
-            <p className="text-sm font-bold text-amber-400">{formatCurrency(totalCommission)}</p>
-            <p className="text-[10px] text-ink/30">{unpaidCommission > 0 ? `${formatCurrency(unpaidCommission)} unpaid` : "All paid ✓"}</p>
+          <div className="min-w-0 flex-1">
+            <p className="text-[10px] text-ink/50 truncate">Total Commissions</p>
+            <p className="text-sm font-bold text-amber-400 truncate">{formatCurrency(totalCommission)}</p>
+            <p className="text-[10px] text-ink/30 truncate">{unpaidCommission > 0 ? `${formatCurrency(unpaidCommission)} unpaid` : "All paid ✓"}</p>
           </div>
         </Card>
-        <Card className="px-4 py-3 flex items-center gap-3">
+        <Card className="px-3.5 sm:px-4 py-3 flex items-center gap-3 min-w-0 overflow-hidden">
           <div className="h-8 w-8 rounded-lg bg-red-500/10 border border-red-500/20 flex items-center justify-center shrink-0">
             <TrendingDown className="h-3.5 w-3.5 text-red-400" />
           </div>
-          <div>
-            <p className="text-[10px] text-ink/50">Total Expenses</p>
-            <p className="text-sm font-bold text-red-400">{formatCurrency(totalExpenses)}</p>
+          <div className="min-w-0 flex-1">
+            <p className="text-[10px] text-ink/50 truncate">Total Expenses</p>
+            <p className="text-sm font-bold text-red-400 truncate">{formatCurrency(totalExpenses)}</p>
           </div>
         </Card>
       </div>
@@ -820,16 +820,16 @@ function SummaryCard({
   color: string;
 }) {
   return (
-    <Card className="px-4 py-3.5 flex items-center gap-3">
+    <Card className="px-3 sm:px-4 py-3 sm:py-3.5 flex items-center gap-2.5 sm:gap-3 min-w-0 overflow-hidden">
       <div
-        className="h-9 w-9 rounded-xl flex items-center justify-center shrink-0"
+        className="h-8 w-8 sm:h-9 sm:w-9 rounded-xl flex items-center justify-center shrink-0"
         style={{ background: `${color}18`, border: `1px solid ${color}33` }}
       >
-        <Icon className="h-4 w-4" style={{ color }} />
+        <Icon className="h-3.5 w-3.5 sm:h-4 sm:w-4 shrink-0" style={{ color }} />
       </div>
-      <div>
-        <p className="text-[10px] text-ink/50">{label}</p>
-        <p className="text-base font-bold text-ink" style={{ color }}>{value}</p>
+      <div className="min-w-0 flex-1">
+        <p className="text-[10px] text-ink/50 truncate">{label}</p>
+        <p className="text-sm sm:text-base font-bold text-ink truncate tabular" style={{ color }}>{value}</p>
       </div>
     </Card>
   );
@@ -868,19 +868,19 @@ export function FinancePage() {
       <PageHeader title="Finance" description="Payments, expenses, and your profit summary" />
 
       {/* Tab switcher */}
-      <div className="flex rounded-xl border border-white/10 bg-white/3 p-1 w-fit">
+      <div className="flex w-full sm:w-fit rounded-xl border border-white/10 bg-white/5 p-1 gap-1">
         {TABS.map(({ key, label, icon: Icon }) => (
           <button
             key={key}
             onClick={() => setActiveTab(key)}
-            className={`flex items-center gap-2 rounded-lg px-4 py-1.5 text-sm font-medium transition-all ${
+            className={`flex flex-1 sm:flex-initial items-center justify-center gap-1.5 rounded-lg px-3 sm:px-4 py-2 text-xs sm:text-sm font-medium transition-all touch-manipulation ${
               activeTab === key
-                ? "bg-white/10 text-white shadow-sm"
-                : "text-ink/50 hover:text-ink/80"
+                ? "bg-white/15 text-white shadow-sm border border-white/10 font-semibold"
+                : "text-ink/50 hover:text-ink/80 hover:bg-white/5"
             }`}
           >
-            <Icon className="h-3.5 w-3.5" />
-            {label}
+            <Icon className="h-3.5 w-3.5 shrink-0" />
+            <span className="truncate">{label}</span>
           </button>
         ))}
       </div>

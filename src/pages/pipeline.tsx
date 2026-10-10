@@ -1032,14 +1032,14 @@ export function PipelinePage() {
       <div className="flex flex-col gap-3 lg:flex-row lg:items-center lg:justify-between">
         <div className="flex flex-wrap items-center gap-2">
           {/* Main View Tabs */}
-          <div className="flex rounded-xl border border-white/10 bg-white/3 p-1 w-fit">
+          <div className="flex rounded-xl border border-white/10 bg-white/3 p-1 w-fit max-w-full overflow-x-auto scrollbar-none">
             {(["leads", "clients"] as const).map((tab) => (
               <button
                 key={tab}
                 onClick={() => setActiveTab(tab)}
-                className={`flex items-center gap-2 rounded-lg px-4 py-1.5 text-sm font-medium transition-all ${
+                className={`flex items-center gap-2 rounded-lg px-3.5 sm:px-4 py-1.5 text-xs sm:text-sm font-medium transition-all touch-manipulation ${
                   activeTab === tab
-                    ? "bg-white/10 text-white shadow-sm"
+                    ? "bg-white/10 text-white shadow-sm border border-white/10"
                     : "text-ink/50 hover:text-ink/80"
                 }`}
               >
@@ -1053,11 +1053,11 @@ export function PipelinePage() {
           </div>
 
           {/* Quick Partner Filter */}
-          <div className="flex items-center rounded-xl border border-white/10 bg-white/3 p-1 text-xs">
+          <div className="flex items-center rounded-xl border border-white/10 bg-white/3 p-1 text-xs overflow-x-auto scrollbar-none">
             <button
               type="button"
               onClick={() => setPartnerFilter("all")}
-              className={`rounded-lg px-2.5 py-1 text-xs font-medium transition-all ${
+              className={`rounded-lg px-2.5 py-1 text-xs font-medium transition-all touch-manipulation ${
                 partnerFilter === "all"
                   ? "bg-white/15 text-white shadow-sm"
                   : "text-ink/40 hover:text-ink/80"
@@ -1068,19 +1068,19 @@ export function PipelinePage() {
             <button
               type="button"
               onClick={() => setPartnerFilter("Hatim")}
-              className={`flex items-center gap-1.5 rounded-lg px-2.5 py-1 text-xs font-medium transition-all ${
+              className={`flex items-center gap-1.5 rounded-lg px-2.5 py-1 text-xs font-medium transition-all touch-manipulation ${
                 partnerFilter === "Hatim"
-                  ? "border border-indigo-500/40 bg-indigo-500/20 text-indigo-300 shadow-sm"
+                  ? "border border-[#C9A876]/40 bg-[#C9A876]/15 text-[#C9A876] shadow-sm"
                   : "text-ink/40 hover:text-ink/80"
               }`}
             >
-              <span className="h-1.5 w-1.5 rounded-full bg-indigo-400" />
+              <span className="h-1.5 w-1.5 rounded-full bg-[#C9A876]" />
               Hatim{displayName === "Hatim" ? " (Me)" : ""}
             </button>
             <button
               type="button"
               onClick={() => setPartnerFilter("Moiz")}
-              className={`flex items-center gap-1.5 rounded-lg px-2.5 py-1 text-xs font-medium transition-all ${
+              className={`flex items-center gap-1.5 rounded-lg px-2.5 py-1 text-xs font-medium transition-all touch-manipulation ${
                 partnerFilter === "Moiz"
                   ? "border border-emerald-500/40 bg-emerald-500/20 text-emerald-300 shadow-sm"
                   : "text-ink/40 hover:text-ink/80"
@@ -1092,19 +1092,21 @@ export function PipelinePage() {
           </div>
         </div>
 
-        <div className="flex items-center gap-2">
-          <div className="relative">
+        <div className="flex flex-wrap items-center gap-2 w-full lg:w-auto">
+          <div className="relative flex-1 min-w-[130px] sm:w-48 sm:flex-initial">
             <Search className="absolute left-2.5 top-1/2 h-3.5 w-3.5 -translate-y-1/2 text-ink/40" />
             <Input
               placeholder={`Search ${activeTab}...`}
-              className="h-8 pl-8 text-xs w-48"
+              className="h-9 sm:h-8 pl-8 text-xs w-full"
               value={search}
               onChange={(e) => setSearch(e.target.value)}
             />
           </div>
           {activeTab === "clients" && (
             <Select value={statusFilter} onValueChange={setStatusFilter}>
-              <SelectTrigger className="h-8 w-36 text-xs"><SelectValue placeholder="All statuses" /></SelectTrigger>
+              <SelectTrigger className="h-9 sm:h-8 flex-1 sm:w-36 sm:flex-initial text-xs min-w-[110px] touch-manipulation">
+                <SelectValue placeholder="All statuses" />
+              </SelectTrigger>
               <SelectContent>
                 <SelectItem value="all">All statuses</SelectItem>
                 {CLIENT_STATUSES.map((s) => <SelectItem key={s.key} value={s.key}>{s.label}</SelectItem>)}
@@ -1113,7 +1115,7 @@ export function PipelinePage() {
           )}
           <Button
             size="sm"
-            className="h-8 gap-1.5 text-xs"
+            className="h-9 sm:h-8 gap-1.5 text-xs shrink-0 font-medium touch-manipulation px-3.5 ml-auto sm:ml-0"
             onClick={() => {
               setEditingLead(null);
               setEditingClient(null);
@@ -1311,13 +1313,13 @@ export function PipelinePage() {
                               className="text-[10px] rounded px-1.5 py-0.5 border"
                               style={{
                                 borderColor: String((client as any).assignedTo || (client as any).assigned_to).toLowerCase().includes("hatim")
-                                  ? "#6366F150"
+                                  ? "#C9A87650"
                                   : "#10B98150",
                                 color: String((client as any).assignedTo || (client as any).assigned_to).toLowerCase().includes("hatim")
-                                  ? "#818CF8"
+                                  ? "#C9A876"
                                   : "#34D399",
                                 backgroundColor: String((client as any).assignedTo || (client as any).assigned_to).toLowerCase().includes("hatim")
-                                  ? "#6366F115"
+                                  ? "#C9A87615"
                                   : "#10B98115",
                               }}
                             >
