@@ -1,7 +1,7 @@
 import { useState } from "react";
 import { NavLink, useNavigate } from "react-router-dom";
 import { m as motion, AnimatePresence } from "framer-motion";
-import { ChevronsLeft, Search, LogOut, ArrowUpRight, Plus, Pencil, ChevronRight } from "lucide-react";
+import { ChevronsLeft, Search, LogOut, ArrowUpRight, Plus, Pencil, ChevronDown, LayoutGrid } from "lucide-react";
 import { cn } from "@/lib/utils";
 import { navGroups, navItems } from "@/lib/nav-config";
 import { useSidebar } from "@/hooks/use-sidebar";
@@ -30,9 +30,24 @@ export function Sidebar() {
   const navigate = useNavigate();
 
   const { apps } = useEcosystemApps();
-  const [appsOpen, setAppsOpen] = useState(false);
+  const [appsOpen, setAppsOpen] = useState(() => {
+    const saved = localStorage.getItem("duokarma_sidebar_apps_open");
+    return saved !== null ? saved === "true" : true;
+  });
   const [manageAppsOpen, setManageAppsOpen] = useState(false);
   const [selectedEditAppId, setSelectedEditAppId] = useState<string | null>(null);
+
+  const toggleAppsOpen = (e?: React.SyntheticEvent) => {
+    if (e) {
+      e.preventDefault();
+      e.stopPropagation();
+    }
+    setAppsOpen((prev) => {
+      const next = !prev;
+      localStorage.setItem("duokarma_sidebar_apps_open", String(next));
+      return next;
+    });
+  };
 
   const userEmail = user?.email ?? "";
 
@@ -219,47 +234,60 @@ export function Sidebar() {
             );
           })}
 
-          {/* ── Ecosystem & Client Apps Section (Collapsible Dropdown) ── */}
+          {/* ── Play Store-Style Workspace & Client Apps Section ── */}
           <div className="mt-4 pt-3 border-t border-white/[0.08]">
             {!collapsed ? (
-              <>
-                <div className="flex items-center justify-between px-2 pb-1.5">
-                  <button
-                    type="button"
-                    onClick={() => setAppsOpen(!appsOpen)}
-                    className="flex items-center gap-1.5 text-[10px] font-semibold uppercase tracking-widest text-ink/70 hover:text-white transition-colors cursor-pointer"
-                    aria-expanded={appsOpen}
-                  >
-                    <motion.div
-                      animate={{ rotate: appsOpen ? 90 : 0 }}
-                      transition={{ duration: 0.18 }}
-                      className="shrink-0"
-                    >
-                      <ChevronRight className="h-3 w-3 text-ink-faint" />
-                    </motion.div>
-                    <span>Apps & Sites</span>
-                    {apps.length > 0 && (
-                      <span className="rounded-full bg-white/10 px-1.5 py-0.2 text-[9px] font-normal text-ink-faint">
-                        {apps.length}
+              <div className="space-y-1.5">
+                {/* Play Store Section Header Banner with Generous 44px Touch Target */}
+                <div
+                  role="button"
+                  tabIndex={0}
+                  onClick={toggleAppsOpen}
+                  className="w-full flex items-center justify-between rounded-xl px-2.5 py-2 bg-white/[0.03] border border-white/5 hover:bg-white/[0.07] active:bg-white/15 cursor-pointer touch-manipulation select-none transition-all group"
+                  aria-expanded={appsOpen}
+                >
+                  <div className="flex items-center gap-2 min-w-0">
+                    <div className="h-6 w-6 rounded-lg bg-blue-500/15 border border-blue-400/25 flex items-center justify-center text-blue-400 shrink-0 group-hover:scale-105 transition-transform">
+                      <LayoutGrid className="h-3.5 w-3.5" />
+                    </div>
+                    <div className="min-w-0 flex items-center gap-1.5">
+                      <span className="text-xs font-semibold text-white tracking-wide truncate">
+                        Workspace Apps
                       </span>
-                    )}
-                  </button>
+                      {apps.length > 0 && (
+                        <span className="rounded-full bg-white/10 px-1.5 py-0.2 text-[9px] font-bold text-ink-dim shrink-0">
+                          {apps.length}
+                        </span>
+                      )}
+                    </div>
+                  </div>
 
-                  <button
-                    type="button"
-                    onClick={() => {
-                      setSelectedEditAppId(null);
-                      setManageAppsOpen(true);
-                    }}
-                    className="flex items-center gap-1 rounded px-1.5 py-0.5 text-[10px] font-medium text-ink-faint hover:text-white hover:bg-white/10 transition-colors cursor-pointer"
-                    title="Add or manage apps"
-                  >
-                    <Plus className="h-3 w-3" />
-                    <span>Add</span>
-                  </button>
+                  <div className="flex items-center gap-1 shrink-0">
+                    <button
+                      type="button"
+                      onClick={(e) => {
+                        e.stopPropagation();
+                        setSelectedEditAppId(null);
+                        setManageAppsOpen(true);
+                      }}
+                      className="h-6 px-2 rounded-md bg-white/10 hover:bg-white/20 active:bg-white/30 text-[10px] font-medium text-white flex items-center gap-1 transition-all touch-manipulation cursor-pointer"
+                      title="Add app"
+                    >
+                      <Plus className="h-3 w-3" />
+                      <span>Add</span>
+                    </button>
+                    <div className="h-6 w-6 rounded-md flex items-center justify-center text-ink-faint">
+                      <ChevronDown
+                        className={cn(
+                          "h-3.5 w-3.5 transition-transform duration-200",
+                          appsOpen ? "rotate-180 text-white" : "rotate-0 text-ink-faint"
+                        )}
+                      />
+                    </div>
+                  </div>
                 </div>
 
-                {/* Dropdown Content: visible only when expanded, otherwise hidden */}
+                {/* Play Store App Cards Showcase */}
                 <AnimatePresence initial={false}>
                   {appsOpen && (
                     <motion.div
@@ -267,58 +295,93 @@ export function Sidebar() {
                       animate={{ opacity: 1, height: "auto" }}
                       exit={{ opacity: 0, height: 0 }}
                       transition={{ duration: 0.2 }}
-                      className="overflow-hidden space-y-1 lg:space-y-0.5 pt-1"
+                      className="overflow-hidden space-y-1.5 pt-1"
                     >
-                      {apps.map((app) => (
-                        <div
-                          key={app.id}
-                          className="group relative flex items-center justify-between rounded-[var(--radius-control)] px-2.5 py-2 lg:py-1.5 text-sm transition-colors duration-150 hover:bg-white/5"
-                        >
-                          <a
-                            href={app.url}
-                            target="_blank"
-                            rel="noopener noreferrer"
-                            onClick={() => setMobileOpen(false)}
-                            className="flex-1 min-w-0 flex items-center gap-2.5"
-                          >
-                            <div className="h-6 w-6 lg:h-5 lg:w-5 rounded-md overflow-hidden border border-white/10 bg-black/40 flex items-center justify-center shrink-0 shadow-sm transition-transform group-hover:scale-105">
-                              <img
-                                src={app.imageUrl || "/logo.jpeg"}
-                                alt={app.title}
-                                className="h-full w-full object-cover"
-                                onError={(e) => {
-                                  (e.target as HTMLImageElement).src = "/logo.jpeg";
-                                }}
-                              />
-                            </div>
-                            <div className="min-w-0 flex-1">
-                              <p className="truncate text-[13px] lg:text-[12.5px] font-medium text-ink/80 group-hover:text-white transition-colors">
-                                {app.title}
-                              </p>
-                            </div>
-                            <ArrowUpRight className="h-3.5 w-3.5 lg:h-3 lg:w-3 shrink-0 text-ink-faint/60 transition-transform group-hover:text-ink-dim group-hover:translate-x-0.5 group-hover:-translate-y-0.5" />
-                          </a>
-
-                          {/* Edit Pencil: Always visible on mobile, visible on hover on desktop */}
+                      {apps.length === 0 ? (
+                        <div className="p-3 text-center rounded-xl bg-white/[0.02] border border-white/5">
+                          <p className="text-[11px] text-ink-faint">No apps added yet.</p>
                           <button
                             type="button"
-                            onClick={(e) => {
-                              e.stopPropagation();
-                              setSelectedEditAppId(app.id);
+                            onClick={() => {
+                              setSelectedEditAppId(null);
                               setManageAppsOpen(true);
                             }}
-                            className="opacity-100 lg:opacity-0 lg:group-hover:opacity-100 p-1.5 lg:p-1 ml-1 rounded-md text-ink-faint hover:text-white hover:bg-white/10 active:bg-white/20 transition-all shrink-0 touch-manipulation cursor-pointer"
-                            title={`Edit ${app.title}`}
-                            aria-label={`Edit ${app.title}`}
+                            className="mt-1.5 text-xs text-blue-400 hover:underline font-medium inline-flex items-center gap-1"
                           >
-                            <Pencil className="h-3.5 w-3.5 lg:h-3 lg:w-3" />
+                            <Plus className="h-3 w-3" /> Add your first app
                           </button>
                         </div>
-                      ))}
+                      ) : (
+                        apps.map((app) => (
+                          <div
+                            key={app.id}
+                            className="group relative flex items-center justify-between rounded-xl p-2 border border-white/5 bg-white/[0.02] hover:border-white/15 hover:bg-white/[0.06] active:bg-white/10 transition-all gap-2"
+                          >
+                            <a
+                              href={app.url}
+                              target="_blank"
+                              rel="noopener noreferrer"
+                              onClick={() => setMobileOpen(false)}
+                              className="flex-1 min-w-0 flex items-center gap-2.5"
+                            >
+                              {/* Squircle App Icon (Play Store style) */}
+                              <div className="relative h-9 w-9 rounded-xl overflow-hidden border border-white/15 bg-black/60 flex items-center justify-center shrink-0 shadow-md group-hover:scale-105 transition-transform">
+                                <img
+                                  src={app.imageUrl || "/logo.jpeg"}
+                                  alt={app.title}
+                                  className="h-full w-full object-cover"
+                                  onError={(e) => {
+                                    (e.target as HTMLImageElement).src = "/logo.jpeg";
+                                  }}
+                                />
+                              </div>
+
+                              {/* App Name and Category/Domain */}
+                              <div className="min-w-0 flex-1">
+                                <p className="truncate text-xs font-semibold text-white group-hover:text-blue-400 transition-colors">
+                                  {app.title}
+                                </p>
+                                <p className="truncate text-[10px] text-ink-faint flex items-center gap-1 mt-0.5">
+                                  <span className="h-1.5 w-1.5 rounded-full bg-emerald-400 shrink-0" />
+                                  <span className="truncate">{app.category || "Client App"}</span>
+                                </p>
+                              </div>
+                            </a>
+
+                            {/* Actions: OPEN pill + Edit pencil */}
+                            <div className="flex items-center gap-1 shrink-0">
+                              <a
+                                href={app.url}
+                                target="_blank"
+                                rel="noopener noreferrer"
+                                onClick={() => setMobileOpen(false)}
+                                className="px-2 py-0.5 rounded-full border border-blue-500/30 bg-blue-500/10 text-blue-400 hover:bg-blue-500/20 text-[10px] font-semibold tracking-wide flex items-center gap-0.5 transition-colors"
+                              >
+                                <span>OPEN</span>
+                                <ArrowUpRight className="h-2.5 w-2.5" />
+                              </a>
+
+                              <button
+                                type="button"
+                                onClick={(e) => {
+                                  e.stopPropagation();
+                                  setSelectedEditAppId(app.id);
+                                  setManageAppsOpen(true);
+                                }}
+                                className="p-1.5 rounded-lg text-ink-faint hover:text-white hover:bg-white/10 active:bg-white/20 transition-all touch-manipulation cursor-pointer"
+                                title={`Edit ${app.title}`}
+                                aria-label={`Edit ${app.title}`}
+                              >
+                                <Pencil className="h-3.5 w-3.5" />
+                              </button>
+                            </div>
+                          </div>
+                        ))
+                      )}
                     </motion.div>
                   )}
                 </AnimatePresence>
-              </>
+              </div>
             ) : (
               <div className="flex flex-col items-center gap-1.5 pb-2">
                 <Tooltip>
