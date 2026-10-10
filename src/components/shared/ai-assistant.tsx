@@ -1,6 +1,6 @@
 import { useState, useRef, useEffect, useCallback } from "react";
 import { m as motion, AnimatePresence } from "framer-motion";
-import { Bot, X, Send, Loader2, Sparkles } from "lucide-react";
+import { Bot, X, Send, Loader2 } from "lucide-react";
 import { Button } from "@/components/ui/button";
 import { cn } from "@/lib/utils";
 import { supabase } from "@/lib/supabase";
@@ -231,7 +231,7 @@ export function AiAssistant() {
 
   return (
     <>
-      {/* Floating Button */}
+      {/* Floating Button - Liquid Glass Bubble UI */}
       <AnimatePresence>
         {!isOpen && (
           <motion.div
@@ -240,41 +240,57 @@ export function AiAssistant() {
             exit={{ scale: 0, opacity: 0 }}
             className="fixed bottom-6 right-6 z-[999] pointer-events-auto"
           >
-            <Button
+            <button
+              type="button"
               onClick={() => setIsOpen(true)}
-              size="icon"
-              className="h-14 w-14 rounded-full bg-electric text-ink shadow-[0_4px_24px_rgba(45,212,191,0.4)] hover:bg-electric/90 hover:scale-105 transition-transform"
+              aria-label="Open duo-AI Assistant"
+              className={cn(
+                "group relative flex h-14 w-14 items-center justify-center rounded-full",
+                "bg-white/[0.08] hover:bg-white/[0.15] active:scale-95",
+                "border border-white/20 hover:border-white/40",
+                "backdrop-blur-2xl transition-all duration-300",
+                "shadow-[0_8px_32px_0_rgba(0,0,0,0.5),inset_0_1px_2px_rgba(255,255,255,0.4),0_0_20px_rgba(255,255,255,0.06)]",
+                "hover:shadow-[0_12px_40px_0_rgba(0,0,0,0.65),inset_0_1px_2px_rgba(255,255,255,0.6),0_0_28px_rgba(255,255,255,0.15)]",
+                "hover:scale-105 cursor-pointer touch-manipulation"
+              )}
             >
-              <Sparkles className="h-6 w-6" />
-            </Button>
+              {/* Liquid glass meniscus light reflection highlight */}
+              <span className="pointer-events-none absolute top-1.5 left-3 right-3 h-3.5 rounded-full bg-gradient-to-b from-white/35 to-transparent blur-[0.5px]" />
+              {/* Radial inner depth */}
+              <span className="pointer-events-none absolute inset-0 rounded-full bg-radial from-white/10 via-transparent to-transparent opacity-60 group-hover:opacity-100 transition-opacity" />
+              {/* Bottom meniscus reflex */}
+              <span className="pointer-events-none absolute bottom-1 left-4 right-4 h-1.5 rounded-full bg-gradient-to-t from-white/20 to-transparent blur-[0.5px]" />
+              {/* Sleek minimal bot icon */}
+              <Bot className="relative z-10 h-6 w-6 text-white drop-shadow-[0_2px_8px_rgba(255,255,255,0.3)] transition-transform duration-300 group-hover:scale-110" />
+            </button>
           </motion.div>
         )}
       </AnimatePresence>
 
-      {/* Chat Window */}
+      {/* Chat Window - Frosted Glassmorphism UI */}
       <AnimatePresence>
         {isOpen && (
           <motion.div
             initial={{ opacity: 0, y: 20, scale: 0.95 }}
             animate={{ opacity: 1, y: 0, scale: 1 }}
             exit={{ opacity: 0, y: 20, scale: 0.95 }}
-            className="fixed bottom-6 right-6 z-[999] pointer-events-auto flex h-[500px] max-h-[80vh] w-[350px] max-w-[calc(100vw-3rem)] flex-col overflow-hidden rounded-[var(--radius-panel)] border border-white/10 bg-black/60 backdrop-blur-2xl shadow-2xl"
+            className="fixed bottom-6 right-6 z-[999] pointer-events-auto flex h-[500px] max-h-[80vh] w-[350px] max-w-[calc(100vw-3rem)] flex-col overflow-hidden rounded-[var(--radius-panel)] border border-white/15 bg-[#0B0F17]/90 backdrop-blur-2xl shadow-[0_24px_64px_rgba(0,0,0,0.8),inset_0_1px_1px_rgba(255,255,255,0.15)]"
           >
             {/* Header */}
             <div className="flex items-center justify-between border-b border-white/10 bg-white/5 px-4 py-3">
-              <div className="flex items-center gap-2">
-                <div className="flex h-8 w-8 items-center justify-center rounded-full bg-electric/20 text-electric">
+              <div className="flex items-center gap-2.5">
+                <div className="flex h-8 w-8 items-center justify-center rounded-full border border-white/15 bg-white/10 text-white backdrop-blur-md shadow-sm">
                   <Bot className="h-4 w-4" />
                 </div>
                 <div>
-                  <h3 className="text-sm font-semibold text-ink">duo-AI Assistant</h3>
-                  <p className="text-[10px] text-ink-faint">Powered by duo-AI</p>
+                  <h3 className="text-sm font-semibold text-white">duo-AI Assistant</h3>
+                  <p className="text-[10px] text-white/50">DuoKarma Intelligent Co-pilot</p>
                 </div>
               </div>
               <Button
                 variant="ghost"
                 size="icon"
-                className="h-8 w-8 text-ink-faint hover:text-ink hover:bg-white/5"
+                className="h-8 w-8 text-white/50 hover:text-white hover:bg-white/10"
                 onClick={() => setIsOpen(false)}
               >
                 <X className="h-4 w-4" />
@@ -295,8 +311,8 @@ export function AiAssistant() {
                     className={cn(
                       "px-3 py-2 rounded-2xl text-sm leading-relaxed whitespace-pre-wrap shadow-md",
                       msg.role === "user"
-                        ? "bg-electric text-black rounded-br-sm font-medium shadow-[0_0_15px_rgba(45,212,191,0.2)]"
-                        : "bg-white/10 text-ink rounded-bl-sm border border-white/10 backdrop-blur-md"
+                        ? "bg-white/15 text-white border border-white/20 backdrop-blur-md rounded-br-sm font-medium shadow-[0_2px_12px_rgba(0,0,0,0.25)]"
+                        : "bg-white/5 text-ink rounded-bl-sm border border-white/10 backdrop-blur-md"
                     )}
                   >
                     {msg.content}
@@ -338,18 +354,17 @@ export function AiAssistant() {
                     }
                   }}
                   placeholder="Ask anything..."
-                  className="flex-1 bg-white/5 border border-white/10 rounded-xl p-3 text-sm text-ink placeholder:text-ink-faint focus:outline-none focus:ring-1 focus:ring-electric resize-none min-h-[44px] max-h-[120px] custom-scrollbar leading-relaxed"
+                  className="flex-1 bg-white/5 border border-white/10 rounded-xl p-3 text-sm text-ink placeholder:text-ink-faint focus:outline-none focus:border-white/30 focus:ring-1 focus:ring-white/20 resize-none min-h-[44px] max-h-[120px] custom-scrollbar leading-relaxed"
                   rows={2}
                   disabled={isLoading}
                 />
-                <Button
+                <button
                   type="submit"
-                  size="icon"
                   disabled={!input.trim() || isLoading}
-                  className="h-11 w-11 rounded-xl shrink-0 bg-electric text-black hover:bg-electric/90 shadow-[0_0_15px_rgba(45,212,191,0.3)] transition-all mb-0.5"
+                  className="h-11 w-11 rounded-xl shrink-0 flex items-center justify-center border border-white/20 bg-white/10 hover:bg-white/20 text-white shadow-sm transition-all mb-0.5 disabled:opacity-40 disabled:pointer-events-none cursor-pointer"
                 >
-                  <Send className="h-5 w-5 ml-0.5" />
-                </Button>
+                  <Send className="h-4 w-4" />
+                </button>
               </form>
             </div>
           </motion.div>

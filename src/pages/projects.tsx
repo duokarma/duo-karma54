@@ -65,7 +65,6 @@ export function ProjectsPage() {
   const { displayName } = useAuth();
   const [query, setQuery] = useState("");
   const [statusFilter, setStatusFilter] = useState("all");
-  const [partnerFilter, setPartnerFilter] = useState<"all" | "Hatim" | "Moiz">("all");
   const [assignedPartner, setAssignedPartner] = useState<"Hatim" | "Moiz" | "Both">(
     displayName === "Moiz" ? "Moiz" : "Hatim"
   );
@@ -189,14 +188,9 @@ export function ProjectsPage() {
         p.name.toLowerCase().includes(query.toLowerCase()) ||
         p.client.toLowerCase().includes(query.toLowerCase());
       const matchesStatus = statusFilter === "all" || p.status === statusFilter;
-      const teamStr = Array.isArray(p.team) ? p.team.join(" ").toLowerCase() : "";
-      const matchesPartner =
-        partnerFilter === "all" ||
-        (partnerFilter === "Hatim" && (teamStr.includes("hatim") || !teamStr)) ||
-        (partnerFilter === "Moiz" && teamStr.includes("moiz"));
-      return matchesQuery && matchesStatus && matchesPartner;
+      return matchesQuery && matchesStatus;
     });
-  }, [projects, query, statusFilter, partnerFilter]);
+  }, [projects, query, statusFilter]);
 
   return (
     <div>
@@ -214,45 +208,6 @@ export function ProjectsPage() {
         <div className="relative flex-1 min-w-[220px] max-w-sm">
           <Search className="absolute left-3 top-1/2 h-4 w-4 -translate-y-1/2 text-ink-faint" />
           <Input placeholder="Search projects..." className="pl-10" value={query} onChange={(e) => setQuery(e.target.value)} />
-        </div>
-
-        {/* Partner Quick-Filter */}
-        <div className="flex items-center rounded-xl border border-white/10 bg-white/3 p-0.5 text-xs">
-          <button
-            type="button"
-            onClick={() => setPartnerFilter("all")}
-            className={`rounded-lg px-2.5 py-1 text-xs font-medium transition-all ${
-              partnerFilter === "all"
-                ? "bg-white/15 text-white shadow-sm"
-                : "text-ink/40 hover:text-ink/80"
-            }`}
-          >
-            All
-          </button>
-          <button
-            type="button"
-            onClick={() => setPartnerFilter("Hatim")}
-            className={`flex items-center gap-1.5 rounded-lg px-2.5 py-1 text-xs font-medium transition-all ${
-              partnerFilter === "Hatim"
-                ? "border border-indigo-500/40 bg-indigo-500/20 text-indigo-300 shadow-sm"
-                : "text-ink/40 hover:text-ink/80"
-            }`}
-          >
-            <span className="h-1.5 w-1.5 rounded-full bg-indigo-400" />
-            Hatim{displayName === "Hatim" ? " (Me)" : ""}
-          </button>
-          <button
-            type="button"
-            onClick={() => setPartnerFilter("Moiz")}
-            className={`flex items-center gap-1.5 rounded-lg px-2.5 py-1 text-xs font-medium transition-all ${
-              partnerFilter === "Moiz"
-                ? "border border-emerald-500/40 bg-emerald-500/20 text-emerald-300 shadow-sm"
-                : "text-ink/40 hover:text-ink/80"
-            }`}
-          >
-            <span className="h-1.5 w-1.5 rounded-full bg-emerald-400" />
-            Moiz{displayName === "Moiz" ? " (Me)" : ""}
-          </button>
         </div>
 
         <Select value={statusFilter} onValueChange={setStatusFilter}>

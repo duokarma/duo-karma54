@@ -25,7 +25,6 @@ import {
   UserCheck,
   Cloud,
   Camera,
-  Link2,
   Trash2,
 } from "lucide-react";
 
@@ -60,8 +59,6 @@ export function PartnerSettingsDialog({
 
   // Avatar state
   const [uploadingAvatar, setUploadingAvatar] = useState(false);
-  const [avatarInputUrl, setAvatarInputUrl] = useState("");
-  const [showUrlInput, setShowUrlInput] = useState(false);
 
   // Password state
   const [newPassword, setNewPassword] = useState("");
@@ -152,28 +149,6 @@ export function PartnerSettingsDialog({
     }
   };
 
-  const handleSaveUrlAvatar = async () => {
-    if (!avatarInputUrl.trim()) return;
-    setUploadingAvatar(true);
-    try {
-      await updateAvatarUrl(avatarInputUrl.trim());
-      setAvatarInputUrl("");
-      setShowUrlInput(false);
-      toast({
-        title: "Avatar updated",
-        description: "Your profile picture has been updated from the provided image link.",
-      });
-    } catch (err: any) {
-      toast({
-        title: "Save failed",
-        description: err.message || "Could not update avatar URL.",
-        variant: "destructive",
-      });
-    } finally {
-      setUploadingAvatar(false);
-    }
-  };
-
   const handleRemoveAvatar = async () => {
     setUploadingAvatar(true);
     try {
@@ -250,7 +225,7 @@ export function PartnerSettingsDialog({
 
   return (
     <Dialog open={open} onOpenChange={onOpenChange}>
-      <DialogContent className="w-[calc(100vw-1.5rem)] sm:max-w-2xl border border-white/10 bg-[#121215]/98 backdrop-blur-2xl p-4 sm:p-6 shadow-2xl text-white overflow-hidden">
+      <DialogContent className="w-[calc(100vw-1.5rem)] sm:max-w-2xl border border-white/10 bg-[#121215]/98 backdrop-blur-2xl p-4 sm:p-6 shadow-2xl text-white max-h-[85vh] sm:max-h-[88vh] overflow-y-auto custom-scrollbar flex flex-col">
         <DialogHeader className="space-y-1">
           <div className="flex items-center justify-between">
             <div className="flex items-center gap-2">
@@ -270,7 +245,7 @@ export function PartnerSettingsDialog({
         </DialogHeader>
 
         {/* ── Tabs Navigation ── */}
-        <Tabs value={activeTab} onValueChange={setActiveTab} className="mt-3">
+        <Tabs value={activeTab} onValueChange={setActiveTab} className="mt-3 flex-1 flex flex-col">
           <TabsList className="grid w-full grid-cols-2 bg-white/5 border border-white/10 p-1">
             <TabsTrigger value="account" className="text-xs">
               Account & Password
@@ -282,7 +257,7 @@ export function PartnerSettingsDialog({
           </TabsList>
 
           {/* ══════════════ TAB 1: ACCOUNT & PASSWORD ══════════════ */}
-          <TabsContent value="account" className="mt-4 space-y-4">
+          <TabsContent value="account" className="mt-4 space-y-4 pb-8">
             {/* Partner Profile Card with Avatar Option */}
             <div className="rounded-xl border border-white/10 bg-white/4 p-4 space-y-3">
               <div className="flex flex-col sm:flex-row sm:items-center justify-between gap-3">
@@ -340,16 +315,6 @@ export function PartnerSettingsDialog({
                       disabled={uploadingAvatar}
                     />
                   </label>
-                  <Button
-                    type="button"
-                    variant="ghost"
-                    size="sm"
-                    onClick={() => setShowUrlInput(!showUrlInput)}
-                    className="text-xs h-8 text-white/70 hover:text-white"
-                  >
-                    <Link2 className="mr-1.5 h-3.5 w-3.5" />
-                    {showUrlInput ? "Hide Link" : "Image Link"}
-                  </Button>
                   {avatarUrl && (
                     <Button
                       type="button"
@@ -364,26 +329,6 @@ export function PartnerSettingsDialog({
                   )}
                 </div>
               </div>
-
-              {/* URL paste input if toggled */}
-              {showUrlInput && (
-                <div className="pt-2 border-t border-white/5 flex gap-2">
-                  <Input
-                    placeholder="https://example.com/my-profile.jpg"
-                    value={avatarInputUrl}
-                    onChange={(e) => setAvatarInputUrl(e.target.value)}
-                    className="h-8 text-xs border-white/10 bg-white/5 text-white placeholder:text-white/30"
-                  />
-                  <Button
-                    size="sm"
-                    onClick={handleSaveUrlAvatar}
-                    disabled={!avatarInputUrl.trim() || uploadingAvatar}
-                    className="h-8 text-xs bg-white text-black hover:bg-white/90 font-medium shrink-0 touch-manipulation"
-                  >
-                    {uploadingAvatar ? <Loader2 className="h-3.5 w-3.5 animate-spin" /> : "Save Link"}
-                  </Button>
-                </div>
-              )}
             </div>
 
             {/* Change Password Card */}
@@ -533,7 +478,7 @@ export function PartnerSettingsDialog({
           </TabsContent>
 
           {/* ══════════════ TAB 2: SUPABASE STORAGE ══════════════ */}
-          <TabsContent value="storage" className="mt-4 space-y-3.5">
+          <TabsContent value="storage" className="mt-4 space-y-3.5 pb-8">
             {/* Status card */}
             <div className="rounded-xl border border-white/10 bg-white/4 p-3.5 flex items-center justify-between">
               <div>
