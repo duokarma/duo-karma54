@@ -1,7 +1,7 @@
 import { useState } from "react";
 import { NavLink, useNavigate } from "react-router-dom";
-import { m as motion } from "framer-motion";
-import { ChevronsLeft, Search, LogOut, ArrowUpRight, Plus, Pencil } from "lucide-react";
+import { m as motion, AnimatePresence } from "framer-motion";
+import { ChevronsLeft, Search, LogOut, ArrowUpRight, Plus, Pencil, ChevronRight } from "lucide-react";
 import { cn } from "@/lib/utils";
 import { navGroups, navItems } from "@/lib/nav-config";
 import { useSidebar } from "@/hooks/use-sidebar";
@@ -30,6 +30,7 @@ export function Sidebar() {
   const navigate = useNavigate();
 
   const { apps } = useEcosystemApps();
+  const [appsOpen, setAppsOpen] = useState(false);
   const [manageAppsOpen, setManageAppsOpen] = useState(false);
   const [selectedEditAppId, setSelectedEditAppId] = useState<string | null>(null);
 
@@ -218,28 +219,108 @@ export function Sidebar() {
             );
           })}
 
-          {/* ── Ecosystem Apps Section ── */}
-          <div className="mt-3 pt-3 border-t border-[var(--color-edge)]/60">
+          {/* ── Ecosystem & Client Apps Section (Collapsible Dropdown) ── */}
+          <div className="mt-4 pt-3 border-t border-white/[0.08]">
             {!collapsed ? (
-              <div className="flex items-center justify-between px-2 pb-1.5">
-                <p className="text-[10px] font-semibold uppercase tracking-widest text-ink/70">
-                  Apps & Ecosystem
-                </p>
-                <button
-                  type="button"
-                  onClick={() => {
-                    setSelectedEditAppId(null);
-                    setManageAppsOpen(true);
-                  }}
-                  className="flex items-center gap-1 rounded px-1.5 py-0.5 text-[10px] font-medium text-ink-faint hover:text-white hover:bg-white/10 transition-colors"
-                  title="Add or manage apps"
-                >
-                  <Plus className="h-3 w-3" />
-                  <span>Add</span>
-                </button>
-              </div>
+              <>
+                <div className="flex items-center justify-between px-2 pb-1.5">
+                  <button
+                    type="button"
+                    onClick={() => setAppsOpen(!appsOpen)}
+                    className="flex items-center gap-1.5 text-[10px] font-semibold uppercase tracking-widest text-ink/70 hover:text-white transition-colors cursor-pointer"
+                    aria-expanded={appsOpen}
+                  >
+                    <motion.div
+                      animate={{ rotate: appsOpen ? 90 : 0 }}
+                      transition={{ duration: 0.18 }}
+                      className="shrink-0"
+                    >
+                      <ChevronRight className="h-3 w-3 text-ink-faint" />
+                    </motion.div>
+                    <span>Apps & Sites</span>
+                    {apps.length > 0 && (
+                      <span className="rounded-full bg-white/10 px-1.5 py-0.2 text-[9px] font-normal text-ink-faint">
+                        {apps.length}
+                      </span>
+                    )}
+                  </button>
+
+                  <button
+                    type="button"
+                    onClick={() => {
+                      setSelectedEditAppId(null);
+                      setManageAppsOpen(true);
+                    }}
+                    className="flex items-center gap-1 rounded px-1.5 py-0.5 text-[10px] font-medium text-ink-faint hover:text-white hover:bg-white/10 transition-colors cursor-pointer"
+                    title="Add or manage apps"
+                  >
+                    <Plus className="h-3 w-3" />
+                    <span>Add</span>
+                  </button>
+                </div>
+
+                {/* Dropdown Content: visible only when expanded, otherwise hidden */}
+                <AnimatePresence initial={false}>
+                  {appsOpen && (
+                    <motion.div
+                      initial={{ opacity: 0, height: 0 }}
+                      animate={{ opacity: 1, height: "auto" }}
+                      exit={{ opacity: 0, height: 0 }}
+                      transition={{ duration: 0.2 }}
+                      className="overflow-hidden space-y-1 lg:space-y-0.5 pt-1"
+                    >
+                      {apps.map((app) => (
+                        <div
+                          key={app.id}
+                          className="group relative flex items-center justify-between rounded-[var(--radius-control)] px-2.5 py-2 lg:py-1.5 text-sm transition-colors duration-150 hover:bg-white/5"
+                        >
+                          <a
+                            href={app.url}
+                            target="_blank"
+                            rel="noopener noreferrer"
+                            onClick={() => setMobileOpen(false)}
+                            className="flex-1 min-w-0 flex items-center gap-2.5"
+                          >
+                            <div className="h-6 w-6 lg:h-5 lg:w-5 rounded-md overflow-hidden border border-white/10 bg-black/40 flex items-center justify-center shrink-0 shadow-sm transition-transform group-hover:scale-105">
+                              <img
+                                src={app.imageUrl || "/logo.jpeg"}
+                                alt={app.title}
+                                className="h-full w-full object-cover"
+                                onError={(e) => {
+                                  (e.target as HTMLImageElement).src = "/logo.jpeg";
+                                }}
+                              />
+                            </div>
+                            <div className="min-w-0 flex-1">
+                              <p className="truncate text-[13px] lg:text-[12.5px] font-medium text-ink/80 group-hover:text-white transition-colors">
+                                {app.title}
+                              </p>
+                            </div>
+                            <ArrowUpRight className="h-3.5 w-3.5 lg:h-3 lg:w-3 shrink-0 text-ink-faint/60 transition-transform group-hover:text-ink-dim group-hover:translate-x-0.5 group-hover:-translate-y-0.5" />
+                          </a>
+
+                          {/* Edit Pencil: Always visible on mobile, visible on hover on desktop */}
+                          <button
+                            type="button"
+                            onClick={(e) => {
+                              e.stopPropagation();
+                              setSelectedEditAppId(app.id);
+                              setManageAppsOpen(true);
+                            }}
+                            className="opacity-100 lg:opacity-0 lg:group-hover:opacity-100 p-1.5 lg:p-1 ml-1 rounded-md text-ink-faint hover:text-white hover:bg-white/10 active:bg-white/20 transition-all shrink-0 touch-manipulation cursor-pointer"
+                            title={`Edit ${app.title}`}
+                            aria-label={`Edit ${app.title}`}
+                          >
+                            <Pencil className="h-3.5 w-3.5 lg:h-3 lg:w-3" />
+                          </button>
+                        </div>
+                      ))}
+                    </motion.div>
+                  )}
+                </AnimatePresence>
+              </>
             ) : (
-              <div className="flex justify-center pb-2">
+              <div className="flex flex-col items-center gap-1.5 pb-2">
                 <Tooltip>
                   <TooltipTrigger asChild>
                     <button
@@ -258,93 +339,42 @@ export function Sidebar() {
                     Add or manage apps
                   </TooltipContent>
                 </Tooltip>
+
+                {apps.map((app) => (
+                  <Tooltip key={app.id}>
+                    <TooltipTrigger asChild>
+                      <a
+                        href={app.url}
+                        target="_blank"
+                        rel="noopener noreferrer"
+                        onClick={() => setMobileOpen(false)}
+                        className="group relative flex items-center justify-center rounded-[var(--radius-control)] py-1.5 transition-colors hover:bg-white/10"
+                      >
+                        <div className="h-6 w-6 rounded-md overflow-hidden border border-white/10 bg-black/40 flex items-center justify-center shrink-0 transition-transform group-hover:scale-110 shadow-sm">
+                          <img
+                            src={app.imageUrl || "/logo.jpeg"}
+                            alt={app.title}
+                            className="h-full w-full object-cover"
+                            onError={(e) => {
+                              (e.target as HTMLImageElement).src = "/logo.jpeg";
+                            }}
+                          />
+                        </div>
+                      </a>
+                    </TooltipTrigger>
+                    <TooltipContent side="right" className="flex items-center gap-2">
+                      <span>{app.title}</span>
+                      {app.category && (
+                        <span className="text-[10px] text-ink-faint font-mono">
+                          ({app.category})
+                        </span>
+                      )}
+                      <ArrowUpRight className="h-3 w-3 opacity-70" />
+                    </TooltipContent>
+                  </Tooltip>
+                ))}
               </div>
             )}
-
-            <div className="space-y-1 lg:space-y-0.5">
-              {apps.map((app) => {
-                if (collapsed) {
-                  return (
-                    <Tooltip key={app.id}>
-                      <TooltipTrigger asChild>
-                        <a
-                          href={app.url}
-                          target="_blank"
-                          rel="noopener noreferrer"
-                          onClick={() => setMobileOpen(false)}
-                          className="group relative flex items-center justify-center rounded-[var(--radius-control)] py-1.5 transition-colors hover:bg-white/10"
-                        >
-                          <div className="h-6 w-6 rounded-md overflow-hidden border border-white/10 bg-black/40 flex items-center justify-center shrink-0 transition-transform group-hover:scale-110 shadow-sm">
-                            <img
-                              src={app.imageUrl || "/logo.jpeg"}
-                              alt={app.title}
-                              className="h-full w-full object-cover"
-                              onError={(e) => {
-                                (e.target as HTMLImageElement).src = "/logo.jpeg";
-                              }}
-                            />
-                          </div>
-                        </a>
-                      </TooltipTrigger>
-                      <TooltipContent side="right" className="flex items-center gap-2">
-                        <span>{app.title}</span>
-                        {app.category && (
-                          <span className="text-[10px] text-ink-faint font-mono">
-                            ({app.category})
-                          </span>
-                        )}
-                        <ArrowUpRight className="h-3 w-3 opacity-70" />
-                      </TooltipContent>
-                    </Tooltip>
-                  );
-                }
-
-                return (
-                  <div
-                    key={app.id}
-                    className="group relative flex items-center gap-2 rounded-[var(--radius-control)] px-2.5 py-1.5 text-sm transition-colors duration-150 hover:bg-white/5"
-                  >
-                    <a
-                      href={app.url}
-                      target="_blank"
-                      rel="noopener noreferrer"
-                      onClick={() => setMobileOpen(false)}
-                      className="flex-1 min-w-0 flex items-center gap-2.5"
-                    >
-                      <div className="h-5 w-5 rounded-md overflow-hidden border border-white/10 bg-black/40 flex items-center justify-center shrink-0 shadow-sm transition-transform group-hover:scale-105">
-                        <img
-                          src={app.imageUrl || "/logo.jpeg"}
-                          alt={app.title}
-                          className="h-full w-full object-cover"
-                          onError={(e) => {
-                            (e.target as HTMLImageElement).src = "/logo.jpeg";
-                          }}
-                        />
-                      </div>
-                      <div className="min-w-0 flex-1">
-                        <p className="truncate text-[12.5px] font-medium text-ink/80 group-hover:text-white transition-colors">
-                          {app.title}
-                        </p>
-                      </div>
-                      <ArrowUpRight className="h-3 w-3 shrink-0 text-ink-faint/60 transition-transform group-hover:text-ink-dim group-hover:translate-x-0.5 group-hover:-translate-y-0.5" />
-                    </a>
-
-                    <button
-                      type="button"
-                      onClick={(e) => {
-                        e.stopPropagation();
-                        setSelectedEditAppId(app.id);
-                        setManageAppsOpen(true);
-                      }}
-                      className="opacity-0 group-hover:opacity-100 p-1 rounded text-ink-faint hover:text-white hover:bg-white/10 transition-all shrink-0"
-                      title={`Edit ${app.title}`}
-                    >
-                      <Pencil className="h-2.5 w-2.5" />
-                    </button>
-                  </div>
-                );
-              })}
-            </div>
           </div>
         </nav>
 
