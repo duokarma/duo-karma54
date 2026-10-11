@@ -97,8 +97,12 @@ export function ClientsPage() {
         type: "client",
         message: `Client "${values.name}" (${values.company || "Company"}) added`,
       });
+      return newClient as Client;
     },
-    onSuccess: () => {
+    onSuccess: (newClient) => {
+      queryClient.setQueryData<Client[]>(["clients"], (old) => {
+        return old ? [newClient, ...old] : [newClient];
+      });
       queryClient.invalidateQueries({ queryKey: ["clients"] });
       queryClient.invalidateQueries({ queryKey: ["activities"] });
       setAddOpen(false);
@@ -145,8 +149,13 @@ export function ClientsPage() {
         type: "client",
         message: `Client removed from database`,
       });
+      return id;
     },
-    onSuccess: () => {
+    onSuccess: (deletedId) => {
+      queryClient.setQueryData<Client[]>(["clients"], (old) => {
+        if (!old) return old;
+        return old.filter(c => c.id !== deletedId);
+      });
       queryClient.invalidateQueries({ queryKey: ["clients"] });
       queryClient.invalidateQueries({ queryKey: ["activities"] });
       setSelectedId(null);

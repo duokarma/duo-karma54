@@ -41,6 +41,7 @@ import type { Project } from "@/types";
 
 import { formatCurrency } from "@/lib/utils";
 import { logActivity } from "@/lib/activity-logger";
+import { useToast } from "@/components/ui/toast";
 
 const projectSchema = z.object({
   name: z.string().min(2, "Name is required"),
@@ -64,6 +65,7 @@ type ProjectFormValues = z.infer<typeof projectSchema>;
 export function ProjectsPage() {
   const queryClient = useQueryClient();
   const { displayName } = useAuth();
+  const { toast } = useToast();
   const [query, setQuery] = useState("");
   const [statusFilter, setStatusFilter] = useState("all");
   const [assignedPartner, setAssignedPartner] = useState<"Hatim" | "Moiz" | "Both">(
@@ -110,12 +112,27 @@ export function ProjectsPage() {
         message: `Project "${values.name}" created for ${values.client || "Client"}`,
         actor: assignedPartner === "Both" ? "Partners" : assignedPartner,
       });
+      return newProject as Project;
     },
-    onSuccess: () => {
+    onSuccess: (newProject) => {
+      queryClient.setQueryData<Project[]>(["projects"], (old) => {
+        return old ? [newProject, ...old] : [newProject];
+      });
       queryClient.invalidateQueries({ queryKey: ["projects"] });
       queryClient.invalidateQueries({ queryKey: ["activities"] });
       setAddOpen(false);
       reset();
+      toast({
+        title: "Project Created",
+        description: `Project "${newProject.name}" has been added.`,
+      });
+    },
+    onError: (err: any) => {
+      toast({
+        title: "Failed to create project",
+        description: err.message,
+        variant: "destructive",
+      });
     },
   });
 
@@ -130,13 +147,30 @@ export function ProjectsPage() {
         message: `Project "${values.name}" details updated`,
         actor: assignedPartner === "Both" ? "Partners" : assignedPartner,
       });
+      return { id, ...rest, team };
     },
-    onSuccess: () => {
+    onSuccess: (updated) => {
+      // Instantly update the cache so UI reflects budget and all fields with 0ms latency
+      queryClient.setQueryData<Project[]>(["projects"], (old) => {
+        if (!old) return old;
+        return old.map((p) => (p.id === updated.id ? { ...p, ...updated } : p));
+      });
       queryClient.invalidateQueries({ queryKey: ["projects"] });
       queryClient.invalidateQueries({ queryKey: ["activities"] });
       setAddOpen(false);
       setSelectedProject(null);
       reset();
+      toast({
+        title: "Changes Saved",
+        description: `Project "${updated.name}" budget and details updated.`,
+      });
+    },
+    onError: (err: any) => {
+      toast({
+        title: "Failed to update project",
+        description: err.message,
+        variant: "destructive",
+      });
     },
   });
 
@@ -149,10 +183,19 @@ export function ProjectsPage() {
         message: `Project removed from workspace`,
         actor: "Partner",
       });
+      return id;
     },
-    onSuccess: () => {
+    onSuccess: (deletedId) => {
+      queryClient.setQueryData<Project[]>(["projects"], (old) => {
+        if (!old) return old;
+        return old.filter((p) => p.id !== deletedId);
+      });
       queryClient.invalidateQueries({ queryKey: ["projects"] });
       queryClient.invalidateQueries({ queryKey: ["activities"] });
+      toast({
+        title: "Project Deleted",
+        description: "Project has been removed from workspace.",
+      });
     },
   });
 
@@ -165,10 +208,19 @@ export function ProjectsPage() {
         message: `Project status updated to ${status}`,
         actor: "Partner",
       });
+      return { id, status };
     },
-    onSuccess: () => {
+    onSuccess: ({ id, status }) => {
+      queryClient.setQueryData<Project[]>(["projects"], (old) => {
+        if (!old) return old;
+        return old.map((p) => (p.id === id ? { ...p, status } : p));
+      });
       queryClient.invalidateQueries({ queryKey: ["projects"] });
       queryClient.invalidateQueries({ queryKey: ["activities"] });
+      toast({
+        title: "Status Updated",
+        description: `Project status set to ${status}.`,
+      });
     },
   });
 

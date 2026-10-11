@@ -13,6 +13,7 @@ import { useAuth } from "@/hooks/use-auth";
 import { useToast } from "@/components/ui/toast";
 import { supabase } from "@/lib/supabase";
 import { checkStorageStatus, uploadToStorage, type StorageStatus } from "@/lib/storage";
+import { setPartnerPassword, type PartnerId } from "@/lib/partner-auth";
 import {
   Eye,
   EyeOff,
@@ -52,7 +53,7 @@ export function PartnerSettingsDialog({
   open,
   onOpenChange,
 }: PartnerSettingsDialogProps) {
-  const { user, displayName, avatarUrl, updateAvatarUrl } = useAuth();
+  const { user, displayName, avatarUrl, updateAvatarUrl, partnerId } = useAuth();
   const { toast } = useToast();
 
   const [activeTab, setActiveTab] = useState("account");
@@ -173,8 +174,8 @@ export function PartnerSettingsDialog({
     setErrorMessage(null);
     setSuccessMessage(null);
 
-    if (newPassword.length < 8) {
-      setErrorMessage("Password must be at least 8 characters long.");
+    if (newPassword.length < 4) {
+      setErrorMessage("Password must be at least 4 characters long.");
       return;
     }
 
@@ -185,18 +186,29 @@ export function PartnerSettingsDialog({
 
     setIsLoading(true);
     try {
-      const { error } = await supabase.auth.updateUser({
-        password: newPassword,
-      });
+      const pid: PartnerId = (partnerId === "moiz" || displayName === "Moiz") ? "moiz" : "hatim";
+      
+      // 1. Save directly to partner credential store & Supabase
+      const saved = await setPartnerPassword(pid, newPassword);
+      if (!saved) {
+        throw new Error("Could not save password. Please try again.");
+      }
 
-      if (error) throw error;
+      // 2. Also try Supabase Auth updateUser if active session
+      try {
+        await supabase.auth.updateUser({
+          password: newPassword,
+        });
+      } catch {
+        // Silently handled by partner password store
+      }
 
       setSuccessMessage("Password updated successfully! Next time you log in, use your new password.");
       setNewPassword("");
       setConfirmPassword("");
       toast({
         title: "Password Changed",
-        description: "Your account password has been securely updated.",
+        description: "Your login password has been saved and is active immediately.",
       });
     } catch (err: any) {
       setErrorMessage(err.message || "Failed to update password. Please try again.");

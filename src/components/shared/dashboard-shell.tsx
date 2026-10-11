@@ -32,7 +32,10 @@ const NotFoundPage = lazy(() => import("@/pages/not-found").then((m) => ({ defau
 // Singleton QueryClient (once per session)
 const queryClient = new QueryClient({
   defaultOptions: {
-    queries: { staleTime: 1000 * 60 * 5 }, // 5 min
+    queries: {
+      staleTime: 0, // Instant reactivity on every mutation & refetch
+      refetchOnWindowFocus: true,
+    },
   },
 });
 

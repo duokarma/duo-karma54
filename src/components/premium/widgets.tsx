@@ -134,7 +134,7 @@ export function QuickNotes() {
 // ── Business KPIs (100% Real Live Data from Supabase) ─────────────────────────
 export function BusinessKPIs() {
   const { data: clients = [] } = useQuery({
-    queryKey: ["clients"],
+    queryKey: ["clients", "widget-kpis"],
     queryFn: async () => {
       const { data } = await supabase.from("clients").select("totalValue, advance_paid, remaining_amount, status");
       return data ?? [];
@@ -142,7 +142,7 @@ export function BusinessKPIs() {
   });
 
   const { data: leads = [] } = useQuery({
-    queryKey: ["leads"],
+    queryKey: ["leads", "widget-kpis"],
     queryFn: async () => {
       const { data } = await supabase.from("leads").select("stage, value");
       return data ?? [];
@@ -208,7 +208,7 @@ export function BusinessKPIs() {
 // ── Pinned Projects (100% Real Live Data from Supabase) ───────────────────────
 export function PinnedProjects({ onClose }: { onClose?: () => void }) {
   const { data: projects = [], isLoading } = useQuery({
-    queryKey: ["projects"],
+    queryKey: ["projects", "widget-pinned"],
     queryFn: async () => {
       const { data } = await supabase
         .from("projects")

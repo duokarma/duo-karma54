@@ -869,19 +869,30 @@ export function PipelinePage() {
       if (editingLead) {
         const { error } = await supabase.from("leads").update(data).eq("id", editingLead.id);
         if (error) throw error;
+        return { ...editingLead, ...data };
       } else {
         const id = `lead_${Date.now()}`;
-        const { error } = await supabase.from("leads").insert({
+        const newRecord = {
           ...data,
           id,
           createdDate: new Date().toISOString().slice(0, 10),
           lastContact: new Date().toISOString().slice(0, 10),
-        });
+        };
+        const { error } = await supabase.from("leads").insert(newRecord);
         if (error) throw error;
+        return newRecord;
       }
     },
-    onSuccess: () => {
+    onSuccess: (savedLead) => {
+      qc.setQueryData<Lead[]>(["leads"], (old) => {
+        if (!old) return [savedLead];
+        if (editingLead) {
+          return old.map((l) => (l.id === editingLead.id ? { ...l, ...savedLead } : l));
+        }
+        return [savedLead, ...old];
+      });
       qc.invalidateQueries({ queryKey: ["leads"] });
+      qc.invalidateQueries({ queryKey: ["activities"] });
       toast({ title: editingLead ? "Lead updated" : "Lead added" });
       setLeadFormOpen(false);
       setEditingLead(null);
@@ -892,21 +903,27 @@ export function PipelinePage() {
   const deleteLead = useMutation({
     mutationFn: async (id: string) => {
       await supabase.from("leads").delete().eq("id", id);
+      return id;
     },
-    onSuccess: () => {
+    onSuccess: (deletedId) => {
+      qc.setQueryData<Lead[]>(["leads"], (old) => (old ? old.filter((l) => l.id !== deletedId) : old));
       qc.invalidateQueries({ queryKey: ["leads"] });
       toast({ title: "Lead deleted" });
     },
   });
 
   const moveLeadStage = useCallback(async (lead: Lead, stage: LeadStage) => {
+    qc.setQueryData<Lead[]>(["leads"], (old) => {
+      if (!old) return old;
+      return old.map((l) => (l.id === lead.id ? { ...l, stage } : l));
+    });
     await supabase.from("leads").update({ stage }).eq("id", lead.id);
     qc.invalidateQueries({ queryKey: ["leads"] });
   }, [qc]);
 
   const convertToClient = useCallback(async (lead: Lead) => {
     const id = `client_${Date.now()}`;
-    await supabase.from("clients").insert({
+    const newClient = {
       id,
       name:        lead.name ?? lead.company ?? "",
       company:     lead.company ?? "",
@@ -923,9 +940,18 @@ export function PipelinePage() {
       remaining_amount: lead.value ?? 0,
       assignedTo: lead.assignedTo ?? "Hatim",
       assigned_to: lead.assignedTo ?? "Hatim",
-    });
+    };
+    await supabase.from("clients").insert(newClient);
     await supabase.from("leads").update({ stage: "won" }).eq("id", lead.id);
-    qc.invalidateQueries({ queryKey: ["leads", "clients"] });
+
+    qc.setQueryData<Client[]>(["clients"], (old) => (old ? [newClient as any, ...old] : [newClient as any]));
+    qc.setQueryData<Lead[]>(["leads"], (old) => {
+      if (!old) return old;
+      return old.map((l) => (l.id === lead.id ? { ...l, stage: "won" as LeadStage } : l));
+    });
+
+    qc.invalidateQueries({ queryKey: ["leads"] });
+    qc.invalidateQueries({ queryKey: ["clients"] });
     toast({ title: `${lead.name ?? lead.company} converted to client!` });
     setLeadDetailOpen(false);
     setActiveTab("clients");
@@ -941,9 +967,10 @@ export function PipelinePage() {
           type: "client",
           message: `Client "${data.name}" details updated`,
         });
+        return { ...editingClient, ...data };
       } else {
         const id = `client_${Date.now()}`;
-        const { error } = await supabase.from("clients").insert({
+        const newRecord = {
           ...data,
           id,
           avatarSeed:   data.name,
@@ -951,15 +978,24 @@ export function PipelinePage() {
           joinedDate:   new Date().toISOString().slice(0, 10),
           tags:         [],
           amountPaid:   data.advance_paid ?? 0,
-        });
+        };
+        const { error } = await supabase.from("clients").insert(newRecord);
         if (error) throw error;
         logActivity({
           type: "client",
           message: `Client "${data.name}" (${data.company || "Company"}) added to pipeline`,
         });
+        return newRecord;
       }
     },
-    onSuccess: () => {
+    onSuccess: (savedClient) => {
+      qc.setQueryData<Client[]>(["clients"], (old) => {
+        if (!old) return [savedClient];
+        if (editingClient) {
+          return old.map((c) => (c.id === editingClient.id ? { ...c, ...savedClient } : c));
+        }
+        return [savedClient, ...old];
+      });
       qc.invalidateQueries({ queryKey: ["clients"] });
       qc.invalidateQueries({ queryKey: ["activities"] });
       toast({ title: editingClient ? "Client updated" : "Client added" });
@@ -976,8 +1012,10 @@ export function PipelinePage() {
         type: "client",
         message: `Client removed from pipeline`,
       });
+      return id;
     },
-    onSuccess: () => {
+    onSuccess: (deletedId) => {
+      qc.setQueryData<Client[]>(["clients"], (old) => (old ? old.filter((c) => c.id !== deletedId) : old));
       qc.invalidateQueries({ queryKey: ["clients"] });
       qc.invalidateQueries({ queryKey: ["activities"] });
       toast({ title: "Client deleted" });
