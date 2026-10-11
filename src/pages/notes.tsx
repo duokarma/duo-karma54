@@ -9,6 +9,9 @@ import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
 import { useToast } from "@/components/ui/toast";
 import { supabase } from "@/lib/supabase";
+import { useAuth } from "@/hooks/use-auth";
+import { logActivity } from "@/lib/activity-logger";
+import { useQueryClient } from "@tanstack/react-query";
 
 export interface NoteItem {
   id: string;
@@ -155,6 +158,8 @@ const STORAGE_KEY = "dk_partner_notes_v1";
 
 export function NotesPage() {
   const { toast } = useToast();
+  const { displayName } = useAuth();
+  const queryClient = useQueryClient();
 
   const [notes, setNotes] = useState<NoteItem[]>(() => {
     try {
@@ -300,6 +305,13 @@ export function NotesPage() {
     setIsEditing(true);
     setMobileDetailView(true);
     await syncToSupabase(newNote);
+    logActivity({
+      type: "note",
+      message: `New note "${newNote.title}" created`,
+      actor: displayName || "Partner",
+    });
+    queryClient.invalidateQueries({ queryKey: ["activities"] });
+    queryClient.invalidateQueries({ queryKey: ["latest_activity"] });
     toast({
       title: "New note created",
       description: "Give your note a title and start jotting down thoughts.",
@@ -322,6 +334,13 @@ export function NotesPage() {
     if (!activeNote) return;
     await syncToSupabase(activeNote);
     setIsEditing(false);
+    logActivity({
+      type: "note",
+      message: `Note "${activeNote.title}" saved`,
+      actor: displayName || "Partner",
+    });
+    queryClient.invalidateQueries({ queryKey: ["activities"] });
+    queryClient.invalidateQueries({ queryKey: ["latest_activity"] });
     toast({
       title: "Note Saved",
       description: syncStatus === "synced" 
@@ -351,6 +370,14 @@ export function NotesPage() {
     try {
       await supabase.from("notes").delete().eq("id", id);
     } catch {}
+
+    logActivity({
+      type: "note",
+      message: `Note removed from workspace`,
+      actor: displayName || "Partner",
+    });
+    queryClient.invalidateQueries({ queryKey: ["activities"] });
+    queryClient.invalidateQueries({ queryKey: ["latest_activity"] });
 
     toast({
       title: "Note deleted",

@@ -34,6 +34,9 @@ import { useQuery, useMutation, useQueryClient } from "@tanstack/react-query";
 import { supabase } from "@/lib/supabase";
 import { useToast } from "@/components/ui/toast";
 import { uploadToStorage, deleteFromStorage } from "@/lib/storage";
+import { logActivity } from "@/lib/activity-logger";
+import { useAuth } from "@/hooks/use-auth";
+import { useEffect } from "react";
 
 const typeIcon: Record<string, typeof FileText> = {
   pdf: FileText,
@@ -53,6 +56,7 @@ const typeColor: Record<string, string> = {
 
 export function DocumentsPage() {
   const queryClient = useQueryClient();
+  const { displayName } = useAuth();
   const { toast } = useToast();
   const fileInputRef = useRef<HTMLInputElement>(null);
   
@@ -64,6 +68,23 @@ export function DocumentsPage() {
   
   // Image Viewer state
   const [viewerUrl, setViewerUrl] = useState<string | null>(null);
+
+  // Real-time synchronization for documents table across devices
+  useEffect(() => {
+    const channelId = `docs_realtime_${Math.random().toString(36).substring(2, 9)}`;
+    const channel = supabase
+      .channel(channelId)
+      .on("postgres_changes", { event: "*", schema: "public", table: "documents" }, () => {
+        queryClient.invalidateQueries({ queryKey: ["documents"] });
+        queryClient.invalidateQueries({ queryKey: ["activities"] });
+        queryClient.invalidateQueries({ queryKey: ["latest_activity"] });
+      })
+      .subscribe();
+
+    return () => {
+      supabase.removeChannel(channel);
+    };
+  }, [queryClient]);
 
   const { data: documents = [], isLoading } = useQuery({
     queryKey: ["documents"],
@@ -116,8 +137,15 @@ function getDocUrl(doc: Document): string {
       if (dbError) throw dbError;
       return { ...docPayload, url: uploaded.publicUrl };
     },
-    onSuccess: () => {
+    onSuccess: (newDoc) => {
+      logActivity({
+        type: "document",
+        message: `New document "${newDoc.name}" (${newDoc.size}) uploaded`,
+        actor: displayName || "Partner",
+      });
       queryClient.invalidateQueries({ queryKey: ["documents"] });
+      queryClient.invalidateQueries({ queryKey: ["activities"] });
+      queryClient.invalidateQueries({ queryKey: ["latest_activity"] });
       toast({ title: "File uploaded successfully", variant: "success" });
     },
     onError: (error: Error) => {
@@ -130,9 +158,17 @@ function getDocUrl(doc: Document): string {
       await deleteFromStorage(id).catch(() => {});
       const { error } = await supabase.from("documents").delete().eq("id", id);
       if (error) throw error;
+      return id;
     },
     onSuccess: () => {
+      logActivity({
+        type: "document",
+        message: `Document removed from workspace`,
+        actor: displayName || "Partner",
+      });
       queryClient.invalidateQueries({ queryKey: ["documents"] });
+      queryClient.invalidateQueries({ queryKey: ["activities"] });
+      queryClient.invalidateQueries({ queryKey: ["latest_activity"] });
       toast({ title: "File deleted successfully", variant: "success" });
     },
   });
@@ -141,9 +177,17 @@ function getDocUrl(doc: Document): string {
     mutationFn: async ({ id, name }: { id: string; name: string }) => {
       const { error } = await supabase.from("documents").update({ name }).eq("id", id);
       if (error) throw error;
+      return { id, name };
     },
-    onSuccess: () => {
+    onSuccess: (data) => {
+      logActivity({
+        type: "document",
+        message: `Document renamed to "${data.name}"`,
+        actor: displayName || "Partner",
+      });
       queryClient.invalidateQueries({ queryKey: ["documents"] });
+      queryClient.invalidateQueries({ queryKey: ["activities"] });
+      queryClient.invalidateQueries({ queryKey: ["latest_activity"] });
       setRenameDialogOpen(false);
       setSelectedDoc(null);
       setNewName("");

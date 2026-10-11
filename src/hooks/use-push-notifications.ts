@@ -51,6 +51,7 @@ export function usePushNotifications({ listen = true }: UsePushNotificationsOpti
     let leadsChannel: any = null;
     let inquiriesChannel: any = null;
     let projectsChannel: any = null;
+    let documentsChannel: any = null;
 
     const suffix = Math.random().toString(36).substring(2, 9);
 
@@ -97,11 +98,13 @@ export function usePushNotifications({ listen = true }: UsePushNotificationsOpti
       queryClient.invalidateQueries({ queryKey: ["tasks"] });
       queryClient.invalidateQueries({ queryKey: ["clients"] });
       queryClient.invalidateQueries({ queryKey: ["leads"] });
+      queryClient.invalidateQueries({ queryKey: ["documents"] });
+      queryClient.invalidateQueries({ queryKey: ["notes"] });
       queryClient.invalidateQueries({ queryKey: ["website_inquiries"] });
     };
 
     try {
-      // Activities table: All partner actions (projects created/updated, tasks, clients, payments)
+      // Activities table: All partner actions (documents, notes, projects, tasks, clients, payments)
       activitiesChannel = supabase
         .channel(`push-activities-${suffix}`)
         .on(
@@ -120,6 +123,20 @@ export function usePushNotifications({ listen = true }: UsePushNotificationsOpti
                 dedupKey,
               });
             }
+          }
+        )
+        .subscribe();
+
+      // Documents table changes: Real-time sync for file uploads/deletions
+      documentsChannel = supabase
+        .channel(`push-docs-${suffix}`)
+        .on(
+          "postgres_changes",
+          { event: "*", schema: "public", table: "documents" },
+          () => {
+            queryClient.invalidateQueries({ queryKey: ["documents"] });
+            queryClient.invalidateQueries({ queryKey: ["activities"] });
+            queryClient.invalidateQueries({ queryKey: ["latest_activity"] });
           }
         )
         .subscribe();
@@ -193,6 +210,8 @@ export function usePushNotifications({ listen = true }: UsePushNotificationsOpti
         queryClient.invalidateQueries({ queryKey: ["projects"] });
         queryClient.invalidateQueries({ queryKey: ["tasks"] });
         queryClient.invalidateQueries({ queryKey: ["leads"] });
+        queryClient.invalidateQueries({ queryKey: ["documents"] });
+        queryClient.invalidateQueries({ queryKey: ["notes"] });
       }
     };
 
@@ -208,6 +227,7 @@ export function usePushNotifications({ listen = true }: UsePushNotificationsOpti
         if (leadsChannel) supabase.removeChannel(leadsChannel);
         if (inquiriesChannel) supabase.removeChannel(inquiriesChannel);
         if (projectsChannel) supabase.removeChannel(projectsChannel);
+        if (documentsChannel) supabase.removeChannel(documentsChannel);
       } catch {}
     };
   }, [listen, isSupported, permission, queryClient, toast]);
@@ -236,6 +256,10 @@ export function usePushNotifications({ listen = true }: UsePushNotificationsOpti
 
 function getNotificationTitle(type: string): string {
   switch (type) {
+    case "document":
+      return "📄 Document Activity";
+    case "note":
+      return "📝 Note Activity";
     case "lead":
       return "🎯 New Booking / Lead Alert";
     case "payment":
@@ -248,6 +272,8 @@ function getNotificationTitle(type: string): string {
       return "👥 Client Update";
     case "task":
       return "✅ Task Update";
+    case "expense":
+      return "💸 Expense Recorded";
     default:
       return "🔔 Duo Karma Admin Alert";
   }
@@ -255,10 +281,15 @@ function getNotificationTitle(type: string): string {
 
 function getNotificationUrl(type: string): string {
   switch (type) {
+    case "document":
+      return "/admin/documents";
+    case "note":
+      return "/admin/notes";
     case "lead":
       return "/admin/leads";
     case "payment":
     case "invoice":
+    case "expense":
       return "/admin/revenue";
     case "project":
       return "/admin/projects";
