@@ -33,7 +33,7 @@ import type { Document } from "@/types";
 import { useQuery, useMutation, useQueryClient } from "@tanstack/react-query";
 import { supabase } from "@/lib/supabase";
 import { useToast } from "@/components/ui/toast";
-import { uploadToStorage } from "@/lib/storage";
+import { uploadToStorage, deleteFromStorage } from "@/lib/storage";
 
 const typeIcon: Record<string, typeof FileText> = {
   pdf: FileText,
@@ -74,6 +74,11 @@ export function DocumentsPage() {
     },
   });
 
+function getDocUrl(doc: Document): string {
+  if (doc.url && doc.url.startsWith("http")) return doc.url;
+  return supabase.storage.from("duokarma-files").getPublicUrl(doc.id).data?.publicUrl || "";
+}
+
   const uploadMutation = useMutation({
     mutationFn: async (file: File) => {
       let type = "other";
@@ -82,24 +87,34 @@ export function DocumentsPage() {
       else if (file.name.endsWith(".doc") || file.name.endsWith(".docx") || file.type.includes("word")) type = "doc";
       else if (file.name.endsWith(".xls") || file.name.endsWith(".xlsx") || file.type.includes("excel")) type = "xls";
 
-      // 1. Upload directly to Cloudflare R2
+      // 1. Upload directly to Supabase Storage
       const uploaded = await uploadToStorage(file, { folder: "documents" });
 
-      // 2. Save document record to Supabase database
-      const newDoc = {
-        id: crypto.randomUUID(),
+      // 2. Save document record to Supabase database with clean DATE format and key as ID
+      const cleanDate = new Date().toISOString().split("T")[0];
+      const docPayload: any = {
+        id: uploaded.key,
         name: uploaded.fileName,
         type,
         size: uploaded.fileSize,
-        modifiedDate: new Date().toISOString(),
+        modifiedDate: cleanDate,
         folder: "Uploads",
         sharedWith: 0,
-        url: uploaded.publicUrl,
       };
 
-      const { error: dbError } = await supabase.from("documents").insert(newDoc);
+      // Try inserting with url if supported by schema, otherwise fallback to base schema
+      let { error: dbError } = await supabase.from("documents").insert({
+        ...docPayload,
+        url: uploaded.publicUrl,
+      });
+
+      if (dbError && (dbError.message?.includes("url") || dbError.code === "PGRST204" || dbError.code === "42703")) {
+        const fallback = await supabase.from("documents").insert(docPayload);
+        dbError = fallback.error;
+      }
+
       if (dbError) throw dbError;
-      return newDoc;
+      return { ...docPayload, url: uploaded.publicUrl };
     },
     onSuccess: () => {
       queryClient.invalidateQueries({ queryKey: ["documents"] });
@@ -112,6 +127,7 @@ export function DocumentsPage() {
 
   const deleteMutation = useMutation({
     mutationFn: async (id: string) => {
+      await deleteFromStorage(id).catch(() => {});
       const { error } = await supabase.from("documents").delete().eq("id", id);
       if (error) throw error;
     },
@@ -214,14 +230,15 @@ export function DocumentsPage() {
         <div className="grid grid-cols-1 gap-4 sm:grid-cols-2 lg:grid-cols-3 xl:grid-cols-4">
           {filtered.map((doc, i) => {
             const Icon = typeIcon[doc.type] || File;
-            const hasUrl = !!doc.url;
+            const fileUrl = getDocUrl(doc);
+            const hasUrl = !!fileUrl;
             return (
               <motion.div key={doc.id} initial={{ opacity: 0, y: 8 }} animate={{ opacity: 1, y: 0 }} transition={{ delay: i * 0.04 }}>
                 <Card className="group flex flex-col p-4 transition-all duration-300 hover:shadow-lg hover:-translate-y-1 hover:border-electric/30 h-full">
                   <div className="flex items-start justify-between">
                     <div className={cn("flex h-12 w-12 items-center justify-center rounded-xl", typeColor[doc.type])}>
                       {doc.type === "image" && hasUrl ? (
-                        <img src={doc.url} alt={doc.name} className="h-full w-full rounded-xl object-cover" />
+                        <img src={fileUrl} alt={doc.name} className="h-full w-full rounded-xl object-cover" />
                       ) : (
                         <Icon className="h-6 w-6" />
                       )}
@@ -234,17 +251,17 @@ export function DocumentsPage() {
                       </DropdownMenuTrigger>
                       <DropdownMenuContent align="end" className="w-48">
                         {hasUrl && doc.type === "image" && (
-                          <DropdownMenuItem onClick={() => setViewerUrl(doc.url!)}>
+                          <DropdownMenuItem onClick={() => setViewerUrl(fileUrl)}>
                             <Eye className="mr-2 h-4 w-4" /> View Image
                           </DropdownMenuItem>
                         )}
                         {hasUrl && (
-                          <DropdownMenuItem onClick={() => window.open(doc.url, "_blank")}>
+                          <DropdownMenuItem onClick={() => window.open(fileUrl, "_blank")}>
                             <Download className="mr-2 h-4 w-4" /> Download
                           </DropdownMenuItem>
                         )}
                         {hasUrl && (
-                          <DropdownMenuItem onClick={() => copyLink(doc.url!)}>
+                          <DropdownMenuItem onClick={() => copyLink(fileUrl)}>
                             <LinkIcon className="mr-2 h-4 w-4" /> Copy Share Link
                           </DropdownMenuItem>
                         )}
@@ -276,7 +293,7 @@ export function DocumentsPage() {
                   {hasUrl && doc.type === "image" && (
                     <div 
                       className="absolute inset-0 cursor-pointer z-0 opacity-0" 
-                      onClick={() => setViewerUrl(doc.url!)}
+                      onClick={() => setViewerUrl(fileUrl)}
                     />
                   )}
                 </Card>

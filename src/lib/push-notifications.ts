@@ -1,5 +1,3 @@
-import { supabase } from "./supabase";
-
 export interface PushNotificationData {
   title: string;
   body: string;
@@ -123,22 +121,6 @@ export async function requestNotificationPermission(): Promise<boolean> {
     if (permission === "granted") {
       await registerPushServiceWorker();
 
-      // Save push token / device registration to Supabase push_subscriptions table
-      try {
-        const userAgent = navigator?.userAgent || "mobile";
-        const partner = localStorage.getItem("dk_partner_session") || localStorage.getItem("duokarma_preferred_partner") || "Partner";
-        await supabase.from("push_subscriptions").upsert(
-          {
-            id: `device_${Date.now()}_${Math.random().toString(36).substring(2, 6)}`,
-            user_agent: `${userAgent} (${partner})`,
-            permission: "granted",
-            created_at: new Date().toISOString(),
-          },
-          { onConflict: "id" }
-        );
-      } catch (err) {
-        console.warn("[PushNotifications] Could not save subscription to database:", err);
-      }
 
       // Show welcome notification test
       showPushNotification({
