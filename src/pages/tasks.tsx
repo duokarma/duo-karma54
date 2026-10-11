@@ -37,7 +37,8 @@ import * as z from "zod";
 import { supabase } from "@/lib/supabase";
 import { cn } from "@/lib/utils";
 import { logActivity } from "@/lib/activity-logger";
-import type { Task } from "@/types";
+import { useToast } from "@/components/ui/toast";
+import type { Task, Project } from "@/types";
 
 const taskSchema = z.object({
   title: z.string().min(2, "Title is required"),
@@ -115,6 +116,7 @@ function TaskCard({ task, index, onEdit, onDelete, onStatusChange }: { task: Tas
 
 export function TasksPage() {
   const queryClient = useQueryClient();
+  const { toast } = useToast();
   const [isDialogOpen, setIsDialogOpen] = useState(false);
   const [selectedTask, setSelectedTask] = useState<Task | null>(null);
 
@@ -123,46 +125,102 @@ export function TasksPage() {
     defaultValues: { priority: "medium" }
   });
 
+  const { data: projects = [] } = useQuery({
+    queryKey: ["projects"],
+    queryFn: async () => {
+      const { data, error } = await supabase.from("projects").select("*").order("name", { ascending: true });
+      if (error) return [];
+      return (data || []) as Project[];
+    },
+  });
+
   const createMutation = useMutation({
     mutationFn: async (values: TaskFormValues) => {
       const newTask = {
         id: Math.random().toString(36).substring(2, 9),
-        ...values,
-        status: "todo",
+        title: values.title.trim(),
+        project: values.project.trim(),
+        assignee: values.assignee.trim(),
+        priority: values.priority,
+        dueDate: values.dueDate ? values.dueDate.split("T")[0] : new Date().toISOString().split("T")[0],
+        status: "todo" as const,
       };
-      const { error } = await supabase.from("tasks").insert([newTask]);
+      const { data, error } = await supabase.from("tasks").insert([newTask]).select();
       if (error) throw error;
+      const created = data && data[0] ? (data[0] as Task) : (newTask as Task);
       logActivity({
         type: "task",
-        message: `Task "${values.title}" created for ${values.project}`,
-        actor: values.assignee,
+        message: `Task "${created.title}" created for ${created.project}`,
+        actor: created.assignee,
       });
+      return created;
     },
-    onSuccess: () => {
+    onSuccess: (created) => {
+      queryClient.setQueryData<Task[]>(["tasks"], (old) => {
+        return old ? [created, ...old] : [created];
+      });
       queryClient.invalidateQueries({ queryKey: ["tasks"] });
       queryClient.invalidateQueries({ queryKey: ["activities"] });
       setIsDialogOpen(false);
       reset();
+      toast({
+        title: "Task Created",
+        description: `Task "${created.title}" added to ${created.project}.`,
+      });
+    },
+    onError: (err: any) => {
+      toast({
+        title: "Failed to create task",
+        description: err.message || "An unexpected error occurred.",
+        variant: "destructive",
+      });
     },
   });
 
   const editMutation = useMutation({
     mutationFn: async (values: TaskFormValues & { id: string }) => {
       const { id, ...rest } = values;
-      const { error } = await supabase.from("tasks").update(rest).eq("id", id);
+      const payload = {
+        title: rest.title.trim(),
+        project: rest.project.trim(),
+        assignee: rest.assignee.trim(),
+        priority: rest.priority,
+        dueDate: rest.dueDate ? rest.dueDate.split("T")[0] : new Date().toISOString().split("T")[0],
+      };
+      const { data, error } = await supabase.from("tasks").update(payload).eq("id", id).select();
       if (error) throw error;
+      if (!data || data.length === 0) {
+        throw new Error("Task not found or update could not be completed.");
+      }
+      const updated = data[0] as Task;
       logActivity({
         type: "task",
-        message: `Task "${values.title}" updated`,
-        actor: values.assignee,
+        message: `Task "${updated.title}" updated`,
+        actor: updated.assignee,
       });
+      return updated;
     },
-    onSuccess: () => {
+    onSuccess: (updated) => {
+      queryClient.setQueryData<Task[]>(["tasks"], (old) => {
+        if (!old) return [updated];
+        return old.map((t) => (t.id === updated.id ? { ...t, ...updated } : t));
+      });
       queryClient.invalidateQueries({ queryKey: ["tasks"] });
       queryClient.invalidateQueries({ queryKey: ["activities"] });
       setIsDialogOpen(false);
       setSelectedTask(null);
       reset();
+      toast({
+        title: "Changes Saved",
+        description: `Task "${updated.title}" updated successfully.`,
+      });
+    },
+    onError: (err: any) => {
+      toast({
+        title: "Failed to update task",
+        description: err.message || "An unexpected error occurred.",
+        variant: "destructive",
+      });
     },
   });
 
@@ -174,23 +232,44 @@ export function TasksPage() {
         type: "task",
         message: `Task deleted`,
       });
+      return id;
     },
-    onSuccess: () => {
+    onSuccess: (deletedId) => {
+      queryClient.setQueryData<Task[]>(["tasks"], (old) => {
+        if (!old) return old;
+        return old.filter((t) => t.id !== deletedId);
+      });
       queryClient.invalidateQueries({ queryKey: ["tasks"] });
       queryClient.invalidateQueries({ queryKey: ["activities"] });
+      toast({
+        title: "Task Deleted",
+        description: "Task removed from workspace.",
+      });
+    },
+    onError: (err: any) => {
+      toast({
+        title: "Failed to delete task",
+        description: err.message,
+        variant: "destructive",
+      });
     },
   });
 
   const statusMutation = useMutation({
     mutationFn: async ({ id, status }: { id: string; status: Task["status"] }) => {
-      const { error } = await supabase.from("tasks").update({ status }).eq("id", id);
+      const { data, error } = await supabase.from("tasks").update({ status }).eq("id", id).select();
       if (error) throw error;
       logActivity({
         type: "task",
         message: `Task status updated to ${status}`,
       });
+      return data && data[0] ? (data[0] as Task) : { id, status };
     },
-    onSuccess: () => {
+    onSuccess: (updated: any) => {
+      queryClient.setQueryData<Task[]>(["tasks"], (old) => {
+        if (!old) return old;
+        return old.map((t) => (t.id === updated.id ? { ...t, status: updated.status } : t));
+      });
       queryClient.invalidateQueries({ queryKey: ["tasks"] });
       queryClient.invalidateQueries({ queryKey: ["activities"] });
     },
@@ -203,7 +282,7 @@ export function TasksPage() {
       project: task.project,
       assignee: task.assignee,
       priority: task.priority,
-      dueDate: task.dueDate.split('T')[0],
+      dueDate: task.dueDate ? task.dueDate.split('T')[0] : "",
     });
     setIsDialogOpen(true);
   };
@@ -211,7 +290,7 @@ export function TasksPage() {
   const { data: tasks = [], isLoading } = useQuery({
     queryKey: ["tasks"],
     queryFn: async () => {
-      const { data, error } = await supabase.from("tasks").select("*");
+      const { data, error } = await supabase.from("tasks").select("*").order("dueDate", { ascending: true });
       if (error) throw error;
       return data as Task[];
     },
@@ -280,13 +359,25 @@ export function TasksPage() {
             <DialogTitle>{selectedTask ? "Edit Task" : "Create Task"}</DialogTitle>
             <DialogDescription>{selectedTask ? "Update task details." : "Add a new task to your board."}</DialogDescription>
           </DialogHeader>
-          <form onSubmit={handleSubmit((data) => {
-            if (selectedTask) {
-              editMutation.mutate({ ...data, id: selectedTask.id });
-            } else {
-              createMutation.mutate(data);
-            }
-          })}>
+          <form
+            onSubmit={handleSubmit(
+              (data) => {
+                if (selectedTask) {
+                  editMutation.mutate({ ...data, id: selectedTask.id });
+                } else {
+                  createMutation.mutate(data);
+                }
+              },
+              (valErrors) => {
+                const firstMsg = Object.values(valErrors)[0]?.message as string;
+                toast({
+                  title: "Please check form fields",
+                  description: firstMsg || "One or more fields require correction.",
+                  variant: "destructive",
+                });
+              }
+            )}
+          >
             <div className="space-y-4">
               <div>
                 <label className="mb-1.5 block text-xs font-medium text-ink-dim">Title</label>
@@ -295,7 +386,16 @@ export function TasksPage() {
               </div>
               <div>
                 <label className="mb-1.5 block text-xs font-medium text-ink-dim">Project</label>
-                <Input placeholder="Select project" {...register("project")} />
+                <Input
+                  list="project-options"
+                  placeholder="Select or enter project name"
+                  {...register("project")}
+                />
+                <datalist id="project-options">
+                  {projects.map((p) => (
+                    <option key={p.id} value={p.name} />
+                  ))}
+                </datalist>
                 {errors.project && <p className="mt-1 text-[10px] text-rose">{errors.project.message}</p>}
               </div>
               <div>
@@ -305,7 +405,10 @@ export function TasksPage() {
               </div>
               <div>
                 <label className="mb-1.5 block text-xs font-medium text-ink-dim">Priority</label>
-                <Select onValueChange={(val) => setValue("priority", val as any)} defaultValue="medium">
+                <Select
+                  onValueChange={(val) => setValue("priority", val as any, { shouldDirty: true, shouldValidate: true })}
+                  defaultValue="medium"
+                >
                   <SelectTrigger>
                     <SelectValue placeholder="Select priority" />
                   </SelectTrigger>

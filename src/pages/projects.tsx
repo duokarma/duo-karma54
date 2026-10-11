@@ -1,4 +1,4 @@
-import { useMemo, useState } from "react";
+import { useMemo, useState, useEffect } from "react";
 import { m as motion } from "framer-motion";
 import { Plus, Search, FolderKanban, MoreVertical, Pencil, Trash2 } from "lucide-react";
 import { PageHeader } from "@/components/shared/page-header";
@@ -95,24 +95,57 @@ export function ProjectsPage() {
   const currentStatus = watch("status");
   const currentPriority = watch("priority");
 
+  // Real-time synchronization for projects table
+  useEffect(() => {
+    const channelId = `projects_realtime_${Math.random().toString(36).substring(2, 9)}`;
+    const channel = supabase
+      .channel(channelId)
+      .on("postgres_changes", { event: "*", schema: "public", table: "projects" }, () => {
+        queryClient.invalidateQueries({ queryKey: ["projects"] });
+        queryClient.invalidateQueries({ queryKey: ["activities"] });
+      })
+      .subscribe();
+
+    return () => {
+      supabase.removeChannel(channel);
+    };
+  }, [queryClient]);
+
   const createMutation = useMutation({
     mutationFn: async (values: ProjectFormValues) => {
       const team = assignedPartner === "Both" ? ["Hatim", "Moiz"] : [assignedPartner];
+      const cleanDueDate = values.dueDate && values.dueDate.trim() !== ""
+        ? values.dueDate.split("T")[0]
+        : new Date(Date.now() + 30 * 24 * 60 * 60 * 1000).toISOString().split("T")[0];
+
       const newProject = {
         id: Math.random().toString(36).substring(2, 9),
-        ...values,
+        name: values.name.trim(),
+        client: values.client.trim(),
+        budget: Number(values.budget) || 0,
+        spent: Number(values.spent) || 0,
+        progress: Number(values.progress) || 0,
+        status: values.status || "pending",
+        priority: values.priority || "medium",
         startDate: new Date().toISOString().split("T")[0],
-        dueDate: values.dueDate || new Date(Date.now() + 30 * 24 * 60 * 60 * 1000).toISOString().split("T")[0],
+        dueDate: cleanDueDate,
+        websiteLink: values.websiteLink?.trim() || "",
+        vercelLink: values.vercelLink?.trim() || "",
+        githubLink: values.githubLink?.trim() || "",
+        databaseLink: values.databaseLink?.trim() || "",
         team,
       };
-      const { error } = await supabase.from("projects").insert([newProject]);
+
+      const { data, error } = await supabase.from("projects").insert([newProject]).select();
       if (error) throw error;
+      const created = data && data[0] ? (data[0] as Project) : (newProject as Project);
+
       logActivity({
         type: "project",
-        message: `Project "${values.name}" created for ${values.client || "Client"}`,
+        message: `Project "${created.name}" created for ${created.client || "Client"}`,
         actor: assignedPartner === "Both" ? "Partners" : assignedPartner,
       });
-      return newProject as Project;
+      return created;
     },
     onSuccess: (newProject) => {
       queryClient.setQueryData<Project[]>(["projects"], (old) => {
@@ -130,7 +163,7 @@ export function ProjectsPage() {
     onError: (err: any) => {
       toast({
         title: "Failed to create project",
-        description: err.message,
+        description: err.message || "An error occurred while creating the project.",
         variant: "destructive",
       });
     },
@@ -140,19 +173,53 @@ export function ProjectsPage() {
     mutationFn: async (values: ProjectFormValues & { id: string }) => {
       const team = assignedPartner === "Both" ? ["Hatim", "Moiz"] : [assignedPartner];
       const { id, ...rest } = values;
-      const { error } = await supabase.from("projects").update({ ...rest, team }).eq("id", id);
+
+      // Ensure empty string is converted to null for PostgreSQL DATE type
+      const cleanDueDate = rest.dueDate && rest.dueDate.trim() !== ""
+        ? rest.dueDate.split("T")[0]
+        : null;
+
+      const payload = {
+        name: rest.name.trim(),
+        client: rest.client.trim(),
+        budget: Number(rest.budget) || 0,
+        spent: Number(rest.spent) || 0,
+        progress: Number(rest.progress) || 0,
+        status: rest.status || "pending",
+        priority: rest.priority || "medium",
+        dueDate: cleanDueDate,
+        websiteLink: rest.websiteLink?.trim() || "",
+        vercelLink: rest.vercelLink?.trim() || "",
+        githubLink: rest.githubLink?.trim() || "",
+        databaseLink: rest.databaseLink?.trim() || "",
+        team,
+      };
+
+      const { data, error } = await supabase
+        .from("projects")
+        .update(payload)
+        .eq("id", id)
+        .select();
+
       if (error) throw error;
+      if (!data || data.length === 0) {
+        throw new Error("Project not found or update could not be completed.");
+      }
+
+      const updated = data[0] as Project;
+
       logActivity({
         type: "project",
-        message: `Project "${values.name}" details updated`,
+        message: `Project "${updated.name}" details updated`,
         actor: assignedPartner === "Both" ? "Partners" : assignedPartner,
       });
-      return { id, ...rest, team };
+
+      return updated;
     },
     onSuccess: (updated) => {
-      // Instantly update the cache so UI reflects budget and all fields with 0ms latency
+      // Instantly update the cache so UI reflects all fields with 0ms latency
       queryClient.setQueryData<Project[]>(["projects"], (old) => {
-        if (!old) return old;
+        if (!old) return [updated];
         return old.map((p) => (p.id === updated.id ? { ...p, ...updated } : p));
       });
       queryClient.invalidateQueries({ queryKey: ["projects"] });
@@ -162,13 +229,13 @@ export function ProjectsPage() {
       reset();
       toast({
         title: "Changes Saved",
-        description: `Project "${updated.name}" budget and details updated.`,
+        description: `Project "${updated.name}" updated successfully.`,
       });
     },
     onError: (err: any) => {
       toast({
         title: "Failed to update project",
-        description: err.message,
+        description: err.message || "An error occurred while saving project changes.",
         variant: "destructive",
       });
     },
@@ -197,29 +264,47 @@ export function ProjectsPage() {
         description: "Project has been removed from workspace.",
       });
     },
+    onError: (err: any) => {
+      toast({
+        title: "Failed to delete project",
+        description: err.message,
+        variant: "destructive",
+      });
+    },
   });
 
   const statusMutation = useMutation({
     mutationFn: async ({ id, status }: { id: string; status: Project["status"] }) => {
-      const { error } = await supabase.from("projects").update({ status }).eq("id", id);
+      const { data, error } = await supabase
+        .from("projects")
+        .update({ status })
+        .eq("id", id)
+        .select();
       if (error) throw error;
       logActivity({
         type: "project",
         message: `Project status updated to ${status}`,
         actor: "Partner",
       });
-      return { id, status };
+      return data && data[0] ? (data[0] as Project) : { id, status };
     },
-    onSuccess: ({ id, status }) => {
+    onSuccess: (updated: any) => {
       queryClient.setQueryData<Project[]>(["projects"], (old) => {
         if (!old) return old;
-        return old.map((p) => (p.id === id ? { ...p, status } : p));
+        return old.map((p) => (p.id === updated.id ? { ...p, status: updated.status } : p));
       });
       queryClient.invalidateQueries({ queryKey: ["projects"] });
       queryClient.invalidateQueries({ queryKey: ["activities"] });
       toast({
         title: "Status Updated",
-        description: `Project status set to ${status}.`,
+        description: `Project status set to ${updated.status}.`,
+      });
+    },
+    onError: (err: any) => {
+      toast({
+        title: "Failed to update status",
+        description: err.message,
+        variant: "destructive",
       });
     },
   });
@@ -241,7 +326,7 @@ export function ProjectsPage() {
       progress: project.progress || 0,
       status: project.status || "pending",
       priority: project.priority || "medium",
-      dueDate: project.dueDate || "",
+      dueDate: project.dueDate ? project.dueDate.split("T")[0] : "",
       websiteLink: project.websiteLink || "",
       vercelLink: project.vercelLink || "",
       githubLink: project.githubLink || "",
@@ -253,9 +338,12 @@ export function ProjectsPage() {
   const { data: projects = [], isLoading } = useQuery({
     queryKey: ["projects"],
     queryFn: async () => {
-      const { data, error } = await supabase.from("projects").select("*");
+      const { data, error } = await supabase
+        .from("projects")
+        .select("*")
+        .order("startDate", { ascending: false });
       if (error) throw error;
-      return data as Project[];
+      return (data || []) as Project[];
     },
   });
 
@@ -389,7 +477,11 @@ export function ProjectsPage() {
                           </Button>
                         </DropdownMenuTrigger>
                         <DropdownMenuContent align="end">
-                          <DropdownMenuItem onClick={() => openEditDrawer(project)}>
+                          <DropdownMenuItem
+                            onSelect={() => {
+                              setTimeout(() => openEditDrawer(project), 50);
+                            }}
+                          >
                             <Pencil className="mr-2 h-3.5 w-3.5" /> Edit Project
                           </DropdownMenuItem>
                           <DropdownMenuSeparator />
@@ -504,13 +596,29 @@ export function ProjectsPage() {
             <DrawerDescription>{selectedProject ? "Update all project details." : "Set up a new project tracking space."}</DrawerDescription>
           </DrawerHeader>
           <div className="overflow-y-auto px-4 pb-8">
-            <form onSubmit={handleSubmit((data) => {
-              if (selectedProject) {
-                editMutation.mutate({ ...data, id: selectedProject.id });
-              } else {
-                createMutation.mutate(data);
-              }
-            })} className="space-y-4">
+            <form
+              onSubmit={handleSubmit(
+                (data) => {
+                  if (selectedProject) {
+                    editMutation.mutate({ ...data, id: selectedProject.id });
+                  } else {
+                    createMutation.mutate(data);
+                  }
+                },
+                (valErrors) => {
+                  const errorKeys = Object.keys(valErrors);
+                  if (errorKeys.length > 0) {
+                    const firstMsg = (valErrors as any)[errorKeys[0]]?.message;
+                    toast({
+                      title: "Please check form fields",
+                      description: firstMsg || "One or more fields require correction.",
+                      variant: "destructive",
+                    });
+                  }
+                }
+              )}
+              className="space-y-4"
+            >
               <div className="grid grid-cols-1 sm:grid-cols-2 gap-3 sm:gap-4">
                 <div>
                   <label className="mb-1.5 block text-xs font-medium text-ink-dim">Project Name</label>
@@ -527,7 +635,10 @@ export function ProjectsPage() {
               <div className="grid grid-cols-1 sm:grid-cols-2 gap-3 sm:gap-4">
                 <div>
                   <label className="mb-1.5 block text-xs font-medium text-ink-dim">Status</label>
-                  <Select value={currentStatus || "pending"} onValueChange={(v: any) => setValue("status", v)}>
+                  <Select
+                    value={currentStatus || "pending"}
+                    onValueChange={(v: any) => setValue("status", v, { shouldDirty: true, shouldValidate: true })}
+                  >
                     <SelectTrigger>
                       <SelectValue placeholder="Status" />
                     </SelectTrigger>
@@ -541,7 +652,10 @@ export function ProjectsPage() {
                 </div>
                 <div>
                   <label className="mb-1.5 block text-xs font-medium text-ink-dim">Priority</label>
-                  <Select value={currentPriority || "medium"} onValueChange={(v: any) => setValue("priority", v)}>
+                  <Select
+                    value={currentPriority || "medium"}
+                    onValueChange={(v: any) => setValue("priority", v, { shouldDirty: true, shouldValidate: true })}
+                  >
                     <SelectTrigger>
                       <SelectValue placeholder="Priority" />
                     </SelectTrigger>

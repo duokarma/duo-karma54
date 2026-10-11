@@ -21,7 +21,7 @@ const DropdownMenuContent = React.forwardRef<
       align={align}
       collisionPadding={collisionPadding}
       className={cn(
-        "z-[100] min-w-[10rem] max-w-[calc(100vw-1.5rem)] overflow-hidden rounded-[var(--radius-control)] glass-panel-strong p-1 shadow-2xl popover-content-anim",
+        "z-[200] min-w-[10rem] max-w-[calc(100vw-1.5rem)] overflow-hidden rounded-[var(--radius-control)] glass-panel-strong p-1 shadow-2xl popover-content-anim",
         className
       )}
       {...props}
