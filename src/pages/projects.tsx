@@ -595,7 +595,7 @@ export function ProjectsPage() {
             <DrawerTitle>{selectedProject ? "Edit Project" : "Create New Project"}</DrawerTitle>
             <DrawerDescription>{selectedProject ? "Update all project details." : "Set up a new project tracking space."}</DrawerDescription>
           </DrawerHeader>
-          <div className="overflow-y-auto px-4 pb-8">
+          <div className="overflow-y-auto px-4 pb-12 sm:pb-8">
             <form
               onSubmit={handleSubmit(
                 (data) => {
@@ -723,7 +723,11 @@ export function ProjectsPage() {
                   <Input placeholder="https://..." {...register("databaseLink")} />
                 </div>
               </div>
-              <Button className="w-full mt-2" type="submit" disabled={createMutation.isPending || editMutation.isPending}>
+              <Button
+                className="w-full mt-3 h-10 text-sm font-semibold touch-manipulation relative z-20 cursor-pointer shadow-md"
+                type="submit"
+                disabled={createMutation.isPending || editMutation.isPending}
+              >
                 {createMutation.isPending || editMutation.isPending ? "Saving..." : selectedProject ? "Save Changes" : "Create Project"}
               </Button>
             </form>

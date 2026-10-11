@@ -46,13 +46,13 @@ const Button = React.forwardRef<HTMLButtonElement, ButtonProps>(
     const content = asChild ? children : (
       <>
         <div className="absolute inset-0 bg-gradient-to-r from-transparent via-[rgba(255,255,255,0.15)] to-transparent skew-x-[-20deg] translate-x-[-150%] group-hover:translate-x-[150%] transition-transform duration-700 ease-in-out pointer-events-none" />
-        <span className="relative z-10 flex items-center gap-2">{children}</span>
+        <span className="relative z-10 flex items-center gap-2 pointer-events-none">{children}</span>
       </>
     );
 
     return (
       <Comp
-        className={cn(buttonVariants({ variant, size, className }), "relative overflow-hidden group")}
+        className={cn(buttonVariants({ variant, size, className }), "relative overflow-hidden group touch-manipulation select-none")}
         ref={ref}
         {...props}
       >

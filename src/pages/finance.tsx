@@ -742,9 +742,9 @@ function ExpensesTab({ expenses }: { expenses: Expense[] }) {
               <Input type="date" value={form.date} onChange={(e) => setForm((f) => ({ ...f, date: e.target.value }))} />
             </div>
           </div>
-          <DialogFooter>
-            <DialogClose asChild><Button variant="outline">Cancel</Button></DialogClose>
-            <Button onClick={() => saveMutation.mutate()} disabled={saveMutation.isPending}>
+          <DialogFooter className="gap-2 sm:gap-0 mt-4">
+            <DialogClose asChild><Button variant="outline" className="h-10 sm:h-9 text-sm font-medium touch-manipulation">Cancel</Button></DialogClose>
+            <Button onClick={() => saveMutation.mutate()} disabled={saveMutation.isPending} className="h-10 sm:h-9 text-sm font-semibold touch-manipulation cursor-pointer relative z-10 shadow-md">
               {saveMutation.isPending && <Loader2 className="mr-2 h-3.5 w-3.5 animate-spin" />}
               Save
             </Button>

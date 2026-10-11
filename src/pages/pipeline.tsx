@@ -617,8 +617,8 @@ function LeadForm({
       </div>
 
       <div className="flex gap-2 pt-2">
-        <Button variant="outline" className="flex-1" onClick={onClose} disabled={isSaving}>Cancel</Button>
-        <Button className="flex-1" onClick={() => onSave(form)} disabled={isSaving}>
+        <Button variant="outline" className="flex-1 h-10 sm:h-9 text-sm font-medium touch-manipulation" onClick={onClose} disabled={isSaving}>Cancel</Button>
+        <Button className="flex-1 h-10 sm:h-9 text-sm font-semibold touch-manipulation cursor-pointer relative z-10 shadow-md" onClick={() => onSave(form)} disabled={isSaving}>
           {isSaving ? <Loader2 className="h-4 w-4 animate-spin mr-2" /> : null}
           Save Lead
         </Button>
@@ -813,8 +813,8 @@ function ClientForm({
       </div>
 
       <div className="flex gap-2 pt-2">
-        <Button variant="outline" className="flex-1" onClick={onClose} disabled={isSaving}>Cancel</Button>
-        <Button className="flex-1" onClick={() => onSave({ ...form, remaining_amount: remaining })} disabled={isSaving}>
+        <Button variant="outline" className="flex-1 h-10 sm:h-9 text-sm font-medium touch-manipulation" onClick={onClose} disabled={isSaving}>Cancel</Button>
+        <Button className="flex-1 h-10 sm:h-9 text-sm font-semibold touch-manipulation cursor-pointer relative z-10 shadow-md" onClick={() => onSave({ ...form, remaining_amount: remaining })} disabled={isSaving}>
           {isSaving ? <Loader2 className="h-4 w-4 animate-spin mr-2" /> : null}
           Save Client
         </Button>

@@ -544,7 +544,7 @@ export function ManageAppsDialog({
                 type="submit"
                 size="sm"
                 disabled={isSaving || isUploading}
-                className="h-8 gap-1.5 text-xs bg-[var(--color-accent)] hover:bg-[var(--color-accent)]/90 text-white min-w-[100px]"
+                className="h-10 sm:h-8 gap-1.5 text-sm sm:text-xs font-semibold bg-[var(--color-accent)] hover:bg-[var(--color-accent)]/90 text-white min-w-[110px] touch-manipulation cursor-pointer relative z-10 shadow-md"
               >
                 {isSaving ? (
                   <>

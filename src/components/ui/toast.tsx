@@ -88,7 +88,7 @@ function ToastCard({
       className={cn(
         "flex w-80 items-start gap-3 rounded-[var(--radius-card)] p-4 shadow-[var(--shadow-panel)]",
         "glass-panel-strong border border-[var(--color-edge)]",
-        !isFront && "pointer-events-none"
+        isFront ? "pointer-events-auto" : "pointer-events-none"
       )}
     >
       <Icon className={cn("h-5 w-5 shrink-0 mt-0.5", config.className)} />
@@ -132,8 +132,13 @@ export function ToastProvider({ children }: { children: React.ReactNode }) {
   return (
     <ToastContext.Provider value={{ toast }}>
       {children}
-      <div className="fixed bottom-6 right-6 z-[200] w-80 h-32 pointer-events-none flex items-end justify-end">
-        <ul className="relative w-full h-full pointer-events-auto">
+      <div
+        className={cn(
+          "fixed bottom-6 right-6 z-[250] pointer-events-none flex items-end justify-end",
+          toasts.length > 0 ? "w-80 h-32" : "w-0 h-0 overflow-hidden"
+        )}
+      >
+        <ul className="relative w-full h-full pointer-events-none">
           <AnimatePresence mode="popLayout">
             {toasts.map((t, i) => (
               <ToastCard

@@ -412,7 +412,7 @@ export function PartnerSettingsDialog({
                 <Button
                   type="submit"
                   disabled={isLoading || !newPassword || !confirmPassword}
-                  className="w-full text-xs h-9 sm:h-8 bg-white text-black hover:bg-white/90 font-medium rounded-lg transition-all shadow-sm touch-manipulation"
+                  className="w-full text-sm font-semibold h-10 sm:h-9 bg-white text-black hover:bg-white/90 rounded-lg transition-all shadow-md touch-manipulation cursor-pointer relative z-10"
                 >
                   {isLoading ? (
                     <>

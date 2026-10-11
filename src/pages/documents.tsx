@@ -319,6 +319,7 @@ export function DocumentsPage() {
                 }
               }} 
               disabled={!newName || renameMutation.isPending}
+              className="h-10 sm:h-9 text-sm font-semibold touch-manipulation cursor-pointer relative z-10 shadow-md"
             >
               {renameMutation.isPending ? "Saving..." : "Save"}
             </Button>

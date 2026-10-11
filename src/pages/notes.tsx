@@ -613,7 +613,7 @@ export function NotesPage() {
                       size="sm"
                       onClick={handleSaveActiveNote}
                       disabled={isSaving}
-                      className="h-7 px-2.5 text-xs bg-white text-black hover:bg-white/90 font-medium gap-1 touch-manipulation shadow-sm"
+                      className="h-8 px-3 text-xs bg-white text-black hover:bg-white/90 font-medium gap-1.5 touch-manipulation shadow-sm cursor-pointer relative z-10"
                       title="Save note to Supabase"
                     >
                       {isSaving ? <Loader2 className="h-3 w-3 animate-spin" /> : <Cloud className="h-3 w-3" />}
@@ -739,7 +739,7 @@ export function NotesPage() {
                         size="sm"
                         onClick={handleSaveActiveNote}
                         disabled={isSaving}
-                        className="text-xs h-8 bg-white text-black hover:bg-white/90 font-medium px-4 shadow-sm"
+                        className="text-xs h-9 sm:h-8 bg-white text-black hover:bg-white/90 font-medium px-4 shadow-sm touch-manipulation cursor-pointer relative z-10"
                       >
                         {isSaving ? <Loader2 className="h-3 w-3 animate-spin mr-1" /> : <Cloud className="h-3 w-3 mr-1" />}
                         Save to Supabase

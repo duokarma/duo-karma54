@@ -89,7 +89,11 @@ function TaskCard({ task, index, onEdit, onDelete, onStatusChange }: { task: Tas
                   )
                 ))}
                 <DropdownMenuSeparator />
-                <DropdownMenuItem onClick={onEdit}>
+                <DropdownMenuItem
+                  onSelect={() => {
+                    setTimeout(() => onEdit(), 50);
+                  }}
+                >
                   <Pencil className="mr-2 h-3.5 w-3.5" /> Edit
                 </DropdownMenuItem>
                 <DropdownMenuItem onClick={onDelete} className="text-rose focus:text-rose">
@@ -430,7 +434,11 @@ export function TasksPage() {
               <Button variant="secondary" type="button" onClick={() => setIsDialogOpen(false)}>
                 Cancel
               </Button>
-              <Button type="submit" disabled={createMutation.isPending || editMutation.isPending}>
+              <Button
+                type="submit"
+                disabled={createMutation.isPending || editMutation.isPending}
+                className="h-10 text-sm font-semibold touch-manipulation relative z-20 cursor-pointer shadow-md"
+              >
                 {createMutation.isPending || editMutation.isPending ? "Saving..." : selectedTask ? "Save Changes" : "Create Task"}
               </Button>
             </DialogFooter>
