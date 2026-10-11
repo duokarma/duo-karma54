@@ -19,6 +19,7 @@ import { ProtectedRoute } from "@/components/shared/protected-route";
 const LoginPage = lazy(() => import("@/pages/login").then((m) => ({ default: m.LoginPage })));
 const DashboardPage = lazy(() => import("@/pages/dashboard").then((m) => ({ default: m.DashboardPage })));
 const PipelinePage = lazy(() => import("@/pages/pipeline").then((m) => ({ default: m.PipelinePage })));
+const InstaReachPage = lazy(() => import("@/pages/insta-reach").then((m) => ({ default: m.InstaReachPage })));
 const FinancePage = lazy(() => import("@/pages/finance").then((m) => ({ default: m.FinancePage })));
 const ProjectsPage = lazy(() => import("@/pages/projects").then((m) => ({ default: m.ProjectsPage })));
 const TasksPage = lazy(() => import("@/pages/tasks").then((m) => ({ default: m.TasksPage })));
@@ -51,6 +52,7 @@ function DashboardRoutes() {
           children: [
             { index: true,                          element: <DashboardPage /> },
             { path: "pipeline",                     element: <PipelinePage /> },
+            { path: "insta-reach",                  element: <InstaReachPage /> },
             { path: "finance",                      element: <FinancePage /> },
             { path: "projects",                     element: <ProjectsPage /> },
             { path: "tasks",                        element: <TasksPage /> },

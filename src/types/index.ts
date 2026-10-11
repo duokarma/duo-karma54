@@ -223,3 +223,27 @@ export interface DynamicRecord {
   created_at: string;
   updated_at: string;
 }
+
+export type InstaLeadStatus =
+  | "new"
+  | "dm_sent"
+  | "replied"
+  | "video_sent"
+  | "call_booked"
+  | "won"
+  | "lost";
+
+export interface InstaReachLead {
+  id: string;
+  insta_handle: string;
+  insta_name: string;
+  direct_link: string;
+  location: string;
+  category?: string;
+  phone?: string;
+  whatsapp_link?: string;
+  status: InstaLeadStatus;
+  notes?: string;
+  created_at: string;
+  created_day_date?: string;
+}
