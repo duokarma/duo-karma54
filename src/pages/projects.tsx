@@ -143,7 +143,7 @@ export function ProjectsPage() {
       logActivity({
         type: "project",
         message: `Project "${created.name}" created for ${created.client || "Client"}`,
-        actor: assignedPartner === "Both" ? "Partners" : assignedPartner,
+        actor: displayName || (assignedPartner === "Both" ? "Partners" : assignedPartner),
       });
       return created;
     },
@@ -211,7 +211,7 @@ export function ProjectsPage() {
       logActivity({
         type: "project",
         message: `Project "${updated.name}" details updated`,
-        actor: assignedPartner === "Both" ? "Partners" : assignedPartner,
+        actor: displayName || (assignedPartner === "Both" ? "Partners" : assignedPartner),
       });
 
       return updated;
@@ -248,7 +248,7 @@ export function ProjectsPage() {
       logActivity({
         type: "project",
         message: `Project removed from workspace`,
-        actor: "Partner",
+        actor: displayName || "Partner",
       });
       return id;
     },
@@ -284,7 +284,7 @@ export function ProjectsPage() {
       logActivity({
         type: "project",
         message: `Project status updated to ${status}`,
-        actor: "Partner",
+        actor: displayName || "Partner",
       });
       return data && data[0] ? (data[0] as Project) : { id, status };
     },

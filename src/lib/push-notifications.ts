@@ -37,6 +37,58 @@ export function getNotificationPermissionState(): NotificationPermission | "unsu
 }
 
 /**
+ * Play a gentle audio chime and mobile vibration when a notification arrives.
+ * Safe across all browsers without requiring external audio assets.
+ */
+export function playNotificationSound(): void {
+  try {
+    // Vibrate device if supported
+    if (typeof navigator !== "undefined" && typeof navigator.vibrate === "function") {
+      try {
+        navigator.vibrate([200, 100, 200]);
+      } catch {}
+    }
+
+    // Synthesize a pleasant two-tone chime via Web Audio API
+    const AudioCtx = window.AudioContext || (window as any).webkitAudioContext;
+    if (!AudioCtx) return;
+    const ctx = new AudioCtx();
+
+    if (ctx.state === "suspended") {
+      ctx.resume().catch(() => {});
+    }
+
+    const t = ctx.currentTime;
+
+    // Tone 1 (E5 - 659.25 Hz)
+    const osc1 = ctx.createOscillator();
+    const gain1 = ctx.createGain();
+    osc1.type = "sine";
+    osc1.frequency.setValueAtTime(659.25, t);
+    gain1.gain.setValueAtTime(0.12, t);
+    gain1.gain.exponentialRampToValueAtTime(0.001, t + 0.25);
+    osc1.connect(gain1);
+    gain1.connect(ctx.destination);
+    osc1.start(t);
+    osc1.stop(t + 0.25);
+
+    // Tone 2 (A5 - 880 Hz)
+    const osc2 = ctx.createOscillator();
+    const gain2 = ctx.createGain();
+    osc2.type = "sine";
+    osc2.frequency.setValueAtTime(880, t + 0.12);
+    gain2.gain.setValueAtTime(0.18, t + 0.12);
+    gain2.gain.exponentialRampToValueAtTime(0.001, t + 0.45);
+    osc2.connect(gain2);
+    gain2.connect(ctx.destination);
+    osc2.start(t + 0.12);
+    osc2.stop(t + 0.45);
+  } catch {
+    // Ignore audio restriction errors
+  }
+}
+
+/**
  * Register service worker for background push alerts
  */
 export async function registerPushServiceWorker(): Promise<ServiceWorkerRegistration | null> {
@@ -44,6 +96,9 @@ export async function registerPushServiceWorker(): Promise<ServiceWorkerRegistra
 
   try {
     const registration = await navigator.serviceWorker.register("/sw.js", { scope: "/" });
+    try {
+      await navigator.serviceWorker.ready;
+    } catch {}
     return registration;
   } catch (error) {
     console.warn("[PushNotifications] Service worker registration bypassed:", error);
@@ -71,10 +126,11 @@ export async function requestNotificationPermission(): Promise<boolean> {
       // Save push token / device registration to Supabase push_subscriptions table
       try {
         const userAgent = navigator?.userAgent || "mobile";
+        const partner = localStorage.getItem("dk_partner_session") || localStorage.getItem("duokarma_preferred_partner") || "Partner";
         await supabase.from("push_subscriptions").upsert(
           {
-            id: `device_${Date.now()}`,
-            user_agent: userAgent,
+            id: `device_${Date.now()}_${Math.random().toString(36).substring(2, 6)}`,
+            user_agent: `${userAgent} (${partner})`,
             permission: "granted",
             created_at: new Date().toISOString(),
           },
@@ -86,9 +142,9 @@ export async function requestNotificationPermission(): Promise<boolean> {
 
       // Show welcome notification test
       showPushNotification({
-        title: "🎉 Mobile Push Notifications Enabled!",
-        body: "You will now receive instant phone alerts whenever a new booking comes via website.",
-        url: "/admin/leads",
+        title: "🎉 Mobile Alerts Activated!",
+        body: "Both partners will receive instant notifications whenever projects are updated or bookings arrive.",
+        url: "/admin",
       });
 
       return true;
@@ -109,26 +165,50 @@ export async function showPushNotification(data: PushNotificationData): Promise<
       return;
     }
 
-    const registration = await navigator.serviceWorker.getRegistration();
+    let registration: ServiceWorkerRegistration | undefined;
+    if ("serviceWorker" in navigator) {
+      try {
+        registration = await navigator.serviceWorker.ready;
+      } catch {
+        registration = (await navigator.serviceWorker.getRegistration()) || undefined;
+      }
 
-    if (registration && registration.active) {
-      const options = {
-        body: data.body,
-        icon: data.icon || "/logo.jpeg",
-        badge: "/favicon.svg",
-        vibrate: [200, 100, 200],
-        data: {
-          url: data.url || "/admin",
-        },
-        tag: "duo-karma-booking",
-        renotify: true,
-      };
-      await registration.showNotification(data.title, options as unknown as NotificationOptions);
-    } else if (typeof window.Notification === "function") {
-      new Notification(data.title, {
-        body: data.body,
-        icon: data.icon || "/logo.jpeg",
-      });
+      if (!registration) {
+        registration = (await registerPushServiceWorker()) || undefined;
+      }
+    }
+
+    const uniqueTag = `dk-${Date.now()}-${Math.random().toString(36).substring(2, 7)}`;
+    const options: any = {
+      body: data.body,
+      icon: data.icon || "/logo.jpeg",
+      badge: "/favicon.svg",
+      vibrate: [250, 100, 250, 100, 250],
+      tag: uniqueTag,
+      renotify: true,
+      timestamp: Date.now(),
+      data: {
+        url: data.url || "/admin",
+      },
+    };
+
+    if (registration && typeof registration.showNotification === "function") {
+      await registration.showNotification(data.title, options);
+      return;
+    }
+
+    // Fallback for desktop browsers where new Notification() constructor is supported.
+    // Wrap in try-catch to guarantee mobile browsers (Android Chrome, iOS) never throw Illegal Constructor.
+    if (typeof window !== "undefined" && "Notification" in window && typeof window.Notification === "function") {
+      try {
+        new window.Notification(data.title, {
+          body: data.body,
+          icon: data.icon || "/logo.jpeg",
+          tag: uniqueTag,
+        });
+      } catch (err) {
+        console.warn("[PushNotifications] Desktop notification constructor fallback ignored:", err);
+      }
     }
   } catch (error) {
     console.warn("[PushNotifications] Error showing notification:", error);

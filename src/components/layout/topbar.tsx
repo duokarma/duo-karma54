@@ -219,7 +219,7 @@ export function Topbar() {
           </motion.div>
 
           {appsMenuOpen && (
-            <div className="fixed inset-x-2 top-12 sm:inset-x-auto sm:right-0 sm:top-full sm:mt-1.5 z-50 w-80 max-w-[calc(100vw-1rem)]">
+            <div className="fixed inset-x-2 top-12 sm:absolute sm:inset-x-auto sm:right-0 sm:top-full sm:mt-1.5 z-50 w-80 max-w-[calc(100vw-1rem)]">
               <div className="rounded-2xl border border-white/10 bg-[var(--color-void)]/95 backdrop-blur-2xl p-3 shadow-2xl ring-1 ring-black/50 space-y-2.5">
                 {/* Header */}
                 <div className="flex items-center justify-between pb-2 border-b border-white/10">
@@ -376,7 +376,7 @@ export function Topbar() {
             </Button>
           </motion.div>
           {notifOpen && (
-            <div className="fixed inset-x-2 top-12 sm:inset-x-auto sm:right-0 sm:top-full sm:mt-1.5 z-50 flex justify-end">
+            <div className="fixed inset-x-2 top-12 sm:absolute sm:inset-x-auto sm:right-0 sm:top-full sm:mt-1.5 z-50 flex justify-end">
               <NotificationPanel onClose={() => setNotifOpen(false)} />
             </div>
           )}

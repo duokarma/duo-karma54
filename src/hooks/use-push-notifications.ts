@@ -1,16 +1,26 @@
-import { useEffect, useState } from "react";
+import { useEffect, useState, useRef } from "react";
+import { useQueryClient } from "@tanstack/react-query";
 import { supabase } from "@/lib/supabase";
+import { useSafeToast } from "@/components/ui/toast";
 import {
   isPushNotificationSupported,
   getNotificationPermissionState,
   registerPushServiceWorker,
   showPushNotification,
   requestNotificationPermission,
+  playNotificationSound,
 } from "@/lib/push-notifications";
 
-export function usePushNotifications() {
+interface UsePushNotificationsOptions {
+  listen?: boolean;
+}
+
+export function usePushNotifications({ listen = true }: UsePushNotificationsOptions = {}) {
+  const queryClient = useQueryClient();
+  const toast = useSafeToast();
   const [permission, setPermission] = useState<NotificationPermission | "unsupported">("default");
   const [isSupported, setIsSupported] = useState(false);
+  const recentAlertsRef = useRef<Set<string>>(new Set());
 
   useEffect(() => {
     try {
@@ -33,65 +43,141 @@ export function usePushNotifications() {
     }
   }, []);
 
-  // Listen to Supabase real-time updates for website bookings and new activities
+  // Listen to Supabase real-time updates for activities, projects, tasks, leads, bookings
   useEffect(() => {
-    if (!isSupported || permission !== "granted") return;
+    if (!listen || !isSupported || permission !== "granted") return;
 
     let activitiesChannel: any = null;
     let leadsChannel: any = null;
     let inquiriesChannel: any = null;
+    let projectsChannel: any = null;
+
+    const suffix = Math.random().toString(36).substring(2, 9);
+
+    const triggerNotification = ({
+      title,
+      body,
+      url,
+      dedupKey,
+    }: {
+      title: string;
+      body: string;
+      url: string;
+      type?: string;
+      dedupKey?: string;
+    }) => {
+      if (dedupKey) {
+        if (recentAlertsRef.current.has(dedupKey)) return;
+        recentAlertsRef.current.add(dedupKey);
+        setTimeout(() => {
+          recentAlertsRef.current.delete(dedupKey);
+        }, 4000);
+      }
+
+      // 1. Play audio chime & vibrate device
+      playNotificationSound();
+
+      // 2. Trigger native push notification banner (mobile lockscreen / desktop OS)
+      showPushNotification({
+        title,
+        body,
+        url,
+      });
+
+      // 3. Show in-app toast notification for active screen
+      toast({
+        title,
+        description: body,
+      });
+
+      // 4. Invalidate all relevant React Query keys so UI updates in real time for both partners
+      queryClient.invalidateQueries({ queryKey: ["activities"] });
+      queryClient.invalidateQueries({ queryKey: ["latest_activity"] });
+      queryClient.invalidateQueries({ queryKey: ["projects"] });
+      queryClient.invalidateQueries({ queryKey: ["tasks"] });
+      queryClient.invalidateQueries({ queryKey: ["clients"] });
+      queryClient.invalidateQueries({ queryKey: ["leads"] });
+      queryClient.invalidateQueries({ queryKey: ["website_inquiries"] });
+    };
 
     try {
+      // Activities table: All partner actions (projects created/updated, tasks, clients, payments)
       activitiesChannel = supabase
-        .channel("push-notifications-activities")
+        .channel(`push-activities-${suffix}`)
         .on(
           "postgres_changes",
           { event: "INSERT", schema: "public", table: "activities" },
           (payload) => {
             const newActivity = payload.new;
             if (newActivity) {
-              showPushNotification({
+              const actorSuffix = newActivity.actor ? ` (by ${newActivity.actor})` : "";
+              const dedupKey = `act_${newActivity.id || newActivity.message}`;
+              triggerNotification({
                 title: getNotificationTitle(newActivity.type),
-                body: newActivity.message || "New activity recorded in Duo Karma Admin.",
+                body: `${newActivity.message || "New activity recorded in workspace."}${actorSuffix}`,
                 url: getNotificationUrl(newActivity.type),
+                type: newActivity.type,
+                dedupKey,
               });
             }
           }
         )
         .subscribe();
 
+      // Leads table: New website leads
       leadsChannel = supabase
-        .channel("push-notifications-leads")
+        .channel(`push-leads-${suffix}`)
         .on(
           "postgres_changes",
           { event: "INSERT", schema: "public", table: "leads" },
           (payload) => {
             const newLead = payload.new;
             if (newLead) {
-              showPushNotification({
+              const dedupKey = `lead_${newLead.id || newLead.email}`;
+              triggerNotification({
                 title: "🔔 New Website Booking Request!",
                 body: `New lead from ${newLead.name || "a visitor"} (${newLead.company || newLead.email || "Website"}).`,
                 url: "/admin/leads",
+                type: "lead",
+                dedupKey,
               });
             }
           }
         )
         .subscribe();
 
+      // Website Inquiries: Interactive website inquiries
       inquiriesChannel = supabase
-        .channel("push-notifications-inquiries")
+        .channel(`push-inquiries-${suffix}`)
         .on(
           "postgres_changes",
           { event: "INSERT", schema: "public", table: "website_inquiries" },
           (payload) => {
             const newInquiry = payload.new;
             if (newInquiry) {
-              showPushNotification({
+              const dedupKey = `inq_${newInquiry.id || newInquiry.email}`;
+              triggerNotification({
                 title: "🔔 New Website Booking Request!",
                 body: `New booking inquiry from ${newInquiry.name || "Visitor"} (${newInquiry.phone || newInquiry.email || "Website"}).`,
                 url: "/admin/leads",
+                type: "lead",
+                dedupKey,
               });
             }
+          }
+        )
+        .subscribe();
+
+      // Projects table changes (fallback to keep query cache fresh across devices)
+      projectsChannel = supabase
+        .channel(`push-projects-${suffix}`)
+        .on(
+          "postgres_changes",
+          { event: "*", schema: "public", table: "projects" },
+          () => {
+            queryClient.invalidateQueries({ queryKey: ["projects"] });
+            queryClient.invalidateQueries({ queryKey: ["activities"] });
+            queryClient.invalidateQueries({ queryKey: ["latest_activity"] });
           }
         )
         .subscribe();
@@ -99,14 +185,32 @@ export function usePushNotifications() {
       console.warn("[PushNotifications] Realtime channel setup skipped:", e);
     }
 
+    // Auto-resync when returning from mobile background or re-establishing network
+    const handleVisibilityChange = () => {
+      if (document.visibilityState === "visible") {
+        queryClient.invalidateQueries({ queryKey: ["activities"] });
+        queryClient.invalidateQueries({ queryKey: ["latest_activity"] });
+        queryClient.invalidateQueries({ queryKey: ["projects"] });
+        queryClient.invalidateQueries({ queryKey: ["tasks"] });
+        queryClient.invalidateQueries({ queryKey: ["leads"] });
+      }
+    };
+
+    document.addEventListener("visibilitychange", handleVisibilityChange);
+    window.addEventListener("online", handleVisibilityChange);
+
     return () => {
+      document.removeEventListener("visibilitychange", handleVisibilityChange);
+      window.removeEventListener("online", handleVisibilityChange);
+
       try {
         if (activitiesChannel) supabase.removeChannel(activitiesChannel);
         if (leadsChannel) supabase.removeChannel(leadsChannel);
         if (inquiriesChannel) supabase.removeChannel(inquiriesChannel);
+        if (projectsChannel) supabase.removeChannel(projectsChannel);
       } catch {}
     };
-  }, [isSupported, permission]);
+  }, [listen, isSupported, permission, queryClient, toast]);
 
   const enableNotifications = async () => {
     try {
@@ -140,6 +244,10 @@ function getNotificationTitle(type: string): string {
       return "📁 Project Update";
     case "invoice":
       return "📄 Invoice Created";
+    case "client":
+      return "👥 Client Update";
+    case "task":
+      return "✅ Task Update";
     default:
       return "🔔 Duo Karma Admin Alert";
   }
@@ -154,6 +262,10 @@ function getNotificationUrl(type: string): string {
       return "/admin/revenue";
     case "project":
       return "/admin/projects";
+    case "client":
+      return "/admin/clients";
+    case "task":
+      return "/admin/tasks";
     default:
       return "/admin";
   }

@@ -120,7 +120,7 @@ class NotificationErrorBoundary extends React.Component<
 
 function NotificationContent({ onClose }: { onClose: () => void }) {
   const navigate = useNavigate();
-  const { isEnabled, enableNotifications, isSupported } = usePushNotifications();
+  const { isEnabled, enableNotifications, isSupported } = usePushNotifications({ listen: false });
   const [enabling, setEnabling] = useState(false);
 
   const { data: rawActivities, isLoading, isError } = useQuery({
