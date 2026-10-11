@@ -30,12 +30,46 @@ export function Sidebar() {
   const navigate = useNavigate();
 
   const { apps } = useEcosystemApps();
-  const [appsOpen, setAppsOpen] = useState(true);
+  const [appsOpen, setAppsOpen] = useState<boolean>(() => {
+    try {
+      const saved = localStorage.getItem("dk_sidebar_apps_open");
+      if (saved !== null) return saved === "true";
+    } catch {}
+    // Default to collapsed on mobile screens to keep navigation clean, open on desktop
+    return typeof window !== "undefined" ? window.innerWidth >= 1024 : false;
+  });
   const [manageAppsOpen, setManageAppsOpen] = useState(false);
+  const [manageAppsMode, setManageAppsMode] = useState<"list" | "form">("list");
   const [selectedEditAppId, setSelectedEditAppId] = useState<string | null>(null);
 
-  const handleToggleApps = () => {
-    setAppsOpen((prev) => !prev);
+  const handleToggleApps = (e?: React.MouseEvent) => {
+    e?.preventDefault();
+    e?.stopPropagation();
+    setAppsOpen((prev) => {
+      const next = !prev;
+      try {
+        localStorage.setItem("dk_sidebar_apps_open", String(next));
+      } catch {}
+      return next;
+    });
+  };
+
+  const handleOpenAddApp = (e?: React.MouseEvent) => {
+    e?.preventDefault();
+    e?.stopPropagation();
+    setSelectedEditAppId(null);
+    setManageAppsMode("form");
+    setManageAppsOpen(true);
+    setMobileOpen(false); // Close mobile drawer so modal takes full center stage
+  };
+
+  const handleOpenEditApp = (e: React.MouseEvent, appId: string) => {
+    e.preventDefault();
+    e.stopPropagation();
+    setSelectedEditAppId(appId);
+    setManageAppsMode("form");
+    setManageAppsOpen(true);
+    setMobileOpen(false); // Close mobile drawer so modal takes full center stage
   };
 
   const userEmail = user?.email ?? "";
@@ -232,11 +266,8 @@ export function Sidebar() {
                   {/* Dropdown toggle button */}
                   <button
                     type="button"
-                    onClick={(e) => {
-                      e.stopPropagation();
-                      handleToggleApps();
-                    }}
-                    className="flex-1 min-w-0 flex items-center justify-between px-2 py-1.5 rounded-lg hover:bg-white/[0.05] active:bg-white/10 transition-colors cursor-pointer touch-manipulation text-left"
+                    onClick={handleToggleApps}
+                    className="flex-1 min-w-0 flex items-center justify-between px-2.5 py-2 rounded-lg hover:bg-white/[0.05] active:bg-white/10 transition-colors cursor-pointer select-none text-left"
                     aria-expanded={appsOpen}
                   >
                     <div className="flex items-center gap-2 min-w-0">
@@ -252,7 +283,7 @@ export function Sidebar() {
                         </span>
                       )}
                     </div>
-                    <div className="h-6 w-6 rounded-md flex items-center justify-center text-ink-faint shrink-0">
+                    <div className="h-6 w-6 rounded-md flex items-center justify-center text-ink-faint shrink-0 ml-1">
                       <ChevronDown
                         className={cn(
                           "h-3.5 w-3.5 transition-transform duration-200",
@@ -265,12 +296,8 @@ export function Sidebar() {
                   {/* Dedicated Add Button */}
                   <button
                     type="button"
-                    onClick={(e) => {
-                      e.stopPropagation();
-                      setSelectedEditAppId(null);
-                      setManageAppsOpen(true);
-                    }}
-                    className="h-7 px-2.5 rounded-lg bg-white/10 hover:bg-white/20 active:bg-white/30 text-xs font-medium text-white flex items-center gap-1 transition-all touch-manipulation cursor-pointer shrink-0 ml-1"
+                    onClick={handleOpenAddApp}
+                    className="h-8 px-2.5 rounded-lg bg-blue-500/20 hover:bg-blue-500/30 active:bg-blue-500/40 border border-blue-400/30 text-xs font-medium text-blue-300 flex items-center gap-1 transition-all cursor-pointer shrink-0 ml-1"
                     title="Add app"
                   >
                     <Plus className="h-3.5 w-3.5" />
@@ -286,11 +313,8 @@ export function Sidebar() {
                         <p className="text-[11px] text-ink-faint">No apps added yet.</p>
                         <button
                           type="button"
-                          onClick={() => {
-                            setSelectedEditAppId(null);
-                            setManageAppsOpen(true);
-                          }}
-                          className="mt-1.5 text-xs text-blue-400 hover:underline font-medium inline-flex items-center gap-1 cursor-pointer touch-manipulation"
+                          onClick={handleOpenAddApp}
+                          className="mt-1.5 text-xs text-blue-400 hover:underline font-medium inline-flex items-center gap-1 cursor-pointer"
                         >
                           <Plus className="h-3 w-3" /> Add your first app
                         </button>
@@ -348,11 +372,8 @@ export function Sidebar() {
 
                               <button
                                 type="button"
-                                onClick={() => {
-                                  setSelectedEditAppId(app.id);
-                                  setManageAppsOpen(true);
-                                }}
-                                className="p-1.5 rounded-lg text-ink-faint hover:text-white hover:bg-white/10 active:bg-white/20 transition-all touch-manipulation cursor-pointer"
+                                onClick={(e) => handleOpenEditApp(e, app.id)}
+                                className="p-1.5 rounded-lg text-ink-faint hover:text-white hover:bg-white/10 active:bg-white/20 transition-all cursor-pointer"
                                 title={`Edit ${app.title}`}
                                 aria-label={`Edit ${app.title}`}
                               >
@@ -364,11 +385,8 @@ export function Sidebar() {
 
                         <button
                           type="button"
-                          onClick={() => {
-                            setSelectedEditAppId(null);
-                            setManageAppsOpen(true);
-                          }}
-                          className="w-full flex items-center justify-center gap-1.5 rounded-xl border border-dashed border-white/10 py-2 text-xs text-ink-faint hover:text-white hover:border-white/20 hover:bg-white/[0.03] active:bg-white/10 transition-colors cursor-pointer touch-manipulation mt-1"
+                          onClick={handleOpenAddApp}
+                          className="w-full flex items-center justify-center gap-1.5 rounded-xl border border-dashed border-white/10 py-2 text-xs text-ink-faint hover:text-white hover:border-white/20 hover:bg-white/[0.03] active:bg-white/10 transition-colors cursor-pointer mt-1"
                         >
                           <Plus className="h-3.5 w-3.5" />
                           <span>Add New App</span>
@@ -490,6 +508,7 @@ export function Sidebar() {
         open={manageAppsOpen}
         onOpenChange={setManageAppsOpen}
         initialEditAppId={selectedEditAppId}
+        initialMode={manageAppsMode}
       />
     </>
   );

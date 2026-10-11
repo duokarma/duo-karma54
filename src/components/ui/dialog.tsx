@@ -15,7 +15,7 @@ const DialogOverlay = React.forwardRef<
   <DialogPrimitive.Overlay
     ref={ref}
     className={cn(
-      "fixed inset-0 z-[90] bg-black/75 backdrop-blur-sm overlay-anim",
+      "fixed inset-0 z-[160] bg-black/80 backdrop-blur-md overlay-anim",
       className
     )}
     {...props}
@@ -32,7 +32,7 @@ const DialogContent = React.forwardRef<
     <DialogPrimitive.Content
       ref={ref}
       className={cn(
-        "fixed left-0 right-0 top-0 bottom-0 m-auto z-[91] w-[calc(100vw-1.5rem)] sm:w-full max-w-[calc(100vw-1.5rem)] sm:max-w-md h-fit max-h-[85dvh] sm:max-h-[90dvh] overflow-y-auto overflow-x-hidden rounded-[var(--radius-panel)] glass-panel-strong p-4 sm:p-6 shadow-[0_24px_64px_-12px_rgba(0,0,0,0.8)] dialog-zoom-anim border border-[var(--color-edge)]",
+        "fixed left-0 right-0 top-0 bottom-0 m-auto z-[165] w-[calc(100vw-1.5rem)] sm:w-full max-w-[calc(100vw-1.5rem)] sm:max-w-md h-fit max-h-[85dvh] sm:max-h-[90dvh] overflow-y-auto overflow-x-hidden rounded-[var(--radius-panel)] glass-panel-strong p-4 sm:p-6 shadow-[0_24px_64px_-12px_rgba(0,0,0,0.8)] dialog-zoom-anim border border-[var(--color-edge)]",
         className
       )}
       {...props}

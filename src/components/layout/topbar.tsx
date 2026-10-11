@@ -1,5 +1,5 @@
 import { useLocation, Link } from "react-router-dom";
-import { Bell, Menu, ChevronRight, Search, LogOut, LayoutGrid, KeyRound, X, Boxes, Plus, Pencil, ArrowUpRight } from "lucide-react";
+import { Bell, Menu, ChevronRight, Search, LogOut, KeyRound, X, Boxes, Plus, Pencil, ArrowUpRight, SlidersHorizontal } from "lucide-react";
 import { m as motion, AnimatePresence } from "framer-motion";
 import { useSidebar } from "@/hooks/use-sidebar";
 import { useCommandPalette } from "@/hooks/use-command-palette";
@@ -186,7 +186,7 @@ export function Topbar() {
                 : "text-ink-faint hover:bg-white/10 hover:text-white"
             }`}
           >
-            {widgetsPanelOpen ? <X className="h-3.5 w-3.5" /> : <LayoutGrid className="h-3.5 w-3.5" />}
+            {widgetsPanelOpen ? <X className="h-3.5 w-3.5" /> : <SlidersHorizontal className="h-3.5 w-3.5" />}
           </Button>
         </motion.div>
 

@@ -5,8 +5,13 @@ import path from 'path'
 import { visualizer } from 'rollup-plugin-visualizer'
 
 // https://vite.dev/config/
-export default defineConfig({
-  plugins: [
+export default defineConfig(({ command }) => {
+  const isDev = command === 'serve';
+  const srcPath = path.resolve(__dirname, './src');
+  const aliasReplacement = isDev ? srcPath.replaceAll('$', '$$$$') : srcPath;
+
+  return {
+    plugins: [
     react(),
     tailwindcss(),
     {
@@ -244,9 +249,6 @@ Guidelines:
               });
               return;
             }
-            if (url.pathname.endsWith('.ts') || url.pathname.endsWith('.tsx')) {
-              res.setHeader('Content-Type', 'application/javascript');
-            }
           }
           next();
         });
@@ -263,9 +265,12 @@ Guidelines:
     }),
   ],
   resolve: {
-    alias: {
-      '@': path.resolve(__dirname, './src'),
-    },
+    alias: [
+      {
+        find: '@',
+        replacement: aliasReplacement,
+      },
+    ],
   },
   build: {
     sourcemap: false,
@@ -307,4 +312,5 @@ Guidelines:
       },
     },
   },
-})
+};
+});

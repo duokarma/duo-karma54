@@ -1,6 +1,6 @@
 import { useState, useEffect } from "react";
 import { m as motion, AnimatePresence } from "framer-motion";
-import { X, Sparkles, XCircle } from "lucide-react";
+import { X, SlidersHorizontal, XCircle } from "lucide-react";
 import { Button } from "@/components/ui/button";
 import {
   LiveClock,
@@ -17,6 +17,7 @@ import { ManageAppsDialog } from "@/components/layout/manage-apps-dialog";
 export function WidgetsPanel() {
   const [isOpen, setIsOpen] = useState(false);
   const [manageAppsOpen, setManageAppsOpen] = useState(false);
+  const [manageAppsMode, setManageAppsMode] = useState<"list" | "form">("list");
   const [selectedEditAppId, setSelectedEditAppId] = useState<string | null>(null);
 
   // Sync state outwards whenever isOpen changes
@@ -89,8 +90,8 @@ export function WidgetsPanel() {
             {/* Header with explicit, highly visible Close button */}
             <div className="flex items-center justify-between border-b border-[var(--color-edge)] px-4 py-3 bg-[var(--color-card)]/40 backdrop-blur-md">
               <div className="flex items-center gap-2.5">
-                <div className="flex h-7 w-7 items-center justify-center rounded-lg bg-[var(--color-accent)]/15 text-[var(--color-accent)] border border-[var(--color-accent)]/20 shadow-sm">
-                  <Sparkles className="h-4 w-4" />
+                <div className="flex h-7 w-7 items-center justify-center rounded-lg bg-white/5 text-white/90 border border-white/10 shadow-sm">
+                  <SlidersHorizontal className="h-3.5 w-3.5 text-white/90" />
                 </div>
                 <div>
                   <h2 className="text-sm font-semibold text-ink leading-none">Productivity Hub</h2>
@@ -117,11 +118,15 @@ export function WidgetsPanel() {
                 onClose={handleClose}
                 onAddApp={() => {
                   setSelectedEditAppId(null);
+                  setManageAppsMode("form");
                   setManageAppsOpen(true);
+                  setIsOpen(false);
                 }}
                 onEditApp={(appId) => {
                   setSelectedEditAppId(appId);
+                  setManageAppsMode("form");
                   setManageAppsOpen(true);
+                  setIsOpen(false);
                 }}
               />
               <QuickActions onClose={handleClose} />
@@ -155,6 +160,7 @@ export function WidgetsPanel() {
       open={manageAppsOpen}
       onOpenChange={setManageAppsOpen}
       initialEditAppId={selectedEditAppId}
+      initialMode={manageAppsMode}
     />
   </>
   );

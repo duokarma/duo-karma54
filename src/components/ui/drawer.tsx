@@ -12,11 +12,11 @@ const DrawerContent = React.forwardRef<
   React.ComponentPropsWithoutRef<typeof DialogPrimitive.Content> & { side?: "right" | "left" }
 >(({ className, children, side = "right", ...props }, ref) => (
   <DialogPrimitive.Portal>
-    <DialogPrimitive.Overlay className="fixed inset-0 z-[90] bg-black/75 backdrop-blur-sm overlay-anim" />
+    <DialogPrimitive.Overlay className="fixed inset-0 z-[160] bg-black/80 backdrop-blur-md overlay-anim" />
     <DialogPrimitive.Content
       ref={ref}
       className={cn(
-        "fixed top-2 bottom-2 sm:top-3 sm:bottom-3 z-[91] w-[calc(100vw-1rem)] sm:w-full max-w-md glass-panel-strong rounded-[var(--radius-panel)] p-4 sm:p-6 shadow-[0_24px_64px_-12px_rgba(0,0,0,0.8)] overflow-y-auto border border-[var(--color-edge)]",
+        "fixed top-2 bottom-2 sm:top-3 sm:bottom-3 z-[165] w-[calc(100vw-1rem)] sm:w-full max-w-md glass-panel-strong rounded-[var(--radius-panel)] p-4 sm:p-6 shadow-[0_24px_64px_-12px_rgba(0,0,0,0.8)] overflow-y-auto border border-[var(--color-edge)]",
         side === "right" ? "right-2 sm:right-3 drawer-in-right" : "left-2 sm:left-3 drawer-in-left",
         className
       )}

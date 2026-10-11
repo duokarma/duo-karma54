@@ -31,6 +31,7 @@ interface ManageAppsDialogProps {
   open: boolean;
   onOpenChange: (open: boolean) => void;
   initialEditAppId?: string | null;
+  initialMode?: "list" | "form";
 }
 
 const SUGGESTED_CATEGORIES = [
@@ -46,6 +47,7 @@ export function ManageAppsDialog({
   open,
   onOpenChange,
   initialEditAppId,
+  initialMode = "list",
 }: ManageAppsDialogProps) {
   const { apps, addApp, updateApp, deleteApp, resetToDefaults } = useEcosystemApps();
   const { toast } = useToast();
@@ -73,11 +75,15 @@ export function ManageAppsDialog({
           return;
         }
       }
+      if (initialMode === "form") {
+        startCreate();
+        return;
+      }
       setView("list");
     } else {
       resetForm();
     }
-  }, [open, initialEditAppId]);
+  }, [open, initialEditAppId, initialMode]);
 
   const resetForm = () => {
     setEditingId(null);
