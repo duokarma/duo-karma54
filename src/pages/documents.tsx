@@ -66,8 +66,12 @@ export function DocumentsPage() {
   const [selectedDoc, setSelectedDoc] = useState<Document | null>(null);
   const [newName, setNewName] = useState("");
   
+  // Delete Confirmation state
+  const [deleteDialogOpen, setDeleteDialogOpen] = useState(false);
+  const [docToDelete, setDocToDelete] = useState<Document | null>(null);
+
   // Image Viewer state
-  const [viewerUrl, setViewerUrl] = useState<string | null>(null);
+  const [viewerDoc, setViewerDoc] = useState<Document | null>(null);
 
   // Real-time synchronization for documents table across devices
   useEffect(() => {
@@ -160,17 +164,26 @@ function getDocUrl(doc: Document): string {
       if (error) throw error;
       return id;
     },
-    onSuccess: () => {
+    onSuccess: (deletedId) => {
+      const docName = docToDelete?.name || "Document";
       logActivity({
         type: "document",
-        message: `Document removed from workspace`,
+        message: `Document "${docName}" removed from workspace`,
         actor: displayName || "Partner",
       });
       queryClient.invalidateQueries({ queryKey: ["documents"] });
       queryClient.invalidateQueries({ queryKey: ["activities"] });
       queryClient.invalidateQueries({ queryKey: ["latest_activity"] });
-      toast({ title: "File deleted successfully", variant: "success" });
+      setDeleteDialogOpen(false);
+      setDocToDelete(null);
+      if (viewerDoc?.id === deletedId) {
+        setViewerDoc(null);
+      }
+      toast({ title: "File deleted successfully", description: `"${docName}" was removed from the workspace.`, variant: "success" });
     },
+    onError: (error: Error) => {
+      toast({ title: "Delete Failed", description: error.message || "Failed to delete file", variant: "error" });
+    }
   });
 
   const renameMutation = useMutation({
@@ -278,68 +291,134 @@ function getDocUrl(doc: Document): string {
             const hasUrl = !!fileUrl;
             return (
               <motion.div key={doc.id} initial={{ opacity: 0, y: 8 }} animate={{ opacity: 1, y: 0 }} transition={{ delay: i * 0.04 }}>
-                <Card className="group flex flex-col p-4 transition-all duration-300 hover:shadow-lg hover:-translate-y-1 hover:border-electric/30 h-full">
-                  <div className="flex items-start justify-between">
-                    <div className={cn("flex h-12 w-12 items-center justify-center rounded-xl", typeColor[doc.type])}>
+                <Card className="group relative flex flex-col p-4 transition-all duration-300 hover:shadow-lg hover:-translate-y-1 hover:border-electric/30 h-full">
+                  <div className="flex items-start justify-between relative z-10">
+                    <div 
+                      className={cn(
+                        "flex h-12 w-12 items-center justify-center rounded-xl overflow-hidden", 
+                        typeColor[doc.type],
+                        hasUrl && doc.type === "image" && "cursor-pointer hover:ring-2 hover:ring-electric/50 transition-all"
+                      )}
+                      onClick={() => {
+                        if (hasUrl && doc.type === "image") {
+                          setViewerDoc(doc);
+                        }
+                      }}
+                      title={hasUrl && doc.type === "image" ? "Click to view full image" : undefined}
+                    >
                       {doc.type === "image" && hasUrl ? (
                         <img src={fileUrl} alt={doc.name} className="h-full w-full rounded-xl object-cover" />
                       ) : (
                         <Icon className="h-6 w-6" />
                       )}
                     </div>
-                    <DropdownMenu>
-                      <DropdownMenuTrigger asChild>
-                        <Button variant="ghost" size="icon-sm" className="opacity-0 group-hover:opacity-100 transition-opacity">
-                          <MoreVertical className="h-4 w-4" />
-                        </Button>
-                      </DropdownMenuTrigger>
-                      <DropdownMenuContent align="end" className="w-48">
-                        {hasUrl && doc.type === "image" && (
-                          <DropdownMenuItem onClick={() => setViewerUrl(fileUrl)}>
-                            <Eye className="mr-2 h-4 w-4" /> View Image
+
+                    <div className="flex items-center gap-1">
+                      <Button
+                        variant="ghost"
+                        size="icon-sm"
+                        className="text-ink-faint hover:text-rose hover:bg-rose/10 opacity-75 sm:opacity-0 sm:group-hover:opacity-100 transition-all cursor-pointer"
+                        title="Delete document"
+                        onClick={(e) => {
+                          e.stopPropagation();
+                          setDocToDelete(doc);
+                          setDeleteDialogOpen(true);
+                        }}
+                      >
+                        <Trash2 className="h-4 w-4 text-rose/80 hover:text-rose" />
+                      </Button>
+                      <DropdownMenu>
+                        <DropdownMenuTrigger asChild>
+                          <Button variant="ghost" size="icon-sm" className="opacity-90 sm:opacity-0 sm:group-hover:opacity-100 transition-opacity cursor-pointer">
+                            <MoreVertical className="h-4 w-4" />
+                          </Button>
+                        </DropdownMenuTrigger>
+                        <DropdownMenuContent align="end" className="w-48 z-[150]">
+                          {hasUrl && doc.type === "image" && (
+                            <DropdownMenuItem onClick={() => setViewerDoc(doc)}>
+                              <Eye className="mr-2 h-4 w-4" /> View Image
+                            </DropdownMenuItem>
+                          )}
+                          {hasUrl && (
+                            <DropdownMenuItem onClick={() => window.open(fileUrl, "_blank")}>
+                              <Download className="mr-2 h-4 w-4" /> Download
+                            </DropdownMenuItem>
+                          )}
+                          {hasUrl && (
+                            <DropdownMenuItem onClick={() => copyLink(fileUrl)}>
+                              <LinkIcon className="mr-2 h-4 w-4" /> Copy Share Link
+                            </DropdownMenuItem>
+                          )}
+                          <DropdownMenuItem onClick={() => {
+                            setSelectedDoc(doc);
+                            setNewName(doc.name);
+                            setRenameDialogOpen(true);
+                          }}>
+                            <Pencil className="mr-2 h-4 w-4" /> Rename
                           </DropdownMenuItem>
-                        )}
-                        {hasUrl && (
-                          <DropdownMenuItem onClick={() => window.open(fileUrl, "_blank")}>
-                            <Download className="mr-2 h-4 w-4" /> Download
+                          <DropdownMenuItem 
+                            onClick={() => {
+                              setDocToDelete(doc);
+                              setDeleteDialogOpen(true);
+                            }} 
+                            className="text-rose focus:text-rose focus:bg-rose/10 cursor-pointer font-medium"
+                          >
+                            <Trash2 className="mr-2 h-4 w-4" /> Delete Document
                           </DropdownMenuItem>
-                        )}
-                        {hasUrl && (
-                          <DropdownMenuItem onClick={() => copyLink(fileUrl)}>
-                            <LinkIcon className="mr-2 h-4 w-4" /> Copy Share Link
-                          </DropdownMenuItem>
-                        )}
-                        <DropdownMenuItem onClick={() => {
-                          setSelectedDoc(doc);
-                          setNewName(doc.name);
-                          setRenameDialogOpen(true);
-                        }}>
-                          <Pencil className="mr-2 h-4 w-4" /> Rename
-                        </DropdownMenuItem>
-                        <DropdownMenuItem onClick={() => deleteMutation.mutate(doc.id)} className="text-rose focus:text-rose focus:bg-rose/10">
-                          <Trash2 className="mr-2 h-4 w-4" /> Delete
-                        </DropdownMenuItem>
-                      </DropdownMenuContent>
-                    </DropdownMenu>
+                        </DropdownMenuContent>
+                      </DropdownMenu>
+                    </div>
                   </div>
                   
                   <div className="mt-4 flex-1">
-                    <p className="truncate font-semibold text-ink leading-tight cursor-default" title={doc.name}>{doc.name}</p>
+                    <p 
+                      className={cn(
+                        "truncate font-semibold text-ink leading-tight",
+                        hasUrl && doc.type === "image" ? "cursor-pointer hover:text-electric transition-colors" : "cursor-default"
+                      )} 
+                      title={doc.name}
+                      onClick={() => {
+                        if (hasUrl && doc.type === "image") {
+                          setViewerDoc(doc);
+                        }
+                      }}
+                    >
+                      {doc.name}
+                    </p>
                     <p className="mt-1 text-xs text-ink-faint">{doc.folder}</p>
                   </div>
                   
-                  <div className="mt-4 pt-3 border-t border-edge/40 flex items-center justify-between text-[11px] font-medium text-ink-dim">
+                  <div className="mt-4 pt-3 border-t border-edge/40 flex items-center justify-between text-[11px] font-medium text-ink-dim relative z-10">
                     <span>{doc.size}</span>
-                    <span>{new Date(doc.modifiedDate).toLocaleDateString()}</span>
+                    <div className="flex items-center gap-1.5">
+                      <span>{new Date(doc.modifiedDate).toLocaleDateString()}</span>
+                      {hasUrl && (
+                        <button
+                          type="button"
+                          onClick={(e) => {
+                            e.stopPropagation();
+                            copyLink(fileUrl);
+                          }}
+                          title="Copy Link"
+                          className="p-1 text-ink-faint hover:text-ink transition-colors rounded hover:bg-white/5 cursor-pointer"
+                        >
+                          <LinkIcon className="h-3 w-3" />
+                        </button>
+                      )}
+                      <button
+                        type="button"
+                        onClick={(e) => {
+                          e.stopPropagation();
+                          setDocToDelete(doc);
+                          setDeleteDialogOpen(true);
+                        }}
+                        title="Delete Document"
+                        className="p-1 text-ink-faint hover:text-rose transition-colors rounded hover:bg-rose/10 cursor-pointer"
+                      >
+                        <Trash2 className="h-3 w-3" />
+                      </button>
+                    </div>
                   </div>
-                  
-                  {/* Action overlay for images */}
-                  {hasUrl && doc.type === "image" && (
-                    <div 
-                      className="absolute inset-0 cursor-pointer z-0 opacity-0" 
-                      onClick={() => setViewerUrl(fileUrl)}
-                    />
-                  )}
                 </Card>
               </motion.div>
             );
@@ -347,6 +426,7 @@ function getDocUrl(doc: Document): string {
         </div>
       )}
 
+      {/* Rename Dialog */}
       <Dialog open={renameDialogOpen} onOpenChange={(open) => {
         setRenameDialogOpen(open);
         if (!open) {
@@ -388,32 +468,147 @@ function getDocUrl(doc: Document): string {
         </DialogContent>
       </Dialog>
 
+      {/* Delete Confirmation Dialog */}
+      <Dialog
+        open={deleteDialogOpen}
+        onOpenChange={(open) => {
+          if (!deleteMutation.isPending) {
+            setDeleteDialogOpen(open);
+            if (!open) setDocToDelete(null);
+          }
+        }}
+      >
+        <DialogContent className="sm:max-w-md">
+          <DialogHeader>
+            <div className="flex items-center gap-3">
+              <div className="flex h-10 w-10 shrink-0 items-center justify-center rounded-xl bg-rose/12 text-rose border border-rose/20">
+                <Trash2 className="h-5 w-5" />
+              </div>
+              <div>
+                <DialogTitle className="text-lg">Delete Document</DialogTitle>
+                <DialogDescription className="mt-1">
+                  Are you sure you want to permanently delete this document?
+                </DialogDescription>
+              </div>
+            </div>
+          </DialogHeader>
+
+          {docToDelete && (
+            <div className="rounded-xl border border-edge/60 bg-white/[0.02] p-3 text-xs text-ink-dim space-y-1.5 my-2">
+              <div className="flex items-center justify-between">
+                <span className="text-ink-faint">Name:</span>
+                <span className="font-semibold text-ink truncate max-w-[220px]" title={docToDelete.name}>
+                  {docToDelete.name}
+                </span>
+              </div>
+              <div className="flex items-center justify-between">
+                <span className="text-ink-faint">Folder:</span>
+                <span className="font-medium text-ink">{docToDelete.folder || "Uploads"}</span>
+              </div>
+              {docToDelete.size && (
+                <div className="flex items-center justify-between">
+                  <span className="text-ink-faint">Size:</span>
+                  <span className="font-medium text-ink">{docToDelete.size}</span>
+                </div>
+              )}
+              <div className="pt-1.5 border-t border-edge/40">
+                <p className="text-rose text-[11px] font-medium leading-relaxed">
+                  ⚠️ This file will be permanently removed from cloud storage and the workspace for both partners.
+                </p>
+              </div>
+            </div>
+          )}
+
+          <DialogFooter className="gap-2 sm:gap-0 mt-2">
+            <Button
+              variant="secondary"
+              onClick={() => {
+                setDeleteDialogOpen(false);
+                setDocToDelete(null);
+              }}
+              disabled={deleteMutation.isPending}
+              className="h-10 sm:h-9"
+            >
+              Cancel
+            </Button>
+            <Button
+              onClick={() => {
+                if (docToDelete) {
+                  deleteMutation.mutate(docToDelete.id);
+                }
+              }}
+              disabled={deleteMutation.isPending}
+              className="h-10 sm:h-9 bg-rose text-white hover:bg-rose/90 font-semibold shadow-md border border-rose/30"
+            >
+              <Trash2 className="mr-2 h-4 w-4" />
+              {deleteMutation.isPending ? "Deleting..." : "Delete Permanently"}
+            </Button>
+          </DialogFooter>
+        </DialogContent>
+      </Dialog>
+
       {/* Image Viewer Dialog (Lightbox) */}
       <AnimatePresence>
-        {viewerUrl && (
-          <Dialog open={!!viewerUrl} onOpenChange={() => setViewerUrl(null)}>
-            <DialogContent className="max-w-[90vw] max-h-[90vh] p-1 bg-black/95 border-none shadow-2xl [&>button]:text-white">
-              <DialogTitle className="sr-only">Image Viewer</DialogTitle>
+        {viewerDoc && (
+          <Dialog open={!!viewerDoc} onOpenChange={(open) => { if (!open) setViewerDoc(null); }}>
+            <DialogContent className="max-w-[95vw] sm:max-w-[90vw] max-h-[92vh] sm:max-h-[90vh] p-2 sm:p-4 bg-black/95 border border-white/10 shadow-2xl [&>button]:text-white">
+              <DialogTitle className="sr-only">Image Viewer - {viewerDoc.name}</DialogTitle>
+              <div className="flex items-center justify-between pb-2 px-1 text-white border-b border-white/10 mb-2">
+                <div className="flex items-center gap-2 max-w-[50%] sm:max-w-[65%] truncate">
+                  <span className="text-xs sm:text-sm font-semibold truncate text-white/90">{viewerDoc.name}</span>
+                  <span className="text-[10px] text-white/50 hidden sm:inline">({viewerDoc.size})</span>
+                </div>
+                <div className="flex items-center gap-1.5 sm:gap-2 mr-6 sm:mr-8">
+                  <Button 
+                    variant="outline" 
+                    size="sm" 
+                    className="h-8 px-2.5 text-xs bg-white/10 text-white border-white/20 hover:bg-white/20 cursor-pointer" 
+                    onClick={() => {
+                      const url = getDocUrl(viewerDoc);
+                      if (url) window.open(url, "_blank");
+                    }}
+                  >
+                    <Download className="h-3.5 w-3.5 sm:mr-1.5" />
+                    <span className="hidden sm:inline">Download</span>
+                  </Button>
+                  <Button 
+                    variant="outline" 
+                    size="sm" 
+                    className="h-8 px-2.5 text-xs bg-white/10 text-white border-white/20 hover:bg-white/20 cursor-pointer" 
+                    onClick={() => {
+                      const url = getDocUrl(viewerDoc);
+                      if (url) copyLink(url);
+                    }}
+                  >
+                    <LinkIcon className="h-3.5 w-3.5 sm:mr-1.5" />
+                    <span className="hidden sm:inline">Copy Link</span>
+                  </Button>
+                  <Button 
+                    variant="destructive" 
+                    size="sm" 
+                    className="h-8 px-2.5 text-xs bg-rose text-white hover:bg-rose/90 border border-rose/30 shadow-sm cursor-pointer" 
+                    onClick={() => {
+                      setDocToDelete(viewerDoc);
+                      setDeleteDialogOpen(true);
+                    }}
+                  >
+                    <Trash2 className="h-3.5 w-3.5 sm:mr-1.5" />
+                    <span>Delete</span>
+                  </Button>
+                </div>
+              </div>
               <motion.div 
-                initial={{ opacity: 0, scale: 0.95 }}
+                initial={{ opacity: 0, scale: 0.96 }}
                 animate={{ opacity: 1, scale: 1 }}
-                exit={{ opacity: 0, scale: 0.95 }}
-                className="relative flex items-center justify-center w-full h-[85vh] overflow-hidden"
+                exit={{ opacity: 0, scale: 0.96 }}
+                className="relative flex items-center justify-center w-full h-[70vh] sm:h-[80vh] overflow-hidden"
               >
                 <img 
-                  src={viewerUrl} 
-                  alt="Full view" 
+                  src={getDocUrl(viewerDoc)} 
+                  alt={viewerDoc.name} 
                   className="max-w-full max-h-full object-contain rounded-md"
                 />
               </motion.div>
-              <div className="absolute top-4 right-12 flex gap-2">
-                <Button variant="outline" size="sm" className="bg-black/50 text-white border-white/20 hover:bg-black/80" onClick={() => window.open(viewerUrl, "_blank")}>
-                  <Download className="h-4 w-4 mr-2" /> Download
-                </Button>
-                <Button variant="outline" size="sm" className="bg-black/50 text-white border-white/20 hover:bg-black/80" onClick={() => copyLink(viewerUrl)}>
-                  <LinkIcon className="h-4 w-4 mr-2" /> Copy Link
-                </Button>
-              </div>
             </DialogContent>
           </Dialog>
         )}
