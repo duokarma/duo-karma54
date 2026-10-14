@@ -106,7 +106,7 @@ export function Services() {
 
   return (
     <section
-      className="relative overflow-hidden py-16 md:py-36 px-5 md:px-[5%]"
+      className="relative overflow-hidden pt-12 pb-8 md:pt-36 md:pb-24 px-5 md:px-[5%]"
       style={{ background: COLORS.bg }}
       id="services"
     >
@@ -208,6 +208,14 @@ export function Services() {
           .bento-8 { grid-column: span 2; }
         }
       `}</style>
+
+      {/* Seamless transition line to GlobalPresence */}
+      <div 
+        className="pointer-events-none absolute bottom-0 left-1/2 -translate-x-1/2 w-[80%] max-w-[900px] h-[1px]"
+        style={{
+          background: 'linear-gradient(90deg, transparent 0%, rgba(175,221,255,0.2) 50%, transparent 100%)'
+        }}
+      />
     </section>
   );
 }

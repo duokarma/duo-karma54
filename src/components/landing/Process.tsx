@@ -140,12 +140,19 @@ export function Process() {
   return (
     <section
       id="process"
+      className="relative overflow-hidden py-10 md:py-24"
       style={{
         background: COLORS.bg,
-        position: 'relative',
-        padding: '120px 0',
       }}
     >
+      {/* Ambient top glow connecting from GlobalPresence */}
+      <div
+        className="pointer-events-none absolute top-0 left-1/2 -translate-x-1/2 w-[600px] h-[250px] opacity-25"
+        style={{
+          background: 'radial-gradient(ellipse 70% 50% at 50% 0%, rgba(175,221,255,0.18), transparent 70%)',
+        }}
+        aria-hidden="true"
+      />
       <div style={{ padding: '0 5%' }}>
         <Reveal>
           <Eyebrow>Development process</Eyebrow>
@@ -292,13 +299,13 @@ function ProcessCard({ step }: { step: typeof PROCESS[0] }) {
       style={{
         width: 300,
         flexShrink: 0,
-        background: hovered ? 'rgba(28, 26, 24, 0.9)' : 'linear-gradient(135deg, rgba(22, 20, 18, 0.7) 0%, rgba(12, 11, 10, 0.9) 100%)',
-        border: `1px solid ${hovered ? 'rgba(255,255,255,0.08)' : 'rgba(255,255,255,0.03)'}`,
+        background: hovered ? 'rgba(18, 22, 28, 0.95)' : 'linear-gradient(135deg, rgba(16, 20, 26, 0.8) 0%, rgba(10, 12, 16, 0.95) 100%)',
+        border: `1px solid ${hovered ? 'rgba(175,221,255,0.35)' : 'rgba(175,221,255,0.14)'}`,
         borderRadius: 24,
         padding: '36px 32px',
         scrollSnapAlign: 'start',
         transition: 'background 0.4s ease, border-color 0.4s ease',
-        boxShadow: hovered ? '0 20px 40px rgba(0,0,0,0.4)' : 'none',
+        boxShadow: hovered ? '0 20px 40px rgba(0,0,0,0.5), 0 0 20px rgba(175,221,255,0.1)' : '0 8px 24px rgba(0,0,0,0.3)',
         position: 'relative',
         overflow: 'hidden',
       }}
