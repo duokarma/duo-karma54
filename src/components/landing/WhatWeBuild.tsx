@@ -20,7 +20,6 @@ import {
   Dumbbell, 
   Stethoscope, 
   UtensilsCrossed,
-  Sparkles,
   ArrowRight,
   Hand,
   type LucideIcon
@@ -145,54 +144,54 @@ function BlueprintMockup({ type }: { type: ModuleCardItem['blueprintType'] }) {
   switch (type) {
     case 'salon':
       return (
-        <div className="bg-black/40 rounded-xl p-3 border border-white/5 space-y-2 text-[11px] font-mono">
-          <div className="flex items-center justify-between text-white/50 text-[10px]">
+        <div className="bg-black/40 rounded-xl p-2.5 sm:p-3 border border-white/5 space-y-1.5 sm:space-y-2 text-[10px] sm:text-[11px] font-mono">
+          <div className="flex items-center justify-between text-white/50 text-[9px] sm:text-[10px]">
             <span>STATION 01 // HAIRSTYLIST</span>
             <span className="text-[#AFDDFF]">LIVE</span>
           </div>
-          <div className="space-y-1.5">
+          <div className="space-y-1 sm:space-y-1.5">
             <div className="flex items-center justify-between bg-white/[0.03] p-1.5 rounded border border-white/5">
               <span className="text-white/80">11:30 AM • Balayage + Cut</span>
-              <span className="text-emerald-400 bg-emerald-500/10 px-1.5 py-0.5 rounded text-[9px]">IN SERVICE</span>
+              <span className="text-emerald-400 bg-emerald-500/10 px-1.5 py-0.5 rounded text-[8px] sm:text-[9px]">IN SERVICE</span>
             </div>
             <div className="flex items-center justify-between bg-white/[0.03] p-1.5 rounded border border-white/5">
               <span className="text-white/80">01:15 PM • Keratin Touchup</span>
-              <span className="text-[#AFDDFF] bg-[#AFDDFF]/10 px-1.5 py-0.5 rounded text-[9px]">CONFIRMED</span>
+              <span className="text-[#AFDDFF] bg-[#AFDDFF]/10 px-1.5 py-0.5 rounded text-[8px] sm:text-[9px]">CONFIRMED</span>
             </div>
           </div>
         </div>
       );
     case 'farmhouse':
       return (
-        <div className="bg-black/40 rounded-xl p-3 border border-white/5 space-y-2 text-[11px] font-mono">
-          <div className="flex items-center justify-between text-white/50 text-[10px]">
+        <div className="bg-black/40 rounded-xl p-2.5 sm:p-3 border border-white/5 space-y-1.5 sm:space-y-2 text-[10px] sm:text-[11px] font-mono">
+          <div className="flex items-center justify-between text-white/50 text-[9px] sm:text-[10px]">
             <span>AVAILABILITY CALENDAR</span>
             <span className="text-[#86EFAC]">SYNCED</span>
           </div>
-          <div className="grid grid-cols-4 gap-1 text-center text-[10px]">
+          <div className="grid grid-cols-4 gap-1 text-center text-[9px] sm:text-[10px]">
             <div className="bg-white/5 p-1 rounded text-white/40">Thu 15</div>
             <div className="bg-[#AFDDFF]/15 border border-[#AFDDFF]/30 p-1 rounded text-[#AFDDFF] font-semibold">Fri 16</div>
             <div className="bg-[#AFDDFF]/15 border border-[#AFDDFF]/30 p-1 rounded text-[#AFDDFF] font-semibold">Sat 17</div>
             <div className="bg-white/5 p-1 rounded text-white/40">Sun 18</div>
           </div>
-          <div className="flex items-center justify-between text-[10px] text-white/70 pt-1 border-t border-white/5">
-            <span>Weekend Pass: $320/night</span>
+          <div className="flex items-center justify-between text-[9px] sm:text-[10px] text-white/70 pt-1 border-t border-white/5">
+            <span>Weekend: $320/night</span>
             <span className="text-emerald-400">Gate #881 Locked</span>
           </div>
         </div>
       );
     case 'dashboards':
       return (
-        <div className="bg-black/40 rounded-xl p-3 border border-white/5 space-y-2 text-[11px] font-mono">
-          <div className="flex items-center justify-between text-white/50 text-[10px]">
+        <div className="bg-black/40 rounded-xl p-2.5 sm:p-3 border border-white/5 space-y-1.5 sm:space-y-2 text-[10px] sm:text-[11px] font-mono">
+          <div className="flex items-center justify-between text-white/50 text-[9px] sm:text-[10px]">
             <span>REVENUE TRAJECTORY (MRR)</span>
             <span className="text-emerald-400 font-semibold">+24.8%</span>
           </div>
           <div className="flex items-baseline gap-2">
-            <span className="text-lg font-bold text-white">$142,850</span>
-            <span className="text-[10px] text-white/40">all 3 entities</span>
+            <span className="text-base sm:text-lg font-bold text-white">$142,850</span>
+            <span className="text-[9px] sm:text-[10px] text-white/40">3 entities</span>
           </div>
-          <div className="h-6 w-full flex items-end gap-1 pt-1">
+          <div className="h-5 sm:h-6 w-full flex items-end gap-1 pt-1">
             {[35, 45, 40, 60, 55, 75, 70, 85, 95, 100].map((h, i) => (
               <div 
                 key={i} 
@@ -208,12 +207,12 @@ function BlueprintMockup({ type }: { type: ModuleCardItem['blueprintType'] }) {
       );
     case 'crm':
       return (
-        <div className="bg-black/40 rounded-xl p-3 border border-white/5 space-y-2 text-[11px] font-mono">
-          <div className="flex items-center justify-between text-white/50 text-[10px]">
+        <div className="bg-black/40 rounded-xl p-2.5 sm:p-3 border border-white/5 space-y-1.5 sm:space-y-2 text-[10px] sm:text-[11px] font-mono">
+          <div className="flex items-center justify-between text-white/50 text-[9px] sm:text-[10px]">
             <span>PIPELINE VELOCITY</span>
             <span className="text-[#AFDDFF]">AUTO-SYNC</span>
           </div>
-          <div className="grid grid-cols-3 gap-1.5 text-[9px]">
+          <div className="grid grid-cols-3 gap-1.5 text-[8px] sm:text-[9px]">
             <div className="bg-white/[0.04] p-1.5 rounded border border-white/5">
               <div className="text-white/40">LEADS</div>
               <div className="text-white font-semibold text-xs">28</div>
@@ -231,12 +230,12 @@ function BlueprintMockup({ type }: { type: ModuleCardItem['blueprintType'] }) {
       );
     case 'inventory':
       return (
-        <div className="bg-black/40 rounded-xl p-3 border border-white/5 space-y-2 text-[11px] font-mono">
-          <div className="flex items-center justify-between text-white/50 text-[10px]">
+        <div className="bg-black/40 rounded-xl p-2.5 sm:p-3 border border-white/5 space-y-1.5 sm:space-y-2 text-[10px] sm:text-[11px] font-mono">
+          <div className="flex items-center justify-between text-white/50 text-[9px] sm:text-[10px]">
             <span>STOCK MONITOR // POS SYNC</span>
-            <span className="text-amber-400 text-[9px]">1 REORDER ALERT</span>
+            <span className="text-amber-400 text-[8px] sm:text-[9px]">1 REORDER ALERT</span>
           </div>
-          <div className="space-y-1 text-[10px]">
+          <div className="space-y-1 text-[9px] sm:text-[10px]">
             <div className="flex justify-between items-center text-white/70">
               <span>SKU-904 Ceramic Glaze</span>
               <span className="text-white">142 units</span>
@@ -253,33 +252,33 @@ function BlueprintMockup({ type }: { type: ModuleCardItem['blueprintType'] }) {
       );
     case 'automation':
       return (
-        <div className="bg-black/40 rounded-xl p-3 border border-white/5 space-y-2 text-[11px] font-mono">
-          <div className="flex items-center justify-between text-white/50 text-[10px]">
+        <div className="bg-black/40 rounded-xl p-2.5 sm:p-3 border border-white/5 space-y-1.5 sm:space-y-2 text-[10px] sm:text-[11px] font-mono">
+          <div className="flex items-center justify-between text-white/50 text-[9px] sm:text-[10px]">
             <span>WORKFLOW TRIGGER GRAPH</span>
             <span className="text-[#AFDDFF]">0 MS DRIFT</span>
           </div>
-          <div className="flex items-center gap-1.5 text-[9px] text-white/80 overflow-x-auto py-1">
+          <div className="flex items-center gap-1.5 text-[8px] sm:text-[9px] text-white/80 overflow-x-auto py-1">
             <span className="bg-white/10 px-2 py-1 rounded">Order Paid</span>
             <span className="text-[#AFDDFF]">→</span>
             <span className="bg-[#AFDDFF]/15 text-[#AFDDFF] px-2 py-1 rounded">Generate PDF</span>
             <span className="text-[#AFDDFF]">→</span>
-            <span className="bg-emerald-500/15 text-emerald-400 px-2 py-1 rounded">WhatsApp Ping</span>
+            <span className="bg-emerald-500/15 text-emerald-400 px-2 py-1 rounded">WhatsApp</span>
           </div>
         </div>
       );
     case 'gym':
       return (
-        <div className="bg-black/40 rounded-xl p-3 border border-white/5 space-y-2 text-[11px] font-mono">
-          <div className="flex items-center justify-between text-white/50 text-[10px]">
+        <div className="bg-black/40 rounded-xl p-2.5 sm:p-3 border border-white/5 space-y-1.5 sm:space-y-2 text-[10px] sm:text-[11px] font-mono">
+          <div className="flex items-center justify-between text-white/50 text-[9px] sm:text-[10px]">
             <span>TURNSTILE RFID // LIVE ACCESS</span>
             <span className="text-emerald-400">GATE ACTIVE</span>
           </div>
           <div className="flex items-center justify-between text-xs">
             <div>
-              <span className="text-white font-bold text-base">184</span>
-              <span className="text-white/50 text-[10px] ml-1">in gym</span>
+              <span className="text-white font-bold text-sm sm:text-base">184</span>
+              <span className="text-white/50 text-[9px] sm:text-[10px] ml-1">in gym</span>
             </div>
-            <div className="text-right text-[10px] text-white/70">
+            <div className="text-right text-[9px] sm:text-[10px] text-white/70">
               <div>HIIT Class • 06:00 PM</div>
               <div className="text-[#AFDDFF]">26/30 Registered</div>
             </div>
@@ -288,14 +287,14 @@ function BlueprintMockup({ type }: { type: ModuleCardItem['blueprintType'] }) {
       );
     case 'clinic':
       return (
-        <div className="bg-black/40 rounded-xl p-3 border border-white/5 space-y-2 text-[11px] font-mono">
-          <div className="flex items-center justify-between text-white/50 text-[10px]">
+        <div className="bg-black/40 rounded-xl p-2.5 sm:p-3 border border-white/5 space-y-1.5 sm:space-y-2 text-[10px] sm:text-[11px] font-mono">
+          <div className="flex items-center justify-between text-white/50 text-[9px] sm:text-[10px]">
             <span>PATIENT QUEUE DISPATCH</span>
             <span className="text-[#AFDDFF]">TOKEN #14</span>
           </div>
-          <div className="space-y-1.5 text-[10px]">
+          <div className="space-y-1 text-[9px] sm:text-[10px]">
             <div className="flex justify-between items-center bg-white/[0.03] p-1.5 rounded border border-white/5">
-              <span className="text-white/80">Dr. Mehta • Consultation Room 2</span>
+              <span className="text-white/80">Dr. Mehta • Room 2</span>
               <span className="text-emerald-400 font-semibold">IN-CABIN</span>
             </div>
             <div className="flex justify-between items-center text-white/50 px-1">
@@ -307,18 +306,18 @@ function BlueprintMockup({ type }: { type: ModuleCardItem['blueprintType'] }) {
       );
     case 'restaurant':
       return (
-        <div className="bg-black/40 rounded-xl p-3 border border-white/5 space-y-2 text-[11px] font-mono">
-          <div className="flex items-center justify-between text-white/50 text-[10px]">
+        <div className="bg-black/40 rounded-xl p-2.5 sm:p-3 border border-white/5 space-y-1.5 sm:space-y-2 text-[10px] sm:text-[11px] font-mono">
+          <div className="flex items-center justify-between text-white/50 text-[9px] sm:text-[10px]">
             <span>KITCHEN DISPLAY // FLOOR MAP</span>
             <span className="text-emerald-400">8 TABLES BUSY</span>
           </div>
-          <div className="grid grid-cols-2 gap-1.5 text-[9px]">
-            <div className="bg-white/[0.04] p-1.5 rounded border border-white/5">
-              <div className="text-[#AFDDFF] font-semibold">Table 04 • 4 Guests</div>
+          <div className="grid grid-cols-2 gap-1 text-[8px] sm:text-[9px]">
+            <div className="bg-white/[0.04] p-1 rounded border border-white/5">
+              <div className="text-[#AFDDFF] font-semibold">Table 04 • 4p</div>
               <div className="text-white/60">Mains Dispatched</div>
             </div>
-            <div className="bg-white/[0.04] p-1.5 rounded border border-white/5">
-              <div className="text-amber-400 font-semibold">Table 07 • 2 Guests</div>
+            <div className="bg-white/[0.04] p-1 rounded border border-white/5">
+              <div className="text-amber-400 font-semibold">Table 07 • 2p</div>
               <div className="text-white/60">Bill Requested</div>
             </div>
           </div>
@@ -352,23 +351,15 @@ export function WhatWeBuild() {
 
   return (
     <section
-      className="relative overflow-hidden py-16 md:py-28 px-4 sm:px-6 md:px-10 lg:px-12"
+      className="relative overflow-hidden py-12 sm:py-16 md:py-24 px-4 sm:px-6 md:px-10 lg:px-12"
       style={{ background: COLORS.surface }}
       id="work"
     >
       {/* Ambient background glows */}
       <div
-        className="pointer-events-none absolute top-10 left-1/4 -translate-x-1/2 w-[700px] h-[450px] opacity-20"
+        className="pointer-events-none absolute top-10 left-1/4 -translate-x-1/2 w-[600px] h-[350px] opacity-15"
         style={{
           background: 'radial-gradient(circle, rgba(175,221,255,0.2) 0%, transparent 70%)',
-          filter: 'blur(60px)',
-        }}
-        aria-hidden="true"
-      />
-      <div
-        className="pointer-events-none absolute bottom-10 right-1/4 translate-x-1/2 w-[600px] h-[400px] opacity-15"
-        style={{
-          background: 'radial-gradient(circle, rgba(134,239,172,0.15) 0%, transparent 70%)',
           filter: 'blur(60px)',
         }}
         aria-hidden="true"
@@ -377,11 +368,11 @@ export function WhatWeBuild() {
       <div className="max-w-[1320px] mx-auto w-full">
         {/* Section Header */}
         <Reveal>
-          <div className="flex flex-col md:flex-row md:items-end justify-between mb-8 md:mb-14 pb-6 border-b border-white/[0.08] gap-4">
+          <div className="flex flex-col sm:flex-row sm:items-end justify-between mb-6 sm:mb-10 pb-4 sm:pb-6 border-b border-white/[0.08] gap-3">
             <div>
               <Eyebrow>What we build</Eyebrow>
               <h2
-                className="text-3xl sm:text-4xl md:text-5xl font-normal tracking-tight mt-2"
+                className="text-2xl sm:text-3xl md:text-5xl font-normal tracking-tight mt-1 sm:mt-2"
                 style={{
                   fontFamily: "'Fraunces', serif",
                   background: 'linear-gradient(135deg, #FFFFFF 30%, #D8EDFF 70%, #AFDDFF 100%)',
@@ -392,8 +383,8 @@ export function WhatWeBuild() {
                 Nine kinds of systems, one build quality.
               </h2>
             </div>
-            <div className="flex items-center gap-3">
-              <span className="text-xs text-white/50 font-mono tracking-wider uppercase">
+            <div className="flex items-center gap-2 self-start sm:self-auto">
+              <span className="text-[11px] sm:text-xs text-white/50 font-mono tracking-wider uppercase">
                 Interactive Deck
               </span>
               <span className="w-2 h-2 rounded-full bg-emerald-400 animate-pulse" />
@@ -401,21 +392,159 @@ export function WhatWeBuild() {
           </div>
         </Reveal>
 
-        {/* ── Main Dual-Column Interactive Arena ── */}
-        <div className="grid grid-cols-1 lg:grid-cols-12 gap-8 lg:gap-10 items-center">
+        {/* ── MOBILE / TABLET VIEW (<1024px): FITS PERFECTLY IN ONE SINGLE SCREEN ── */}
+        <div className="flex flex-col items-center lg:hidden w-full">
+          {/* Swipeable 3D Deck */}
+          <div className="relative w-full flex items-center justify-center my-2">
+            <SwipeCards
+              ref={swipeCardsRef}
+              cards={MODULE_DATA}
+              settings={{
+                width: 330,
+                height: 380,
+                radius: 20,
+                swipeThreshold: 70,
+                stackRotation: 3,
+                stackScale: 0.035,
+                tiltStrength: 15,
+                mobileBreakpoint: 480,
+                mobileScale: 0.9,
+              }}
+              onCardChange={(card) => {
+                setActiveItem(card as ModuleCardItem);
+              }}
+              renderCard={(card, _index, isFront) => {
+                const m = card as ModuleCardItem;
+                const IconComp = m.icon;
+
+                return (
+                  <div
+                    className="relative w-full h-full p-5 flex flex-col justify-between overflow-hidden select-none"
+                    style={{
+                      background: 'linear-gradient(145deg, rgba(20, 26, 36, 0.96) 0%, rgba(10, 13, 18, 0.98) 100%)',
+                      border: isFront
+                        ? '1px solid rgba(175, 221, 255, 0.35)'
+                        : '1px solid rgba(255, 255, 255, 0.1)',
+                      boxShadow: isFront
+                        ? '0 16px 40px rgba(0,0,0,0.8), 0 0 25px rgba(175,221,255,0.06)'
+                        : '0 8px 24px rgba(0,0,0,0.5)',
+                      backdropFilter: 'blur(20px)',
+                    }}
+                  >
+                    {/* Header Row */}
+                    <div>
+                      <div className="flex items-center justify-between mb-2.5">
+                        <div className="w-9 h-9 rounded-lg bg-[#AFDDFF]/10 border border-[#AFDDFF]/25 flex items-center justify-center text-[#AFDDFF]">
+                          <IconComp className="w-4.5 h-4.5 text-[#AFDDFF]" strokeWidth={1.8} />
+                        </div>
+                        <div className="flex items-center gap-1.5">
+                          <span className="px-2 py-0.5 rounded-full text-[10px] font-semibold bg-[#AFDDFF]/10 text-[#AFDDFF] border border-[#AFDDFF]/25">
+                            {m.tag}
+                          </span>
+                          <span className="text-[10px] text-white/50 font-mono">
+                            0{MODULE_DATA.findIndex((it) => it.id === m.id) + 1}/09
+                          </span>
+                        </div>
+                      </div>
+
+                      {/* Title */}
+                      <h3
+                        className="text-lg font-normal text-white mb-1"
+                        style={{ fontFamily: "'Fraunces', serif" }}
+                      >
+                        {m.name}
+                      </h3>
+
+                      <p className="text-[11px] text-white/70 leading-relaxed font-sans mb-2 line-clamp-2">
+                        {m.detail}
+                      </p>
+                    </div>
+
+                    {/* Live Blueprint Graphical Mockup */}
+                    <div className="my-auto py-1">
+                      <BlueprintMockup type={m.blueprintType} />
+                    </div>
+
+                    {/* Bottom Metric & Action */}
+                    <div className="pt-2 border-t border-white/10 flex items-center justify-between text-[11px]">
+                      <div className="flex items-center gap-1 text-[#AFDDFF] font-medium">
+                        <span className="font-mono text-white/90 font-bold">{m.metric.value}</span>
+                        <span className="text-[10px] text-white/50">{m.metric.label.split(' ')[0]}</span>
+                      </div>
+                      <div className="text-[10px] text-white/40 font-mono">
+                        Swipe to flip
+                      </div>
+                    </div>
+                  </div>
+                );
+              }}
+            />
+          </div>
+
+          {/* Compact Mobile Controls Bar */}
+          <div className="flex items-center justify-between w-full max-w-[340px] px-2 mt-3 mb-2">
+            <div className="flex items-center gap-2">
+              <button
+                onClick={() => swipeCardsRef.current?.prev()}
+                aria-label="Previous card"
+                className="w-8 h-8 rounded-lg bg-white/[0.06] border border-white/10 flex items-center justify-center text-white/80 active:scale-95"
+              >
+                <ChevronLeft className="w-4 h-4" />
+              </button>
+              <button
+                onClick={() => swipeCardsRef.current?.next()}
+                aria-label="Next card"
+                className="w-8 h-8 rounded-lg bg-[#AFDDFF]/15 border border-[#AFDDFF]/35 flex items-center justify-center text-[#AFDDFF] active:scale-95"
+              >
+                <ChevronRight className="w-4 h-4" />
+              </button>
+            </div>
+
+            <div className="text-center font-mono text-[11px] text-white/60">
+              <span className="text-[#AFDDFF] font-semibold">{activeItem.name}</span>
+            </div>
+
+            <span className="text-[10px] text-white/40 font-mono">
+              {activeIndex + 1}/09
+            </span>
+          </div>
+
+          {/* Horizontal Quick-Select Ribbon */}
+          <div className="flex items-center gap-1.5 overflow-x-auto w-full py-1.5 px-2 scrollbar-none justify-start sm:justify-center">
+            {MODULE_DATA.map((m) => {
+              const isSelected = m.id === activeItem.id;
+              return (
+                <button
+                  key={m.id}
+                  onClick={() => swipeCardsRef.current?.bringToFront(m.id)}
+                  className={`shrink-0 px-2.5 py-1 rounded-full text-[10px] font-mono transition-all ${
+                    isSelected
+                      ? 'bg-[#AFDDFF]/20 text-[#AFDDFF] border border-[#AFDDFF]/40 font-semibold'
+                      : 'bg-white/[0.04] text-white/50 border border-white/5'
+                  }`}
+                >
+                  {m.name.split(' ')[0]}
+                </button>
+              );
+            })}
+          </div>
+        </div>
+
+        {/* ── DESKTOP VIEW (>=1024px): EXPANSIVE DUAL-COLUMN LAYOUT ── */}
+        <div className="hidden lg:grid lg:grid-cols-12 gap-10 items-center">
           
-          {/* ── LEFT COLUMN (lg:cols-5 / 6): Dynamic System Inspector ── */}
+          {/* LEFT COLUMN: System Inspector + 3x3 Matrix + Controls */}
           <div className="lg:col-span-5 flex flex-col justify-between space-y-6">
             
             {/* Active System Details Box */}
             <AnimatePresence mode="wait">
               <motion.div
                 key={activeItem.id}
-                initial={{ opacity: 0, y: 12 }}
+                initial={{ opacity: 0, y: 8 }}
                 animate={{ opacity: 1, y: 0 }}
-                exit={{ opacity: 0, y: -12 }}
-                transition={{ duration: 0.25, ease: 'easeOut' }}
-                className="rounded-2xl p-6 sm:p-7 relative overflow-hidden"
+                exit={{ opacity: 0, y: -8 }}
+                transition={{ duration: 0.2 }}
+                className="rounded-2xl p-6 relative overflow-hidden"
                 style={{
                   background: 'linear-gradient(145deg, rgba(20, 25, 34, 0.85) 0%, rgba(10, 12, 16, 0.95) 100%)',
                   border: '1px solid rgba(175, 221, 255, 0.22)',
@@ -424,7 +553,7 @@ export function WhatWeBuild() {
                 }}
               >
                 {/* Top Badge Row */}
-                <div className="flex items-center justify-between mb-4">
+                <div className="flex items-center justify-between mb-3.5">
                   <span className="text-xs font-mono tracking-widest text-[#AFDDFF]">
                     {activeItem.code}
                   </span>
@@ -435,41 +564,41 @@ export function WhatWeBuild() {
 
                 {/* Big System Title */}
                 <h3
-                  className="text-2xl sm:text-3xl font-normal text-white mb-2.5"
+                  className="text-2xl font-normal text-white mb-2"
                   style={{ fontFamily: "'Fraunces', serif" }}
                 >
                   {activeItem.name}
                 </h3>
 
-                <p className="text-sm text-white/70 leading-relaxed font-sans mb-6">
+                <p className="text-xs md:text-sm text-white/70 leading-relaxed font-sans mb-5">
                   {activeItem.detail}
                 </p>
 
                 {/* Key Metric Callout */}
-                <div className="p-4 rounded-xl bg-white/[0.03] border border-white/[0.08] flex items-center justify-between mb-6">
+                <div className="p-3.5 rounded-xl bg-white/[0.03] border border-white/[0.08] flex items-center justify-between mb-5">
                   <div>
-                    <div className="text-[11px] text-white/50 uppercase tracking-wider font-mono">
+                    <div className="text-[10px] text-white/50 uppercase tracking-wider font-mono">
                       Measured Impact
                     </div>
                     <div className="text-xs text-white/80 mt-0.5 font-medium">
                       {activeItem.metric.label}
                     </div>
                   </div>
-                  <div className="text-2xl sm:text-3xl font-bold font-mono text-[#AFDDFF]">
+                  <div className="text-2xl font-bold font-mono text-[#AFDDFF]">
                     {activeItem.metric.value}
                   </div>
                 </div>
 
                 {/* Architecture Highlights Chips */}
-                <div className="space-y-2">
-                  <div className="text-[11px] text-white/40 font-mono uppercase tracking-wider">
+                <div className="space-y-1.5">
+                  <div className="text-[10px] text-white/40 font-mono uppercase tracking-wider">
                     Core Capabilities
                   </div>
                   <div className="flex flex-wrap gap-1.5">
                     {activeItem.highlights.map((h) => (
                       <span
                         key={h}
-                        className="px-2.5 py-1 rounded-md text-xs bg-white/[0.04] text-white/80 border border-white/10"
+                        className="px-2.5 py-0.5 rounded-md text-[11px] bg-white/[0.04] text-white/80 border border-white/10"
                       >
                         {h}
                       </span>
@@ -479,7 +608,7 @@ export function WhatWeBuild() {
               </motion.div>
             </AnimatePresence>
 
-            {/* Interactive 3x3 Selector Matrix (Click to Jump Directly to Any System) */}
+            {/* Interactive 3x3 Selector Matrix */}
             <div className="space-y-2">
               <div className="flex items-center justify-between text-xs text-white/50 font-mono">
                 <span>QUICK SYSTEM SELECTOR</span>
@@ -501,7 +630,7 @@ export function WhatWeBuild() {
                       }`}
                     >
                       <span className="text-[10px] text-white/40">0{idx + 1}</span>
-                      <span className="font-sans font-medium text-[11px] sm:text-xs truncate w-full mt-0.5">
+                      <span className="font-sans font-medium text-xs truncate w-full mt-0.5">
                         {m.name.split(' ')[0]}
                       </span>
                     </button>
@@ -510,8 +639,8 @@ export function WhatWeBuild() {
               </div>
             </div>
 
-            {/* Deck Controls (Previous / Next Buttons & Hint) */}
-            <div className="flex items-center justify-between pt-2">
+            {/* Deck Controls */}
+            <div className="flex items-center justify-between pt-1">
               <div className="flex items-center gap-2">
                 <button
                   onClick={() => swipeCardsRef.current?.prev()}
@@ -527,8 +656,8 @@ export function WhatWeBuild() {
                 >
                   <ChevronRight className="w-5 h-5" />
                 </button>
-                <span className="text-xs text-white/40 font-mono ml-2 hidden sm:inline-block">
-                  Swipe card or tap arrows to cycle
+                <span className="text-xs text-white/40 font-mono ml-2">
+                  Swipe or tap arrows
                 </span>
               </div>
 
@@ -544,13 +673,13 @@ export function WhatWeBuild() {
             </div>
           </div>
 
-          {/* ── RIGHT COLUMN (lg:cols-7): Generous 3D Interactive Gesture Deck ── */}
-          <div className="lg:col-span-7 flex flex-col items-center justify-center relative py-4 sm:py-6">
+          {/* RIGHT COLUMN: Generous 3D Gesture Deck */}
+          <div className="lg:col-span-7 flex flex-col items-center justify-center relative py-4">
             
             {/* Subtle floating badge above stack */}
             <div className="flex items-center gap-2 px-3 py-1 rounded-full bg-white/[0.04] border border-white/10 text-white/60 text-xs font-mono mb-4">
               <Hand className="w-3.5 h-3.5 text-[#AFDDFF]" />
-              <span>Drag & Throw Card in Any Direction</span>
+              <span>Swipe or Drag to Cycle Cards</span>
             </div>
 
             {/* The 3D Interactive Stack Carousel Component */}
@@ -562,12 +691,12 @@ export function WhatWeBuild() {
                   width: 420,
                   height: 480,
                   radius: 24,
-                  swipeThreshold: 90,
-                  stackRotation: 4.5,
+                  swipeThreshold: 85,
+                  stackRotation: 3.5,
                   stackScale: 0.04,
-                  tiltStrength: 24,
+                  tiltStrength: 20,
                   mobileBreakpoint: 640,
-                  mobileScale: 0.82,
+                  mobileScale: 0.85,
                 }}
                 onCardChange={(card) => {
                   setActiveItem(card as ModuleCardItem);
@@ -641,9 +770,8 @@ export function WhatWeBuild() {
                           <span>Custom engineered</span>
                           <ChevronRight className="w-3.5 h-3.5" />
                         </div>
-                        <div className="flex items-center gap-1 text-[11px] text-white/40 font-mono">
-                          <Sparkles className="w-3 h-3 text-[#AFDDFF]" />
-                          <span>Drag to flip</span>
+                        <div className="text-[11px] text-white/40 font-mono">
+                          Swipe or drag
                         </div>
                       </div>
                     </div>
@@ -651,23 +779,6 @@ export function WhatWeBuild() {
                 }}
               />
             </div>
-
-            {/* Mobile Swipe Pagination Dots */}
-            <div className="flex items-center justify-center gap-1.5 mt-5 lg:hidden">
-              {MODULE_DATA.map((m) => (
-                <button
-                  key={m.id}
-                  onClick={() => swipeCardsRef.current?.bringToFront(m.id)}
-                  aria-label={`Jump to ${m.name}`}
-                  className="h-1.5 rounded-full transition-all duration-300"
-                  style={{
-                    width: activeItem.id === m.id ? 24 : 6,
-                    background: activeItem.id === m.id ? '#AFDDFF' : 'rgba(255, 255, 255, 0.2)',
-                  }}
-                />
-              ))}
-            </div>
-
           </div>
 
         </div>

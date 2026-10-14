@@ -1,4 +1,4 @@
-import React, { useState, forwardRef, useImperativeHandle } from "react";
+import React, { useState, forwardRef, useImperativeHandle, useCallback } from "react";
 import { motion, useMotionValue, useTransform, type PanInfo } from "framer-motion";
 
 // Compatible image component that works in Next.js, Vite, and standard React environments
@@ -8,7 +8,6 @@ const FallbackImage = ({
   fill,
   className,
   priority,
-  sizes,
   ...props
 }: {
   src: string;
@@ -57,14 +56,14 @@ const defaultSettings = {
   width: 340, // card width in px
   height: 420, // card height in px
   radius: 20, // corner roundness in px
-  swipeThreshold: 100, // how far someone has to drag before the card flies off
-  stackRotation: 4, // degrees each card behind the front one tilts
+  swipeThreshold: 80, // how far someone has to drag before the card flies off
+  stackRotation: 3.5, // degrees each card behind the front one tilts
   stackScale: 0.04, // how much smaller each card behind the front one gets
-  tiltStrength: 22, // how far the card tilts while dragging (3D effect)
-  springStiffness: 300, // how snappy the drag/return animation feels
-  springDamping: 28, // how quickly the bounce settles
+  tiltStrength: 18, // how far the card tilts while dragging (3D effect)
+  springStiffness: 340, // snappy drag return animation
+  springDamping: 26, // quick settling bounce
   mobileBreakpoint: 640,
-  mobileScale: 0.88,
+  mobileScale: 0.84,
 };
 
 export type SwipeCardsSettings = typeof defaultSettings;
@@ -92,13 +91,11 @@ function SwipeCard({
 }: SwipeCardProps) {
   const x = useMotionValue(0);
   const y = useMotionValue(0);
+  const [isExiting, setIsExiting] = useState(false);
+  const [exitX, setExitX] = useState(0);
 
-  // Turn drag distance into a 3D tilt effect
-  const rotateX = useTransform(
-    y,
-    [-200, 200],
-    [settings.tiltStrength, -settings.tiltStrength],
-  );
+  // Turn horizontal drag distance into a dynamic tilt effect
+  const rotateZ = useTransform(x, [-250, 250], [-14, 14]);
   const rotateY = useTransform(
     x,
     [-200, 200],
@@ -109,42 +106,71 @@ function SwipeCard({
     _: MouseEvent | TouchEvent | PointerEvent,
     info: PanInfo,
   ) {
-    const draggedFarEnough =
-      Math.abs(info.offset.x) > settings.swipeThreshold ||
-      Math.abs(info.offset.y) > settings.swipeThreshold;
+    if (!isFront || isExiting) return;
 
-    if (draggedFarEnough) {
-      onSendToBack();
+    const velocityX = info.velocity.x;
+    const offsetX = info.offset.x;
+    const isFlick = Math.abs(velocityX) > 350;
+    const isDrag = Math.abs(offsetX) > settings.swipeThreshold;
+
+    if (isFlick || isDrag) {
+      // Determine exit direction based on velocity or drag distance
+      const dir = velocityX !== 0 ? Math.sign(velocityX) : Math.sign(offsetX);
+      const targetX = dir * (typeof window !== "undefined" ? Math.max(window.innerWidth * 0.7, 420) : 420);
+      setExitX(targetX);
+      setIsExiting(true);
     } else {
-      // Snap back to center
+      // Smooth spring snap back to center
       x.set(0);
       y.set(0);
     }
   }
 
+  // Once exit animation finishes, send card to back and reset
+  const handleAnimationComplete = () => {
+    if (isExiting) {
+      onSendToBack();
+      setIsExiting(false);
+      setExitX(0);
+      x.set(0);
+      y.set(0);
+    }
+  };
+
   return (
     <motion.div
-      className="absolute cursor-grab select-none active:cursor-grabbing"
+      className={`absolute select-none ${isFront ? "cursor-grab active:cursor-grabbing" : "pointer-events-none"}`}
       style={{
         width: settings.width,
         height: settings.height,
-        x: isFront ? x : 0,
+        x: isExiting ? exitX : (isFront ? x : 0),
         y: isFront ? y : 0,
-        rotateX: isFront ? rotateX : 0,
+        rotateZ: isExiting ? (exitX > 0 ? 12 : -12) : (isFront ? rotateZ : 0),
         rotateY: isFront ? rotateY : 0,
         zIndex,
-        touchAction: "none",
+        touchAction: "pan-y",
+        willChange: "transform, opacity",
       }}
-      drag={isFront}
-      dragConstraints={{ top: 0, right: 0, bottom: 0, left: 0 }}
-      dragElastic={0.45}
+      drag={isFront && !isExiting ? "x" : false}
+      dragDirectionLock
+      dragConstraints={{ left: 0, right: 0, top: 0, bottom: 0 }}
+      dragElastic={0.35}
       onDragEnd={handleDragEnd}
-      whileHover={isFront ? { scale: 1.02 } : {}}
-      transition={{
-        type: "spring",
-        stiffness: settings.springStiffness,
-        damping: settings.springDamping,
-      }}
+      animate={
+        isExiting
+          ? { x: exitX, opacity: 0, scale: 0.92 }
+          : { opacity: 1, scale: 1 }
+      }
+      transition={
+        isExiting
+          ? { duration: 0.22, ease: "easeOut" }
+          : {
+              type: "spring",
+              stiffness: settings.springStiffness,
+              damping: settings.springDamping,
+            }
+      }
+      onAnimationComplete={handleAnimationComplete}
     >
       {children}
     </motion.div>
@@ -165,7 +191,7 @@ export interface SwipeCardsProps {
   onCardChange?: (currentCard: SwipeCardItem, index: number) => void;
 }
 
-// Shrinks stack smoothly on small screens to fit mobile viewports
+// Shrinks stack smoothly on small screens to fit mobile viewports without glitch
 function useResponsiveScale(breakpoint: number, mobileScale: number) {
   const [scale, setScale] = useState(1);
 
@@ -203,20 +229,13 @@ export const SwipeCards = forwardRef<SwipeCardsRef, SwipeCardsProps>(
     };
     const [cardList, setCardList] = useState(cards);
 
-    // Update if incoming cards list changes length or identity
+    // Update if incoming cards list changes length
     React.useEffect(() => {
       setCardList(cards);
     }, [cards]);
 
-    // Notify parent whenever front card changes
-    React.useEffect(() => {
-      if (cardList.length > 0 && onCardChange) {
-        onCardChange(cardList[0], 0);
-      }
-    }, [cardList, onCardChange]);
-
-    // Send the front card to the back of the pile after a swipe
-    const moveToBack = (id: number | string) => {
+    // Send front card to back of pile
+    const moveToBack = useCallback((id: number | string) => {
       setCardList((prev) => {
         const updated = [...prev];
         const cardIndex = updated.findIndex((card) => card.id === id);
@@ -224,12 +243,15 @@ export const SwipeCards = forwardRef<SwipeCardsRef, SwipeCardsProps>(
           const [movedCard] = updated.splice(cardIndex, 1);
           updated.push(movedCard);
         }
+        if (updated.length > 0 && onCardChange) {
+          onCardChange(updated[0], 0);
+        }
         return updated;
       });
-    };
+    }, [onCardChange]);
 
     // Bring the previous card from the back to the front
-    const moveToFront = () => {
+    const moveToFront = useCallback(() => {
       setCardList((prev) => {
         if (prev.length <= 1) return prev;
         const updated = [...prev];
@@ -237,12 +259,15 @@ export const SwipeCards = forwardRef<SwipeCardsRef, SwipeCardsProps>(
         if (lastCard) {
           updated.unshift(lastCard);
         }
+        if (updated.length > 0 && onCardChange) {
+          onCardChange(updated[0], 0);
+        }
         return updated;
       });
-    };
+    }, [onCardChange]);
 
     // Jump directly to a card by ID
-    const bringToFront = (id: number | string) => {
+    const bringToFront = useCallback((id: number | string) => {
       setCardList((prev) => {
         const updated = [...prev];
         const cardIndex = updated.findIndex((card) => card.id === id);
@@ -250,9 +275,12 @@ export const SwipeCards = forwardRef<SwipeCardsRef, SwipeCardsProps>(
           const itemsToMove = updated.splice(0, cardIndex);
           updated.push(...itemsToMove);
         }
+        if (updated.length > 0 && onCardChange) {
+          onCardChange(updated[0], 0);
+        }
         return updated;
       });
-    };
+    }, [onCardChange]);
 
     // Expose imperative API for buttons/tabs
     useImperativeHandle(ref, () => ({
@@ -277,8 +305,8 @@ export const SwipeCards = forwardRef<SwipeCardsRef, SwipeCardsProps>(
         >
           {cardList.map((card, index) => {
             const isFront = index === 0;
-            // Only render top 4 cards for optimal performance
-            if (index > 3) return null;
+            // Only render top 3 cards for silky 60fps performance on mobile
+            if (index > 2) return null;
             const zIndex = cardList.length - index;
 
             return (
@@ -291,15 +319,17 @@ export const SwipeCards = forwardRef<SwipeCardsRef, SwipeCardsProps>(
               >
                 <motion.div
                   className="relative h-full w-full overflow-hidden shadow-2xl"
-                  style={{ borderRadius: config.radius }}
+                  style={{ 
+                    borderRadius: config.radius,
+                    transformOrigin: "50% 100%", // Anchored at bottom center to eliminate awkward elevation
+                  }}
                   animate={{
-                    rotateZ: index * config.stackRotation,
+                    rotateZ: index * (index % 2 === 0 ? config.stackRotation : -config.stackRotation),
                     scale: 1 - index * config.stackScale,
-                    y: index * 6,
-                    transformOrigin: "85% 85%",
+                    y: index * 4,
                   }}
                   initial={false}
-                  transition={{ type: "spring", stiffness: 260, damping: 24 }}
+                  transition={{ type: "spring", stiffness: 280, damping: 26 }}
                 >
                   {renderCard ? (
                     renderCard(card, index, isFront)
