@@ -10,26 +10,33 @@ const IntroContext = createContext<IntroContextValue>({
   onIntroDone: () => {},
 });
 
-export function IntroProvider({ children }: { children: React.ReactNode }) {
-  // If the user prefers reduced motion, skip the intro entirely
-  const prefersReduced =
-    typeof window !== 'undefined' &&
-    window.matchMedia('(prefers-reduced-motion: reduce)').matches;
+/** Returns true synchronously if we should skip the intro */
+function shouldSkipIntro(): boolean {
+  if (typeof window === 'undefined') return false;
+  // Skip on mobile (touch devices) — no intro video plays there
+  if (window.innerWidth < 768 || window.matchMedia('(hover: none)').matches) return true;
+  // Skip if user prefers reduced motion
+  if (window.matchMedia('(prefers-reduced-motion: reduce)').matches) return true;
+  return false;
+}
 
-  const [introDone, setIntroDone] = useState(prefersReduced);
+export function IntroProvider({ children }: { children: React.ReactNode }) {
+  // Initialise synchronously — mobile users never see opacity:0 flash
+  const [introDone, setIntroDone] = useState(() => shouldSkipIntro());
 
   const onIntroDone = useCallback(() => {
     setIntroDone(true);
   }, []);
 
-  // Safety fallback: if something goes wrong, never block the site forever
+  // Safety fallback: never block the site forever on desktop
   useEffect(() => {
-    if (prefersReduced) return;
+    if (introDone) return; // already done — no need for failsafe
     const failsafe = window.setTimeout(() => {
+      console.warn('[IntroContext] Failsafe triggered — forcing introDone');
       setIntroDone(true);
-    }, 15_000); // 15 s hard cap
+    }, 12_000); // 12 s hard cap (reduced from 15 s)
     return () => window.clearTimeout(failsafe);
-  }, [prefersReduced]);
+  }, [introDone]);
 
   return (
     <IntroContext.Provider value={{ introDone, onIntroDone }}>

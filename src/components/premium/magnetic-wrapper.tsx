@@ -6,7 +6,20 @@ interface MagneticWrapperProps extends HTMLMotionProps<"div"> {
   strength?: number;
 }
 
+// Detect touch devices once at module level — no re-renders needed
+const isTouchDevice =
+  typeof window !== 'undefined' && window.matchMedia('(hover: none)').matches;
+
 export function MagneticWrapper({ children, strength = 0.2, ...props }: MagneticWrapperProps) {
+  // On touch/mobile: just render children — no mouse listeners or motion values
+  if (isTouchDevice) {
+    return <div {...(props as React.HTMLAttributes<HTMLDivElement>)}>{children}</div>;
+  }
+
+  return <MagneticWrapperDesktop strength={strength} {...props}>{children}</MagneticWrapperDesktop>;
+}
+
+function MagneticWrapperDesktop({ children, strength = 0.2, ...props }: MagneticWrapperProps) {
   const ref = useRef<HTMLDivElement>(null);
 
   const x = useMotionValue(0);

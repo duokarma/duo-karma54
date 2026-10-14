@@ -1,6 +1,7 @@
 import React, { useState, useRef, useEffect } from 'react';
 import { m as motion, AnimatePresence } from 'framer-motion';
 import { Send, Bot, MessageCircle, Mail, Calendar, RefreshCw, Sparkles, ClipboardList, ChevronRight } from 'lucide-react';
+import DOMPurify from 'dompurify';
 import { COLORS } from './ui/theme';
 
 // ── Types ──────────────────────────────────────────────────────────────────────
@@ -60,10 +61,15 @@ const LEAD_BOT_QUESTIONS: Record<LeadStep, string> = {
 // ── Helpers ────────────────────────────────────────────────────────────────────
 
 function renderMarkdown(text: string): string {
-  return text
+  const raw = text
     .replace(/\*\*(.+?)\*\*/g, '<strong>$1</strong>')
     .replace(/\*(.+?)\*/g, '<em>$1</em>')
     .replace(/\n/g, '<br/>');
+  // Sanitize — only allow the tags we explicitly produce
+  return DOMPurify.sanitize(raw, {
+    ALLOWED_TAGS: ['strong', 'em', 'br'],
+    ALLOWED_ATTR: [],
+  });
 }
 
 function TypingDots({ color }: { color: string }) {
