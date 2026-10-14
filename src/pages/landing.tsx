@@ -55,7 +55,7 @@ function LandingPageInner() {
   const smoothY = useSpring(rawY, { stiffness: 60, damping: 20, mass: 0.5 });
 
   // Builds the gradient string reactively from motion values — no setState needed
-  const background = useMotionTemplate`radial-gradient(500px circle at ${smoothX}px ${smoothY}px, rgba(201,168,118,0.055) 0%, transparent 70%)`;
+  const background = useMotionTemplate`radial-gradient(500px circle at ${smoothX}px ${smoothY}px, rgba(175,221,255,0.055) 0%, transparent 70%)`;
 
   useEffect(() => {
     if (isTouchDevice) return; // Skip on mobile — no mouse to track
