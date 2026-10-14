@@ -39,6 +39,8 @@
     <noscript>
       <link rel="stylesheet" href="https://fonts.googleapis.com/css2?family=Fraunces:opsz,wght@9..144,300;9..144,400;9..144,500;9..144,600&family=Inter:wght@400;500;600&family=IBM+Plex+Mono:wght@400;500&display=swap" />
     </noscript>
+    <!-- Hero video poster preload for instant 0ms FCP -->
+    <link rel="preload" as="image" href="/hero-poster.webp" type="image/webp" fetchpriority="high" />
     <!-- Intro video preload — WebM is 70% smaller than MP4 and plays on all modern browsers -->
     <link rel="preload" as="video" type="video/webm" crossorigin="anonymous" href="/videos/intro-desktop.webm" media="(min-width: 768px)" />
     <link rel="preload" as="video" type="video/webm" crossorigin="anonymous" href="/videos/intro-mobile.webm" media="(max-width: 767px)" />

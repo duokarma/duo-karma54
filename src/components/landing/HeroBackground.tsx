@@ -174,6 +174,9 @@ function CentralNodes() {
   );
 }
 
+const isTouchDevice =
+  typeof window !== 'undefined' && window.matchMedia('(hover: none)').matches;
+
 /* ─── Main HeroBackground component ─── */
 export const HeroBackground = React.memo(function HeroBackground() {
   const videoRef = React.useRef<HTMLVideoElement>(null);
@@ -188,15 +191,16 @@ export const HeroBackground = React.memo(function HeroBackground() {
 
   return (
     <div className="absolute inset-0 z-10 overflow-hidden bg-black" aria-hidden="true">
-      {/* Layer 0: Full-bleed jellyfish video playing on all devices (mobile + desktop) */}
+      {/* Layer 0: Full-bleed jellyfish video with instant WebP poster fallback */}
       <video
         ref={videoRef}
         src="https://d8j0ntlcm91z4.cloudfront.net/user_38xzZboKViGWJOttwIXH07lWA1P/hf_20260813_115057_94c3699b-0fd1-4124-bcf3-3626bb8c1f77.mp4"
+        poster="/hero-poster.webp"
         autoPlay
         muted
         loop
         playsInline
-        preload="auto"
+        preload={isTouchDevice ? "metadata" : "auto"}
         disablePictureInPicture
         className="absolute inset-0 w-full h-full object-cover lumen-fade-in pointer-events-none opacity-90"
       />

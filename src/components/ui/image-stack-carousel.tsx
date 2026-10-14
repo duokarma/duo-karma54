@@ -149,7 +149,7 @@ function SwipeCard({
         rotateY: isFront ? rotateY : 0,
         zIndex,
         touchAction: "pan-y",
-        willChange: "transform, opacity",
+        willChange: isFront || isExiting ? "transform, opacity" : "auto",
       }}
       drag={isFront && !isExiting ? "x" : false}
       dragDirectionLock

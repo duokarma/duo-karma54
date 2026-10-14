@@ -1,4 +1,4 @@
-import { useState, useRef, useEffect, useCallback } from 'react';
+import { useState, useRef, useEffect, useCallback, memo } from 'react';
 import { m as motion, AnimatePresence } from 'framer-motion';
 import { COLORS } from './ui/theme';
 import { Eyebrow } from './ui/Eyebrow';
@@ -140,7 +140,7 @@ const MODULE_DATA: ModuleCardItem[] = [
 ];
 
 /* ─── Blueprint Mockup Sub-Components inside Cards ─── */
-function BlueprintMockup({ type }: { type: ModuleCardItem['blueprintType'] }) {
+const BlueprintMockup = memo(function BlueprintMockup({ type }: { type: ModuleCardItem['blueprintType'] }) {
   switch (type) {
     case 'salon':
       return (
@@ -326,7 +326,7 @@ function BlueprintMockup({ type }: { type: ModuleCardItem['blueprintType'] }) {
     default:
       return null;
   }
-}
+});
 
 export function WhatWeBuild() {
   const [activeItem, setActiveItem] = useState<ModuleCardItem>(MODULE_DATA[0]);
