@@ -27,35 +27,35 @@ interface LeadData {
 // ── Constants ──────────────────────────────────────────────────────────────────
 
 const SUGGESTED_PROMPTS = [
-  '💈 Salon Booking System',
-  '🏥 Clinic Management Software',
-  '🏋️ Gym & Member Tracking',
-  '💰 Pricing & Timelines',
-  '⚡ Custom Web App Development',
+  'Salon Booking Systems',
+  'Clinic Management Software',
+  'Gym & Member Tracking',
+  'Pricing & Timelines',
+  'Custom Web App Development',
 ];
 
 const BUSINESS_OPTIONS = [
-  { value: 'Salon', label: '💈 Salon / Beauty' },
-  { value: 'Clinic', label: '🏥 Medical Clinic' },
-  { value: 'Gym', label: '🏋️ Gym / Fitness' },
-  { value: 'Restaurant', label: '🍽️ Restaurant / Cafe' },
-  { value: 'Farmhouse', label: '🌿 Farmhouse / Venue' },
-  { value: 'Other', label: '⚡ Other Business' },
+  { value: 'Salon', label: 'Salon / Beauty' },
+  { value: 'Clinic', label: 'Medical Clinic' },
+  { value: 'Gym', label: 'Gym / Fitness' },
+  { value: 'Restaurant', label: 'Restaurant / Cafe' },
+  { value: 'Farmhouse', label: 'Farmhouse / Venue' },
+  { value: 'Other', label: 'Other Enterprise' },
 ];
 
 const AI_INIT_MESSAGE: Message = {
   id: 'ai-init',
   role: 'assistant',
-  text: "👋 Hi! I'm the **DuoKarma AI Assistant**.\n\nI can answer questions about our services, pricing, timelines, or help you figure out what software fits your business best.\n\nWhat would you like to know?",
+  text: "Hello! I'm the **DuoKarma AI Assistant**.\n\nI can answer questions about our services, pricing, timelines, or help you figure out what software fits your business best.\n\nWhat would you like to know?",
 };
 
 const LEAD_BOT_QUESTIONS: Record<LeadStep, string> = {
-  name: "👋 Welcome! I'm here to help you get a **custom proposal**.\n\nLet's start — **what's your name?**",
-  email: "Great, {name}! 📧 What's your **work email address?** _(Type 'skip' to skip this)_",
-  phone: "Perfect! 📱 What's your **WhatsApp / phone number?** We'll use this to contact you.",
+  name: "Welcome! I'm here to help you get a **custom proposal**.\n\nLet's start — **what's your name?**",
+  email: "Great, {name}! What's your **work email address?** _(Type 'skip' to skip this)_",
+  phone: "Perfect! What's your **WhatsApp / phone number?** We'll use this to contact you.",
   business: "Thanks! Now, **what type of business do you run?**",
-  project: "Awesome! 💡 Finally — **briefly describe what you need**, or what your biggest challenge is right now.",
-  done: "🎉 **Thank you, {name}!** We've received your request and will send a tailored proposal to **{email}** within 24 hours.\n\nYou can also book a free 20-min strategy call using the button below!",
+  project: "Understood. Finally — **briefly describe what you need**, or what your biggest operational bottleneck is right now.",
+  done: "**Thank you, {name}!** We've received your request and will send a tailored proposal to **{email}** within 24 hours.\n\nYou can also book a free 20-min strategy call using the button below!",
 };
 
 // ── Helpers ────────────────────────────────────────────────────────────────────
@@ -210,7 +210,11 @@ export function ConversationFlow() {
     } catch {
       setAiMessages((prev) => [
         ...prev,
-        { id: (Date.now() + 1).toString(), role: 'assistant', text: "Connection issue — please try again!" },
+        {
+          id: (Date.now() + 1).toString(),
+          role: 'assistant',
+          text: "We build custom websites (from ₹15k), booking systems (from ₹20k), dashboards (from ₹25k), and CRMs. Tap **Book a Strategy Call** below or reach us directly on WhatsApp at **+91 93138 46266**!",
+        },
       ]);
     } finally {
       setAiTyping(false);

@@ -3,62 +3,81 @@ import { m as motion, AnimatePresence } from 'framer-motion';
 import { COLORS } from './ui/theme';
 import { Eyebrow } from './ui/Eyebrow';
 import { Reveal } from './ui/Reveal';
-import { ChevronRight } from 'lucide-react';
+import { 
+  ChevronRight, 
+  Scissors, 
+  Building2, 
+  BarChart3, 
+  Target, 
+  Package, 
+  Zap, 
+  Dumbbell, 
+  Stethoscope, 
+  UtensilsCrossed,
+  type LucideIcon
+} from 'lucide-react';
 
-const MODULES = [
+interface ModuleItem {
+  name: string;
+  tag: string;
+  detail: string;
+  icon: LucideIcon;
+}
+
+const MODULES: ModuleItem[] = [
   {
     name: "Salon Management",
     tag: "Multi-Location",
     detail: "Appointments, staff schedules, service menus, and client history in one live system.",
-    icon: "✂️",
+    icon: Scissors,
   },
   {
     name: "Farmhouse Booking",
     tag: "Hospitality",
     detail: "Public booking engine with availability calendars, pricing rules, and instant confirmations.",
-    icon: "🏡",
+    icon: Building2,
   },
   {
     name: "Business Dashboards",
     tag: "Executive Analytics",
     detail: "Real-time views into revenue, bookings, and operations — built around how owners actually check numbers.",
-    icon: "📊",
+    icon: BarChart3,
   },
   {
     name: "CRM Systems",
     tag: "Client Pipelines",
     detail: "Track leads, clients, and follow-ups without a spreadsheet duct-taped to email.",
-    icon: "🎯",
+    icon: Target,
   },
   {
     name: "Inventory & Billing",
     tag: "Commerce & POS",
     detail: "Stock levels, invoicing, and POS flows that stay in sync with what's actually sold.",
-    icon: "📦",
+    icon: Package,
   },
   {
     name: "Business Automation",
     tag: "Workflow Engine",
     detail: "Notifications, reminders, and workflows that remove the manual middle step.",
-    icon: "⚡",
+    icon: Zap,
   },
   {
     name: "Gym Management",
     tag: "Health & Fitness",
     detail: "Member subscriptions, class scheduling, and automated billing for fitness centers.",
-    icon: "💪",
+    icon: Dumbbell,
   },
   {
     name: "Clinic Management",
     tag: "Healthcare",
     detail: "Patient records, appointment scheduling, secure billing, and automated reminders.",
-    icon: "🩺",
+    icon: Stethoscope,
   },
   {
     name: "Restaurant Systems",
     tag: "F&B Operations",
     detail: "Table reservations, digital menus, order management, and seamless POS integration.",
-    icon: "🍽️",
+    icon: UtensilsCrossed,
   },
 ];
 
@@ -89,11 +108,11 @@ export function WhatWeBuild() {
       style={{ background: COLORS.surface }}
       id="work"
     >
-      {/* Ambient luxury radial glow */}
+      {/* Ambient luxury radial glow — cyan & ice-blue */}
       <div
-        className="pointer-events-none absolute top-0 left-1/2 -translate-x-1/2 w-[500px] h-[300px] opacity-40"
+        className="pointer-events-none absolute top-0 left-1/2 -translate-x-1/2 w-[600px] h-[320px] opacity-25"
         style={{
-          background: 'radial-gradient(ellipse 60% 50% at 50% 0%, rgba(201,168,118,0.18), transparent 70%)',
+          background: 'radial-gradient(ellipse 60% 50% at 50% 0%, rgba(175,221,255,0.22), transparent 70%)',
         }}
         aria-hidden="true"
       />
@@ -105,7 +124,7 @@ export function WhatWeBuild() {
             className="text-3xl md:text-5xl font-normal tracking-tight max-w-[640px] mt-2"
             style={{
               fontFamily: "'Fraunces', serif",
-              background: 'linear-gradient(135deg, #FFFFFF 20%, #F5E6CC 60%, #C9A876 100%)',
+              background: 'linear-gradient(135deg, #FFFFFF 30%, #D8EDFF 70%, #AFDDFF 100%)',
               WebkitBackgroundClip: 'text',
               WebkitTextFillColor: 'transparent',
             }}
@@ -127,54 +146,59 @@ export function WhatWeBuild() {
             className="flex gap-3.5 overflow-x-auto snap-x snap-mandatory pb-4 pt-1 px-5 -mx-5 scrollbar-none"
             style={{ scrollSnapType: 'x mandatory', WebkitOverflowScrolling: 'touch' }}
           >
-            {MODULES.map((m, i) => (
-              <motion.div
-                key={m.name}
-                whileTap={{ scale: 0.98 }}
-                className="snap-center shrink-0 w-[84vw] max-w-[320px] rounded-2xl p-6 relative overflow-hidden transition-all"
-                style={{
-                  background: 'linear-gradient(145deg, rgba(28, 25, 22, 0.85) 0%, rgba(12, 11, 10, 0.95) 100%)',
-                  border: mobileActiveIndex === i ? '1px solid rgba(201, 168, 118, 0.45)' : '1px solid rgba(201, 168, 118, 0.14)',
-                  boxShadow: mobileActiveIndex === i ? '0 12px 35px -8px rgba(201,168,118,0.12)' : '0 8px 24px rgba(0,0,0,0.5)',
-                  backdropFilter: 'blur(16px)',
-                }}
-              >
-                {/* Top Badge Row */}
-                <div className="flex items-center justify-between mb-4">
-                  <span className="text-2xl">{m.icon}</span>
-                  <div className="flex items-center gap-2">
-                    <span className="px-2 py-0.5 rounded-full text-[10px] font-semibold tracking-wide bg-[#C9A876]/10 text-[#C9A876] border border-[#C9A876]/25">
-                      {m.tag}
-                    </span>
-                    <span
-                      style={{ fontFamily: "'IBM Plex Mono', monospace" }}
-                      className="text-[11px] text-ink/40 font-mono"
-                    >
-                      0{i + 1}
-                    </span>
-                  </div>
-                </div>
-
-                {/* System Title */}
-                <h3
-                  className="text-xl font-normal text-white mb-2"
-                  style={{ fontFamily: "'Fraunces', serif" }}
+            {MODULES.map((m, i) => {
+              const IconComp = m.icon;
+              return (
+                <motion.div
+                  key={m.name}
+                  whileTap={{ scale: 0.98 }}
+                  className="snap-center shrink-0 w-[84vw] max-w-[320px] rounded-2xl p-6 relative overflow-hidden transition-all"
+                  style={{
+                    background: 'linear-gradient(145deg, rgba(20, 24, 30, 0.85) 0%, rgba(10, 12, 16, 0.95) 100%)',
+                    border: mobileActiveIndex === i ? '1px solid rgba(175, 221, 255, 0.45)' : '1px solid rgba(255, 255, 255, 0.08)',
+                    boxShadow: mobileActiveIndex === i ? '0 12px 35px -8px rgba(175,221,255,0.18)' : '0 8px 24px rgba(0,0,0,0.5)',
+                    backdropFilter: 'blur(16px)',
+                  }}
                 >
-                  {m.name}
-                </h3>
+                  {/* Top Badge Row */}
+                  <div className="flex items-center justify-between mb-4">
+                    <div className="w-10 h-10 rounded-xl bg-white/[0.04] border border-white/10 flex items-center justify-center text-[#AFDDFF] shadow-inner">
+                      <IconComp className="w-5 h-5 text-[#AFDDFF]" strokeWidth={1.6} />
+                    </div>
+                    <div className="flex items-center gap-2">
+                      <span className="px-2.5 py-0.5 rounded-full text-[10px] font-semibold tracking-wide bg-[#AFDDFF]/10 text-[#AFDDFF] border border-[#AFDDFF]/25">
+                        {m.tag}
+                      </span>
+                      <span
+                        style={{ fontFamily: "'IBM Plex Mono', monospace" }}
+                        className="text-[11px] text-ink/40 font-mono"
+                      >
+                        0{i + 1}
+                      </span>
+                    </div>
+                  </div>
 
-                {/* Detail Description */}
-                <p className="text-xs text-ink/70 leading-relaxed font-sans mb-4 min-h-[50px]">
-                  {m.detail}
-                </p>
+                  {/* System Title */}
+                  <h3
+                    className="text-xl font-normal text-white mb-2"
+                    style={{ fontFamily: "'Fraunces', serif" }}
+                  >
+                    {m.name}
+                  </h3>
 
-                {/* Bottom link indicator */}
-                <div className="flex items-center gap-1.5 text-xs text-[#C9A876] font-medium pt-2 border-t border-white/5">
-                  <span>Custom engineered</span>
-                  <ChevronRight className="w-3.5 h-3.5" />
-                </div>
-              </motion.div>
-            ))}
+                  {/* Detail Description */}
+                  <p className="text-xs text-ink/70 leading-relaxed font-sans mb-4 min-h-[50px]">
+                    {m.detail}
+                  </p>
+
+                  {/* Bottom link indicator */}
+                  <div className="flex items-center gap-1.5 text-xs text-[#AFDDFF] font-medium pt-2 border-t border-white/5">
+                    <span>Custom engineered</span>
+                    <ChevronRight className="w-3.5 h-3.5" />
+                  </div>
+                </motion.div>
+              );
+            })}
           </div>
 
           {/* Pagination dots */}
@@ -185,7 +209,7 @@ export function WhatWeBuild() {
                 className="h-1 rounded-full transition-all duration-300"
                 style={{
                   width: mobileActiveIndex === i ? 22 : 6,
-                  background: mobileActiveIndex === i ? '#C9A876' : 'rgba(255, 255, 255, 0.15)',
+                  background: mobileActiveIndex === i ? '#AFDDFF' : 'rgba(255, 255, 255, 0.15)',
                 }}
               />
             ))}
@@ -197,100 +221,110 @@ export function WhatWeBuild() {
       ) : (
         /* ── DESKTOP: Interactive list with floating preview drawer ── */
         <div className="max-w-[1200px] mx-auto w-full relative">
-          {MODULES.map((m, i) => (
-            <div
-              key={m.name}
-              onMouseEnter={() => setActive(i)}
-              style={{
-                borderBottom: `1px solid ${COLORS.line}`,
-                position: 'relative',
-                cursor: 'pointer',
-              }}
-            >
+          {MODULES.map((m, i) => {
+            const IconComp = m.icon;
+            return (
               <div
+                key={m.name}
+                onMouseEnter={() => setActive(i)}
                 style={{
-                  padding: '26px 0',
-                  display: 'flex',
-                  alignItems: 'center',
-                  justifyContent: 'space-between',
-                  width: '45%',
+                  borderBottom: `1px solid ${COLORS.line}`,
+                  position: 'relative',
+                  cursor: 'pointer',
                 }}
               >
-                <div className="flex items-center gap-3">
-                  <span className="text-lg opacity-80">{m.icon}</span>
-                  <span
-                    style={{
-                      fontFamily: "'Fraunces', serif",
-                      fontSize: 22,
-                      color: active === i ? COLORS.accent : COLORS.text,
-                      transition: 'color 0.3s',
-                    }}
-                  >
-                    {m.name}
-                  </span>
-                </div>
-                <span
+                <div
                   style={{
-                    fontFamily: "'IBM Plex Mono', monospace",
-                    fontSize: 12,
-                    color: active === i ? COLORS.accent : COLORS.secondary,
+                    padding: '26px 0',
+                    display: 'flex',
+                    alignItems: 'center',
+                    justifyContent: 'space-between',
+                    width: '45%',
                   }}
                 >
-                  {String(i + 1).padStart(2, '0')}
-                </span>
-              </div>
-
-              {/* Desktop Description Panel */}
-              <AnimatePresence>
-                {active === i && (
-                  <motion.div
-                    initial={{ opacity: 0, y: '-50%', x: 14 }}
-                    animate={{ opacity: 1, y: '-50%', x: 0 }}
-                    exit={{ opacity: 0, y: '-50%', x: 14 }}
-                    transition={{ duration: 0.3, ease: [0.16, 1, 0.3, 1] }}
-                    style={{
-                      position: 'absolute',
-                      top: '50%',
-                      right: 0,
-                      width: '48%',
-                      background: 'linear-gradient(145deg, rgba(30, 26, 22, 0.9) 0%, rgba(14, 13, 11, 0.98) 100%)',
-                      border: '1px solid rgba(201, 168, 118, 0.25)',
-                      borderRadius: 20,
-                      padding: 34,
-                      zIndex: 10,
-                      boxShadow: '0 24px 48px rgba(0,0,0,0.6), inset 0 1px 0 rgba(255,255,255,0.08)',
-                      pointerEvents: 'none',
-                    }}
-                  >
-                    <div className="flex items-center justify-between mb-3">
-                      <div
-                        style={{
-                          fontFamily: "'Fraunces', serif",
-                          fontSize: 24,
-                          color: COLORS.accent,
-                        }}
-                      >
-                        {m.name}
-                      </div>
-                      <span className="px-2.5 py-0.5 rounded-full text-xs font-semibold bg-[#C9A876]/10 text-[#C9A876] border border-[#C9A876]/30">
-                        {m.tag}
-                      </span>
+                  <div className="flex items-center gap-3.5">
+                    <div className="w-8 h-8 rounded-lg bg-white/[0.04] border border-white/10 flex items-center justify-center text-[#AFDDFF]/80">
+                      <IconComp className="w-4 h-4 text-[#AFDDFF]" strokeWidth={1.6} />
                     </div>
-                    <div
+                    <span
                       style={{
-                        fontFamily: "'Inter', sans-serif",
-                        fontSize: 15,
-                        color: COLORS.secondary,
-                        lineHeight: 1.7,
+                        fontFamily: "'Fraunces', serif",
+                        fontSize: 22,
+                        color: active === i ? '#AFDDFF' : COLORS.text,
+                        transition: 'color 0.3s',
                       }}
                     >
-                      {m.detail}
-                    </div>
-                  </motion.div>
-                )}
-              </AnimatePresence>
-            </div>
-          ))}
+                      {m.name}
+                    </span>
+                  </div>
+                  <span
+                    style={{
+                      fontFamily: "'IBM Plex Mono', monospace",
+                      fontSize: 12,
+                      color: active === i ? '#AFDDFF' : COLORS.secondary,
+                    }}
+                  >
+                    {String(i + 1).padStart(2, '0')}
+                  </span>
+                </div>
+
+                {/* Desktop Description Panel */}
+                <AnimatePresence>
+                  {active === i && (
+                    <motion.div
+                      initial={{ opacity: 0, y: '-50%', x: 14 }}
+                      animate={{ opacity: 1, y: '-50%', x: 0 }}
+                      exit={{ opacity: 0, y: '-50%', x: 14 }}
+                      transition={{ duration: 0.3, ease: [0.16, 1, 0.3, 1] }}
+                      style={{
+                        position: 'absolute',
+                        top: '50%',
+                        right: 0,
+                        width: '48%',
+                        background: 'linear-gradient(145deg, rgba(18, 22, 28, 0.92) 0%, rgba(10, 12, 16, 0.98) 100%)',
+                        border: '1px solid rgba(175, 221, 255, 0.25)',
+                        borderRadius: 20,
+                        padding: 34,
+                        zIndex: 10,
+                        boxShadow: '0 24px 48px rgba(0,0,0,0.6), inset 0 1px 0 rgba(255,255,255,0.08)',
+                        pointerEvents: 'none',
+                      }}
+                    >
+                      <div className="flex items-center justify-between mb-4">
+                        <div className="flex items-center gap-3">
+                          <div className="w-10 h-10 rounded-xl bg-[#AFDDFF]/10 border border-[#AFDDFF]/30 flex items-center justify-center text-[#AFDDFF]">
+                            <IconComp className="w-5 h-5" strokeWidth={1.6} />
+                          </div>
+                          <div
+                            style={{
+                              fontFamily: "'Fraunces', serif",
+                              fontSize: 24,
+                              color: '#FFFFFF',
+                            }}
+                          >
+                            {m.name}
+                          </div>
+                        </div>
+                        <span className="px-2.5 py-0.5 rounded-full text-xs font-semibold bg-[#AFDDFF]/10 text-[#AFDDFF] border border-[#AFDDFF]/30">
+                          {m.tag}
+                        </span>
+                      </div>
+                      <div
+                        style={{
+                          fontFamily: "'Inter', sans-serif",
+                          fontSize: 15,
+                          color: COLORS.secondary,
+                          lineHeight: 1.7,
+                        }}
+                      >
+                        {m.detail}
+                      </div>
+                    </motion.div>
+                  )}
+                </AnimatePresence>
+              </div>
+            );
+          })}
         </div>
       )}
     </section>

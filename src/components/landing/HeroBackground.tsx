@@ -1,20 +1,17 @@
 import React from 'react';
 
-// Detect touch/mobile devices — module-level, no re-renders
-const isTouchDevice =
-  typeof window !== 'undefined' && window.matchMedia('(hover: none)').matches;
 
 /* ─── Grid configuration ─── */
 const VERTICAL_POSITIONS = ['12.6%', '37.5%', '61.9%', '86.2%'];
 const HORIZONTAL_POSITIONS = ['32.7%', '71.4%'];
 
-/* ─── Node configuration ─── */
+/* ─── Node configuration — re-anchored to open negative space corridors ─── */
 const NODES = [
   {
     id: 'core',
-    squarePos: { top: '27%', left: '60%' },
+    squarePos: { top: '20%', left: '74%' },
     squareDelay: 1500,
-    labelPos: { top: '11%', left: '26%' },
+    labelPos: { top: '13%', left: '58%' },
     labelAnim: 'lumen-slide-left',
     labelDelay: 1100,
     title: '[ CORE_ENTITY ]',
@@ -23,9 +20,9 @@ const NODES = [
   },
   {
     id: 'luminous',
-    squarePos: { top: '58%', left: '32%' },
+    squarePos: { top: '48%', left: '42%' },
     squareDelay: 1800,
-    labelPos: { top: '76%', left: '3%' },
+    labelPos: { top: '42%', left: '22%' },
     labelAnim: 'lumen-slide-left',
     labelDelay: 1400,
     title: '[ LUMINOUS_INSIGHT ]',
@@ -34,9 +31,9 @@ const NODES = [
   },
   {
     id: 'connect',
-    squarePos: { top: '63%', left: '50%' },
+    squarePos: { top: '56%', left: '68%' },
     squareDelay: 2100,
-    labelPos: { top: '50%', left: '78%' },
+    labelPos: { top: '48%', left: '74%' },
     labelAnim: 'lumen-slide-right',
     labelDelay: 1700,
     title: '[ CONNECTIVITY ]',
@@ -47,12 +44,12 @@ const NODES = [
 
 /* ─── Connector line configuration ─── */
 const CONNECTOR_LINES = [
-  { x1: '38%', y1: '14%', x2: '52%', y2: '14%', delay: 1200 },
-  { x1: '52%', y1: '14%', x2: '60%', y2: '27%', delay: 1400 },
-  { x1: '32%', y1: '58%', x2: '20%', y2: '74%', delay: 1500 },
-  { x1: '20%', y1: '74%', x2: '6%',  y2: '74%', delay: 1700 },
-  { x1: '78%', y1: '53%', x2: '63%', y2: '53%', delay: 1800 },
-  { x1: '63%', y1: '53%', x2: '50%', y2: '63%', delay: 2000 },
+  { x1: '58%', y1: '16%', x2: '67%', y2: '16%', delay: 1200 },
+  { x1: '67%', y1: '16%', x2: '74%', y2: '20%', delay: 1400 },
+  { x1: '22%', y1: '45%', x2: '34%', y2: '45%', delay: 1500 },
+  { x1: '34%', y1: '45%', x2: '42%', y2: '48%', delay: 1700 },
+  { x1: '74%', y1: '51%', x2: '74%', y2: '56%', delay: 1800 },
+  { x1: '74%', y1: '56%', x2: '68%', y2: '56%', delay: 2000 },
 ] as const;
 
 /* ─── Grid Lines sub-component ─── */
@@ -113,7 +110,7 @@ function ConnectorLine({
     >
       <line
         x1={x1} y1={y1} x2={x2} y2={y2}
-        stroke="rgba(255,255,255,0.25)"
+        stroke="rgba(255,255,255,0.22)"
         strokeWidth="1"
         vectorEffect="non-scaling-stroke"
       />
@@ -129,7 +126,7 @@ function CentralNodes() {
       {NODES.map((node) => (
         <div
           key={`sq-${node.id}`}
-          className="absolute w-[80px] h-[80px] lg:w-[100px] lg:h-[100px] border border-white/80 lumen-scale-in"
+          className="absolute w-[70px] h-[70px] lg:w-[84px] lg:h-[84px] border border-white/35 lumen-scale-in backdrop-blur-[1px]"
           style={{
             top: node.squarePos.top,
             left: node.squarePos.left,
@@ -150,14 +147,13 @@ function CentralNodes() {
           }}
         >
           <span
-            className="text-white text-[13px] leading-[15.6px] whitespace-nowrap"
-            style={{ fontFamily: "'Inter', sans-serif" }}
+            className="text-white/70 text-[12px] leading-[15px] whitespace-nowrap font-mono tracking-wider"
           >
             {node.title}
           </span>
           <p
-            className="text-white/50 text-[11px] leading-[14px] mt-[4px]"
-            style={{ maxWidth: node.descMaxW, fontFamily: "'Inter', sans-serif" }}
+            className="text-white/40 text-[11px] leading-[14px] mt-[3px]"
+            style={{ maxWidth: node.descMaxW }}
           >
             {node.desc}
           </p>
@@ -185,32 +181,19 @@ export const HeroBackground = React.memo(function HeroBackground() {
   }, []);
 
   return (
-    <div className="absolute inset-0 z-10" aria-hidden="true">
-      {/* Layer 0: Video / Poster — no scrim/overlay per spec §6 */}
-      {isTouchDevice ? (
-        /* Mobile: static poster — no video download */
-        <img
-          src="/videos/poster.webp"
-          alt=""
-          fetchPriority="high"
-          decoding="async"
-          className="absolute inset-0 w-full h-full object-cover object-center pointer-events-none"
-        />
-      ) : (
-        /* Desktop: autoplaying jellyfish video */
-        <video
-          ref={videoRef}
-          src="https://d8j0ntlcm91z4.cloudfront.net/user_38xzZboKViGWJOttwIXH07lWA1P/hf_20260813_115057_94c3699b-0fd1-4124-bcf3-3626bb8c1f77.mp4"
-          poster="/videos/poster.webp"
-          autoPlay
-          muted
-          loop
-          playsInline
-          preload="none"
-          disablePictureInPicture
-          className="absolute inset-0 w-full h-full object-cover lumen-fade-in pointer-events-none"
-        />
-      )}
+    <div className="absolute inset-0 z-10 overflow-hidden bg-black" aria-hidden="true">
+      {/* Layer 0: Full-bleed jellyfish video playing on all devices (mobile + desktop) */}
+      <video
+        ref={videoRef}
+        src="https://d8j0ntlcm91z4.cloudfront.net/user_38xzZboKViGWJOttwIXH07lWA1P/hf_20260813_115057_94c3699b-0fd1-4124-bcf3-3626bb8c1f77.mp4"
+        autoPlay
+        muted
+        loop
+        playsInline
+        preload="auto"
+        disablePictureInPicture
+        className="absolute inset-0 w-full h-full object-cover lumen-fade-in pointer-events-none opacity-90"
+      />
 
       {/* Layer 1: Grid lines + plus marks (above video, below content) */}
       <div className="absolute inset-0 z-[20]">

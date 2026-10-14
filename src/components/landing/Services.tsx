@@ -118,11 +118,11 @@ export function Services() {
       style={{ background: COLORS.bg }}
       id="services"
     >
-      {/* Ambient background glow */}
+      {/* Ambient background glow — ice-blue */}
       <div
-        className="pointer-events-none absolute top-10 left-1/2 -translate-x-1/2 w-[550px] h-[300px] opacity-25"
+        className="pointer-events-none absolute top-10 left-1/2 -translate-x-1/2 w-[600px] h-[320px] opacity-20"
         style={{
-          background: 'radial-gradient(ellipse 70% 50% at 50% 50%, rgba(201,168,118,0.18), transparent 70%)',
+          background: 'radial-gradient(ellipse 70% 50% at 50% 50%, rgba(175,221,255,0.22), transparent 70%)',
         }}
         aria-hidden="true"
       />
@@ -134,7 +134,7 @@ export function Services() {
             className="text-3xl md:text-6xl font-normal tracking-tight mt-2 mb-4"
             style={{
               fontFamily: "'Fraunces', serif",
-              background: 'linear-gradient(135deg, #FFFFFF 20%, #F5E6CC 60%, #C9A876 100%)',
+              background: 'linear-gradient(135deg, #FFFFFF 30%, #D8EDFF 70%, #AFDDFF 100%)',
               WebkitBackgroundClip: 'text',
               WebkitTextFillColor: 'transparent',
               letterSpacing: '-0.02em',
@@ -148,24 +148,22 @@ export function Services() {
         </div>
       </Reveal>
 
-      {/* ── MOBILE CATEGORY PILL SELECTOR ── */}
-      {isMobile && (
-        <div className="flex flex-wrap items-center justify-center gap-1.5 mb-8">
-          {SERVICE_CATEGORIES.map((cat) => (
-            <button
-              key={cat.id}
-              onClick={() => setSelectedCat(cat.id)}
-              className={`px-3 py-1.5 rounded-full text-xs font-medium transition-all ${
-                selectedCat === cat.id
-                  ? 'bg-[#C9A876] text-[#0A0D14] font-semibold shadow-[0_2px_12px_rgba(201,168,118,0.25)]'
-                  : 'bg-white/5 text-ink/70 border border-white/5 hover:text-white'
-              }`}
-            >
-              {cat.label}
-            </button>
-          ))}
-        </div>
-      )}
+      {/* ── CATEGORY PILL SELECTOR ── */}
+      <div className="flex flex-wrap items-center justify-center gap-1.5 mb-8">
+        {SERVICE_CATEGORIES.map((cat) => (
+          <button
+            key={cat.id}
+            onClick={() => setSelectedCat(cat.id)}
+            className={`px-3.5 py-1.5 rounded-full text-xs font-medium transition-all ${
+              selectedCat === cat.id
+                ? 'bg-[#AFDDFF] text-black font-semibold shadow-[0_2px_14px_rgba(175,221,255,0.3)]'
+                : 'bg-white/5 text-ink/70 border border-white/5 hover:text-white'
+            }`}
+          >
+            {cat.label}
+          </button>
+        ))}
+      </div>
 
       {/* Grid of services */}
       <div className="dk-bento-grid max-w-[1200px] mx-auto">
@@ -231,8 +229,8 @@ function ServiceCard({ service }: { service: typeof SERVICES[0] }) {
         isWide ? 'md:flex-row md:items-center md:gap-8' : ''
       }`}
       style={{
-        background: 'linear-gradient(145deg, rgba(26, 23, 20, 0.8) 0%, rgba(12, 11, 10, 0.94) 100%)',
-        border: '1px solid rgba(201, 168, 118, 0.16)',
+        background: 'linear-gradient(145deg, rgba(18, 22, 28, 0.78) 0%, rgba(10, 12, 16, 0.95) 100%)',
+        border: '1px solid rgba(175, 221, 255, 0.14)',
         boxShadow: '0 10px 30px -10px rgba(0,0,0,0.6)',
         backdropFilter: 'blur(16px)',
       }}
@@ -240,7 +238,7 @@ function ServiceCard({ service }: { service: typeof SERVICES[0] }) {
       <div className="flex-1">
         {/* Icon & Title Row */}
         <div className="flex items-center gap-3.5 mb-3">
-          <div className="w-10 h-10 rounded-xl flex items-center justify-center bg-[#C9A876]/10 text-[#C9A876] border border-[#C9A876]/25 group-hover:scale-105 transition-transform">
+          <div className="w-10 h-10 rounded-xl flex items-center justify-center bg-[#AFDDFF]/10 text-[#AFDDFF] border border-[#AFDDFF]/25 group-hover:scale-105 transition-transform">
             <Icon className="w-5 h-5" />
           </div>
           <h3
@@ -263,7 +261,7 @@ function ServiceCard({ service }: { service: typeof SERVICES[0] }) {
               key={item}
               className="inline-flex items-center gap-1 px-2.5 py-0.5 rounded-md text-[10px] md:text-[11px] font-sans bg-white/[0.04] text-ink/70 border border-white/5"
             >
-              <CheckCircle2 className="w-3 h-3 text-[#C9A876]" />
+              <CheckCircle2 className="w-3 h-3 text-[#AFDDFF]" />
               {item}
             </span>
           ))}

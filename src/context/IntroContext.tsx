@@ -10,33 +10,42 @@ const IntroContext = createContext<IntroContextValue>({
   onIntroDone: () => {},
 });
 
-/** Returns true synchronously if we should skip the intro */
+/** Returns true synchronously if the intro has already been shown in this session */
 function shouldSkipIntro(): boolean {
   if (typeof window === 'undefined') return false;
-  // Skip on mobile (touch devices) — no intro video plays there
-  if (window.innerWidth < 768 || window.matchMedia('(hover: none)').matches) return true;
   // Skip if user prefers reduced motion
   if (window.matchMedia('(prefers-reduced-motion: reduce)').matches) return true;
+  // Skip if already seen in current session
+  try {
+    if (sessionStorage.getItem('dk_intro_played') === 'true') {
+      return true;
+    }
+  } catch {
+    // ignore storage restrictions
+  }
   return false;
 }
 
 export function IntroProvider({ children }: { children: React.ReactNode }) {
-  // Initialise synchronously — mobile users never see opacity:0 flash
   const [introDone, setIntroDone] = useState(() => shouldSkipIntro());
 
   const onIntroDone = useCallback(() => {
+    try {
+      sessionStorage.setItem('dk_intro_played', 'true');
+    } catch {
+      // ignore
+    }
     setIntroDone(true);
   }, []);
 
-  // Safety fallback: never block the site forever on desktop
+  // Hard cap safety fallback: never block the site forever
   useEffect(() => {
-    if (introDone) return; // already done — no need for failsafe
+    if (introDone) return;
     const failsafe = window.setTimeout(() => {
-      console.warn('[IntroContext] Failsafe triggered — forcing introDone');
-      setIntroDone(true);
-    }, 12_000); // 12 s hard cap (reduced from 15 s)
+      onIntroDone();
+    }, 4500); // 4.5s max cap
     return () => window.clearTimeout(failsafe);
-  }, [introDone]);
+  }, [introDone, onIntroDone]);
 
   return (
     <IntroContext.Provider value={{ introDone, onIntroDone }}>

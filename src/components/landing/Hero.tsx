@@ -65,6 +65,21 @@ export const Hero = React.memo(function Hero() {
             </MagneticWrapper>
           )}
         </div>
+
+        {/* Seamless bottom portal merge into About section */}
+        <div 
+          className="pointer-events-none absolute bottom-0 left-0 right-0 h-44 sm:h-64 z-40"
+          style={{
+            background: 'linear-gradient(to bottom, transparent 0%, rgba(5,6,8,0.3) 30%, rgba(5,6,8,0.75) 65%, #08090C 100%)'
+          }}
+        />
+        <div 
+          className="pointer-events-none absolute bottom-0 left-1/2 -translate-x-1/2 w-[85%] max-w-[1000px] h-[1px] z-40"
+          style={{
+            background: 'linear-gradient(90deg, transparent 0%, rgba(175,221,255,0.4) 50%, transparent 100%)',
+            boxShadow: '0 0 20px rgba(175,221,255,0.3)'
+          }}
+        />
       </section>
     </div>
   );

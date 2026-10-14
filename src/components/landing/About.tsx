@@ -24,11 +24,11 @@ const PRINCIPLES = [
 export function About() {
   return (
     <section className="relative overflow-hidden py-16 md:py-32 px-5 md:px-[5%]" style={{ background: COLORS.bg }}>
-      {/* Subtle ambient lighting */}
+      {/* Subtle ambient lighting connecting from Hero */}
       <div
-        className="pointer-events-none absolute top-10 left-1/2 -translate-x-1/2 w-[500px] h-[250px] opacity-20"
+        className="pointer-events-none absolute top-0 left-1/2 -translate-x-1/2 w-[600px] h-[300px] opacity-25"
         style={{
-          background: 'radial-gradient(ellipse 60% 50% at 50% 50%, rgba(201,168,118,0.2), transparent 75%)',
+          background: 'radial-gradient(ellipse 70% 50% at 50% 0%, rgba(175,221,255,0.2), transparent 75%)',
         }}
         aria-hidden="true"
       />
@@ -41,7 +41,7 @@ export function About() {
               className="text-3xl md:text-5xl font-normal tracking-tight max-w-[720px] mt-2"
               style={{
                 fontFamily: "'Fraunces', serif",
-                background: 'linear-gradient(135deg, #FFFFFF 20%, #F5E6CC 60%, #C9A876 100%)',
+                background: 'linear-gradient(135deg, #FFFFFF 30%, #D8EDFF 70%, #AFDDFF 100%)',
                 WebkitBackgroundClip: 'text',
                 WebkitTextFillColor: 'transparent',
               }}
@@ -51,15 +51,15 @@ export function About() {
           </div>
         </Reveal>
 
-        {/* 2x2 grid on mobile, 4-col on desktop */}
+        {/* 2x2 grid on mobile, 4-col on desktop for compact, engaging layout */}
         <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-4 gap-4 md:gap-6 pt-4 border-t border-white/5">
           {PRINCIPLES.map((principle, i) => (
             <Reveal delay={i * 0.08} key={principle.title}>
               <div
-                className="p-5 md:p-6 rounded-2xl h-full flex flex-col justify-between transition-all"
+                className="p-5 md:p-6 rounded-2xl h-full flex flex-col justify-between transition-all duration-300 hover:border-[#AFDDFF]/35"
                 style={{
-                  background: 'linear-gradient(145deg, rgba(24, 21, 18, 0.7) 0%, rgba(12, 11, 10, 0.9) 100%)',
-                  border: '1px solid rgba(201, 168, 118, 0.14)',
+                  background: 'linear-gradient(145deg, rgba(18, 22, 28, 0.75) 0%, rgba(10, 12, 16, 0.92) 100%)',
+                  border: '1px solid rgba(175, 221, 255, 0.14)',
                   boxShadow: '0 8px 24px rgba(0,0,0,0.3)',
                   backdropFilter: 'blur(16px)',
                 }}
@@ -69,7 +69,7 @@ export function About() {
                     style={{
                       fontFamily: "'IBM Plex Mono', monospace",
                       fontSize: 11,
-                      color: COLORS.accent,
+                      color: '#AFDDFF',
                       marginBottom: 12,
                     }}
                   >
@@ -90,6 +90,14 @@ export function About() {
           ))}
         </div>
       </div>
+
+      {/* Seamless transition line to next section */}
+      <div 
+        className="pointer-events-none absolute bottom-0 left-1/2 -translate-x-1/2 w-[70%] max-w-[800px] h-[1px]"
+        style={{
+          background: 'linear-gradient(90deg, transparent 0%, rgba(175,221,255,0.2) 50%, transparent 100%)'
+        }}
+      />
     </section>
   );
 }
