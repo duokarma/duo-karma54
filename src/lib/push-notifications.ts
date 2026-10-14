@@ -163,7 +163,7 @@ export async function showPushNotification(data: PushNotificationData): Promise<
     const uniqueTag = `dk-${Date.now()}-${Math.random().toString(36).substring(2, 7)}`;
     const options: any = {
       body: data.body,
-      icon: data.icon || "/logo.jpeg",
+      icon: data.icon || "/duokarma-logo.jpeg",
       badge: "/favicon.svg",
       vibrate: [250, 100, 250, 100, 250],
       tag: uniqueTag,
@@ -185,7 +185,7 @@ export async function showPushNotification(data: PushNotificationData): Promise<
       try {
         new window.Notification(data.title, {
           body: data.body,
-          icon: data.icon || "/logo.jpeg",
+          icon: data.icon || "/duokarma-logo.jpeg",
           tag: uniqueTag,
         });
       } catch (err) {

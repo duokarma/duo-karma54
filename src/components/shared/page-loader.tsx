@@ -30,7 +30,7 @@ export function PageLoader() {
           className="mb-12 relative flex items-center justify-center"
         >
           <div className="absolute inset-0 bg-[var(--color-accent)] blur-2xl opacity-20 rounded-full animate-pulse" />
-          <img src="/logo.jpeg" alt="DuoKarma" className="h-16 w-auto object-contain rounded-xl shadow-2xl z-10 border border-white/10" />
+          <img src="/duokarma-logo.jpeg" alt="DuoKarma" className="h-16 w-auto object-contain rounded-xl shadow-2xl z-10 border border-white/10" />
         </motion.div>
 
         {/* Skeleton Grid (Fakes the dashboard layout for smooth transition) */}

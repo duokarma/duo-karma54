@@ -192,7 +192,7 @@ export function ManageAppsDialog({
       cleanUrl = `https://${cleanUrl}`;
     }
 
-    const finalImage = imageUrl.trim() || "/logo.jpeg";
+    const finalImage = imageUrl.trim() || "/duokarma-logo.jpeg";
 
     setIsSaving(true);
     try {
@@ -329,7 +329,7 @@ export function ManageAppsDialog({
                             alt={app.title}
                             className="h-full w-full object-cover"
                             onError={(e) => {
-                              (e.target as HTMLImageElement).src = "/logo.jpeg";
+                              (e.target as HTMLImageElement).src = "/duokarma-logo.jpeg";
                             }}
                           />
                         ) : (
@@ -444,7 +444,7 @@ export function ManageAppsDialog({
                       alt="Logo preview"
                       className="h-full w-full object-cover"
                       onError={(e) => {
-                        (e.target as HTMLImageElement).src = "/logo.jpeg";
+                        (e.target as HTMLImageElement).src = "/duokarma-logo.jpeg";
                       }}
                     />
                   ) : (

@@ -543,11 +543,11 @@ export function EcosystemAppsWidget({
               >
                 <div className="relative h-8 w-8 rounded-xl overflow-hidden border border-white/15 bg-black/60 flex items-center justify-center shrink-0 shadow-sm group-hover:scale-105 transition-transform">
                   <img
-                    src={app.imageUrl || "/logo.jpeg"}
+                    src={app.imageUrl || "/duokarma-logo.jpeg"}
                     alt={app.title}
                     className="h-full w-full object-cover"
                     onError={(e) => {
-                      (e.target as HTMLImageElement).src = "/logo.jpeg";
+                      (e.target as HTMLImageElement).src = "/duokarma-logo.jpeg";
                     }}
                   />
                 </div>

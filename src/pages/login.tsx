@@ -176,7 +176,7 @@ export function LoginPage() {
         className="mb-8 flex flex-col items-center gap-2"
       >
         <img
-          src="/logo.jpeg"
+          src="/duokarma-logo.jpeg"
           alt="DuoKarma"
           className="h-12 w-12 rounded-xl object-cover shadow-lg"
         />

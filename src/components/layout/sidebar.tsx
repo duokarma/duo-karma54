@@ -87,6 +87,20 @@ export function Sidebar() {
     },
   });
 
+  // Fetch real-time count of unhandled/new website quotes
+  const { data: newInquiriesCount = 0 } = useQuery({
+    queryKey: ["website_inquiries", "new_count"],
+    queryFn: async () => {
+      const { count, error } = await supabase
+        .from("website_inquiries")
+        .select("*", { count: "exact", head: true })
+        .eq("status", "new");
+      if (error) return 0;
+      return count ?? 0;
+    },
+    refetchInterval: 20000,
+  });
+
   return (
     <>
       {/* Mobile backdrop */}
@@ -118,7 +132,7 @@ export function Sidebar() {
             aria-label="Go to Admin Dashboard"
             className="flex h-7 w-7 shrink-0 items-center justify-center overflow-hidden rounded-md"
           >
-            <img src="/logo.jpeg" alt="DuoKarma" className="h-full w-full object-cover" />
+            <img src="/duokarma-logo.jpeg" alt="DuoKarma" className="h-full w-full object-cover" />
           </button>
           {!collapsed && (
             <motion.div
@@ -204,9 +218,17 @@ export function Sidebar() {
                             />
                           </div>
                           {!collapsed && (
-                            <span className={cn("truncate text-[13px]", isActive && "font-medium text-ink")}>
+                            <span className={cn("truncate text-[13px] flex-1", isActive && "font-medium text-ink")}>
                               {item.label}
                             </span>
+                          )}
+                          {!collapsed && item.path === "/admin/quotes" && newInquiriesCount > 0 && (
+                            <span className="ml-auto flex items-center justify-center rounded-full bg-amber-500/20 px-1.5 py-0.2 text-[10px] font-bold text-amber-300 border border-amber-500/30">
+                              {newInquiriesCount}
+                            </span>
+                          )}
+                          {collapsed && item.path === "/admin/quotes" && newInquiriesCount > 0 && (
+                            <span className="absolute top-1 right-1 h-2 w-2 rounded-full bg-amber-400 ring-2 ring-black" />
                           )}
                         </>
                       )}
@@ -336,11 +358,11 @@ export function Sidebar() {
                               {/* Squircle App Icon (Play Store style) */}
                               <div className="relative h-9 w-9 rounded-xl overflow-hidden border border-white/15 bg-black/60 flex items-center justify-center shrink-0 shadow-md group-hover:scale-105 transition-transform">
                                 <img
-                                  src={app.imageUrl || "/logo.jpeg"}
+                                  src={app.imageUrl || "/duokarma-logo.jpeg"}
                                   alt={app.title}
                                   className="h-full w-full object-cover"
                                   onError={(e) => {
-                                    (e.target as HTMLImageElement).src = "/logo.jpeg";
+                                    (e.target as HTMLImageElement).src = "/duokarma-logo.jpeg";
                                   }}
                                 />
                               </div>
@@ -429,11 +451,11 @@ export function Sidebar() {
                       >
                         <div className="h-6 w-6 rounded-md overflow-hidden border border-white/10 bg-black/40 flex items-center justify-center shrink-0 transition-transform group-hover:scale-110 shadow-sm">
                           <img
-                            src={app.imageUrl || "/logo.jpeg"}
+                            src={app.imageUrl || "/duokarma-logo.jpeg"}
                             alt={app.title}
                             className="h-full w-full object-cover"
                             onError={(e) => {
-                              (e.target as HTMLImageElement).src = "/logo.jpeg";
+                              (e.target as HTMLImageElement).src = "/duokarma-logo.jpeg";
                             }}
                           />
                         </div>

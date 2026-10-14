@@ -1,3 +1,4 @@
+import { useState } from 'react';
 import { m as motion } from 'framer-motion';
 
 const APPLE_EASE = [0.22, 1, 0.36, 1] as [number, number, number, number];
@@ -60,7 +61,7 @@ export function GlobalPresence() {
       initial="hidden"
       whileInView="visible"
       viewport={{ once: true, amount: 0.1 }}
-      className="relative w-full bg-[#050505] min-h-screen flex items-center justify-center overflow-hidden font-sans py-12 md:py-0"
+      className="relative w-full bg-[#050505] md:min-h-screen flex items-center justify-center overflow-hidden font-sans py-12 md:py-0"
     >
       {/* Background Environment */}
       <div className="absolute inset-0 pointer-events-none z-0">
@@ -78,7 +79,7 @@ export function GlobalPresence() {
       </div>
 
       {/* MOBILE LAYOUT (< 768px) */}
-      <div className="md:hidden relative w-full max-w-[400px] mx-auto z-10 mt-8" style={{ aspectRatio: '4/12.5' }}>
+      <div className="md:hidden relative w-full max-w-[500px] mx-auto z-10">
         <MobileAnimation />
       </div>
     </motion.section>
@@ -179,94 +180,89 @@ function DesktopAnimation() {
 }
 
 function MobileAnimation() {
+  const [activeIdx, setActiveIdx] = useState(0);
+  const hubs = [
+    { country: 'INDIA', role: 'Engineering Digital Products', flag: 'https://flagcdn.com/in.svg', tag: 'Core Engineering' },
+    { country: 'KUWAIT', role: 'Business Automation', flag: 'https://flagcdn.com/kw.svg', tag: 'Workflow Ops' },
+    { country: 'AUSTRALIA', role: 'Scalable SaaS Solutions', flag: 'https://flagcdn.com/au.svg', tag: 'Cloud Platforms' },
+    { country: 'DUBAI', role: 'Digital Transformation', flag: 'https://flagcdn.com/ae.svg', tag: 'Enterprise Tech' },
+    { country: 'USA', role: 'Enterprise Innovation', flag: 'https://flagcdn.com/us.svg', tag: 'Custom Software' },
+  ];
+
   return (
-    <>
-      <svg viewBox="0 0 400 1250" className="absolute inset-0 w-full h-full pointer-events-none">
-        {/* Animated S-Curves */}
-        <motion.path d="M 200,100 C 250,150 150,200 200,250" fill="none" stroke="#C8A45C" className="opacity-80" variants={drawLine(TIMINGS.line1, TIMINGS.shimmer)} />
-        <motion.path d="M 200,350 C 150,380 250,420 200,450" fill="none" stroke="#C8A45C" className="opacity-80" variants={drawLine(TIMINGS.line2, TIMINGS.shimmer)} />
-        <motion.path d="M 200,550 C 250,580 150,620 200,650" fill="none" stroke="#C8A45C" className="opacity-80" variants={drawLine(TIMINGS.line3, TIMINGS.shimmer)} />
-        <motion.path d="M 200,750 C 150,780 250,820 200,850" fill="none" stroke="#C8A45C" className="opacity-80" variants={drawLine(TIMINGS.line4, TIMINGS.shimmer)} />
-        <motion.path d="M 200,950 C 250,980 150,1020 200,1050" fill="none" stroke="#C8A45C" className="opacity-80" variants={drawLine(TIMINGS.line5, TIMINGS.shimmer)} />
-
-        {/* Nodes */}
-        <g>
-          <motion.circle cx="200" cy="250" r="3.5" fill="#C8A45C" variants={nodeVariants(TIMINGS.node1)} />
-          <motion.circle cx="200" cy="250" r="3.5" fill="none" stroke="#C8A45C" strokeWidth="1" variants={pulseVariants(TIMINGS.node1)} />
-        </g>
-        <g>
-          <motion.circle cx="200" cy="450" r="3.5" fill="#C8A45C" variants={nodeVariants(TIMINGS.node2)} />
-          <motion.circle cx="200" cy="450" r="3.5" fill="none" stroke="#C8A45C" strokeWidth="1" variants={pulseVariants(TIMINGS.node2)} />
-        </g>
-        <g>
-          <motion.circle cx="200" cy="650" r="3.5" fill="#C8A45C" variants={nodeVariants(TIMINGS.node3)} />
-          <motion.circle cx="200" cy="650" r="3.5" fill="none" stroke="#C8A45C" strokeWidth="1" variants={pulseVariants(TIMINGS.node3)} />
-        </g>
-        <g>
-          <motion.circle cx="200" cy="850" r="3.5" fill="#C8A45C" variants={nodeVariants(TIMINGS.node4)} />
-          <motion.circle cx="200" cy="850" r="3.5" fill="none" stroke="#C8A45C" strokeWidth="1" variants={pulseVariants(TIMINGS.node4)} />
-        </g>
-        <g>
-          <motion.circle cx="200" cy="1050" r="3.5" fill="#C8A45C" variants={nodeVariants(TIMINGS.node5)} />
-          <motion.circle cx="200" cy="1050" r="3.5" fill="none" stroke="#C8A45C" strokeWidth="1" variants={pulseVariants(TIMINGS.node5)} />
-        </g>
-      </svg>
-
-      {/* HTML Overlays */}
-      <LogoOverlay className="absolute left-[50%] top-[8.0%] -translate-x-1/2 -translate-y-1/2 scale-[0.85]" />
-
-      {/* 1. India */}
-      <motion.div variants={fadeUp(TIMINGS.node1)} className="absolute left-[50%] top-[22.4%] -translate-x-1/2 flex flex-col items-center whitespace-nowrap text-center pt-1">
-        <div className="flex items-center gap-2 mb-1">
-          <img src="https://flagcdn.com/in.svg" alt="India" className="w-5 object-contain rounded-[2px] opacity-90 shadow-sm" />
-          <span className="text-[18px] font-medium tracking-[0.15em] text-[#F5F5F5]">INDIA</span>
-        </div>
-        <p className="text-[#A1A1AA] font-light text-[13px] tracking-wide">Engineering Digital Products</p>
-      </motion.div>
-
-      {/* 2. Kuwait */}
-      <motion.div variants={fadeUp(TIMINGS.node2)} className="absolute left-[50%] top-[38.4%] -translate-x-1/2 flex flex-col items-center whitespace-nowrap text-center pt-1">
-        <div className="flex items-center gap-2 mb-1">
-          <img src="https://flagcdn.com/kw.svg" alt="Kuwait" className="w-5 object-contain rounded-[2px] opacity-90 shadow-sm" />
-          <span className="text-[18px] font-medium tracking-[0.15em] text-[#F5F5F5]">KUWAIT</span>
-        </div>
-        <p className="text-[#A1A1AA] font-light text-[13px] tracking-wide">Business Automation</p>
-      </motion.div>
-
-      {/* 3. Australia */}
-      <motion.div variants={fadeUp(TIMINGS.node3)} className="absolute left-[50%] top-[54.4%] -translate-x-1/2 flex flex-col items-center whitespace-nowrap text-center pt-1">
-        <div className="flex items-center gap-2 mb-1">
-          <img src="https://flagcdn.com/au.svg" alt="Australia" className="w-5 object-contain rounded-[2px] opacity-90 shadow-sm" />
-          <span className="text-[18px] font-medium tracking-[0.15em] text-[#F5F5F5]">AUSTRALIA</span>
-        </div>
-        <p className="text-[#A1A1AA] font-light text-[13px] tracking-wide">Scalable SaaS Solutions</p>
-      </motion.div>
-
-      {/* 4. Dubai */}
-      <motion.div variants={fadeUp(TIMINGS.node4)} className="absolute left-[50%] top-[70.4%] -translate-x-1/2 flex flex-col items-center whitespace-nowrap text-center pt-1">
-        <div className="flex items-center gap-2 mb-1">
-          <img src="https://flagcdn.com/ae.svg" alt="Dubai" className="w-5 object-contain rounded-[2px] opacity-90 shadow-sm" />
-          <span className="text-[18px] font-medium tracking-[0.15em] text-[#F5F5F5]">DUBAI</span>
-        </div>
-        <p className="text-[#A1A1AA] font-light text-[13px] tracking-wide">Digital Transformation</p>
-      </motion.div>
-
-      {/* 5. USA */}
-      <motion.div variants={fadeUp(TIMINGS.node5)} className="absolute left-[50%] top-[86.4%] -translate-x-1/2 flex flex-col items-center whitespace-nowrap text-center pt-1">
-        <div className="flex items-center gap-2 mb-1">
-          <img src="https://flagcdn.com/us.svg" alt="USA" className="w-5 object-contain rounded-[2px] opacity-90 shadow-sm" />
-          <span className="text-[18px] font-medium tracking-[0.15em] text-[#F5F5F5]">USA</span>
-        </div>
-        <p className="text-[#A1A1AA] font-light text-[13px] tracking-wide">Enterprise Innovation</p>
-      </motion.div>
-
-      {/* Final Story Text */}
-      <motion.div variants={fadeUp(TIMINGS.finalText)} className="absolute left-[50%] top-[94.4%] -translate-x-1/2 flex flex-col items-center whitespace-nowrap w-full">
-        <p className="text-[15px] font-light tracking-[0.1em] text-[#F5F5F5] opacity-90 text-center">
+    <div className="flex flex-col items-center w-full px-4 py-8">
+      {/* Central Emblem & Title */}
+      <div className="flex flex-col items-center text-center mb-6">
+        <LogoOverlay className="mb-4 scale-[0.8]" />
+        <h3
+          className="text-xl font-normal text-white mb-1"
+          style={{
+            fontFamily: "'Fraunces', serif",
+            background: 'linear-gradient(135deg, #FFFFFF 20%, #F5E6CC 60%, #C9A876 100%)',
+            WebkitBackgroundClip: 'text',
+            WebkitTextFillColor: 'transparent',
+          }}
+        >
           Building software beyond borders.
+        </h3>
+        <p className="text-xs text-ink/60 font-sans">
+          Deploying world-class platforms for teams across 5 countries.
         </p>
-      </motion.div>
-    </>
+      </div>
+
+      {/* Swipeable Hub Cards */}
+      <div
+        className="w-full flex gap-3 overflow-x-auto snap-x snap-mandatory pb-3 scrollbar-none"
+        onScroll={(e) => {
+          const el = e.currentTarget;
+          const idx = Math.round(el.scrollLeft / (el.offsetWidth * 0.75));
+          setActiveIdx(Math.min(Math.max(idx, 0), hubs.length - 1));
+        }}
+        style={{ scrollSnapType: 'x mandatory' }}
+      >
+        {hubs.map((hub) => (
+          <div
+            key={hub.country}
+            className="snap-center shrink-0 w-[74vw] max-w-[280px] rounded-2xl p-4 relative overflow-hidden transition-all"
+            style={{
+              background: 'linear-gradient(145deg, rgba(26, 23, 20, 0.85) 0%, rgba(12, 11, 10, 0.95) 100%)',
+              border: '1px solid rgba(201, 168, 118, 0.2)',
+              boxShadow: '0 8px 24px rgba(0,0,0,0.5)',
+            }}
+          >
+            <div className="flex items-center justify-between mb-3">
+              <div className="flex items-center gap-2">
+                <img src={hub.flag} alt={hub.country} className="w-5 h-3.5 object-cover rounded-sm shadow-sm" />
+                <span className="text-sm font-semibold tracking-wider text-white font-mono">{hub.country}</span>
+              </div>
+              <span className="flex h-2 w-2 relative">
+                <span className="animate-ping absolute inline-flex h-full w-full rounded-full bg-[#C9A876] opacity-75"></span>
+                <span className="relative inline-flex rounded-full h-2 w-2 bg-[#C9A876]"></span>
+              </span>
+            </div>
+
+            <p className="text-xs text-white/90 font-medium font-sans mb-1">{hub.role}</p>
+            <span className="inline-block text-[10px] text-[#C9A876] bg-[#C9A876]/10 px-2 py-0.5 rounded-full border border-[#C9A876]/20 font-mono">
+              {hub.tag}
+            </span>
+          </div>
+        ))}
+      </div>
+
+      {/* Pagination indicators */}
+      <div className="flex items-center gap-1.5 mt-3">
+        {hubs.map((_, i) => (
+          <span
+            key={i}
+            className="h-1 rounded-full transition-all duration-300"
+            style={{
+              width: activeIdx === i ? 20 : 6,
+              background: activeIdx === i ? '#C9A876' : 'rgba(255, 255, 255, 0.15)',
+            }}
+          />
+        ))}
+      </div>
+    </div>
   );
 }
 
@@ -290,7 +286,7 @@ function LogoOverlay({ className = "" }: { className?: string }) {
         />
         {/* Logo Image container */}
         <div className="relative z-10 w-[100px] h-[100px] rounded-full border border-white/[0.08] shadow-[0_0_50px_rgba(0,0,0,0.9)] overflow-hidden bg-[#050505]">
-          <img src="/logo.jpeg" alt="DuoKarma" className="w-full h-full object-cover scale-[1.05]" />
+          <img src="/duokarma-logo.jpeg" alt="DuoKarma" className="w-full h-full object-cover scale-[1.05]" />
         </div>
       </div>
     </motion.div>

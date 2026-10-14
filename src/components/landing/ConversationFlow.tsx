@@ -1,6 +1,6 @@
 import React, { useState, useRef, useEffect } from 'react';
 import { m as motion, AnimatePresence } from 'framer-motion';
-import { Send, Bot, MessageCircle, Mail, Calendar, RefreshCw, Sparkles, ClipboardList, ChevronRight } from 'lucide-react';
+import { Send, Bot, MessageCircle, Mail, Calendar, RefreshCw, ClipboardList, ChevronRight } from 'lucide-react';
 import DOMPurify from 'dompurify';
 import { COLORS } from './ui/theme';
 
@@ -289,21 +289,28 @@ export function ConversationFlow() {
       // Save to Supabase website_inquiries
       try {
         const { supabase } = await import('@/lib/supabase');
-        await supabase.from('website_inquiries').insert({
-          name: newData.name,
-          email: newData.email,
-          phone: newData.phone,
-          business_type: newData.businessType,
-          message: newData.project,
-          source: 'DuoKarma AI Assistant',
+        const { error: insertErr } = await supabase.from('website_inquiries').insert({
+          name: newData.name?.trim() || 'Anonymous Visitor',
+          email: newData.email?.trim() || '',
+          phone: newData.phone?.trim() || '',
+          business_type: newData.businessType || 'General',
+          branches: '1 Branch',
+          interested_in: newData.businessType || 'Web App & Custom Software',
+          challenge: newData.project || 'Quote requested via DuoKarma AI Assistant',
+          timeline: 'Immediately',
+          source: 'Website Quote Flow',
           status: 'new',
-          lead_score: 70,
+          lead_score: 85,
         });
+        if (insertErr) {
+          console.error('Supabase quote insertion error:', insertErr);
+        }
       } catch (err) {
         console.error('Failed to save inquiry:', err);
       } finally {
         setLeadSubmitting(false);
         setLeadDone(true);
+        const contactTarget = newData.email?.trim() || newData.phone?.trim() || 'your contact details';
         setLeadMessages((prev) => [
           ...prev,
           {
@@ -311,7 +318,7 @@ export function ConversationFlow() {
             role: 'assistant',
             text: LEAD_BOT_QUESTIONS.done
               .replace('{name}', newData.name)
-              .replace('{email}', newData.email),
+              .replace('{email}', contactTarget),
           },
         ]);
       }
@@ -390,11 +397,22 @@ export function ConversationFlow() {
         }}>
           <div style={{ display: 'flex', alignItems: 'center', gap: 10 }}>
             <div style={{
-              width: 36, height: 36, borderRadius: 10,
-              background: `${themeColor}20`,
+              width: 38, height: 38, borderRadius: 10,
+              background: '#07090e',
+              border: `1px solid ${themeColor}35`,
               display: 'flex', alignItems: 'center', justifyContent: 'center',
+              overflow: 'hidden',
+              flexShrink: 0,
+              boxShadow: `0 2px 10px rgba(0,0,0,0.5)`,
             }}>
-              <Sparkles size={18} color={themeColor} />
+              <img
+                src="/duokarma-emblem.png"
+                alt="DuoKarma"
+                style={{ width: '100%', height: '100%', objectFit: 'cover' }}
+                onError={(e) => {
+                  (e.target as HTMLElement).style.display = 'none';
+                }}
+              />
             </div>
             <div>
               <div style={{ fontFamily: "'Inter', sans-serif", fontSize: 15, fontWeight: 700, color: COLORS.text }}>

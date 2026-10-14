@@ -30,17 +30,11 @@ export function Nav() {
       {/* Logo — always visible, pointer-events restored */}
       <a href="/" aria-label="DuoKarma Home" className="pointer-events-auto flex items-center gap-2 select-none focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-[#C9A876] rounded-md">
         <img
-          src="/logo.jpeg"
-          alt=""
-          className="w-10 h-10 object-contain drop-shadow rounded"
+          src="/duokarma-logo.jpeg"
+          alt="DuoKarma"
+          className="w-9 h-9 object-contain drop-shadow-md rounded-sm"
           onError={(e) => { (e.target as HTMLImageElement).style.display = 'none'; }}
         />
-        <span
-          style={{ fontFamily: "'Fraunces', serif" }}
-          className="text-white text-[1.5rem] italic font-medium tracking-tight leading-none"
-        >
-          DuoKarma
-        </span>
       </a>
 
       {/* Center floating pill — desktop only */}

@@ -136,7 +136,7 @@ export function Topbar() {
       {/* Breadcrumb */}
       <div className="flex items-center gap-1.5 text-xs text-ink-faint h-full overflow-hidden">
         <Link to="/admin" className="hover:opacity-80 transition-opacity">
-          <img src="/logo.jpeg" alt="DuoKarma" className="h-5 w-auto object-contain" />
+          <img src="/duokarma-logo.jpeg" alt="DuoKarma" className="h-5 w-auto object-contain" />
         </Link>
         <AnimatePresence mode="popLayout">
           {currentItem && currentItem.path !== "/admin" && (
@@ -278,11 +278,11 @@ export function Topbar() {
                         >
                           <div className="relative h-8 w-8 rounded-xl overflow-hidden border border-white/15 bg-black/60 flex items-center justify-center shrink-0 shadow-md group-hover:scale-105 transition-transform">
                             <img
-                              src={app.imageUrl || "/logo.jpeg"}
+                              src={app.imageUrl || "/duokarma-logo.jpeg"}
                               alt={app.title}
                               className="h-full w-full object-cover"
                               onError={(e) => {
-                                (e.target as HTMLImageElement).src = "/logo.jpeg";
+                                (e.target as HTMLImageElement).src = "/duokarma-logo.jpeg";
                               }}
                             />
                           </div>

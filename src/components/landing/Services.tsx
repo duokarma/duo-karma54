@@ -1,4 +1,5 @@
-import { m as motion } from 'framer-motion';
+import { useState, useEffect } from 'react';
+import { m as motion, AnimatePresence } from 'framer-motion';
 import { COLORS } from './ui/theme';
 import { Eyebrow } from './ui/Eyebrow';
 import { Reveal } from './ui/Reveal';
@@ -10,60 +11,192 @@ import {
   Globe, 
   Cloud, 
   Database, 
-  MonitorSmartphone 
+  MonitorSmartphone,
+  CheckCircle2,
 } from 'lucide-react';
 
+const SERVICE_CATEGORIES = [
+  { id: 'all', label: 'All Services' },
+  { id: 'platforms', label: 'Admin & Tools' },
+  { id: 'booking', label: 'Booking & Web' },
+  { id: 'automation', label: 'Automation & Cloud' },
+];
+
 const SERVICES = [
-  { name: 'Internal Tools', icon: Code2, description: 'We build the exact software your team needs to work faster, instead of forcing you to use clunky off-the-shelf apps.', bento: 'bento-1', size: 'wide' },
-  { name: 'Admin Dashboards', icon: LayoutDashboard, description: 'A single control panel where you can see exactly what\'s happening in your business and manage everything in one place.', bento: 'bento-2', size: 'wide' },
-  { name: 'Custom Booking', icon: CalendarClock, description: 'Systems that let your customers schedule and pay for your services online, completely hands-free.', bento: 'bento-3', size: 'normal' },
-  { name: 'Automating Busywork', icon: Zap, description: 'If you\'re copying and pasting data all day, we write scripts to do it for you automatically in the background.', bento: 'bento-4', size: 'normal' },
-  { name: 'Marketing Sites', icon: Globe, description: 'Fast, custom-built websites that look professional, load instantly, and actually convince people to contact you.', bento: 'bento-5', size: 'normal' },
-  { name: 'Cloud Infrastructure', icon: Cloud, description: 'We put your software on reliable servers so it stays online, and we handle all the maintenance.', bento: 'bento-6', size: 'normal' },
-  { name: 'Database & Security', icon: Database, description: 'We set up secure, modern databases to store your business data safely, complete with proper user logins and backups.', bento: 'bento-7', size: 'wide' },
-  { name: 'Mobile Ready', icon: MonitorSmartphone, description: 'Everything we build works perfectly on your phone, so you can run your business while you\'re away from your desk.', bento: 'bento-8', size: 'wide' },
+  {
+    category: 'platforms',
+    name: 'Internal Tools',
+    icon: Code2,
+    deliverables: ['Custom workflows', 'Role permissions', 'API integrations'],
+    description: "We build the exact software your team needs to work faster, instead of forcing you into clunky off-the-shelf apps.",
+    bento: 'bento-1',
+    size: 'wide',
+  },
+  {
+    category: 'platforms',
+    name: 'Admin Dashboards',
+    icon: LayoutDashboard,
+    deliverables: ['Live revenue charts', 'Operation metrics', 'Team overview'],
+    description: "A single control panel where you can see exactly what's happening in your business and manage everything in one place.",
+    bento: 'bento-2',
+    size: 'wide',
+  },
+  {
+    category: 'booking',
+    name: 'Custom Booking',
+    icon: CalendarClock,
+    deliverables: ['Availability engine', 'Automated reminders', 'Payment sync'],
+    description: "Systems that let your customers schedule and pay for your services online, completely hands-free.",
+    bento: 'bento-3',
+    size: 'normal',
+  },
+  {
+    category: 'automation',
+    name: 'Automating Busywork',
+    icon: Zap,
+    deliverables: ['Scripted sync', 'WhatsApp bots', 'Zero manual entry'],
+    description: "If you're copying and pasting data all day, we write scripts to do it for you automatically in the background.",
+    bento: 'bento-4',
+    size: 'normal',
+  },
+  {
+    category: 'booking',
+    name: 'Marketing Sites',
+    icon: Globe,
+    deliverables: ['Instant loading', 'High conversion', 'SEO optimized'],
+    description: "Fast, custom-built websites that look professional, load instantly, and actually convince people to contact you.",
+    bento: 'bento-5',
+    size: 'normal',
+  },
+  {
+    category: 'automation',
+    name: 'Cloud Infrastructure',
+    icon: Cloud,
+    deliverables: ['99.9% uptime', 'Automated backups', 'Global CDN'],
+    description: "We put your software on reliable servers so it stays online, and we handle all the maintenance.",
+    bento: 'bento-6',
+    size: 'normal',
+  },
+  {
+    category: 'automation',
+    name: 'Database & Security',
+    icon: Database,
+    deliverables: ['Row-level security', 'Encrypted storage', 'Audit logging'],
+    description: "We set up secure, modern databases to store your business data safely, complete with proper user logins and backups.",
+    bento: 'bento-7',
+    size: 'wide',
+  },
+  {
+    category: 'platforms',
+    name: 'Mobile Ready',
+    icon: MonitorSmartphone,
+    deliverables: ['PWA & touch', 'Real-time push', 'Offline sync'],
+    description: "Everything we build works perfectly on your phone, so you can run your business while you're away from your desk.",
+    bento: 'bento-8',
+    size: 'wide',
+  },
 ];
 
 export function Services() {
+  const [isMobile, setIsMobile] = useState(false);
+  const [selectedCat, setSelectedCat] = useState('all');
+
+  useEffect(() => {
+    const check = () => setIsMobile(window.innerWidth < 768);
+    check();
+    window.addEventListener('resize', check);
+    return () => window.removeEventListener('resize', check);
+  }, []);
+
+  const filteredServices = isMobile && selectedCat !== 'all'
+    ? SERVICES.filter((s) => s.category === selectedCat)
+    : SERVICES;
+
   return (
-    <section style={{ padding: '180px 5%', background: COLORS.bg }} id="services">
+    <section
+      className="relative overflow-hidden py-16 md:py-36 px-5 md:px-[5%]"
+      style={{ background: COLORS.bg }}
+      id="services"
+    >
+      {/* Ambient background glow */}
+      <div
+        className="pointer-events-none absolute top-10 left-1/2 -translate-x-1/2 w-[550px] h-[300px] opacity-25"
+        style={{
+          background: 'radial-gradient(ellipse 70% 50% at 50% 50%, rgba(201,168,118,0.18), transparent 70%)',
+        }}
+        aria-hidden="true"
+      />
+
       <Reveal>
-        <div style={{ display: 'flex', flexDirection: 'column', alignItems: 'center', textAlign: 'center' }}>
+        <div className="flex flex-col items-center text-center max-w-[700px] mx-auto mb-10 md:mb-16">
           <Eyebrow>Capabilities</Eyebrow>
           <h2
+            className="text-3xl md:text-6xl font-normal tracking-tight mt-2 mb-4"
             style={{
               fontFamily: "'Fraunces', serif",
-              fontWeight: 400,
-              fontSize: 'clamp(36px, 5vw, 64px)',
-              color: COLORS.text,
-              marginBottom: 80,
-              maxWidth: 700,
-              lineHeight: 1.1,
-              letterSpacing: '-0.02em'
+              background: 'linear-gradient(135deg, #FFFFFF 20%, #F5E6CC 60%, #C9A876 100%)',
+              WebkitBackgroundClip: 'text',
+              WebkitTextFillColor: 'transparent',
+              letterSpacing: '-0.02em',
             }}
           >
             What you can hand us.
           </h2>
+          <p className="text-sm md:text-base text-ink/60 max-w-[520px] leading-relaxed">
+            Full-stack engineering from conception to deployment. No cookie-cutter templates.
+          </p>
         </div>
       </Reveal>
+
+      {/* ── MOBILE CATEGORY PILL SELECTOR ── */}
+      {isMobile && (
+        <div className="flex flex-wrap items-center justify-center gap-1.5 mb-8">
+          {SERVICE_CATEGORIES.map((cat) => (
+            <button
+              key={cat.id}
+              onClick={() => setSelectedCat(cat.id)}
+              className={`px-3 py-1.5 rounded-full text-xs font-medium transition-all ${
+                selectedCat === cat.id
+                  ? 'bg-[#C9A876] text-[#0A0D14] font-semibold shadow-[0_2px_12px_rgba(201,168,118,0.25)]'
+                  : 'bg-white/5 text-ink/70 border border-white/5 hover:text-white'
+              }`}
+            >
+              {cat.label}
+            </button>
+          ))}
+        </div>
+      )}
+
+      {/* Grid of services */}
       <div className="dk-bento-grid max-w-[1200px] mx-auto">
-        {SERVICES.map((s, i) => (
-          <Reveal delay={i * 0.05} key={s.name} className={s.bento} style={{ height: '100%' }}>
-            <ServiceCard service={s} />
-          </Reveal>
-        ))}
+        <AnimatePresence mode="popLayout">
+          {filteredServices.map((s) => (
+            <motion.div
+              layout
+              key={s.name}
+              initial={{ opacity: 0, scale: 0.96 }}
+              animate={{ opacity: 1, scale: 1 }}
+              exit={{ opacity: 0, scale: 0.96 }}
+              transition={{ duration: 0.25 }}
+              className={s.bento}
+              style={{ height: '100%' }}
+            >
+              <ServiceCard service={s} />
+            </motion.div>
+          ))}
+        </AnimatePresence>
       </div>
       
       <style>{`
         .dk-bento-grid {
           display: grid;
           grid-template-columns: 1fr;
-          gap: 20px;
+          gap: 16px;
         }
         @media (min-width: 768px) {
           .dk-bento-grid {
             grid-template-columns: repeat(2, 1fr);
-            grid-auto-rows: minmax(220px, auto);
+            gap: 20px;
           }
         }
         @media (min-width: 1024px) {
@@ -87,83 +220,54 @@ export function Services() {
 }
 
 function ServiceCard({ service }: { service: typeof SERVICES[0] }) {
-  const isLarge = service.size === 'large';
-  const isTall = service.size === 'tall';
-  const isWide = service.size === 'wide' || service.size === 'wide-large';
-
-  // Responsive layout classes
-  const flexStyle = isWide ? 'flex-col lg:flex-row items-start lg:items-center gap-6 lg:gap-10' : 'flex-col justify-start';
-  const paddingStyle = isLarge ? '48px' : isWide ? '36px 44px' : '32px';
+  const Icon = service.icon;
+  const isWide = service.size === 'wide';
 
   return (
     <motion.div
-      className={`group relative flex h-full w-full overflow-hidden rounded-3xl transition-all duration-700 ${flexStyle}`}
+      whileHover={{ y: -4 }}
+      whileTap={{ scale: 0.98 }}
+      className={`group relative flex h-full w-full flex-col justify-between overflow-hidden rounded-2xl p-6 md:p-8 transition-all duration-300 ${
+        isWide ? 'md:flex-row md:items-center md:gap-8' : ''
+      }`}
       style={{
-        background: 'linear-gradient(135deg, rgba(22, 20, 18, 0.7) 0%, rgba(12, 11, 10, 0.9) 100%)',
-        border: '1px solid rgba(255,255,255,0.03)',
-        padding: paddingStyle,
-        boxShadow: 'inset 0 1px 0 rgba(255,255,255,0.02), 0 10px 30px rgba(0,0,0,0.2)',
+        background: 'linear-gradient(145deg, rgba(26, 23, 20, 0.8) 0%, rgba(12, 11, 10, 0.94) 100%)',
+        border: '1px solid rgba(201, 168, 118, 0.16)',
+        boxShadow: '0 10px 30px -10px rgba(0,0,0,0.6)',
+        backdropFilter: 'blur(16px)',
       }}
-      whileHover={{ 
-        y: -4, 
-        backgroundColor: 'rgba(28, 26, 24, 0.9)', 
-        borderColor: 'rgba(255,255,255,0.08)',
-        boxShadow: '0 20px 40px rgba(0,0,0,0.4)'
-      }}
-      transition={{ type: "spring", stiffness: 300, damping: 35 }}
     >
-      {/* Subtle grid pattern for Tall card */}
-      {isTall && (
-        <div 
-          className="absolute inset-0 z-0 opacity-[0.03] pointer-events-none mix-blend-overlay" 
-          style={{ 
-            backgroundImage: 'linear-gradient(#fff 1px, transparent 1px), linear-gradient(90deg, #fff 1px, transparent 1px)', 
-            backgroundSize: '24px 24px' 
-          }} 
-        />
-      )}
+      <div className="flex-1">
+        {/* Icon & Title Row */}
+        <div className="flex items-center gap-3.5 mb-3">
+          <div className="w-10 h-10 rounded-xl flex items-center justify-center bg-[#C9A876]/10 text-[#C9A876] border border-[#C9A876]/25 group-hover:scale-105 transition-transform">
+            <Icon className="w-5 h-5" />
+          </div>
+          <h3
+            className="text-lg md:text-xl font-normal text-white"
+            style={{ fontFamily: "'Fraunces', serif" }}
+          >
+            {service.name}
+          </h3>
+        </div>
 
-      
-      <div 
-        className={`relative z-10 flex items-center justify-center shrink-0 rounded-2xl transition-all duration-500 group-hover:scale-110 group-hover:shadow-[0_0_30px_rgba(201,168,118,0.3)] ${isLarge ? 'mb-8 lg:mb-10' : isTall ? 'mb-auto' : isWide ? 'mb-6 lg:mb-0' : 'mb-6 lg:mb-8'}`}
-        style={{
-          width: isLarge ? 80 : 56,
-          height: isLarge ? 80 : 56,
-          background: 'linear-gradient(135deg, rgba(201,168,118,0.15) 0%, rgba(201,168,118,0.02) 100%)',
-          border: '1px solid rgba(201,168,118,0.3)',
-          color: '#c9a876',
-          boxShadow: '0 8px 20px rgba(0,0,0,0.2), inset 0 1px 0 rgba(255,255,255,0.1)'
-        }}
-      >
-        <service.icon size={isLarge ? 34 : 26} strokeWidth={1.5} />
-      </div>
-
-      <div className={`relative z-10 ${isWide ? 'flex flex-col justify-center' : ''} ${isTall ? 'mt-8' : ''}`}>
-        <h3
-          className="transition-colors duration-300 group-hover:text-[rgba(201,168,118,1)]"
-          style={{
-            fontFamily: "'Fraunces', serif",
-            fontSize: isLarge ? 32 : isWide ? 24 : 22,
-            color: '#fff',
-            marginBottom: isLarge ? 16 : 10,
-            lineHeight: 1.2,
-            letterSpacing: '-0.02em',
-          }}
-        >
-          {service.name}
-        </h3>
-
-        <p
-          className="m-0 transition-colors duration-300 group-hover:text-[rgba(255,255,255,0.9)]"
-          style={{
-            fontFamily: "'Inter', sans-serif",
-            fontSize: isLarge ? 16 : 14.5,
-            color: 'rgba(255,255,255,0.5)',
-            lineHeight: 1.6,
-          }}
-        >
+        {/* Description */}
+        <p className="text-xs md:text-sm text-ink/75 leading-relaxed font-sans mb-4">
           {service.description}
         </p>
+
+        {/* Deliverables Pills */}
+        <div className="flex flex-wrap gap-1.5">
+          {service.deliverables.map((item) => (
+            <span
+              key={item}
+              className="inline-flex items-center gap-1 px-2.5 py-0.5 rounded-md text-[10px] md:text-[11px] font-sans bg-white/[0.04] text-ink/70 border border-white/5"
+            >
+              <CheckCircle2 className="w-3 h-3 text-[#C9A876]" />
+              {item}
+            </span>
+          ))}
+        </div>
       </div>
     </motion.div>
   );

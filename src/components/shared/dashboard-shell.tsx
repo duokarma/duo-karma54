@@ -19,6 +19,7 @@ import { ProtectedRoute } from "@/components/shared/protected-route";
 const LoginPage = lazy(() => import("@/pages/login").then((m) => ({ default: m.LoginPage })));
 const DashboardPage = lazy(() => import("@/pages/dashboard").then((m) => ({ default: m.DashboardPage })));
 const PipelinePage = lazy(() => import("@/pages/pipeline").then((m) => ({ default: m.PipelinePage })));
+const QuotesPage = lazy(() => import("@/pages/quotes").then((m) => ({ default: m.QuotesPage })));
 const InstaReachPage = lazy(() => import("@/pages/insta-reach").then((m) => ({ default: m.InstaReachPage })));
 const FinancePage = lazy(() => import("@/pages/finance").then((m) => ({ default: m.FinancePage })));
 const ProjectsPage = lazy(() => import("@/pages/projects").then((m) => ({ default: m.ProjectsPage })));
@@ -52,6 +53,7 @@ function DashboardRoutes() {
           children: [
             { index: true,                          element: <DashboardPage /> },
             { path: "pipeline",                     element: <PipelinePage /> },
+            { path: "quotes",                       element: <QuotesPage /> },
             { path: "insta-reach",                  element: <InstaReachPage /> },
             { path: "finance",                      element: <FinancePage /> },
             { path: "projects",                     element: <ProjectsPage /> },
@@ -61,9 +63,9 @@ function DashboardRoutes() {
             { path: "notes",                        element: <NotesPage /> },
             { path: "schema-builder",               element: <SchemaBuilderPage /> },
             { path: "custom/:schemaSlug",            element: <DynamicCollectionPage /> },
-            // Legacy redirects so old links don't 404
+            // Legacy redirects & aliases
             { path: "clients",                      element: <PipelinePage /> },
-            { path: "leads",                        element: <PipelinePage /> },
+            { path: "leads",                        element: <QuotesPage /> },
             { path: "revenue",                      element: <FinancePage /> },
             { path: "expenses",                     element: <FinancePage /> },
             { path: "profit",                       element: <FinancePage /> },

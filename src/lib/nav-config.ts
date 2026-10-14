@@ -1,6 +1,7 @@
 import {
   LayoutDashboard,
   Target,
+  ClipboardList,
   FolderKanban,
   Wallet,
   CheckSquare,
@@ -20,9 +21,10 @@ export interface NavItem {
 }
 
 export const navItems: NavItem[] = [
-  { label: "Dashboard",      path: "/admin",                icon: LayoutDashboard, group: "Overview" },
-  { label: "Pipeline",       path: "/admin/pipeline",       icon: Target,          group: "Business" },
-  { label: "Insta Reach",    path: "/admin/insta-reach",    icon: MessageCircle,   group: "Business" },
+  { label: "Dashboard",       path: "/admin",                icon: LayoutDashboard, group: "Overview" },
+  { label: "Pipeline",        path: "/admin/pipeline",       icon: Target,          group: "Business" },
+  { label: "Quote Inquiries", path: "/admin/quotes",         icon: ClipboardList,   group: "Business" },
+  { label: "Insta Reach",     path: "/admin/insta-reach",    icon: MessageCircle,   group: "Business" },
   { label: "Projects",       path: "/admin/projects",       icon: FolderKanban,    group: "Business" },
   { label: "Finance",        path: "/admin/finance",        icon: Wallet,          group: "Business" },
   { label: "Tasks",          path: "/admin/tasks",          icon: CheckSquare,     group: "Workspace" },
