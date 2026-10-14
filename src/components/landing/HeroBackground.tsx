@@ -5,14 +5,15 @@ import React from 'react';
 const VERTICAL_POSITIONS = ['12.6%', '37.5%', '61.9%', '86.2%'];
 const HORIZONTAL_POSITIONS = ['32.7%', '71.4%'];
 
-/* ─── Node configuration — CONNECTIVITY attached to 3rd flower ─── */
+/* ─── Node configuration — precisely aligned with 3 flower blooms ─── */
 const NODES = [
   {
     id: 'core',
-    squarePos: { top: '20%', left: '74%' },
+    // Flower 1: Top blossom
+    squarePos: { top: '17%', left: '53%' },
     squareDelay: 1500,
-    labelPos: { top: '13%', left: '58%' },
-    labelAnim: 'lumen-slide-left',
+    labelPos: { top: '11%', left: '68%' },
+    labelAnim: 'lumen-slide-right',
     labelDelay: 1100,
     title: '[ CORE_ENTITY ]',
     desc: 'Neural node processing real-time data streams.',
@@ -20,9 +21,10 @@ const NODES = [
   },
   {
     id: 'luminous',
-    squarePos: { top: '56%', left: '60%' },
+    // Flower 3: Bottom-right blossom
+    squarePos: { top: '58%', left: '56%' },
     squareDelay: 1800,
-    labelPos: { top: '48%', left: '68%' },
+    labelPos: { top: '50%', left: '69%' },
     labelAnim: 'lumen-slide-right',
     labelDelay: 1400,
     title: '[ LUMINOUS_INSIGHT ]',
@@ -31,28 +33,29 @@ const NODES = [
   },
   {
     id: 'connect',
-    squarePos: { top: '44%', left: '17%' },
+    // Flower 2: Middle-left central blossom
+    squarePos: { top: '46%', left: '41%' },
     squareDelay: 2100,
-    labelPos: { top: '36%', left: '25%' },
+    labelPos: { top: '63%', left: '20%' },
     labelAnim: 'lumen-slide-left',
     labelDelay: 1700,
     title: '[ CONNECTIVITY ]',
     desc: 'Latency-free transmission across distributed networks.',
-    descMaxW: 180,
+    descMaxW: 175,
   },
 ] as const;
 
 /* ─── Connector line configuration ─── */
 const CONNECTOR_LINES = [
-  // Core entity connector
-  { x1: '58%', y1: '16%', x2: '67%', y2: '16%', delay: 1200 },
-  { x1: '67%', y1: '16%', x2: '74%', y2: '20%', delay: 1400 },
-  // Luminous insight connector
-  { x1: '68%', y1: '51%', x2: '64%', y2: '51%', delay: 1500 },
-  { x1: '64%', y1: '51%', x2: '60%', y2: '56%', delay: 1700 },
-  // Connectivity connector — anchored directly to 3rd flower
-  { x1: '25%', y1: '39%', x2: '21%', y2: '39%', delay: 1800 },
-  { x1: '21%', y1: '39%', x2: '17%', y2: '44%', delay: 2000 },
+  // Core entity connector (Top Flower) — connects label to top-right corner of core box
+  { x1: '68%', y1: '13%', x2: '63%', y2: '13%', delay: 1200 },
+  { x1: '63%', y1: '13%', x2: '58%', y2: '17%', delay: 1400 },
+  // Luminous insight connector (Bottom-Right Flower) — connects label to top-right corner of luminous box
+  { x1: '69%', y1: '52%', x2: '65.5%', y2: '52%', delay: 1500 },
+  { x1: '65.5%', y1: '52%', x2: '61.5%', y2: '58%', delay: 1700 },
+  // Connectivity connector (Middle-Left Flower) — connects label to bottom-left corner of connect box
+  { x1: '36%', y1: '65%', x2: '39%', y2: '65%', delay: 1800 },
+  { x1: '39%', y1: '65%', x2: '41%', y2: '53%', delay: 2000 },
 ] as const;
 
 /* ─── Grid Lines sub-component ─── */
