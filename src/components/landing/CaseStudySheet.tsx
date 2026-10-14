@@ -1,6 +1,6 @@
-import { useEffect, useRef } from 'react';
-import { m as motion, useMotionValue, useTransform, animate } from 'framer-motion';
-import { COLORS } from './ui/theme';
+import { useEffect } from 'react';
+import { m as motion } from 'framer-motion';
+import { X, Zap, Cpu, CheckCircle2 } from 'lucide-react';
 
 interface Project {
   title: string;
@@ -19,13 +19,11 @@ interface CaseStudySheetProps {
 }
 
 export function CaseStudySheet({ project, onClose }: CaseStudySheetProps) {
-  const sheetRef = useRef<HTMLDivElement>(null);
-  const y = useMotionValue(0);
-  const opacity = useTransform(y, [0, 300], [1, 0]);
-
-  // Close on Escape
+  // Lock body scroll while modal is open & listen for Escape
   useEffect(() => {
-    const onKey = (e: KeyboardEvent) => { if (e.key === 'Escape') onClose(); };
+    const onKey = (e: KeyboardEvent) => { 
+      if (e.key === 'Escape') onClose(); 
+    };
     window.addEventListener('keydown', onKey);
     document.body.style.overflow = 'hidden';
     return () => {
@@ -34,78 +32,51 @@ export function CaseStudySheet({ project, onClose }: CaseStudySheetProps) {
     };
   }, [onClose]);
 
-  const handleDragEnd = (_: any, info: any) => {
-    if (info.offset.y > 120 || info.velocity.y > 500) {
-      onClose();
-    } else {
-      animate(y, 0, { type: 'spring', stiffness: 400, damping: 40 });
-    }
-  };
-
   const stages = [
-    { label: 'Challenge', icon: '⚡', text: project.problem, color: 'rgba(201,168,118,0.9)' },
-    { label: 'Solution', icon: '⚙️', text: project.solution, color: 'rgba(232,207,160,0.9)' },
-    { label: 'Result', icon: '✦', text: project.result, color: COLORS.emerald },
+    { label: 'Challenge', icon: Zap, text: project.problem, color: '#AFDDFF' },
+    { label: 'Solution', icon: Cpu, text: project.solution, color: '#c8e8ff' },
+    { label: 'Result', icon: CheckCircle2, text: project.result, color: '#6ee7b7' },
   ];
 
   return (
-    <>
+    <div className="fixed inset-0 z-[999] flex items-end sm:items-center justify-center p-0 sm:p-4">
       {/* Backdrop */}
       <motion.div
         initial={{ opacity: 0 }}
         animate={{ opacity: 1 }}
         exit={{ opacity: 0 }}
+        transition={{ duration: 0.2 }}
         onClick={onClose}
-        style={{
-          position: 'fixed',
-          inset: 0,
-          background: 'rgba(0,0,0,0.6)',
-          backdropFilter: 'blur(4px)',
-          zIndex: 200,
-        }}
+        className="fixed inset-0 bg-black/80 backdrop-blur-md"
+        aria-hidden="true"
       />
 
-      {/* Sheet */}
+      {/* Modal / Sheet Card */}
       <motion.div
-        ref={sheetRef}
-        drag="y"
-        dragConstraints={{ top: 0 }}
-        dragElastic={{ top: 0, bottom: 0.4 }}
-        onDragEnd={handleDragEnd}
-        initial={{ y: '100%' }}
-        animate={{ y: 0 }}
-        exit={{ y: '100%' }}
-        transition={{ type: 'spring', stiffness: 300, damping: 32 }}
+        initial={{ opacity: 0, y: 35, scale: 0.96 }}
+        animate={{ opacity: 1, y: 0, scale: 1 }}
+        exit={{ opacity: 0, y: 25, scale: 0.96 }}
+        transition={{ duration: 0.28, ease: [0.16, 1, 0.3, 1] }}
         aria-modal="true"
         role="dialog"
         aria-label={`Case study: ${project.title}`}
-        className="fixed bottom-0 left-0 right-0 z-[201] touch-none"
-        style={{
-          y,
-          opacity,
-          background: COLORS.surface,
-          borderRadius: '28px 28px 0 0',
-          border: `1px solid ${COLORS.line}`,
-          borderBottom: 'none',
-          maxHeight: '88vh',
-          overflowY: 'auto',
-        } as any}
+        className="relative z-10 w-full sm:max-w-2xl bg-[#0c1017] border border-white/10 sm:border-[#AFDDFF]/20 rounded-t-[28px] sm:rounded-3xl shadow-[0_25px_60px_rgba(0,0,0,0.8)] max-h-[88vh] flex flex-col overflow-hidden"
       >
-        {/* Drag handle */}
-        <div style={{ display: 'flex', justifyContent: 'center', padding: '16px 0 4px' }}>
-          <div style={{ width: 40, height: 4, borderRadius: 999, background: 'rgba(243,238,227,0.15)' }} />
+        {/* Mobile Drag Indicator Bar */}
+        <div className="flex sm:hidden justify-center pt-3 pb-1">
+          <div className="w-10 h-1 rounded-full bg-white/20" />
         </div>
 
-        <div style={{ padding: '16px 32px 48px', maxWidth: 700, margin: '0 auto' }}>
-          {/* Category + close */}
-          <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center', marginBottom: 24 }}>
+        {/* Scrollable Content Container */}
+        <div className="overflow-y-auto px-6 sm:px-8 py-5 sm:py-7">
+          {/* Category Tag + Close Button */}
+          <div className="flex items-center justify-between mb-4">
             <span
+              className="text-[11px] font-mono tracking-widest uppercase px-3 py-1 rounded-full border"
               style={{
-                fontFamily: "'IBM Plex Mono', monospace",
-                fontSize: 11,
-                letterSpacing: '0.1em',
-                textTransform: 'uppercase',
-                color: project.color,
+                color: '#AFDDFF',
+                background: 'rgba(175, 221, 255, 0.08)',
+                borderColor: 'rgba(175, 221, 255, 0.25)',
               }}
             >
               {project.category}
@@ -113,125 +84,76 @@ export function CaseStudySheet({ project, onClose }: CaseStudySheetProps) {
             <button
               onClick={onClose}
               aria-label="Close"
-              style={{
-                background: 'rgba(243,238,227,0.06)',
-                border: '1px solid rgba(243,238,227,0.1)',
-                borderRadius: '50%',
-                width: 32,
-                height: 32,
-                display: 'flex',
-                alignItems: 'center',
-                justifyContent: 'center',
-                cursor: 'pointer',
-                color: COLORS.secondary,
-                fontSize: 16,
-              }}
+              className="w-8 h-8 rounded-full bg-white/5 hover:bg-white/10 border border-white/10 flex items-center justify-center text-white/70 hover:text-white transition-colors"
             >
-              ×
+              <X className="w-4 h-4" />
             </button>
           </div>
 
-          {/* Title */}
+          {/* Project Title */}
           <h2
+            className="text-2xl sm:text-3xl font-normal text-white mb-6 leading-tight"
             style={{
               fontFamily: "'Fraunces', serif",
-              fontSize: 'clamp(24px, 3.5vw, 38px)',
-              color: COLORS.text,
-              fontWeight: 400,
-              marginBottom: 36,
-              lineHeight: 1.2,
+              background: 'linear-gradient(135deg, #FFFFFF 30%, #D8EDFF 70%, #AFDDFF 100%)',
+              WebkitBackgroundClip: 'text',
+              WebkitTextFillColor: 'transparent',
             }}
           >
             {project.title}
           </h2>
 
           {/* Case study stages */}
-          <div style={{ display: 'flex', flexDirection: 'column', gap: 0 }}>
-            {stages.map((stage, i) => (
-              <motion.div
-                key={stage.label}
-                initial={{ opacity: 0, x: -16 }}
-                animate={{ opacity: 1, x: 0 }}
-                transition={{ delay: 0.1 + i * 0.1, duration: 0.4, ease: [0.16, 1, 0.3, 1] }}
-                style={{ display: 'flex', gap: 20, paddingBottom: i < stages.length - 1 ? 32 : 0 }}
-              >
-                {/* Connector line */}
-                <div style={{ display: 'flex', flexDirection: 'column', alignItems: 'center', flexShrink: 0 }}>
-                  <div
+          <div className="space-y-6 mb-8">
+            {stages.map((stage, i) => {
+              const StageIcon = stage.icon;
+              return (
+                <motion.div
+                  key={stage.label}
+                  initial={{ opacity: 0, x: -14 }}
+                  animate={{ opacity: 1, x: 0 }}
+                  transition={{ delay: 0.08 + i * 0.08, duration: 0.35 }}
+                  className="flex gap-4 items-start"
+                >
+                  {/* Icon Badge */}
+                  <div 
+                    className="w-9 h-9 rounded-xl flex items-center justify-center shrink-0 border mt-0.5"
                     style={{
-                      width: 36,
-                      height: 36,
-                      borderRadius: 10,
-                      background: `${project.color}18`,
-                      border: `1px solid ${project.color}35`,
-                      display: 'flex',
-                      alignItems: 'center',
-                      justifyContent: 'center',
-                      fontSize: 14,
-                      flexShrink: 0,
+                      background: 'rgba(175, 221, 255, 0.08)',
+                      borderColor: 'rgba(175, 221, 255, 0.25)',
+                      color: stage.color,
                     }}
                   >
-                    {stage.icon}
+                    <StageIcon className="w-4 h-4" strokeWidth={1.8} />
                   </div>
-                  {i < stages.length - 1 && (
-                    <div style={{ width: 1, flex: 1, background: COLORS.line, marginTop: 8, minHeight: 24 }} />
-                  )}
-                </div>
-                <div style={{ paddingTop: 6 }}>
-                  <div
-                    style={{
-                      fontFamily: "'IBM Plex Mono', monospace",
-                      fontSize: 11,
-                      letterSpacing: '0.1em',
-                      textTransform: 'uppercase',
-                      color: stage.color as string,
-                      marginBottom: 8,
-                    }}
-                  >
-                    {stage.label}
+
+                  {/* Content */}
+                  <div>
+                    <span 
+                      className="text-[11px] font-mono tracking-wider uppercase block mb-1 font-semibold"
+                      style={{ color: stage.color }}
+                    >
+                      {stage.label}
+                    </span>
+                    <p className="text-sm text-white/80 leading-relaxed font-sans m-0">
+                      {stage.text}
+                    </p>
                   </div>
-                  <p
-                    style={{
-                      fontFamily: "'Inter', sans-serif",
-                      fontSize: 14.5,
-                      color: COLORS.text,
-                      lineHeight: 1.7,
-                    }}
-                  >
-                    {stage.text}
-                  </p>
-                </div>
-              </motion.div>
-            ))}
+                </motion.div>
+              );
+            })}
           </div>
 
-          {/* Features */}
-          <div style={{ marginTop: 36, paddingTop: 28, borderTop: `1px solid ${COLORS.line}` }}>
-            <div
-              style={{
-                fontFamily: "'IBM Plex Mono', monospace",
-                fontSize: 11,
-                letterSpacing: '0.1em',
-                textTransform: 'uppercase',
-                color: COLORS.secondary,
-                marginBottom: 14,
-              }}
-            >
-              What was built
-            </div>
-            <div style={{ display: 'flex', flexWrap: 'wrap', gap: 8 }}>
+          {/* Features Pills */}
+          <div className="pt-5 border-t border-white/10 mb-6">
+            <span className="text-[11px] font-mono tracking-wider uppercase text-white/40 block mb-3">
+              Delivered Architecture
+            </span>
+            <div className="flex flex-wrap gap-2">
               {project.features.map((f) => (
                 <span
                   key={f}
-                  style={{
-                    fontFamily: "'Inter', sans-serif",
-                    fontSize: 13,
-                    padding: '6px 14px',
-                    borderRadius: 999,
-                    border: `1px solid ${COLORS.line}`,
-                    color: COLORS.secondary,
-                    background: COLORS.surface2,
-                  }}
+                  className="text-xs px-3 py-1 rounded-lg bg-white/[0.04] text-white/75 border border-white/10 font-sans"
                 >
                   {f}
                 </span>
@@ -239,34 +161,22 @@ export function CaseStudySheet({ project, onClose }: CaseStudySheetProps) {
             </div>
           </div>
 
-          {/* CTA */}
+          {/* CTA Button */}
           <motion.button
-            whileHover={{ scale: 1.02, y: -2 }}
-            whileTap={{ scale: 0.97 }}
-            transition={{ type: 'spring', stiffness: 300, damping: 20 }}
+            whileHover={{ scale: 1.01 }}
+            whileTap={{ scale: 0.98 }}
             onClick={() => {
               onClose();
-              setTimeout(() => document.getElementById('contact')?.scrollIntoView({ behavior: 'smooth' }), 300);
+              setTimeout(() => {
+                document.getElementById('contact')?.scrollIntoView({ behavior: 'smooth' });
+              }, 300);
             }}
-            style={{
-              marginTop: 32,
-              width: '100%',
-              padding: '16px 0',
-              borderRadius: 14,
-              background: COLORS.accent,
-              border: 'none',
-              color: '#0A0908',
-              fontFamily: "'Inter', sans-serif",
-              fontSize: 15,
-              fontWeight: 600,
-              cursor: 'pointer',
-              letterSpacing: '0.01em',
-            }}
+            className="w-full py-3.5 rounded-xl bg-[#AFDDFF] hover:bg-[#c8e8ff] text-black font-semibold text-sm transition-all shadow-lg shadow-[#AFDDFF]/20"
           >
             Start a similar project →
           </motion.button>
         </div>
       </motion.div>
-    </>
+    </div>
   );
 }

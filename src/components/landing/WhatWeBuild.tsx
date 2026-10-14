@@ -1,5 +1,5 @@
 import { useState, useEffect, useRef } from 'react';
-import { m as motion, AnimatePresence } from 'framer-motion';
+import { m as motion } from 'framer-motion';
 import { COLORS } from './ui/theme';
 import { Eyebrow } from './ui/Eyebrow';
 import { Reveal } from './ui/Reveal';
@@ -82,7 +82,6 @@ const MODULES: ModuleItem[] = [
 ];
 
 export function WhatWeBuild() {
-  const [active, setActive] = useState<number | null>(0);
   const [isMobile, setIsMobile] = useState(false);
   const [mobileActiveIndex, setMobileActiveIndex] = useState(0);
   const carouselRef = useRef<HTMLDivElement>(null);
@@ -104,7 +103,7 @@ export function WhatWeBuild() {
 
   return (
     <section
-      className="relative overflow-hidden py-16 md:py-36 px-5 md:px-[5%]"
+      className="relative overflow-hidden py-16 md:py-32 px-5 md:px-[5%]"
       style={{ background: COLORS.surface }}
       id="work"
     >
@@ -219,110 +218,62 @@ export function WhatWeBuild() {
           </p>
         </div>
       ) : (
-        /* ── DESKTOP: Interactive list with floating preview drawer ── */
-        <div className="max-w-[1200px] mx-auto w-full relative">
+        /* ── DESKTOP: Space-Optimized 3x3 Card Grid ── */
+        <div className="max-w-[1200px] mx-auto w-full grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-5 lg:gap-6">
           {MODULES.map((m, i) => {
             const IconComp = m.icon;
             return (
-              <div
+              <motion.div
                 key={m.name}
-                onMouseEnter={() => setActive(i)}
+                whileHover={{ y: -5 }}
+                transition={{ type: 'spring', stiffness: 300, damping: 25 }}
+                className="group rounded-2xl p-6 relative overflow-hidden transition-all duration-300 border flex flex-col justify-between"
                 style={{
-                  borderBottom: `1px solid ${COLORS.line}`,
-                  position: 'relative',
-                  cursor: 'pointer',
+                  background: 'linear-gradient(145deg, rgba(18, 22, 28, 0.8) 0%, rgba(10, 12, 16, 0.95) 100%)',
+                  borderColor: 'rgba(175, 221, 255, 0.14)',
+                  boxShadow: '0 8px 30px rgba(0,0,0,0.5)',
+                  backdropFilter: 'blur(16px)',
                 }}
               >
-                <div
-                  style={{
-                    padding: '26px 0',
-                    display: 'flex',
-                    alignItems: 'center',
-                    justifyContent: 'space-between',
-                    width: '45%',
-                  }}
-                >
-                  <div className="flex items-center gap-3.5">
-                    <div className="w-8 h-8 rounded-lg bg-white/[0.04] border border-white/10 flex items-center justify-center text-[#AFDDFF]/80">
-                      <IconComp className="w-4 h-4 text-[#AFDDFF]" strokeWidth={1.6} />
+                <div>
+                  {/* Top Badge Row */}
+                  <div className="flex items-center justify-between mb-4">
+                    <div className="w-10 h-10 rounded-xl bg-[#AFDDFF]/10 border border-[#AFDDFF]/25 flex items-center justify-center text-[#AFDDFF] group-hover:scale-110 transition-transform duration-300 shadow-sm">
+                      <IconComp className="w-5 h-5 text-[#AFDDFF]" strokeWidth={1.6} />
                     </div>
-                    <span
-                      style={{
-                        fontFamily: "'Fraunces', serif",
-                        fontSize: 22,
-                        color: active === i ? '#AFDDFF' : COLORS.text,
-                        transition: 'color 0.3s',
-                      }}
-                    >
-                      {m.name}
-                    </span>
+                    <div className="flex items-center gap-2">
+                      <span className="px-2.5 py-0.5 rounded-full text-[11px] font-semibold tracking-wide bg-[#AFDDFF]/10 text-[#AFDDFF] border border-[#AFDDFF]/25">
+                        {m.tag}
+                      </span>
+                      <span
+                        style={{ fontFamily: "'IBM Plex Mono', monospace" }}
+                        className="text-[12px] text-ink/40 font-mono"
+                      >
+                        0{i + 1}
+                      </span>
+                    </div>
                   </div>
-                  <span
-                    style={{
-                      fontFamily: "'IBM Plex Mono', monospace",
-                      fontSize: 12,
-                      color: active === i ? '#AFDDFF' : COLORS.secondary,
-                    }}
+
+                  {/* System Title */}
+                  <h3
+                    className="text-xl font-normal text-white mb-2 group-hover:text-[#AFDDFF] transition-colors"
+                    style={{ fontFamily: "'Fraunces', serif" }}
                   >
-                    {String(i + 1).padStart(2, '0')}
-                  </span>
+                    {m.name}
+                  </h3>
+
+                  {/* Detail Description */}
+                  <p className="text-xs md:text-sm text-ink/70 leading-relaxed font-sans mb-4 min-h-[48px]">
+                    {m.detail}
+                  </p>
                 </div>
 
-                {/* Desktop Description Panel */}
-                <AnimatePresence>
-                  {active === i && (
-                    <motion.div
-                      initial={{ opacity: 0, y: '-50%', x: 14 }}
-                      animate={{ opacity: 1, y: '-50%', x: 0 }}
-                      exit={{ opacity: 0, y: '-50%', x: 14 }}
-                      transition={{ duration: 0.3, ease: [0.16, 1, 0.3, 1] }}
-                      style={{
-                        position: 'absolute',
-                        top: '50%',
-                        right: 0,
-                        width: '48%',
-                        background: 'linear-gradient(145deg, rgba(18, 22, 28, 0.92) 0%, rgba(10, 12, 16, 0.98) 100%)',
-                        border: '1px solid rgba(175, 221, 255, 0.25)',
-                        borderRadius: 20,
-                        padding: 34,
-                        zIndex: 10,
-                        boxShadow: '0 24px 48px rgba(0,0,0,0.6), inset 0 1px 0 rgba(255,255,255,0.08)',
-                        pointerEvents: 'none',
-                      }}
-                    >
-                      <div className="flex items-center justify-between mb-4">
-                        <div className="flex items-center gap-3">
-                          <div className="w-10 h-10 rounded-xl bg-[#AFDDFF]/10 border border-[#AFDDFF]/30 flex items-center justify-center text-[#AFDDFF]">
-                            <IconComp className="w-5 h-5" strokeWidth={1.6} />
-                          </div>
-                          <div
-                            style={{
-                              fontFamily: "'Fraunces', serif",
-                              fontSize: 24,
-                              color: '#FFFFFF',
-                            }}
-                          >
-                            {m.name}
-                          </div>
-                        </div>
-                        <span className="px-2.5 py-0.5 rounded-full text-xs font-semibold bg-[#AFDDFF]/10 text-[#AFDDFF] border border-[#AFDDFF]/30">
-                          {m.tag}
-                        </span>
-                      </div>
-                      <div
-                        style={{
-                          fontFamily: "'Inter', sans-serif",
-                          fontSize: 15,
-                          color: COLORS.secondary,
-                          lineHeight: 1.7,
-                        }}
-                      >
-                        {m.detail}
-                      </div>
-                    </motion.div>
-                  )}
-                </AnimatePresence>
-              </div>
+                {/* Bottom link indicator */}
+                <div className="flex items-center gap-1.5 text-xs text-[#AFDDFF] font-medium pt-3 border-t border-white/5 group-hover:border-[#AFDDFF]/20 transition-colors">
+                  <span>Custom engineered</span>
+                  <ChevronRight className="w-3.5 h-3.5 group-hover:translate-x-1 transition-transform" />
+                </div>
+              </motion.div>
             );
           })}
         </div>
