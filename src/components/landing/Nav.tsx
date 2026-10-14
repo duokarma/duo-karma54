@@ -27,13 +27,16 @@ export function Nav() {
       transition={{ duration: 0.4, ease: [0.16, 1, 0.3, 1] }}
       className="fixed top-0 left-0 right-0 z-[100] flex items-center justify-between px-5 pt-4 pb-0 pointer-events-none"
     >
-      {/* Logo — always visible, pointer-events restored */}
-      <a href="/" aria-label="DuoKarma Home" className="pointer-events-auto flex items-center gap-2 select-none focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-[#AFDDFF] rounded-md">
+      {/* Full DuoKarma Brand Logo */}
+      <a 
+        href="/" 
+        aria-label="DuoKarma Home" 
+        className="pointer-events-auto flex items-center select-none focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-[#AFDDFF] rounded-lg group"
+      >
         <img
-          src="/duokarma-logo.jpeg"
-          alt="DuoKarma"
-          className="w-9 h-9 object-contain drop-shadow-md rounded-sm"
-          onError={(e) => { (e.target as HTMLImageElement).style.display = 'none'; }}
+          src="/duokarma-full-logo.jpeg"
+          alt="DuoKarma — Your Vision, Engineered."
+          className="h-9 sm:h-11 w-auto max-w-[180px] sm:max-w-[220px] object-contain rounded-md shadow-lg border border-white/10 group-hover:border-[#AFDDFF]/40 transition-all duration-300"
         />
       </a>
 

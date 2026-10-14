@@ -5,7 +5,7 @@ import React from 'react';
 const VERTICAL_POSITIONS = ['12.6%', '37.5%', '61.9%', '86.2%'];
 const HORIZONTAL_POSITIONS = ['32.7%', '71.4%'];
 
-/* ─── Node configuration — re-anchored to open negative space corridors ─── */
+/* ─── Node configuration — CONNECTIVITY attached to 3rd flower ─── */
 const NODES = [
   {
     id: 'core',
@@ -20,10 +20,10 @@ const NODES = [
   },
   {
     id: 'luminous',
-    squarePos: { top: '48%', left: '42%' },
+    squarePos: { top: '56%', left: '60%' },
     squareDelay: 1800,
-    labelPos: { top: '42%', left: '22%' },
-    labelAnim: 'lumen-slide-left',
+    labelPos: { top: '48%', left: '68%' },
+    labelAnim: 'lumen-slide-right',
     labelDelay: 1400,
     title: '[ LUMINOUS_INSIGHT ]',
     desc: 'Deep-learning engine synthesizing raw inputs.',
@@ -31,10 +31,10 @@ const NODES = [
   },
   {
     id: 'connect',
-    squarePos: { top: '56%', left: '68%' },
+    squarePos: { top: '44%', left: '17%' },
     squareDelay: 2100,
-    labelPos: { top: '48%', left: '74%' },
-    labelAnim: 'lumen-slide-right',
+    labelPos: { top: '36%', left: '25%' },
+    labelAnim: 'lumen-slide-left',
     labelDelay: 1700,
     title: '[ CONNECTIVITY ]',
     desc: 'Latency-free transmission across distributed networks.',
@@ -44,12 +44,15 @@ const NODES = [
 
 /* ─── Connector line configuration ─── */
 const CONNECTOR_LINES = [
+  // Core entity connector
   { x1: '58%', y1: '16%', x2: '67%', y2: '16%', delay: 1200 },
   { x1: '67%', y1: '16%', x2: '74%', y2: '20%', delay: 1400 },
-  { x1: '22%', y1: '45%', x2: '34%', y2: '45%', delay: 1500 },
-  { x1: '34%', y1: '45%', x2: '42%', y2: '48%', delay: 1700 },
-  { x1: '74%', y1: '51%', x2: '74%', y2: '56%', delay: 1800 },
-  { x1: '74%', y1: '56%', x2: '68%', y2: '56%', delay: 2000 },
+  // Luminous insight connector
+  { x1: '68%', y1: '51%', x2: '64%', y2: '51%', delay: 1500 },
+  { x1: '64%', y1: '51%', x2: '60%', y2: '56%', delay: 1700 },
+  // Connectivity connector — anchored directly to 3rd flower
+  { x1: '25%', y1: '39%', x2: '21%', y2: '39%', delay: 1800 },
+  { x1: '21%', y1: '39%', x2: '17%', y2: '44%', delay: 2000 },
 ] as const;
 
 /* ─── Grid Lines sub-component ─── */

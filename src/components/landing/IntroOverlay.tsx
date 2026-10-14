@@ -122,28 +122,15 @@ export function IntroOverlay() {
                 style={{ background: 'rgba(175, 221, 255, 0.35)' }}
               />
 
-              {/* Logo Emblem Container */}
-              <div className="relative w-20 h-20 sm:w-24 sm:h-24 rounded-2xl p-2.5 bg-gradient-to-b from-[#161a22] to-[#0c0e14] border border-[#AFDDFF]/35 shadow-[0_0_40px_rgba(175,221,255,0.25)] flex items-center justify-center">
+              {/* Full Logo Container */}
+              <div className="relative w-52 sm:w-64 rounded-2xl p-2.5 bg-gradient-to-b from-[#161a22] to-[#0c0e14] border border-[#AFDDFF]/35 shadow-[0_0_40px_rgba(175,221,255,0.25)] flex items-center justify-center overflow-hidden">
                 <img
-                  src="/duokarma-logo.jpeg"
-                  alt="DuoKarma Logo"
-                  className="w-full h-full object-contain rounded-xl"
+                  src="/duokarma-full-logo.jpeg"
+                  alt="DuoKarma — Your Vision, Engineered."
+                  className="w-full h-auto object-contain rounded-xl"
                 />
               </div>
             </div>
-
-            {/* Brand Title */}
-            <h1
-              className="text-2xl sm:text-3xl font-light tracking-[0.22em] uppercase text-white mb-2"
-              style={{
-                fontFamily: "'Fraunces', serif",
-                background: 'linear-gradient(135deg, #FFFFFF 30%, #D8EDFF 70%, #AFDDFF 100%)',
-                WebkitBackgroundClip: 'text',
-                WebkitTextFillColor: 'transparent',
-              }}
-            >
-              DUOKARMA
-            </h1>
 
             {/* Studio Tagline */}
             <p

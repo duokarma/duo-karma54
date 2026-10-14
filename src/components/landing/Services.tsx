@@ -1,4 +1,4 @@
-import { useState, useEffect } from 'react';
+import { useState } from 'react';
 import { m as motion, AnimatePresence } from 'framer-motion';
 import { COLORS } from './ui/theme';
 import { Eyebrow } from './ui/Eyebrow';
@@ -98,19 +98,11 @@ const SERVICES = [
 ];
 
 export function Services() {
-  const [isMobile, setIsMobile] = useState(false);
   const [selectedCat, setSelectedCat] = useState('all');
 
-  useEffect(() => {
-    const check = () => setIsMobile(window.innerWidth < 768);
-    check();
-    window.addEventListener('resize', check);
-    return () => window.removeEventListener('resize', check);
-  }, []);
-
-  const filteredServices = isMobile && selectedCat !== 'all'
-    ? SERVICES.filter((s) => s.category === selectedCat)
-    : SERVICES;
+  const filteredServices = selectedCat === 'all'
+    ? SERVICES
+    : SERVICES.filter((s) => s.category === selectedCat);
 
   return (
     <section
@@ -149,15 +141,16 @@ export function Services() {
       </Reveal>
 
       {/* ── CATEGORY PILL SELECTOR ── */}
-      <div className="flex flex-wrap items-center justify-center gap-1.5 mb-8">
+      <div className="flex flex-wrap items-center justify-center gap-2 mb-10">
         {SERVICE_CATEGORIES.map((cat) => (
           <button
             key={cat.id}
+            type="button"
             onClick={() => setSelectedCat(cat.id)}
-            className={`px-3.5 py-1.5 rounded-full text-xs font-medium transition-all ${
+            className={`px-4 py-2 rounded-full text-xs sm:text-sm font-medium transition-all duration-300 cursor-pointer select-none ${
               selectedCat === cat.id
-                ? 'bg-[#AFDDFF] text-black font-semibold shadow-[0_2px_14px_rgba(175,221,255,0.3)]'
-                : 'bg-white/5 text-ink/70 border border-white/5 hover:text-white'
+                ? 'bg-[#AFDDFF] text-black font-semibold shadow-[0_4px_20px_rgba(175,221,255,0.35)] scale-105'
+                : 'bg-white/5 text-ink/70 border border-white/10 hover:text-white hover:bg-white/10'
             }`}
           >
             {cat.label}
@@ -166,17 +159,19 @@ export function Services() {
       </div>
 
       {/* Grid of services */}
-      <div className="dk-bento-grid max-w-[1200px] mx-auto">
+      <div className={`max-w-[1200px] mx-auto ${
+        selectedCat === 'all' ? 'dk-bento-grid' : 'grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-5 md:gap-6'
+      }`}>
         <AnimatePresence mode="popLayout">
           {filteredServices.map((s) => (
             <motion.div
               layout
               key={s.name}
-              initial={{ opacity: 0, scale: 0.96 }}
-              animate={{ opacity: 1, scale: 1 }}
-              exit={{ opacity: 0, scale: 0.96 }}
-              transition={{ duration: 0.25 }}
-              className={s.bento}
+              initial={{ opacity: 0, y: 15, scale: 0.95 }}
+              animate={{ opacity: 1, y: 0, scale: 1 }}
+              exit={{ opacity: 0, y: -10, scale: 0.95 }}
+              transition={{ duration: 0.28, ease: [0.16, 1, 0.3, 1] }}
+              className={selectedCat === 'all' ? s.bento : ''}
               style={{ height: '100%' }}
             >
               <ServiceCard service={s} />
