@@ -1,10 +1,16 @@
-import { useState, useEffect, useRef } from 'react';
-import { m as motion } from 'framer-motion';
+import { useState, useRef, useEffect, useCallback } from 'react';
+import { m as motion, AnimatePresence } from 'framer-motion';
 import { COLORS } from './ui/theme';
 import { Eyebrow } from './ui/Eyebrow';
 import { Reveal } from './ui/Reveal';
 import { 
+  SwipeCards, 
+  type SwipeCardsRef, 
+  type SwipeCardItem 
+} from '@/components/ui/image-stack-carousel';
+import { 
   ChevronRight, 
+  ChevronLeft,
   Scissors, 
   Building2, 
   BarChart3, 
@@ -14,270 +20,659 @@ import {
   Dumbbell, 
   Stethoscope, 
   UtensilsCrossed,
+  Sparkles,
+  ArrowRight,
+  Hand,
   type LucideIcon
 } from 'lucide-react';
 
-interface ModuleItem {
+interface ModuleCardItem extends SwipeCardItem {
+  id: string;
   name: string;
   tag: string;
+  code: string;
   detail: string;
+  metric: { value: string; label: string };
+  highlights: string[];
   icon: LucideIcon;
+  blueprintType: 'salon' | 'farmhouse' | 'dashboards' | 'crm' | 'inventory' | 'automation' | 'gym' | 'clinic' | 'restaurant';
 }
 
-const MODULES: ModuleItem[] = [
+const MODULE_DATA: ModuleCardItem[] = [
   {
+    id: 'salon',
     name: "Salon Management",
     tag: "Multi-Location",
+    code: "SYS-01 // SALON-CORE",
     detail: "Appointments, staff schedules, service menus, and client history in one live system.",
+    metric: { value: "+42%", label: "Daily Booking Velocity" },
+    highlights: ["Multi-Branch Sync", "Staff Commission Engine", "WhatsApp Reminders", "Client Formula History"],
     icon: Scissors,
+    blueprintType: 'salon',
   },
   {
+    id: 'farmhouse',
     name: "Farmhouse Booking",
     tag: "Hospitality",
+    code: "SYS-02 // GUEST-ENGINE",
     detail: "Public booking engine with availability calendars, pricing rules, and instant confirmations.",
+    metric: { value: "0 hrs", label: "Manual Phone-Tag Coordination" },
+    highlights: ["Dynamic Weekend Rates", "Live Availability Matrix", "Automated Gate Codes", "Instant WhatsApp Receipts"],
     icon: Building2,
+    blueprintType: 'farmhouse',
   },
   {
+    id: 'dashboards',
     name: "Business Dashboards",
     tag: "Executive Analytics",
+    code: "SYS-03 // OWNER-VIEW",
     detail: "Real-time views into revenue, bookings, and operations — built around how owners actually check numbers.",
+    metric: { value: "< 80ms", label: "P&L Metric Refresh SLA" },
+    highlights: ["Consolidated Bank Feeds", "Expense Leakage Alerts", "Role-Based Permissions", "Nightly PDF Executive Brief"],
     icon: BarChart3,
+    blueprintType: 'dashboards',
   },
   {
+    id: 'crm',
     name: "CRM Systems",
     tag: "Client Pipelines",
+    code: "SYS-04 // PIPELINE-PRO",
     detail: "Track leads, clients, and follow-ups without a spreadsheet duct-taped to email.",
+    metric: { value: "3.4x", label: "Lead-to-Close Velocity" },
+    highlights: ["Visual Funnel Stages", "Auto-Enrich Contacts", "1-Click WhatsApp Direct", "Automated Stale-Lead Pings"],
     icon: Target,
+    blueprintType: 'crm',
   },
   {
+    id: 'inventory',
     name: "Inventory & Billing",
     tag: "Commerce & POS",
+    code: "SYS-05 // STOCK-LEDGER",
     detail: "Stock levels, invoicing, and POS flows that stay in sync with what's actually sold.",
+    metric: { value: "99.9%", label: "Inventory Count Accuracy" },
+    highlights: ["Barcode Scanner API", "Low-Stock Push Alerts", "Instant GST E-Invoicing", "Supplier Purchase Orders"],
     icon: Package,
+    blueprintType: 'inventory',
   },
   {
+    id: 'automation',
     name: "Business Automation",
     tag: "Workflow Engine",
+    code: "SYS-06 // FLOW-NEXUS",
     detail: "Notifications, reminders, and workflows that remove the manual middle step.",
+    metric: { value: "18 hrs", label: "Weekly Manual Labor Saved" },
+    highlights: ["Webhook Ingestion Engine", "Multi-Branch Logic Flow", "Self-Healing Worker Queues", "Slack & WhatsApp Triggers"],
     icon: Zap,
+    blueprintType: 'automation',
   },
   {
+    id: 'gym',
     name: "Gym Management",
     tag: "Health & Fitness",
+    code: "SYS-07 // FITNESS-PASS",
     detail: "Member subscriptions, class scheduling, and automated billing for fitness centers.",
+    metric: { value: "94%", label: "On-Time Renewal Rate" },
+    highlights: ["Turnstile RFID Hardware API", "Class Capacity Engine", "Recurring Auto-Debit", "Trainer Roster Sync"],
     icon: Dumbbell,
+    blueprintType: 'gym',
   },
   {
+    id: 'clinic',
     name: "Clinic Management",
     tag: "Healthcare",
+    code: "SYS-08 // CLINIC-VAULT",
     detail: "Patient records, appointment scheduling, secure billing, and automated reminders.",
+    metric: { value: "0 min", label: "Patient Record Retrieval" },
+    highlights: ["Encrypted Health Vault", "Live Token Queue Display", "Digital Rx Generator", "Diagnostic Lab Webhook"],
     icon: Stethoscope,
+    blueprintType: 'clinic',
   },
   {
+    id: 'restaurant',
     name: "Restaurant Systems",
     tag: "F&B Operations",
+    code: "SYS-09 // DINE-CORE",
     detail: "Table reservations, digital menus, order management, and seamless POS integration.",
+    metric: { value: "-22%", label: "Order-to-Table Turnaround" },
+    highlights: ["Kitchen Display System (KDS)", "Live Floor Plan Table Map", "QR Self-Ordering", "Split-Bill POS Integration"],
     icon: UtensilsCrossed,
+    blueprintType: 'restaurant',
   },
 ];
 
-export function WhatWeBuild() {
-  const [isMobile, setIsMobile] = useState(false);
-  const [mobileActiveIndex, setMobileActiveIndex] = useState(0);
-  const carouselRef = useRef<HTMLDivElement>(null);
+/* ─── Blueprint Mockup Sub-Components inside Cards ─── */
+function BlueprintMockup({ type }: { type: ModuleCardItem['blueprintType'] }) {
+  switch (type) {
+    case 'salon':
+      return (
+        <div className="bg-black/40 rounded-xl p-3 border border-white/5 space-y-2 text-[11px] font-mono">
+          <div className="flex items-center justify-between text-white/50 text-[10px]">
+            <span>STATION 01 // HAIRSTYLIST</span>
+            <span className="text-[#AFDDFF]">LIVE</span>
+          </div>
+          <div className="space-y-1.5">
+            <div className="flex items-center justify-between bg-white/[0.03] p-1.5 rounded border border-white/5">
+              <span className="text-white/80">11:30 AM • Balayage + Cut</span>
+              <span className="text-emerald-400 bg-emerald-500/10 px-1.5 py-0.5 rounded text-[9px]">IN SERVICE</span>
+            </div>
+            <div className="flex items-center justify-between bg-white/[0.03] p-1.5 rounded border border-white/5">
+              <span className="text-white/80">01:15 PM • Keratin Touchup</span>
+              <span className="text-[#AFDDFF] bg-[#AFDDFF]/10 px-1.5 py-0.5 rounded text-[9px]">CONFIRMED</span>
+            </div>
+          </div>
+        </div>
+      );
+    case 'farmhouse':
+      return (
+        <div className="bg-black/40 rounded-xl p-3 border border-white/5 space-y-2 text-[11px] font-mono">
+          <div className="flex items-center justify-between text-white/50 text-[10px]">
+            <span>AVAILABILITY CALENDAR</span>
+            <span className="text-[#86EFAC]">SYNCED</span>
+          </div>
+          <div className="grid grid-cols-4 gap-1 text-center text-[10px]">
+            <div className="bg-white/5 p-1 rounded text-white/40">Thu 15</div>
+            <div className="bg-[#AFDDFF]/15 border border-[#AFDDFF]/30 p-1 rounded text-[#AFDDFF] font-semibold">Fri 16</div>
+            <div className="bg-[#AFDDFF]/15 border border-[#AFDDFF]/30 p-1 rounded text-[#AFDDFF] font-semibold">Sat 17</div>
+            <div className="bg-white/5 p-1 rounded text-white/40">Sun 18</div>
+          </div>
+          <div className="flex items-center justify-between text-[10px] text-white/70 pt-1 border-t border-white/5">
+            <span>Weekend Pass: $320/night</span>
+            <span className="text-emerald-400">Gate #881 Locked</span>
+          </div>
+        </div>
+      );
+    case 'dashboards':
+      return (
+        <div className="bg-black/40 rounded-xl p-3 border border-white/5 space-y-2 text-[11px] font-mono">
+          <div className="flex items-center justify-between text-white/50 text-[10px]">
+            <span>REVENUE TRAJECTORY (MRR)</span>
+            <span className="text-emerald-400 font-semibold">+24.8%</span>
+          </div>
+          <div className="flex items-baseline gap-2">
+            <span className="text-lg font-bold text-white">$142,850</span>
+            <span className="text-[10px] text-white/40">all 3 entities</span>
+          </div>
+          <div className="h-6 w-full flex items-end gap-1 pt-1">
+            {[35, 45, 40, 60, 55, 75, 70, 85, 95, 100].map((h, i) => (
+              <div 
+                key={i} 
+                className="flex-1 rounded-t transition-all"
+                style={{ 
+                  height: `${h}%`, 
+                  background: i === 9 ? '#AFDDFF' : 'rgba(175, 221, 255, 0.25)' 
+                }} 
+              />
+            ))}
+          </div>
+        </div>
+      );
+    case 'crm':
+      return (
+        <div className="bg-black/40 rounded-xl p-3 border border-white/5 space-y-2 text-[11px] font-mono">
+          <div className="flex items-center justify-between text-white/50 text-[10px]">
+            <span>PIPELINE VELOCITY</span>
+            <span className="text-[#AFDDFF]">AUTO-SYNC</span>
+          </div>
+          <div className="grid grid-cols-3 gap-1.5 text-[9px]">
+            <div className="bg-white/[0.04] p-1.5 rounded border border-white/5">
+              <div className="text-white/40">LEADS</div>
+              <div className="text-white font-semibold text-xs">28</div>
+            </div>
+            <div className="bg-[#AFDDFF]/10 p-1.5 rounded border border-[#AFDDFF]/20">
+              <div className="text-[#AFDDFF]/70">DISCOVERY</div>
+              <div className="text-[#AFDDFF] font-semibold text-xs">14</div>
+            </div>
+            <div className="bg-emerald-500/10 p-1.5 rounded border border-emerald-500/20">
+              <div className="text-emerald-400/70">CLOSED</div>
+              <div className="text-emerald-400 font-semibold text-xs">$94k</div>
+            </div>
+          </div>
+        </div>
+      );
+    case 'inventory':
+      return (
+        <div className="bg-black/40 rounded-xl p-3 border border-white/5 space-y-2 text-[11px] font-mono">
+          <div className="flex items-center justify-between text-white/50 text-[10px]">
+            <span>STOCK MONITOR // POS SYNC</span>
+            <span className="text-amber-400 text-[9px]">1 REORDER ALERT</span>
+          </div>
+          <div className="space-y-1 text-[10px]">
+            <div className="flex justify-between items-center text-white/70">
+              <span>SKU-904 Ceramic Glaze</span>
+              <span className="text-white">142 units</span>
+            </div>
+            <div className="w-full bg-white/10 h-1 rounded-full overflow-hidden">
+              <div className="bg-emerald-400 h-full w-[78%]" />
+            </div>
+            <div className="flex justify-between items-center text-white/70 pt-1">
+              <span>SKU-412 Resin Pack</span>
+              <span className="text-amber-400">12 units (Low)</span>
+            </div>
+          </div>
+        </div>
+      );
+    case 'automation':
+      return (
+        <div className="bg-black/40 rounded-xl p-3 border border-white/5 space-y-2 text-[11px] font-mono">
+          <div className="flex items-center justify-between text-white/50 text-[10px]">
+            <span>WORKFLOW TRIGGER GRAPH</span>
+            <span className="text-[#AFDDFF]">0 MS DRIFT</span>
+          </div>
+          <div className="flex items-center gap-1.5 text-[9px] text-white/80 overflow-x-auto py-1">
+            <span className="bg-white/10 px-2 py-1 rounded">Order Paid</span>
+            <span className="text-[#AFDDFF]">→</span>
+            <span className="bg-[#AFDDFF]/15 text-[#AFDDFF] px-2 py-1 rounded">Generate PDF</span>
+            <span className="text-[#AFDDFF]">→</span>
+            <span className="bg-emerald-500/15 text-emerald-400 px-2 py-1 rounded">WhatsApp Ping</span>
+          </div>
+        </div>
+      );
+    case 'gym':
+      return (
+        <div className="bg-black/40 rounded-xl p-3 border border-white/5 space-y-2 text-[11px] font-mono">
+          <div className="flex items-center justify-between text-white/50 text-[10px]">
+            <span>TURNSTILE RFID // LIVE ACCESS</span>
+            <span className="text-emerald-400">GATE ACTIVE</span>
+          </div>
+          <div className="flex items-center justify-between text-xs">
+            <div>
+              <span className="text-white font-bold text-base">184</span>
+              <span className="text-white/50 text-[10px] ml-1">in gym</span>
+            </div>
+            <div className="text-right text-[10px] text-white/70">
+              <div>HIIT Class • 06:00 PM</div>
+              <div className="text-[#AFDDFF]">26/30 Registered</div>
+            </div>
+          </div>
+        </div>
+      );
+    case 'clinic':
+      return (
+        <div className="bg-black/40 rounded-xl p-3 border border-white/5 space-y-2 text-[11px] font-mono">
+          <div className="flex items-center justify-between text-white/50 text-[10px]">
+            <span>PATIENT QUEUE DISPATCH</span>
+            <span className="text-[#AFDDFF]">TOKEN #14</span>
+          </div>
+          <div className="space-y-1.5 text-[10px]">
+            <div className="flex justify-between items-center bg-white/[0.03] p-1.5 rounded border border-white/5">
+              <span className="text-white/80">Dr. Mehta • Consultation Room 2</span>
+              <span className="text-emerald-400 font-semibold">IN-CABIN</span>
+            </div>
+            <div className="flex justify-between items-center text-white/50 px-1">
+              <span>Next: Token #15 (Waiting: 4m)</span>
+              <span className="text-[#AFDDFF]">256-bit EMR</span>
+            </div>
+          </div>
+        </div>
+      );
+    case 'restaurant':
+      return (
+        <div className="bg-black/40 rounded-xl p-3 border border-white/5 space-y-2 text-[11px] font-mono">
+          <div className="flex items-center justify-between text-white/50 text-[10px]">
+            <span>KITCHEN DISPLAY // FLOOR MAP</span>
+            <span className="text-emerald-400">8 TABLES BUSY</span>
+          </div>
+          <div className="grid grid-cols-2 gap-1.5 text-[9px]">
+            <div className="bg-white/[0.04] p-1.5 rounded border border-white/5">
+              <div className="text-[#AFDDFF] font-semibold">Table 04 • 4 Guests</div>
+              <div className="text-white/60">Mains Dispatched</div>
+            </div>
+            <div className="bg-white/[0.04] p-1.5 rounded border border-white/5">
+              <div className="text-amber-400 font-semibold">Table 07 • 2 Guests</div>
+              <div className="text-white/60">Bill Requested</div>
+            </div>
+          </div>
+        </div>
+      );
+    default:
+      return null;
+  }
+}
 
-  useEffect(() => {
-    const check = () => setIsMobile(window.innerWidth < 768);
-    check();
-    window.addEventListener('resize', check);
-    return () => window.removeEventListener('resize', check);
+export function WhatWeBuild() {
+  const [activeItem, setActiveItem] = useState<ModuleCardItem>(MODULE_DATA[0]);
+  const swipeCardsRef = useRef<SwipeCardsRef>(null);
+
+  // Active index for indicator
+  const activeIndex = MODULE_DATA.findIndex((m) => m.id === activeItem.id);
+
+  // Keyboard navigation support
+  const handleKeyDown = useCallback((e: KeyboardEvent) => {
+    if (e.key === 'ArrowRight') {
+      swipeCardsRef.current?.next();
+    } else if (e.key === 'ArrowLeft') {
+      swipeCardsRef.current?.prev();
+    }
   }, []);
 
-  const handleMobileScroll = () => {
-    if (!carouselRef.current) return;
-    const scrollLeft = carouselRef.current.scrollLeft;
-    const cardWidth = carouselRef.current.offsetWidth * 0.82;
-    const index = Math.round(scrollLeft / cardWidth);
-    setMobileActiveIndex(Math.min(Math.max(index, 0), MODULES.length - 1));
-  };
+  useEffect(() => {
+    window.addEventListener('keydown', handleKeyDown);
+    return () => window.removeEventListener('keydown', handleKeyDown);
+  }, [handleKeyDown]);
 
   return (
     <section
-      className="relative overflow-hidden py-16 md:py-32 px-5 md:px-[5%]"
+      className="relative overflow-hidden py-16 md:py-28 px-4 sm:px-6 md:px-10 lg:px-12"
       style={{ background: COLORS.surface }}
       id="work"
     >
-      {/* Ambient luxury radial glow — cyan & ice-blue */}
+      {/* Ambient background glows */}
       <div
-        className="pointer-events-none absolute top-0 left-1/2 -translate-x-1/2 w-[600px] h-[320px] opacity-25"
+        className="pointer-events-none absolute top-10 left-1/4 -translate-x-1/2 w-[700px] h-[450px] opacity-20"
         style={{
-          background: 'radial-gradient(ellipse 60% 50% at 50% 0%, rgba(175,221,255,0.22), transparent 70%)',
+          background: 'radial-gradient(circle, rgba(175,221,255,0.2) 0%, transparent 70%)',
+          filter: 'blur(60px)',
+        }}
+        aria-hidden="true"
+      />
+      <div
+        className="pointer-events-none absolute bottom-10 right-1/4 translate-x-1/2 w-[600px] h-[400px] opacity-15"
+        style={{
+          background: 'radial-gradient(circle, rgba(134,239,172,0.15) 0%, transparent 70%)',
+          filter: 'blur(60px)',
         }}
         aria-hidden="true"
       />
 
-      <Reveal>
-        <div className="max-w-[1200px] mx-auto mb-10 md:mb-16">
-          <Eyebrow>What we build</Eyebrow>
-          <h2
-            className="text-3xl md:text-5xl font-normal tracking-tight max-w-[640px] mt-2"
-            style={{
-              fontFamily: "'Fraunces', serif",
-              background: 'linear-gradient(135deg, #FFFFFF 30%, #D8EDFF 70%, #AFDDFF 100%)',
-              WebkitBackgroundClip: 'text',
-              WebkitTextFillColor: 'transparent',
-            }}
-          >
-            Nine kinds of systems, one build quality.
-          </h2>
-          <p className="text-sm md:text-base text-ink/60 mt-3 max-w-[540px] leading-relaxed">
-            Every product is custom engineered from scratch for peak operational speed, bank-grade reliability, and memorable aesthetics.
-          </p>
-        </div>
-      </Reveal>
-
-      {/* ── MOBILE: Sleek Horizontal Snap-Carousel ── */}
-      {isMobile ? (
-        <div className="relative -mx-5 px-5">
-          <div
-            ref={carouselRef}
-            onScroll={handleMobileScroll}
-            className="flex gap-3.5 overflow-x-auto snap-x snap-mandatory pb-4 pt-1 px-5 -mx-5 scrollbar-none"
-            style={{ scrollSnapType: 'x mandatory', WebkitOverflowScrolling: 'touch' }}
-          >
-            {MODULES.map((m, i) => {
-              const IconComp = m.icon;
-              return (
-                <motion.div
-                  key={m.name}
-                  whileTap={{ scale: 0.98 }}
-                  className="snap-center shrink-0 w-[84vw] max-w-[320px] rounded-2xl p-6 relative overflow-hidden transition-all"
-                  style={{
-                    background: 'linear-gradient(145deg, rgba(20, 24, 30, 0.85) 0%, rgba(10, 12, 16, 0.95) 100%)',
-                    border: mobileActiveIndex === i ? '1px solid rgba(175, 221, 255, 0.45)' : '1px solid rgba(255, 255, 255, 0.08)',
-                    boxShadow: mobileActiveIndex === i ? '0 12px 35px -8px rgba(175,221,255,0.18)' : '0 8px 24px rgba(0,0,0,0.5)',
-                    backdropFilter: 'blur(16px)',
-                  }}
-                >
-                  {/* Top Badge Row */}
-                  <div className="flex items-center justify-between mb-4">
-                    <div className="w-10 h-10 rounded-xl bg-white/[0.04] border border-white/10 flex items-center justify-center text-[#AFDDFF] shadow-inner">
-                      <IconComp className="w-5 h-5 text-[#AFDDFF]" strokeWidth={1.6} />
-                    </div>
-                    <div className="flex items-center gap-2">
-                      <span className="px-2.5 py-0.5 rounded-full text-[10px] font-semibold tracking-wide bg-[#AFDDFF]/10 text-[#AFDDFF] border border-[#AFDDFF]/25">
-                        {m.tag}
-                      </span>
-                      <span
-                        style={{ fontFamily: "'IBM Plex Mono', monospace" }}
-                        className="text-[11px] text-ink/40 font-mono"
-                      >
-                        0{i + 1}
-                      </span>
-                    </div>
-                  </div>
-
-                  {/* System Title */}
-                  <h3
-                    className="text-xl font-normal text-white mb-2"
-                    style={{ fontFamily: "'Fraunces', serif" }}
-                  >
-                    {m.name}
-                  </h3>
-
-                  {/* Detail Description */}
-                  <p className="text-xs text-ink/70 leading-relaxed font-sans mb-4 min-h-[50px]">
-                    {m.detail}
-                  </p>
-
-                  {/* Bottom link indicator */}
-                  <div className="flex items-center gap-1.5 text-xs text-[#AFDDFF] font-medium pt-2 border-t border-white/5">
-                    <span>Custom engineered</span>
-                    <ChevronRight className="w-3.5 h-3.5" />
-                  </div>
-                </motion.div>
-              );
-            })}
-          </div>
-
-          {/* Pagination dots */}
-          <div className="flex items-center justify-center gap-1.5 mt-3">
-            {MODULES.map((_, i) => (
-              <span
-                key={i}
-                className="h-1 rounded-full transition-all duration-300"
+      <div className="max-w-[1320px] mx-auto w-full">
+        {/* Section Header */}
+        <Reveal>
+          <div className="flex flex-col md:flex-row md:items-end justify-between mb-8 md:mb-14 pb-6 border-b border-white/[0.08] gap-4">
+            <div>
+              <Eyebrow>What we build</Eyebrow>
+              <h2
+                className="text-3xl sm:text-4xl md:text-5xl font-normal tracking-tight mt-2"
                 style={{
-                  width: mobileActiveIndex === i ? 22 : 6,
-                  background: mobileActiveIndex === i ? '#AFDDFF' : 'rgba(255, 255, 255, 0.15)',
-                }}
-              />
-            ))}
-          </div>
-          <p className="text-center text-[11px] text-ink/40 mt-2 font-mono">
-            Swipe to explore systems ({mobileActiveIndex + 1}/{MODULES.length})
-          </p>
-        </div>
-      ) : (
-        /* ── DESKTOP: Space-Optimized 3x3 Card Grid ── */
-        <div className="max-w-[1200px] mx-auto w-full grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-5 lg:gap-6">
-          {MODULES.map((m, i) => {
-            const IconComp = m.icon;
-            return (
-              <motion.div
-                key={m.name}
-                whileHover={{ y: -5 }}
-                transition={{ type: 'spring', stiffness: 300, damping: 25 }}
-                className="group rounded-2xl p-6 relative overflow-hidden transition-all duration-300 border flex flex-col justify-between"
-                style={{
-                  background: 'linear-gradient(145deg, rgba(18, 22, 28, 0.8) 0%, rgba(10, 12, 16, 0.95) 100%)',
-                  borderColor: 'rgba(175, 221, 255, 0.14)',
-                  boxShadow: '0 8px 30px rgba(0,0,0,0.5)',
-                  backdropFilter: 'blur(16px)',
+                  fontFamily: "'Fraunces', serif",
+                  background: 'linear-gradient(135deg, #FFFFFF 30%, #D8EDFF 70%, #AFDDFF 100%)',
+                  WebkitBackgroundClip: 'text',
+                  WebkitTextFillColor: 'transparent',
                 }}
               >
-                <div>
-                  {/* Top Badge Row */}
-                  <div className="flex items-center justify-between mb-4">
-                    <div className="w-10 h-10 rounded-xl bg-[#AFDDFF]/10 border border-[#AFDDFF]/25 flex items-center justify-center text-[#AFDDFF] group-hover:scale-110 transition-transform duration-300 shadow-sm">
-                      <IconComp className="w-5 h-5 text-[#AFDDFF]" strokeWidth={1.6} />
+                Nine kinds of systems, one build quality.
+              </h2>
+            </div>
+            <div className="flex items-center gap-3">
+              <span className="text-xs text-white/50 font-mono tracking-wider uppercase">
+                Interactive Deck
+              </span>
+              <span className="w-2 h-2 rounded-full bg-emerald-400 animate-pulse" />
+            </div>
+          </div>
+        </Reveal>
+
+        {/* ── Main Dual-Column Interactive Arena ── */}
+        <div className="grid grid-cols-1 lg:grid-cols-12 gap-8 lg:gap-10 items-center">
+          
+          {/* ── LEFT COLUMN (lg:cols-5 / 6): Dynamic System Inspector ── */}
+          <div className="lg:col-span-5 flex flex-col justify-between space-y-6">
+            
+            {/* Active System Details Box */}
+            <AnimatePresence mode="wait">
+              <motion.div
+                key={activeItem.id}
+                initial={{ opacity: 0, y: 12 }}
+                animate={{ opacity: 1, y: 0 }}
+                exit={{ opacity: 0, y: -12 }}
+                transition={{ duration: 0.25, ease: 'easeOut' }}
+                className="rounded-2xl p-6 sm:p-7 relative overflow-hidden"
+                style={{
+                  background: 'linear-gradient(145deg, rgba(20, 25, 34, 0.85) 0%, rgba(10, 12, 16, 0.95) 100%)',
+                  border: '1px solid rgba(175, 221, 255, 0.22)',
+                  boxShadow: '0 16px 40px rgba(0,0,0,0.6)',
+                  backdropFilter: 'blur(20px)',
+                }}
+              >
+                {/* Top Badge Row */}
+                <div className="flex items-center justify-between mb-4">
+                  <span className="text-xs font-mono tracking-widest text-[#AFDDFF]">
+                    {activeItem.code}
+                  </span>
+                  <span className="px-2.5 py-0.5 rounded-full text-[11px] font-semibold bg-[#AFDDFF]/10 text-[#AFDDFF] border border-[#AFDDFF]/30">
+                    {activeItem.tag}
+                  </span>
+                </div>
+
+                {/* Big System Title */}
+                <h3
+                  className="text-2xl sm:text-3xl font-normal text-white mb-2.5"
+                  style={{ fontFamily: "'Fraunces', serif" }}
+                >
+                  {activeItem.name}
+                </h3>
+
+                <p className="text-sm text-white/70 leading-relaxed font-sans mb-6">
+                  {activeItem.detail}
+                </p>
+
+                {/* Key Metric Callout */}
+                <div className="p-4 rounded-xl bg-white/[0.03] border border-white/[0.08] flex items-center justify-between mb-6">
+                  <div>
+                    <div className="text-[11px] text-white/50 uppercase tracking-wider font-mono">
+                      Measured Impact
                     </div>
-                    <div className="flex items-center gap-2">
-                      <span className="px-2.5 py-0.5 rounded-full text-[11px] font-semibold tracking-wide bg-[#AFDDFF]/10 text-[#AFDDFF] border border-[#AFDDFF]/25">
-                        {m.tag}
-                      </span>
-                      <span
-                        style={{ fontFamily: "'IBM Plex Mono', monospace" }}
-                        className="text-[12px] text-ink/40 font-mono"
-                      >
-                        0{i + 1}
-                      </span>
+                    <div className="text-xs text-white/80 mt-0.5 font-medium">
+                      {activeItem.metric.label}
                     </div>
                   </div>
-
-                  {/* System Title */}
-                  <h3
-                    className="text-xl font-normal text-white mb-2 group-hover:text-[#AFDDFF] transition-colors"
-                    style={{ fontFamily: "'Fraunces', serif" }}
-                  >
-                    {m.name}
-                  </h3>
-
-                  {/* Detail Description */}
-                  <p className="text-xs md:text-sm text-ink/70 leading-relaxed font-sans mb-4 min-h-[48px]">
-                    {m.detail}
-                  </p>
+                  <div className="text-2xl sm:text-3xl font-bold font-mono text-[#AFDDFF]">
+                    {activeItem.metric.value}
+                  </div>
                 </div>
 
-                {/* Bottom link indicator */}
-                <div className="flex items-center gap-1.5 text-xs text-[#AFDDFF] font-medium pt-3 border-t border-white/5 group-hover:border-[#AFDDFF]/20 transition-colors">
-                  <span>Custom engineered</span>
-                  <ChevronRight className="w-3.5 h-3.5 group-hover:translate-x-1 transition-transform" />
+                {/* Architecture Highlights Chips */}
+                <div className="space-y-2">
+                  <div className="text-[11px] text-white/40 font-mono uppercase tracking-wider">
+                    Core Capabilities
+                  </div>
+                  <div className="flex flex-wrap gap-1.5">
+                    {activeItem.highlights.map((h) => (
+                      <span
+                        key={h}
+                        className="px-2.5 py-1 rounded-md text-xs bg-white/[0.04] text-white/80 border border-white/10"
+                      >
+                        {h}
+                      </span>
+                    ))}
+                  </div>
                 </div>
               </motion.div>
-            );
-          })}
+            </AnimatePresence>
+
+            {/* Interactive 3x3 Selector Matrix (Click to Jump Directly to Any System) */}
+            <div className="space-y-2">
+              <div className="flex items-center justify-between text-xs text-white/50 font-mono">
+                <span>QUICK SYSTEM SELECTOR</span>
+                <span>{activeIndex + 1} of {MODULE_DATA.length}</span>
+              </div>
+              <div className="grid grid-cols-3 gap-2">
+                {MODULE_DATA.map((m, idx) => {
+                  const isSelected = m.id === activeItem.id;
+                  return (
+                    <button
+                      key={m.id}
+                      onClick={() => {
+                        swipeCardsRef.current?.bringToFront(m.id);
+                      }}
+                      className={`text-left p-2.5 rounded-xl border text-xs font-mono transition-all duration-200 flex flex-col justify-between ${
+                        isSelected
+                          ? 'bg-[#AFDDFF]/15 border-[#AFDDFF]/50 text-white shadow-md shadow-[#AFDDFF]/10 scale-[1.02]'
+                          : 'bg-white/[0.03] border-white/5 text-white/50 hover:text-white hover:bg-white/[0.06]'
+                      }`}
+                    >
+                      <span className="text-[10px] text-white/40">0{idx + 1}</span>
+                      <span className="font-sans font-medium text-[11px] sm:text-xs truncate w-full mt-0.5">
+                        {m.name.split(' ')[0]}
+                      </span>
+                    </button>
+                  );
+                })}
+              </div>
+            </div>
+
+            {/* Deck Controls (Previous / Next Buttons & Hint) */}
+            <div className="flex items-center justify-between pt-2">
+              <div className="flex items-center gap-2">
+                <button
+                  onClick={() => swipeCardsRef.current?.prev()}
+                  aria-label="Previous system card"
+                  className="w-10 h-10 rounded-xl bg-white/[0.05] hover:bg-white/[0.1] border border-white/10 flex items-center justify-center text-white/80 hover:text-white transition-all active:scale-95"
+                >
+                  <ChevronLeft className="w-5 h-5" />
+                </button>
+                <button
+                  onClick={() => swipeCardsRef.current?.next()}
+                  aria-label="Next system card"
+                  className="w-10 h-10 rounded-xl bg-[#AFDDFF]/15 hover:bg-[#AFDDFF]/25 border border-[#AFDDFF]/40 flex items-center justify-center text-[#AFDDFF] hover:text-white transition-all active:scale-95 shadow-lg shadow-[#AFDDFF]/10"
+                >
+                  <ChevronRight className="w-5 h-5" />
+                </button>
+                <span className="text-xs text-white/40 font-mono ml-2 hidden sm:inline-block">
+                  Swipe card or tap arrows to cycle
+                </span>
+              </div>
+
+              <button
+                onClick={() => {
+                  document.getElementById('contact')?.scrollIntoView({ behavior: 'smooth' });
+                }}
+                className="flex items-center gap-1.5 text-xs text-[#AFDDFF] hover:text-white transition-colors font-medium"
+              >
+                <span>Request Custom Build</span>
+                <ArrowRight className="w-3.5 h-3.5" />
+              </button>
+            </div>
+          </div>
+
+          {/* ── RIGHT COLUMN (lg:cols-7): Generous 3D Interactive Gesture Deck ── */}
+          <div className="lg:col-span-7 flex flex-col items-center justify-center relative py-4 sm:py-6">
+            
+            {/* Subtle floating badge above stack */}
+            <div className="flex items-center gap-2 px-3 py-1 rounded-full bg-white/[0.04] border border-white/10 text-white/60 text-xs font-mono mb-4">
+              <Hand className="w-3.5 h-3.5 text-[#AFDDFF]" />
+              <span>Drag & Throw Card in Any Direction</span>
+            </div>
+
+            {/* The 3D Interactive Stack Carousel Component */}
+            <div className="relative w-full flex items-center justify-center">
+              <SwipeCards
+                ref={swipeCardsRef}
+                cards={MODULE_DATA}
+                settings={{
+                  width: 420,
+                  height: 480,
+                  radius: 24,
+                  swipeThreshold: 90,
+                  stackRotation: 4.5,
+                  stackScale: 0.04,
+                  tiltStrength: 24,
+                  mobileBreakpoint: 640,
+                  mobileScale: 0.82,
+                }}
+                onCardChange={(card) => {
+                  setActiveItem(card as ModuleCardItem);
+                }}
+                renderCard={(card, _index, isFront) => {
+                  const m = card as ModuleCardItem;
+                  const IconComp = m.icon;
+
+                  return (
+                    <div
+                      className="relative w-full h-full p-6 sm:p-7 flex flex-col justify-between overflow-hidden select-none"
+                      style={{
+                        background: 'linear-gradient(145deg, rgba(22, 28, 38, 0.95) 0%, rgba(10, 13, 18, 0.98) 100%)',
+                        border: isFront
+                          ? '1px solid rgba(175, 221, 255, 0.35)'
+                          : '1px solid rgba(255, 255, 255, 0.12)',
+                        boxShadow: isFront
+                          ? '0 24px 60px -12px rgba(0,0,0,0.8), 0 0 40px rgba(175,221,255,0.08)'
+                          : '0 16px 40px rgba(0,0,0,0.6)',
+                        backdropFilter: 'blur(24px)',
+                      }}
+                    >
+                      {/* Top Accent Light Highlight */}
+                      <div 
+                        className="pointer-events-none absolute top-0 left-0 right-0 h-px"
+                        style={{
+                          background: 'linear-gradient(90deg, transparent 0%, rgba(175,221,255,0.5) 50%, transparent 100%)',
+                        }}
+                      />
+
+                      {/* Header Row */}
+                      <div>
+                        <div className="flex items-center justify-between mb-4">
+                          <div className="w-12 h-12 rounded-xl bg-[#AFDDFF]/10 border border-[#AFDDFF]/25 flex items-center justify-center text-[#AFDDFF] shadow-inner">
+                            <IconComp className="w-6 h-6 text-[#AFDDFF]" strokeWidth={1.7} />
+                          </div>
+                          <div className="flex items-center gap-2">
+                            <span className="px-2.5 py-0.5 rounded-full text-[11px] font-semibold tracking-wide bg-[#AFDDFF]/10 text-[#AFDDFF] border border-[#AFDDFF]/30">
+                              {m.tag}
+                            </span>
+                            <span
+                              style={{ fontFamily: "'IBM Plex Mono', monospace" }}
+                              className="text-xs text-white/50 font-mono"
+                            >
+                              0{MODULE_DATA.findIndex((it) => it.id === m.id) + 1}
+                            </span>
+                          </div>
+                        </div>
+
+                        {/* Title */}
+                        <h3
+                          className="text-2xl font-normal text-white mb-2"
+                          style={{ fontFamily: "'Fraunces', serif" }}
+                        >
+                          {m.name}
+                        </h3>
+
+                        <p className="text-xs sm:text-sm text-white/70 leading-relaxed font-sans mb-4 line-clamp-2">
+                          {m.detail}
+                        </p>
+                      </div>
+
+                      {/* Live Blueprint Graphical Mockup */}
+                      <div className="my-auto py-2">
+                        <BlueprintMockup type={m.blueprintType} />
+                      </div>
+
+                      {/* Bottom Footer Action */}
+                      <div className="pt-3 border-t border-white/10 flex items-center justify-between text-xs">
+                        <div className="flex items-center gap-1.5 text-[#AFDDFF] font-medium">
+                          <span>Custom engineered</span>
+                          <ChevronRight className="w-3.5 h-3.5" />
+                        </div>
+                        <div className="flex items-center gap-1 text-[11px] text-white/40 font-mono">
+                          <Sparkles className="w-3 h-3 text-[#AFDDFF]" />
+                          <span>Drag to flip</span>
+                        </div>
+                      </div>
+                    </div>
+                  );
+                }}
+              />
+            </div>
+
+            {/* Mobile Swipe Pagination Dots */}
+            <div className="flex items-center justify-center gap-1.5 mt-5 lg:hidden">
+              {MODULE_DATA.map((m) => (
+                <button
+                  key={m.id}
+                  onClick={() => swipeCardsRef.current?.bringToFront(m.id)}
+                  aria-label={`Jump to ${m.name}`}
+                  className="h-1.5 rounded-full transition-all duration-300"
+                  style={{
+                    width: activeItem.id === m.id ? 24 : 6,
+                    background: activeItem.id === m.id ? '#AFDDFF' : 'rgba(255, 255, 255, 0.2)',
+                  }}
+                />
+              ))}
+            </div>
+
+          </div>
+
         </div>
-      )}
+
+      </div>
     </section>
   );
 }
