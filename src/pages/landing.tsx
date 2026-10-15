@@ -23,7 +23,9 @@ const Cursor = !isTouchDevice
 const About = React.lazy(() => import('@/components/landing/About').then((m) => ({ default: m.About })));
 const WhatWeBuild = React.lazy(() => import('@/components/landing/WhatWeBuild').then((m) => ({ default: m.WhatWeBuild })));
 const Showcase = React.lazy(() => import('@/components/landing/Showcase').then((m) => ({ default: m.Showcase })));
+const MagazineSection = React.lazy(() => import('@/components/landing/MagazineSection').then((m) => ({ default: m.MagazineSection })));
 const Services = React.lazy(() => import('@/components/landing/Services').then((m) => ({ default: m.Services })));
+const PraiseMarquee = React.lazy(() => import('@/components/landing/PraiseMarquee').then((m) => ({ default: m.PraiseMarquee })));
 const GlobalPresence = React.lazy(() => import('@/components/landing/GlobalPresence').then((m) => ({ default: m.GlobalPresence })));
 const Process = React.lazy(() => import('@/components/landing/Process').then((m) => ({ default: m.Process })));
 const Stats = React.lazy(() => import('@/components/landing/Stats').then((m) => ({ default: m.Stats })));
@@ -184,8 +186,14 @@ function LandingPageInner() {
       <Suspense fallback={<SectionSkeleton height={600} />}>
         <Showcase />
       </Suspense>
+      <Suspense fallback={<SectionSkeleton height={600} />}>
+        <MagazineSection />
+      </Suspense>
       <Suspense fallback={<SectionSkeleton height={400} />}>
         <Services />
+      </Suspense>
+      <Suspense fallback={<SectionSkeleton height={250} />}>
+        <PraiseMarquee />
       </Suspense>
       <Suspense fallback={<SectionSkeleton height={500} />}>
         <GlobalPresence />
