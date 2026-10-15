@@ -26,7 +26,7 @@ const SERVICES = [
 
 export function Services() {
   return (
-    <section style={{ padding: '180px 5%', background: COLORS.bg }} id="services">
+    <section style={{ padding: '160px 5%', background: COLORS.bg }} id="services">
       <Reveal>
         <div style={{ display: 'flex', flexDirection: 'column', alignItems: 'center', textAlign: 'center' }}>
           <Eyebrow>Capabilities</Eyebrow>
@@ -34,11 +34,11 @@ export function Services() {
             style={{
               fontFamily: "'Fraunces', serif",
               fontWeight: 400,
-              fontSize: 'clamp(36px, 5vw, 64px)',
+              fontSize: 'clamp(32px, 4.5vw, 56px)',
               color: COLORS.text,
-              marginBottom: 80,
+              marginBottom: 72,
               maxWidth: 700,
-              lineHeight: 1.1,
+              lineHeight: 1.15,
               letterSpacing: '-0.02em'
             }}
           >
@@ -70,7 +70,7 @@ export function Services() {
           .dk-bento-grid {
             grid-template-columns: repeat(4, 1fr);
             grid-auto-rows: minmax(220px, auto);
-            gap: 24px;
+            gap: 20px;
           }
           .bento-1 { grid-column: span 2; }
           .bento-2 { grid-column: span 2; }
@@ -88,77 +88,61 @@ export function Services() {
 
 function ServiceCard({ service }: { service: typeof SERVICES[0] }) {
   const isLarge = service.size === 'large';
-  const isTall = service.size === 'tall';
   const isWide = service.size === 'wide' || service.size === 'wide-large';
 
   // Responsive layout classes
-  const flexStyle = isWide ? 'flex-col lg:flex-row items-start lg:items-center gap-6 lg:gap-10' : 'flex-col justify-start';
-  const paddingStyle = isLarge ? '48px' : isWide ? '36px 44px' : '32px';
+  const flexStyle = isWide ? 'flex-col lg:flex-row items-start lg:items-center gap-6 lg:gap-8' : 'flex-col justify-start';
+  const paddingStyle = isLarge ? '44px 40px' : isWide ? '36px 36px' : '32px 28px';
 
   return (
     <motion.div
-      className={`group relative flex h-full w-full overflow-hidden rounded-3xl transition-all duration-700 ${flexStyle}`}
+      className={`group relative flex h-full w-full overflow-hidden rounded-2xl transition-all duration-300 ${flexStyle}`}
       style={{
-        background: 'linear-gradient(135deg, rgba(22, 20, 18, 0.7) 0%, rgba(12, 11, 10, 0.9) 100%)',
-        border: '1px solid rgba(255,255,255,0.03)',
+        background: COLORS.card,
+        border: `1px solid ${COLORS.line}`,
         padding: paddingStyle,
-        boxShadow: 'inset 0 1px 0 rgba(255,255,255,0.02), 0 10px 30px rgba(0,0,0,0.2)',
       }}
       whileHover={{ 
-        y: -4, 
-        backgroundColor: 'rgba(28, 26, 24, 0.9)', 
-        borderColor: 'rgba(255,255,255,0.08)',
-        boxShadow: '0 20px 40px rgba(0,0,0,0.4)'
+        y: -3, 
+        borderColor: '#3A372E',
       }}
-      transition={{ type: "spring", stiffness: 300, damping: 35 }}
+      transition={{ type: "spring", stiffness: 280, damping: 30 }}
     >
-      {/* Subtle grid pattern for Tall card */}
-      {isTall && (
-        <div 
-          className="absolute inset-0 z-0 opacity-[0.03] pointer-events-none mix-blend-overlay" 
-          style={{ 
-            backgroundImage: 'linear-gradient(#fff 1px, transparent 1px), linear-gradient(90deg, #fff 1px, transparent 1px)', 
-            backgroundSize: '24px 24px' 
-          }} 
-        />
-      )}
-
-      
       <div 
-        className={`relative z-10 flex items-center justify-center shrink-0 rounded-2xl transition-all duration-500 group-hover:scale-110 group-hover:shadow-[0_0_30px_rgba(201,168,118,0.3)] ${isLarge ? 'mb-8 lg:mb-10' : isTall ? 'mb-auto' : isWide ? 'mb-6 lg:mb-0' : 'mb-6 lg:mb-8'}`}
+        className={`relative z-10 flex items-center justify-center shrink-0 rounded-xl transition-colors duration-300 ${isLarge ? 'mb-8 lg:mb-10' : isWide ? 'mb-6 lg:mb-0' : 'mb-6'}`}
         style={{
-          width: isLarge ? 80 : 56,
-          height: isLarge ? 80 : 56,
-          background: 'linear-gradient(135deg, rgba(201,168,118,0.15) 0%, rgba(201,168,118,0.02) 100%)',
-          border: '1px solid rgba(201,168,118,0.3)',
-          color: '#c9a876',
-          boxShadow: '0 8px 20px rgba(0,0,0,0.2), inset 0 1px 0 rgba(255,255,255,0.1)'
+          width: 48,
+          height: 48,
+          background: 'rgba(25, 25, 22, 0.8)',
+          border: `1px solid ${COLORS.line}`,
+          color: COLORS.accent,
         }}
       >
-        <service.icon size={isLarge ? 34 : 26} strokeWidth={1.5} />
+        <service.icon size={22} strokeWidth={1.6} />
       </div>
 
-      <div className={`relative z-10 ${isWide ? 'flex flex-col justify-center' : ''} ${isTall ? 'mt-8' : ''}`}>
+      <div className={`relative z-10 ${isWide ? 'flex flex-col justify-center' : ''}`}>
         <h3
-          className="transition-colors duration-300 group-hover:text-[rgba(201,168,118,1)]"
+          className="transition-colors duration-200 group-hover:text-[#C5A46D]"
           style={{
             fontFamily: "'Fraunces', serif",
-            fontSize: isLarge ? 32 : isWide ? 24 : 22,
-            color: '#fff',
-            marginBottom: isLarge ? 16 : 10,
-            lineHeight: 1.2,
-            letterSpacing: '-0.02em',
+            fontSize: isLarge ? 28 : isWide ? 22 : 20,
+            color: COLORS.text,
+            marginBottom: 10,
+            lineHeight: 1.25,
+            letterSpacing: '-0.01em',
+            fontWeight: 400,
           }}
         >
           {service.name}
         </h3>
 
         <p
-          className="m-0 transition-colors duration-300 group-hover:text-[rgba(255,255,255,0.9)]"
+          className="m-0"
           style={{
             fontFamily: "'Inter', sans-serif",
-            fontSize: isLarge ? 16 : 14.5,
-            color: 'rgba(255,255,255,0.5)',
+            fontSize: 14,
+            color: COLORS.secondary,
             lineHeight: 1.6,
           }}
         >

@@ -28,7 +28,7 @@ export function MagneticButton({ children, primary = false, onClick }: { childre
         borderRadius: 999,
         border: primary ? "none" : `1px solid ${COLORS.line}`,
         background: primary ? COLORS.accent : "transparent",
-        color: primary ? "#15130F" : COLORS.text,
+        color: primary ? "#0A0A09" : COLORS.text,
         cursor: "pointer",
         letterSpacing: "0.01em",
       }}

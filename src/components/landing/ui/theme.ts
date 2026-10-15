@@ -1,14 +1,17 @@
 export const COLORS = {
-  bg: "#0A0908",
-  surface: "#15130F",
-  surface2: "#1D1A14",
-  accent: "#C9A876",
-  accent2: "#E8CFA0",
-  text: "#F3EEE3",
-  secondary: "#8B8578",
+  bg: "#0A0A09",             // Obsidian Black
+  surface: "#11110F",        // Charcoal
+  card: "#151512",           // Elevated card background
+  surface2: "#151512",       // Elevated card background
+  text: "#F2EEE6",           // Warm Ivory
+  secondary: "#A6A197",      // Muted Stone
+  tertiary: "#77736B",       // Tertiary text
+  accent: "#C5A46D",         // Champagne Gold
+  accentHover: "#D7BC8C",    // Hover accent
+  accent2: "#D7BC8C",        // Secondary Gold
+  line: "#292720",           // Subtle Warm Charcoal border
+  border: "#292720",         // Subtle Warm Charcoal border
   emerald: "#6E8F76",
-  line: "rgba(243,238,227,0.09)",
 };
 
 export const FONT_IMPORT = ``;
-

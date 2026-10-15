@@ -81,12 +81,13 @@ function TypingDots({ color }: { color: string }) {
   );
 }
 
-// ── Main Component ─────────────────────────────────────────────────────────────
+// ── Chat Bubble ────────────────────────────────────────────────────────────────
 
 const ChatBubble = ({ msg, accentColor }: { msg: Message; accentColor: string }) => (
   <motion.div
-    initial={{ opacity: 0, y: 8 }}
+    initial={{ opacity: 0, y: 6 }}
     animate={{ opacity: 1, y: 0 }}
+    transition={{ duration: 0.2 }}
     style={{
       display: 'flex',
       flexDirection: msg.role === 'user' ? 'row-reverse' : 'row',
@@ -98,7 +99,8 @@ const ChatBubble = ({ msg, accentColor }: { msg: Message; accentColor: string })
     {msg.role === 'assistant' && (
       <div style={{
         width: 30, height: 30, borderRadius: '50%', flexShrink: 0,
-        background: `${accentColor}20`,
+        background: 'rgba(197,164,109,0.1)',
+        border: `1px solid ${COLORS.line}`,
         display: 'flex', alignItems: 'center', justifyContent: 'center',
       }}>
         <Bot size={14} color={accentColor} />
@@ -109,9 +111,9 @@ const ChatBubble = ({ msg, accentColor }: { msg: Message; accentColor: string })
         maxWidth: '80%',
         padding: '12px 16px',
         borderRadius: msg.role === 'user' ? '18px 18px 4px 18px' : '4px 18px 18px 18px',
-        background: msg.role === 'user' ? accentColor : COLORS.surface,
+        background: msg.role === 'user' ? accentColor : COLORS.card,
         border: msg.role === 'user' ? 'none' : `1px solid ${COLORS.line}`,
-        color: msg.role === 'user' ? '#15130F' : COLORS.text,
+        color: msg.role === 'user' ? '#0A0A09' : COLORS.text,
         fontFamily: "'Inter', sans-serif",
         fontSize: 14,
         lineHeight: 1.6,
@@ -124,20 +126,21 @@ const ChatBubble = ({ msg, accentColor }: { msg: Message; accentColor: string })
 const ChatGlobalStyles = React.memo(() => (
   <style>{`
     .dk-scroll::-webkit-scrollbar { width: 4px; }
-    .dk-scroll::-webkit-scrollbar-thumb { background: rgba(255,255,255,0.1); border-radius: 4px; }
+    .dk-scroll::-webkit-scrollbar-thumb { background: #292720; border-radius: 4px; }
     .dk-input { background: transparent; border: none; outline: none; flex: 1; min-width: 0; font-family: 'Inter', sans-serif; font-size: 14px; color: ${COLORS.text}; }
-    .dk-input::placeholder { color: ${COLORS.secondary}; opacity: 0.6; }
-    .dk-send-btn { width: 40px; height: 40px; border-radius: 12px; border: none; background: ${COLORS.accent || '#F4C073'}; color: #15130F; cursor: pointer; display: flex; align-items: center; justify-content: center; flex-shrink: 0; transition: opacity 0.2s; }
+    .dk-input::placeholder { color: ${COLORS.secondary}; opacity: 0.7; }
+    .dk-send-btn { width: 40px; height: 40px; border-radius: 12px; border: none; background: ${COLORS.accent}; color: #0A0A09; cursor: pointer; display: flex; align-items: center; justify-content: center; flex-shrink: 0; transition: background 0.2s; }
+    .dk-send-btn:hover { background: ${COLORS.accentHover}; }
     .dk-send-btn:disabled { opacity: 0.4; cursor: not-allowed; }
-    .prompt-chip { padding: 7px 14px; border-radius: 20px; border: 1px solid ${COLORS.line}; background: ${COLORS.surface}; color: ${COLORS.secondary}; font-family: 'Inter', sans-serif; font-size: 12px; cursor: pointer; white-space: nowrap; transition: border-color 0.2s, color 0.2s; }
-    .prompt-chip:hover { border-color: ${COLORS.accent || '#F4C073'}; color: ${COLORS.accent || '#F4C073'}; }
-    .biz-chip { padding: 8px 14px; border-radius: 20px; border: 1px solid ${COLORS.line}; background: ${COLORS.bg}; color: ${COLORS.text}; font-family: 'Inter', sans-serif; font-size: 13px; cursor: pointer; transition: all 0.2s; white-space: nowrap; }
-    .biz-chip:hover { border-color: ${COLORS.accent || '#F4C073'}; background: ${COLORS.accent || '#F4C073'}20; color: ${COLORS.accent || '#F4C073'}; }
+    .prompt-chip { padding: 7px 14px; border-radius: 20px; border: 1px solid ${COLORS.line}; background: ${COLORS.card}; color: ${COLORS.secondary}; font-family: 'Inter', sans-serif; font-size: 12px; cursor: pointer; white-space: nowrap; transition: border-color 0.2s, color 0.2s; }
+    .prompt-chip:hover { border-color: ${COLORS.accent}; color: ${COLORS.accent}; }
+    .biz-chip { padding: 8px 14px; border-radius: 20px; border: 1px solid ${COLORS.line}; background: ${COLORS.card}; color: ${COLORS.text}; font-family: 'Inter', sans-serif; font-size: 13px; cursor: pointer; transition: all 0.2s; white-space: nowrap; }
+    .biz-chip:hover { border-color: ${COLORS.accent}; background: rgba(197,164,109,0.12); color: ${COLORS.accent}; }
   `}</style>
 ));
 
 export function ConversationFlow() {
-  const themeColor = COLORS.accent || '#F4C073';
+  const themeColor = COLORS.accent;
 
   // AI Chat state
   const [aiMessages, setAiMessages] = useState<Message[]>([AI_INIT_MESSAGE]);
@@ -280,7 +283,6 @@ export function ConversationFlow() {
       setLeadStep('done');
       setLeadSubmitting(true);
 
-      // Save to Supabase website_inquiries
       try {
         const { supabase } = await import('@/lib/supabase');
         await supabase.from('website_inquiries').insert({
@@ -325,16 +327,16 @@ export function ConversationFlow() {
 
   const tabStyle = (active: boolean): React.CSSProperties => ({
     flex: 1,
-    padding: '12px 20px',
+    padding: '10px 18px',
     border: 'none',
-    borderRadius: 14,
+    borderRadius: 12,
     cursor: 'pointer',
     fontFamily: "'Inter', sans-serif",
-    fontSize: 14,
+    fontSize: 13.5,
     fontWeight: 600,
     transition: 'all 0.2s',
     background: active ? themeColor : 'transparent',
-    color: active ? '#15130F' : COLORS.secondary,
+    color: active ? '#0A0A09' : COLORS.secondary,
     display: 'flex',
     alignItems: 'center',
     justifyContent: 'center',
@@ -368,7 +370,7 @@ export function ConversationFlow() {
       <div style={{
         background: COLORS.surface,
         border: `1px solid ${COLORS.line}`,
-        borderRadius: 24,
+        borderRadius: 20,
         overflow: 'hidden',
         width: '100%',
         boxSizing: 'border-box',
@@ -385,18 +387,19 @@ export function ConversationFlow() {
           <div style={{ display: 'flex', alignItems: 'center', gap: 10 }}>
             <div style={{
               width: 36, height: 36, borderRadius: 10,
-              background: `${themeColor}20`,
+              background: 'rgba(197,164,109,0.1)',
+              border: `1px solid ${COLORS.line}`,
               display: 'flex', alignItems: 'center', justifyContent: 'center',
             }}>
-              <Sparkles size={18} color={themeColor} />
+              <Sparkles size={16} color={themeColor} />
             </div>
             <div>
-              <div style={{ fontFamily: "'Inter', sans-serif", fontSize: 15, fontWeight: 700, color: COLORS.text }}>
+              <div style={{ fontFamily: "'Inter', sans-serif", fontSize: 15, fontWeight: 600, color: COLORS.text }}>
                 DuoKarma AI Assistant
               </div>
-              <div style={{ display: 'flex', alignItems: 'center', gap: 5 }}>
-                <span style={{ width: 6, height: 6, borderRadius: '50%', background: '#4ADE80', display: 'inline-block' }} />
-                <span style={{ fontFamily: "'Inter', sans-serif", fontSize: 11, color: COLORS.secondary }}>Online · Powered by DUO-KARMA</span>
+              <div style={{ display: 'flex', alignItems: 'center', gap: 6 }}>
+                <span style={{ width: 6, height: 6, borderRadius: '50%', background: '#10B981', display: 'inline-block' }} />
+                <span style={{ fontFamily: "'Inter', sans-serif", fontSize: 11, color: COLORS.secondary }}>Online · Available for consultation</span>
               </div>
             </div>
           </div>
@@ -405,8 +408,9 @@ export function ConversationFlow() {
           <div style={{
             display: 'flex',
             background: COLORS.bg,
-            borderRadius: 16,
-            padding: 4,
+            border: `1px solid ${COLORS.line}`,
+            borderRadius: 14,
+            padding: 3,
             gap: 4,
           }}>
             <button style={tabStyle(activeTab === 'ai')} onClick={() => setActiveTab('ai')}>
@@ -435,10 +439,10 @@ export function ConversationFlow() {
                 {aiMessages.map((msg) => <ChatBubble key={msg.id} msg={msg} accentColor={themeColor} />)}
                 {aiTyping && (
                   <div style={{ display: 'flex', alignItems: 'flex-end', gap: 10, marginBottom: 16 }}>
-                    <div style={{ width: 30, height: 30, borderRadius: '50%', background: `${themeColor}20`, display: 'flex', alignItems: 'center', justifyContent: 'center', flexShrink: 0 }}>
+                    <div style={{ width: 30, height: 30, borderRadius: '50%', background: 'rgba(197,164,109,0.1)', border: `1px solid ${COLORS.line}`, display: 'flex', alignItems: 'center', justifyContent: 'center', flexShrink: 0 }}>
                       <Bot size={14} color={themeColor} />
                     </div>
-                    <div style={{ padding: '12px 16px', borderRadius: '4px 18px 18px 18px', background: COLORS.surface, border: `1px solid ${COLORS.line}` }}>
+                    <div style={{ padding: '12px 16px', borderRadius: '4px 18px 18px 18px', background: COLORS.card, border: `1px solid ${COLORS.line}` }}>
                       <TypingDots color={themeColor} />
                     </div>
                   </div>
@@ -452,7 +456,7 @@ export function ConversationFlow() {
                   flex: 1, display: 'flex', alignItems: 'center',
                   background: COLORS.bg,
                   border: `1px solid ${COLORS.line}`,
-                  borderRadius: 14, padding: '10px 16px', gap: 8,
+                  borderRadius: 12, padding: '10px 16px', gap: 8,
                   minWidth: 0,
                 }}>
                   <input
@@ -463,8 +467,8 @@ export function ConversationFlow() {
                     disabled={aiTyping}
                   />
                 </div>
-                <button className="dk-send-btn" type="submit" disabled={aiTyping || !aiInput.trim()}>
-                  <Send size={16} />
+                <button className="dk-send-btn" type="submit" disabled={aiTyping || !aiInput.trim()} aria-label="Send message">
+                  <Send size={15} />
                 </button>
                 <button
                   type="button"
@@ -524,7 +528,7 @@ export function ConversationFlow() {
                     flex: 1, display: 'flex', alignItems: 'center',
                     background: COLORS.bg,
                     border: `1px solid ${COLORS.line}`,
-                    borderRadius: 14, padding: '10px 16px', gap: 8,
+                    borderRadius: 12, padding: '10px 16px', gap: 8,
                     minWidth: 0,
                   }}>
                     <input
@@ -540,7 +544,7 @@ export function ConversationFlow() {
                       }
                     />
                   </div>
-                  <button className="dk-send-btn" type="submit" disabled={!leadInput.trim()}>
+                  <button className="dk-send-btn" type="submit" disabled={!leadInput.trim()} aria-label="Submit">
                     <ChevronRight size={18} />
                   </button>
                 </form>
@@ -567,8 +571,8 @@ export function ConversationFlow() {
           style={{
             display: 'flex', alignItems: 'center', gap: 14,
             padding: '18px 20px',
-            borderRadius: 18,
-            background: COLORS.surface,
+            borderRadius: 16,
+            background: COLORS.card,
             border: `1px solid ${COLORS.line}`,
             textDecoration: 'none',
             transition: 'border-color 0.2s',
@@ -576,16 +580,17 @@ export function ConversationFlow() {
           }}
         >
           <div style={{
-            width: 44, height: 44, flexShrink: 0, borderRadius: 12,
-            background: `${themeColor}20`,
+            width: 42, height: 42, flexShrink: 0, borderRadius: 10,
+            background: 'rgba(197,164,109,0.1)',
+            border: `1px solid ${COLORS.line}`,
             display: 'flex', alignItems: 'center', justifyContent: 'center',
           }}>
-            <Calendar size={20} color={themeColor} />
+            <Calendar size={18} color={themeColor} />
           </div>
           <div>
-            <div style={{ fontFamily: "'IBM Plex Mono', monospace", fontSize: 10, color: themeColor, letterSpacing: '0.08em', textTransform: 'uppercase', marginBottom: 3 }}>Free · 20 min</div>
-            <div style={{ fontFamily: "'Inter', sans-serif", fontSize: 15, fontWeight: 600, color: COLORS.text }}>Book a Strategy Call</div>
-            <div style={{ fontFamily: "'Inter', sans-serif", fontSize: 12, color: COLORS.secondary, marginTop: 1 }}>Google Meet · No pressure</div>
+            <div style={{ fontFamily: "'IBM Plex Mono', monospace", fontSize: 10.5, color: themeColor, letterSpacing: '0.1em', textTransform: 'uppercase', marginBottom: 2 }}>Free · 20 min</div>
+            <div style={{ fontFamily: "'Inter', sans-serif", fontSize: 14.5, fontWeight: 600, color: COLORS.text }}>Book a Strategy Call</div>
+            <div style={{ fontFamily: "'Inter', sans-serif", fontSize: 12, color: COLORS.secondary, marginTop: 1 }}>Google Meet · Direct discussion</div>
           </div>
         </a>
 
@@ -597,23 +602,25 @@ export function ConversationFlow() {
           style={{
             display: 'flex', alignItems: 'center', gap: 14,
             padding: '18px 20px',
-            borderRadius: 18,
-            background: COLORS.surface,
+            borderRadius: 16,
+            background: COLORS.card,
             border: `1px solid ${COLORS.line}`,
             textDecoration: 'none',
             boxSizing: 'border-box',
+            transition: 'border-color 0.2s',
           }}
         >
           <div style={{
-            width: 44, height: 44, flexShrink: 0, borderRadius: 12,
-            background: '#25D36620',
+            width: 42, height: 42, flexShrink: 0, borderRadius: 10,
+            background: 'rgba(37,211,102,0.1)',
+            border: `1px solid ${COLORS.line}`,
             display: 'flex', alignItems: 'center', justifyContent: 'center',
           }}>
-            <MessageCircle size={20} color="#25D366" />
+            <MessageCircle size={18} color="#25D366" />
           </div>
           <div>
-            <div style={{ fontFamily: "'IBM Plex Mono', monospace", fontSize: 10, color: '#25D366', letterSpacing: '0.08em', textTransform: 'uppercase', marginBottom: 3 }}>Instant reply</div>
-            <div style={{ fontFamily: "'Inter', sans-serif", fontSize: 15, fontWeight: 600, color: COLORS.text }}>WhatsApp Us</div>
+            <div style={{ fontFamily: "'IBM Plex Mono', monospace", fontSize: 10.5, color: '#25D366', letterSpacing: '0.1em', textTransform: 'uppercase', marginBottom: 2 }}>Direct line</div>
+            <div style={{ fontFamily: "'Inter', sans-serif", fontSize: 14.5, fontWeight: 600, color: COLORS.text }}>WhatsApp Us</div>
             <div style={{ fontFamily: "'Inter', sans-serif", fontSize: 12, color: COLORS.secondary, marginTop: 1 }}>+91 93138 46266</div>
           </div>
         </a>
@@ -624,23 +631,25 @@ export function ConversationFlow() {
           style={{
             display: 'flex', alignItems: 'center', gap: 14,
             padding: '18px 20px',
-            borderRadius: 18,
-            background: COLORS.surface,
+            borderRadius: 16,
+            background: COLORS.card,
             border: `1px solid ${COLORS.line}`,
             textDecoration: 'none',
             boxSizing: 'border-box',
+            transition: 'border-color 0.2s',
           }}
         >
           <div style={{
-            width: 44, height: 44, flexShrink: 0, borderRadius: 12,
-            background: `${COLORS.secondary}20`,
+            width: 42, height: 42, flexShrink: 0, borderRadius: 10,
+            background: 'rgba(166,161,151,0.1)',
+            border: `1px solid ${COLORS.line}`,
             display: 'flex', alignItems: 'center', justifyContent: 'center',
           }}>
-            <Mail size={20} color={COLORS.secondary} />
+            <Mail size={18} color={COLORS.secondary} />
           </div>
           <div>
-            <div style={{ fontFamily: "'IBM Plex Mono', monospace", fontSize: 10, color: COLORS.secondary, letterSpacing: '0.08em', textTransform: 'uppercase', marginBottom: 3 }}>Send us a note</div>
-            <div style={{ fontFamily: "'Inter', sans-serif", fontSize: 15, fontWeight: 600, color: COLORS.text }}>Email Us</div>
+            <div style={{ fontFamily: "'IBM Plex Mono', monospace", fontSize: 10.5, color: COLORS.secondary, letterSpacing: '0.1em', textTransform: 'uppercase', marginBottom: 2 }}>Inquiries</div>
+            <div style={{ fontFamily: "'Inter', sans-serif", fontSize: 14.5, fontWeight: 600, color: COLORS.text }}>Email Us</div>
             <div style={{ fontFamily: "'Inter', sans-serif", fontSize: 12, color: COLORS.secondary, marginTop: 1 }}>duokarma54@gmail.com</div>
           </div>
         </a>

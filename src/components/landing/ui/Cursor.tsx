@@ -64,15 +64,15 @@ export function Cursor() {
         className="dk-cursor fixed top-0 left-0 pointer-events-none z-[9998] flex items-center justify-center"
         style={{
           ...motionStyle,
-          border: `1px solid rgba(201,168,118,0.6)`,
+          border: `1px solid rgba(197,164,109,0.4)`,
           mixBlendMode: 'normal',
         } as any}
         animate={{
           width: hovering ? (label ? 72 : 36) : 24,
           height: hovering ? 36 : 24,
-          borderColor: hovering ? COLORS.accent : 'rgba(201,168,118,0.6)',
+          borderColor: hovering ? COLORS.accent : 'rgba(197,164,109,0.4)',
           borderWidth: hovering ? 1.5 : 1,
-          backgroundColor: hovering ? 'rgba(201,168,118,0.08)' : 'transparent',
+          backgroundColor: hovering ? 'rgba(197,164,109,0.08)' : 'transparent',
           borderRadius: 999,
         }}
         transition={{ type: 'spring', stiffness: 300, damping: 28 }}

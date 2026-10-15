@@ -178,10 +178,10 @@ export function CommandPalette({ open, onClose }: CommandPaletteProps) {
               width: 'min(600px, 90vw)',
               zIndex: 301,
               background: COLORS.surface,
-              border: `1px solid rgba(201,168,118,0.2)`,
+              border: `1px solid ${COLORS.line}`,
               borderRadius: 20,
               overflow: 'hidden',
-              boxShadow: '0 24px 80px rgba(0,0,0,0.6)',
+              boxShadow: '0 24px 80px rgba(0,0,0,0.7)',
             }}
           >
             {/* Search input */}
@@ -266,7 +266,7 @@ export function CommandPalette({ open, onClose }: CommandPaletteProps) {
                         return (
                           <motion.button
                             key={item.id}
-                            whileHover={{ backgroundColor: 'rgba(201,168,118,0.07)' }}
+                            whileHover={{ backgroundColor: 'rgba(197, 164, 109, 0.08)' }}
                             onClick={item.action}
                             onMouseEnter={() => setSelectedIndex(currentIndex)}
                             style={{
@@ -277,10 +277,10 @@ export function CommandPalette({ open, onClose }: CommandPaletteProps) {
                               padding: '10px 14px',
                               borderRadius: 10,
                               border: 'none',
-                              background: isSelected ? 'rgba(201,168,118,0.1)' : 'transparent',
+                              background: isSelected ? 'rgba(197, 164, 109, 0.12)' : 'transparent',
                               cursor: 'pointer',
                               textAlign: 'left',
-                              outline: isSelected ? `1px solid rgba(201,168,118,0.2)` : 'none',
+                              outline: isSelected ? '1px solid rgba(197, 164, 109, 0.3)' : 'none',
                               transition: 'background 0.15s ease',
                             }}
                           >

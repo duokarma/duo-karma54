@@ -114,7 +114,7 @@ export function Stats() {
   return (
     <section
       style={{
-        padding: '200px 5%',
+        padding: '120px 5%',
         background: COLORS.bg,
         borderTop: `1px solid ${COLORS.line}`,
         borderBottom: `1px solid ${COLORS.line}`,
@@ -131,11 +131,11 @@ export function Stats() {
           <Reveal key={s.label} delay={i * 0.08}>
             <TiltCard>
               <div 
-                className="p-8 transition-all duration-400 hover:bg-[rgba(28,26,24,0.9)]"
+                className="p-8 transition-colors duration-300 hover:border-[#C5A46D]/40"
                 style={{
-                  background: 'linear-gradient(135deg, rgba(22, 20, 18, 0.7) 0%, rgba(12, 11, 10, 0.9) 100%)',
-                  border: '1px solid rgba(255,255,255,0.03)',
-                  borderRadius: 24,
+                  background: COLORS.surface,
+                  border: `1px solid ${COLORS.line}`,
+                  borderRadius: 16,
                 }}
               >
                 <RollingCounter to={s.to} suffix={s.suffix} delay={i * 0.1} />

@@ -28,7 +28,7 @@ export function WhatWeBuild() {
   }, []);
 
   return (
-    <section style={{ padding: "200px 5%", background: COLORS.surface }} id="work">
+    <section style={{ padding: "160px 5%", background: COLORS.surface }} id="work">
       <Reveal>
         <div className="max-w-[1200px] mx-auto">
           <Eyebrow>What we build</Eyebrow>
@@ -40,6 +40,7 @@ export function WhatWeBuild() {
               color: COLORS.text,
               marginBottom: 60,
               maxWidth: 620,
+              lineHeight: 1.15,
             }}
           >
             Nine kinds of systems, one build quality.
@@ -73,7 +74,7 @@ export function WhatWeBuild() {
                   fontFamily: "'Fraunces', serif",
                   fontSize: 22,
                   color: active === i ? COLORS.accent : COLORS.text,
-                  transition: "color 0.3s",
+                  transition: "color 0.25s ease",
                 }}
               >
                 {m.name}
@@ -82,7 +83,8 @@ export function WhatWeBuild() {
                 style={{
                   fontFamily: "'IBM Plex Mono', monospace",
                   fontSize: 12,
-                  color: COLORS.secondary,
+                  color: active === i ? COLORS.accent : COLORS.secondary,
+                  transition: "color 0.25s ease",
                 }}
               >
                 {String(i + 1).padStart(2, "0")}
@@ -94,28 +96,28 @@ export function WhatWeBuild() {
               <AnimatePresence>
                 {active === i && (
                   <motion.div
-                    initial={{ opacity: 0, y: "-50%", x: 14 }}
+                    initial={{ opacity: 0, y: "-50%", x: 10 }}
                     animate={{ opacity: 1, y: "-50%", x: 0 }}
-                    exit={{ opacity: 0, y: "-50%", x: 14 }}
-                    transition={{ duration: 0.3, ease: [0.16, 1, 0.3, 1] }}
+                    exit={{ opacity: 0, y: "-50%", x: 10 }}
+                    transition={{ duration: 0.25, ease: [0.16, 1, 0.3, 1] }}
                     style={{
                       position: "absolute",
                       top: "50%",
                       right: 0,
                       width: "48%",
-                      background: COLORS.surface2,
+                      background: COLORS.card,
                       border: `1px solid ${COLORS.line}`,
                       borderRadius: 16,
                       padding: 32,
                       zIndex: 10,
-                      boxShadow: "0 20px 40px rgba(0,0,0,0.4), inset 0 1px 0 rgba(255,255,255,0.05)",
+                      boxShadow: "0 16px 36px rgba(0,0,0,0.5)",
                       pointerEvents: "none",
                     }}
                   >
-                    <div style={{ fontFamily: "'Fraunces', serif", fontSize: 24, color: COLORS.accent, marginBottom: 14 }}>
+                    <div style={{ fontFamily: "'Fraunces', serif", fontSize: 22, color: COLORS.accent, marginBottom: 12 }}>
                       {m.name}
                     </div>
-                    <div style={{ fontFamily: "'Inter', sans-serif", fontSize: 15, color: COLORS.secondary, lineHeight: 1.7 }}>
+                    <div style={{ fontFamily: "'Inter', sans-serif", fontSize: 14.5, color: COLORS.secondary, lineHeight: 1.65 }}>
                       {m.detail}
                     </div>
                   </motion.div>
@@ -131,11 +133,11 @@ export function WhatWeBuild() {
                     initial={{ height: 0, opacity: 0 }}
                     animate={{ height: "auto", opacity: 1 }}
                     exit={{ height: 0, opacity: 0 }}
-                    transition={{ duration: 0.25, ease: "easeInOut" }}
+                    transition={{ duration: 0.2, ease: "easeInOut" }}
                     style={{ overflow: "hidden" }}
                   >
-                    <div style={{ paddingBottom: 24 }}>
-                      <div style={{ fontFamily: "'Inter', sans-serif", fontSize: 15, color: COLORS.secondary, lineHeight: 1.7 }}>
+                    <div style={{ paddingBottom: 20 }}>
+                      <div style={{ fontFamily: "'Inter', sans-serif", fontSize: 14.5, color: COLORS.secondary, lineHeight: 1.65 }}>
                         {m.detail}
                       </div>
                     </div>

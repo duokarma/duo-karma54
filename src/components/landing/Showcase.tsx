@@ -10,17 +10,16 @@ const PROJECTS = [
     id: 'salon-admin',
     title: 'Salon Admin Platform',
     category: 'Admin System',
-    size: 'large', // large card
+    size: 'large',
     problem: 'Three salons were running bookings across phone calls, WhatsApp, and paper registers — no shared view of the day.',
     solution: 'A unified admin panel covering appointments, staff schedules, billing, and client history, live across every location.',
     result: 'One dashboard replaced three systems. The owner gained full real-time visibility across all locations.',
     features: ['Live appointment calendar', 'Staff & service management', 'Client history & billing', 'Role-based access'],
     tech: ['React', 'Supabase', 'TypeScript'],
     color: COLORS.accent,
-    gradient: 'linear-gradient(135deg, rgba(201,168,118,0.15) 0%, rgba(201,168,118,0.04) 100%)',
-    accentBg: 'rgba(201,168,118,0.08)',
+    accentBg: 'rgba(197,164,109,0.08)',
     icon: (
-      <svg width="28" height="28" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="1.5" strokeLinecap="round" strokeLinejoin="round">
+      <svg width="24" height="24" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="1.5" strokeLinecap="round" strokeLinejoin="round">
         <path d="M8 6h13M8 12h13M8 18h13M3 6h.01M3 12h.01M3 18h.01" />
       </svg>
     ),
@@ -35,11 +34,10 @@ const PROJECTS = [
     result: 'Bookings moved fully online, eliminating all manual coordination and phone-tag.',
     features: ['Live availability calendar', 'Dynamic pricing rules', 'Instant confirmation', 'Mobile-first design'],
     tech: ['React', 'Supabase'],
-    color: COLORS.emerald,
-    gradient: 'linear-gradient(135deg, rgba(110,143,118,0.15) 0%, rgba(110,143,118,0.04) 100%)',
-    accentBg: 'rgba(110,143,118,0.08)',
+    color: COLORS.accent,
+    accentBg: 'rgba(197,164,109,0.08)',
     icon: (
-      <svg width="28" height="28" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="1.5" strokeLinecap="round" strokeLinejoin="round">
+      <svg width="24" height="24" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="1.5" strokeLinecap="round" strokeLinejoin="round">
         <rect x="3" y="4" width="18" height="18" rx="2" />
         <line x1="16" y1="2" x2="16" y2="6" />
         <line x1="8" y1="2" x2="8" y2="6" />
@@ -57,11 +55,10 @@ const PROJECTS = [
     result: 'Full operational control from a single screen. Zero spreadsheets.',
     features: ['Booking & revenue overview', 'Blackout date management', 'Guest communication log', 'Supabase-backed sync'],
     tech: ['React', 'Supabase', 'TypeScript'],
-    color: COLORS.accent2,
-    gradient: 'linear-gradient(135deg, rgba(232,207,160,0.15) 0%, rgba(232,207,160,0.04) 100%)',
-    accentBg: 'rgba(232,207,160,0.08)',
+    color: COLORS.accent,
+    accentBg: 'rgba(197,164,109,0.08)',
     icon: (
-      <svg width="28" height="28" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="1.5" strokeLinecap="round" strokeLinejoin="round">
+      <svg width="24" height="24" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="1.5" strokeLinecap="round" strokeLinejoin="round">
         <rect x="2" y="3" width="20" height="14" rx="2" />
         <line x1="8" y1="21" x2="16" y2="21" />
         <line x1="12" y1="17" x2="12" y2="21" />
@@ -79,10 +76,9 @@ const PROJECTS = [
     features: ['Service menu', 'Photo gallery', 'Online booking', 'Mobile-responsive'],
     tech: ['React', 'Tailwind CSS'],
     color: COLORS.accent,
-    gradient: 'linear-gradient(135deg, rgba(201,168,118,0.12) 0%, rgba(232,207,160,0.04) 100%)',
-    accentBg: 'rgba(201,168,118,0.06)',
+    accentBg: 'rgba(197,164,109,0.08)',
     icon: (
-      <svg width="28" height="28" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="1.5" strokeLinecap="round" strokeLinejoin="round">
+      <svg width="24" height="24" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="1.5" strokeLinecap="round" strokeLinejoin="round">
         <circle cx="12" cy="12" r="10" />
         <line x1="2" y1="12" x2="22" y2="12" />
         <path d="M12 2a15.3 15.3 0 014 10 15.3 15.3 0 01-4 10 15.3 15.3 0 01-4-10 15.3 15.3 0 014-10z" />
@@ -97,73 +93,75 @@ export function Showcase() {
   return (
     <section
       id="work"
-      style={{ padding: '120px 5%', background: COLORS.bg }}
+      style={{ padding: '140px 5%', background: COLORS.bg }}
     >
-      <Reveal>
-        <Eyebrow>Selected work</Eyebrow>
-        <h2
+      <div className="max-w-[1200px] mx-auto">
+        <Reveal>
+          <Eyebrow>Selected work</Eyebrow>
+          <h2
+            style={{
+              fontFamily: "'Fraunces', serif",
+              fontWeight: 400,
+              fontSize: 'clamp(28px, 3.6vw, 46px)',
+              color: COLORS.text,
+              marginBottom: 56,
+              maxWidth: 520,
+              lineHeight: 1.15,
+            }}
+          >
+            Real systems, running in production.
+          </h2>
+        </Reveal>
+
+        {/* Bento Grid */}
+        <div
           style={{
-            fontFamily: "'Fraunces', serif",
-            fontWeight: 400,
-            fontSize: 'clamp(28px, 3.6vw, 46px)',
-            color: COLORS.text,
-            marginBottom: 56,
-            maxWidth: 520,
+            display: 'grid',
+            gridTemplateColumns: 'repeat(12, 1fr)',
+            gap: 20,
           }}
+          className="bento-grid"
         >
-          Real systems, running in production.
-        </h2>
-      </Reveal>
+          {/* Large card — col 1-7 */}
+          <BentoCard
+            project={PROJECTS[0]}
+            style={{ gridColumn: 'span 7' }}
+            onOpen={() => setSelected(PROJECTS[0])}
+          />
+          {/* Small card — col 8-12 */}
+          <BentoCard
+            project={PROJECTS[1]}
+            style={{ gridColumn: 'span 5' }}
+            onOpen={() => setSelected(PROJECTS[1])}
+          />
+          {/* Small card — col 1-5 */}
+          <BentoCard
+            project={PROJECTS[2]}
+            style={{ gridColumn: 'span 5' }}
+            onOpen={() => setSelected(PROJECTS[2])}
+          />
+          {/* Wide card — col 6-12 */}
+          <BentoCard
+            project={PROJECTS[3]}
+            style={{ gridColumn: 'span 7' }}
+            onOpen={() => setSelected(PROJECTS[3])}
+          />
+        </div>
 
-      {/* Bento Grid */}
-      <div
-        style={{
-          display: 'grid',
-          gridTemplateColumns: 'repeat(12, 1fr)',
-          gridTemplateRows: 'auto',
-          gap: 16,
-        }}
-        className="bento-grid"
-      >
-        {/* Large card — col 1-7 */}
-        <BentoCard
-          project={PROJECTS[0]}
-          style={{ gridColumn: 'span 7' }}
-          onOpen={() => setSelected(PROJECTS[0])}
-        />
-        {/* Small card — col 8-12 */}
-        <BentoCard
-          project={PROJECTS[1]}
-          style={{ gridColumn: 'span 5' }}
-          onOpen={() => setSelected(PROJECTS[1])}
-        />
-        {/* Small card — col 1-5 */}
-        <BentoCard
-          project={PROJECTS[2]}
-          style={{ gridColumn: 'span 5' }}
-          onOpen={() => setSelected(PROJECTS[2])}
-        />
-        {/* Wide card — col 6-12 */}
-        <BentoCard
-          project={PROJECTS[3]}
-          style={{ gridColumn: 'span 7' }}
-          onOpen={() => setSelected(PROJECTS[3])}
-        />
+        {/* Responsive fallback for mobile */}
+        <style>{`
+          @media (max-width: 768px) {
+            .bento-grid { grid-template-columns: 1fr !important; }
+            .bento-grid > * { grid-column: span 1 !important; }
+          }
+        `}</style>
+
+        <AnimatePresence>
+          {selected && (
+            <CaseStudySheet project={selected} onClose={() => setSelected(null)} />
+          )}
+        </AnimatePresence>
       </div>
-
-      {/* Responsive fallback for mobile */}
-      <style>{`
-        @media (max-width: 768px) {
-          .bento-grid { grid-template-columns: 1fr !important; }
-          .bento-grid > * { grid-column: span 1 !important; }
-        }
-      `}</style>
-
-      <AnimatePresence>
-        {selected && (
-          <CaseStudySheet project={selected} onClose={() => setSelected(null)} />
-        )}
-      </AnimatePresence>
     </section>
   );
 }
@@ -184,47 +182,46 @@ function BentoCard({
       onHoverStart={() => setHovered(true)}
       onHoverEnd={() => setHovered(false)}
       onClick={onOpen}
-      whileHover={{ y: -4 }}
+      whileHover={{ y: -3 }}
       whileTap={{ scale: 0.99 }}
-      transition={{ type: 'spring', stiffness: 250, damping: 30 }}
+      transition={{ type: 'spring', stiffness: 280, damping: 30 }}
       style={{
         ...style,
-        background: hovered ? 'rgba(28, 26, 24, 0.9)' : 'linear-gradient(135deg, rgba(22, 20, 18, 0.7) 0%, rgba(12, 11, 10, 0.9) 100%)',
-        border: `1px solid ${hovered ? 'rgba(255,255,255,0.08)' : 'rgba(255,255,255,0.03)'}`,
-        borderRadius: 24,
+        background: COLORS.card,
+        border: `1px solid ${hovered ? '#3A372E' : COLORS.line}`,
+        borderRadius: 20,
         padding: '36px 32px',
         cursor: 'pointer',
         position: 'relative',
         overflow: 'hidden',
         minHeight: 200,
-        transition: 'background 0.4s ease, border-color 0.4s ease',
-        boxShadow: hovered ? '0 20px 40px rgba(0,0,0,0.4)' : 'none',
+        transition: 'border-color 0.25s ease',
+        boxShadow: hovered ? '0 12px 30px rgba(0,0,0,0.45)' : 'none',
       }}
       data-cursor="View"
     >
-
       <div style={{ position: 'relative', zIndex: 1 }}>
         {/* Header */}
         <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'flex-start', marginBottom: 20 }}>
           <div
             style={{
-              width: 48,
-              height: 48,
+              width: 44,
+              height: 44,
               borderRadius: 12,
-              background: project.accentBg,
-              border: `1px solid ${project.color}30`,
+              background: 'rgba(197,164,109,0.08)',
+              border: `1px solid rgba(197,164,109,0.2)`,
               display: 'flex',
               alignItems: 'center',
               justifyContent: 'center',
-              color: project.color,
+              color: COLORS.accent,
             }}
           >
             {project.icon}
           </div>
           <motion.div
-            animate={{ opacity: hovered ? 1 : 0.35, x: hovered ? 0 : 4 }}
-            transition={{ duration: 0.3 }}
-            style={{ color: project.color }}
+            animate={{ opacity: hovered ? 1 : 0.35, x: hovered ? 0 : 3 }}
+            transition={{ duration: 0.2 }}
+            style={{ color: COLORS.accent }}
           >
             <svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round">
               <line x1="7" y1="17" x2="17" y2="7" />
@@ -239,11 +236,11 @@ function BentoCard({
             display: 'inline-block',
             fontFamily: "'IBM Plex Mono', monospace",
             fontSize: 10,
-            letterSpacing: '0.1em',
+            letterSpacing: '0.12em',
             textTransform: 'uppercase',
-            color: project.color,
-            background: project.accentBg,
-            border: `1px solid ${project.color}30`,
+            color: COLORS.accent,
+            background: 'rgba(197,164,109,0.08)',
+            border: `1px solid rgba(197,164,109,0.2)`,
             borderRadius: 999,
             padding: '3px 10px',
             marginBottom: 12,

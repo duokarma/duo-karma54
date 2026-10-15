@@ -93,14 +93,14 @@ export function TechStack() {
                 layout
                 onClick={() => setActiveId(isActive ? null : tech.id)}
                 style={{
-                  background: isActive ? "rgba(201,168,118,0.08)" : COLORS.surface2,
-                  border: `1px solid ${isActive ? "rgba(201,168,118,0.4)" : COLORS.line}`,
+                  background: isActive ? "rgba(197, 164, 109, 0.1)" : COLORS.surface,
+                  border: `1px solid ${isActive ? "rgba(197, 164, 109, 0.45)" : COLORS.line}`,
                   borderRadius: 16,
                   padding: "24px",
                   cursor: "pointer",
                   overflow: "hidden",
                 }}
-                whileHover={{ scale: isActive ? 1 : 1.02, borderColor: isActive ? "rgba(201,168,118,0.4)" : "rgba(201,168,118,0.2)" }}
+                whileHover={{ scale: isActive ? 1 : 1.01, borderColor: isActive ? "rgba(197, 164, 109, 0.5)" : "rgba(197, 164, 109, 0.25)" }}
                 transition={{ type: "spring", stiffness: 300, damping: 25 }}
               >
                 <motion.div layout style={{ display: "flex", justifyContent: "space-between", alignItems: "center" }}>

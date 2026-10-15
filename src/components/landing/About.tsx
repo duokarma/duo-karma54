@@ -23,60 +23,87 @@ const PRINCIPLES = [
 
 export function About() {
   return (
-    <section style={{ padding: "120px 5%", background: COLORS.bg }}>
-      <Reveal>
-        <Eyebrow>About DuoKarma</Eyebrow>
-        <h2
+    <section style={{ padding: "140px 5%", background: COLORS.bg }} id="about">
+      <div className="max-w-[1200px] mx-auto">
+        <Reveal>
+          <Eyebrow>About DuoKarma</Eyebrow>
+          <h2
+            style={{
+              fontFamily: "'Fraunces', serif",
+              fontWeight: 400,
+              fontSize: "clamp(28px, 3.6vw, 46px)",
+              color: COLORS.text,
+              maxWidth: 720,
+              lineHeight: 1.15,
+              marginBottom: 72,
+            }}
+          >
+            Two people, one discipline: build the software a business will still run in five years.
+          </h2>
+        </Reveal>
+
+        <div
           style={{
-            fontFamily: "'Fraunces', serif",
-            fontWeight: 400,
-            fontSize: "clamp(28px, 3.6vw, 46px)",
-            color: COLORS.text,
-            maxWidth: 680,
-            marginBottom: 80,
+            display: "grid",
+            gridTemplateColumns: "repeat(auto-fit, minmax(260px, 1fr))",
+            gap: "24px",
           }}
         >
-          Two people, one discipline: build the software a business will still be running in five years.
-        </h2>
-      </Reveal>
-      <div
-        style={{
-          display: "grid",
-          gridTemplateColumns: "repeat(auto-fit, minmax(240px, 1fr))",
-          gap: "48px 40px",
-          borderTop: `1px solid ${COLORS.line}`,
-          paddingTop: 60,
-        }}
-      >
-        {PRINCIPLES.map((principle, i) => (
-          <Reveal delay={i * 0.1} key={principle.title}>
-            <div>
+          {PRINCIPLES.map((principle, i) => (
+            <Reveal delay={i * 0.08} key={principle.title} style={{ height: "100%" }}>
               <div
                 style={{
-                  fontFamily: "'IBM Plex Mono', monospace",
-                  fontSize: 12,
-                  color: COLORS.accent,
-                  marginBottom: 16,
+                  background: COLORS.card,
+                  border: `1px solid ${COLORS.line}`,
+                  borderRadius: 16,
+                  padding: "40px 32px",
+                  height: "100%",
+                  boxSizing: "border-box",
+                  display: "flex",
+                  flexDirection: "column",
+                  justifyContent: "flex-start",
+                  transition: "border-color 0.25s ease",
                 }}
               >
-                0{i + 1} //
+                <div
+                  style={{
+                    fontFamily: "'IBM Plex Mono', monospace",
+                    fontSize: 12,
+                    fontWeight: 600,
+                    letterSpacing: "0.15em",
+                    color: COLORS.accent,
+                    marginBottom: 20,
+                  }}
+                >
+                  0{i + 1} //
+                </div>
+                <h3
+                  style={{
+                    fontFamily: "'Fraunces', serif",
+                    fontSize: 22,
+                    fontWeight: 400,
+                    color: COLORS.text,
+                    marginBottom: 14,
+                    lineHeight: 1.25,
+                  }}
+                >
+                  {principle.title}
+                </h3>
+                <p
+                  style={{
+                    fontFamily: "'Inter', sans-serif",
+                    fontSize: 14.5,
+                    color: COLORS.secondary,
+                    lineHeight: 1.65,
+                    margin: 0,
+                  }}
+                >
+                  {principle.description}
+                </p>
               </div>
-              <h3
-                style={{
-                  fontFamily: "'Fraunces', serif",
-                  fontSize: 22,
-                  color: COLORS.text,
-                  marginBottom: 12,
-                }}
-              >
-                {principle.title}
-              </h3>
-              <p style={{ fontFamily: "'Inter', sans-serif", fontSize: 14.5, color: COLORS.secondary, lineHeight: 1.6, margin: 0 }}>
-                {principle.description}
-              </p>
-            </div>
-          </Reveal>
-        ))}
+            </Reveal>
+          ))}
+        </div>
       </div>
     </section>
   );

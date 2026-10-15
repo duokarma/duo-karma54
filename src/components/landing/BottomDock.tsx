@@ -64,11 +64,11 @@ export function BottomDock() {
         transition={{ delay: 1.2, duration: 0.6, ease: [0.16, 1, 0.3, 1] }}
         className="pointer-events-auto flex items-center gap-1 px-3 py-2 rounded-full"
         style={{
-          background: 'rgba(10,9,8,0.8)',
-          border: '1px solid rgba(201,168,118,0.2)',
+          background: 'rgba(10,10,9,0.95)',
+          border: '1px solid #292720',
           backdropFilter: 'blur(28px)',
           WebkitBackdropFilter: 'blur(28px)',
-          boxShadow: '0 8px 40px rgba(0,0,0,0.5)',
+          boxShadow: '0 8px 32px rgba(0,0,0,0.6)',
         }}
       >
         {DOCK_ITEMS.map((item) => (
@@ -89,7 +89,7 @@ function DockItem({ item, active, onClick }: { item: typeof DOCK_ITEMS[0]; activ
     <motion.button
       onClick={onClick}
       whileTap={{ scale: 0.88 }}
-      className="relative flex flex-col items-center gap-1 px-4 py-2 rounded-full transition-all focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-[#C9A876]"
+      className="relative flex flex-col items-center gap-1 px-4 py-2 rounded-full transition-all focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-[#C5A46D]"
       aria-label={item.label}
       style={{ minWidth: 56 }}
     >
@@ -97,13 +97,13 @@ function DockItem({ item, active, onClick }: { item: typeof DOCK_ITEMS[0]; activ
         <motion.div
           layoutId="dock-active"
           className="absolute inset-0 rounded-full"
-          style={{ background: 'rgba(201,168,118,0.12)', border: '1px solid rgba(201,168,118,0.2)' }}
+          style={{ background: 'rgba(197,164,109,0.12)', border: '1px solid rgba(197,164,109,0.25)' }}
           transition={{ type: 'spring', stiffness: 400, damping: 30 }}
         />
       )}
       <span
         className="relative z-10 transition-colors"
-        style={{ color: active ? '#C9A876' : 'rgba(243,238,227,0.45)' }}
+        style={{ color: active ? '#C5A46D' : '#A6A197' }}
       >
         {item.icon}
       </span>
@@ -111,7 +111,7 @@ function DockItem({ item, active, onClick }: { item: typeof DOCK_ITEMS[0]; activ
         className="relative z-10 text-[10px] font-medium transition-colors"
         style={{
           fontFamily: "'Inter', sans-serif",
-          color: active ? '#C9A876' : 'rgba(243,238,227,0.4)',
+          color: active ? '#C5A46D' : '#77736B',
           letterSpacing: '0.04em',
         }}
       >

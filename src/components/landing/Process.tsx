@@ -292,13 +292,13 @@ function ProcessCard({ step }: { step: typeof PROCESS[0] }) {
       style={{
         width: 300,
         flexShrink: 0,
-        background: hovered ? 'rgba(28, 26, 24, 0.9)' : 'linear-gradient(135deg, rgba(22, 20, 18, 0.7) 0%, rgba(12, 11, 10, 0.9) 100%)',
-        border: `1px solid ${hovered ? 'rgba(255,255,255,0.08)' : 'rgba(255,255,255,0.03)'}`,
-        borderRadius: 24,
+        background: hovered ? COLORS.surface2 : COLORS.surface,
+        border: `1px solid ${hovered ? 'rgba(197, 164, 109, 0.4)' : COLORS.line}`,
+        borderRadius: 16,
         padding: '36px 32px',
         scrollSnapAlign: 'start',
-        transition: 'background 0.4s ease, border-color 0.4s ease',
-        boxShadow: hovered ? '0 20px 40px rgba(0,0,0,0.4)' : 'none',
+        transition: 'background 0.25s ease, border-color 0.25s ease',
+        boxShadow: hovered ? '0 12px 32px rgba(0,0,0,0.4)' : 'none',
         position: 'relative',
         overflow: 'hidden',
       }}

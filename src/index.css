@@ -3,15 +3,15 @@
 
 
 @theme {
-  /* ─── Surface tokens — Professional neutral dark palette ─── */
-  --color-void: transparent;
-  --color-graphite: rgba(0, 0, 0, 0.3);         /* Sidebar background */
-  --color-card: rgba(14, 16, 20, 0.6);             /* Card backgrounds */
-  --color-graphite-soft: rgba(26, 33, 48, 0.6);
-  --color-charcoal: rgba(28, 36, 48, 0.6);         /* Hover states */
-  --color-charcoal-soft: rgba(33, 43, 58, 0.6);
-  --color-edge: rgba(255, 255, 255, 0.1);             /* Borders */
-  --color-edge-hover: rgba(255, 255, 255, 0.2);       /* Hovered borders */
+  /* ─── Surface tokens — Luxury neutral dark palette ─── */
+  --color-void: #0A0A09;
+  --color-graphite: #11110F;         /* Sidebar / secondary background */
+  --color-card: #151512;             /* Card backgrounds */
+  --color-graphite-soft: #181815;
+  --color-charcoal: #11110F;         /* Hover states */
+  --color-charcoal-soft: #1D1C18;
+  --color-edge: #292720;             /* Subtle Warm Charcoal borders */
+  --color-edge-hover: #3D3930;       /* Hovered borders */
 
   /* ─── Light mode surfaces ─── */
   --color-pearl: #F8FAFC;
@@ -19,44 +19,39 @@
   --color-mist: #F1F5F9;
   --color-fog: #E2E8F0;
 
-  /* ─── Single accent — Deep professional blue (Linear/Stripe) ─── */
-  --color-accent: #2563EB;
-  --color-accent-hover: #1D4ED8;
-  --color-accent-subtle: rgba(37, 99, 235, 0.12);
+  /* ─── Accent — Champagne Gold ─── */
+  --color-accent: #C5A46D;
+  --color-accent-hover: #D7BC8C;
+  --color-accent-subtle: rgba(197, 164, 109, 0.12);
 
   /* Legacy compat: electric maps to accent */
-  --color-electric: #2563EB;
-  --color-electric-deep: #1D4ED8;
+  --color-electric: #C5A46D;
+  --color-electric-deep: #B08F56;
 
   /* ─── Semantic palette — muted, professional ─── */
   --color-emerald: #10B981;
   --color-success: #10B981;
   --color-success-subtle: rgba(16, 185, 129, 0.12);
 
-  --color-amber: #F59E0B;
-  --color-warning: #F59E0B;
-  --color-warning-subtle: rgba(245, 158, 11, 0.12);
+  --color-amber: #C5A46D;
+  --color-warning: #C5A46D;
+  --color-warning-subtle: rgba(197, 164, 109, 0.12);
 
   --color-rose: #EF4444;
   --color-danger: #EF4444;
   --color-danger-subtle: rgba(239, 68, 68, 0.12);
 
-  /* Kept for any remaining references */
-  --color-cyan: #06B6D4;
-  --color-indigo: #6366F1;
-  --color-violet: #7C3AED;
-
   /* ─── Text tokens ─── */
-  --color-ink: #F1F5F9;
-  --color-ink-dim: #94A3B8;
-  --color-ink-faint: #475569;
-  --color-ink-dark: #0F172A;
-  --color-ink-dark-dim: #64748B;
+  --color-ink: #F2EEE6;
+  --color-ink-dim: #A6A197;
+  --color-ink-faint: #77736B;
+  --color-ink-dark: #0A0A09;
+  --color-ink-dark-dim: #77736B;
 
   /* ─── Typography ─── */
-  --font-display: "Inter", system-ui, sans-serif;
+  --font-display: "Playfair Display", "Fraunces", serif;
   --font-body: "Inter", system-ui, sans-serif;
-  --font-mono: "JetBrains Mono", "Geist Mono Variable", monospace;
+  --font-mono: "IBM Plex Mono", "JetBrains Mono", monospace;
 
   /* ─── Radii — tighter, more refined ─── */
   --radius-panel: 0.625rem;
@@ -64,9 +59,9 @@
   --radius-control: 0.375rem;
 
   /* ─── Shadows — elevation without glow ─── */
-  --shadow-panel: 0 1px 3px 0 rgba(0, 0, 0, 0.4), 0 0 0 1px rgba(255,255,255,0.03) inset;
-  --shadow-card: 0 1px 2px 0 rgba(0, 0, 0, 0.3);
-  --shadow-dropdown: 0 8px 24px -4px rgba(0, 0, 0, 0.6), 0 0 0 1px rgba(255,255,255,0.04) inset;
+  --shadow-panel: 0 1px 3px 0 rgba(0, 0, 0, 0.5), 0 0 0 1px #292720 inset;
+  --shadow-card: 0 1px 2px 0 rgba(0, 0, 0, 0.4);
+  --shadow-dropdown: 0 8px 24px -4px rgba(0, 0, 0, 0.7), 0 0 0 1px #292720 inset;
 }
 
 @layer base {
@@ -106,7 +101,8 @@
   }
 
   ::selection {
-    background-color: rgba(37, 99, 235, 0.25);
+    background-color: rgba(197, 164, 109, 0.25);
+    color: #F2EEE6;
   }
 
   ::-webkit-scrollbar {
@@ -222,24 +218,15 @@
   [data-state="open"].overlay-anim        { animation: overlay-in 0.3s ease-out forwards; }
   [data-state="closed"].overlay-anim        { animation: overlay-out 0.2s ease-in forwards; }
 
-  /* ─── Surface utilities — REPLACES glassmorphism ─── */
-  /* 
-   * All glass-panel usages are now solid, dark surfaces.
-   * This is the key change: we drop the backdrop-filter + blur look 
-   * and use proper opaque backgrounds like Linear/Stripe.
-   */
+  /* ─── Surface utilities — Architectural neutral luxury surfaces ─── */
   .glass-panel {
-    background-color: rgba(14, 16, 20, 0.85);
+    background-color: #11110F;
     border: 1px solid var(--color-edge);
-    backdrop-filter: blur(24px);
-    -webkit-backdrop-filter: blur(24px);
   }
 
   .glass-panel-strong {
-    background-color: rgba(0, 0, 0, 0.85);
+    background-color: #0A0A09;
     border: 1px solid var(--color-edge);
-    backdrop-filter: blur(32px);
-    -webkit-backdrop-filter: blur(32px);
   }
 
   html.light .glass-panel {
@@ -257,21 +244,17 @@
     background-color: var(--color-card);
     border: 1px solid var(--color-edge);
     border-radius: var(--radius-card);
-    backdrop-filter: blur(24px);
-    -webkit-backdrop-filter: blur(24px);
   }
 
   /* Sidebar solid surface */
   .surface-sidebar {
     background-color: var(--color-graphite);
     border-right: 1px solid var(--color-edge);
-    backdrop-filter: blur(24px);
-    -webkit-backdrop-filter: blur(24px);
   }
 
   /* Subtle muted text gradient (brand label only) */
   .text-gradient-brand {
-    background: linear-gradient(120deg, #2563EB 0%, #10B981 100%);
+    background: linear-gradient(120deg, #F2EEE6 0%, #C5A46D 100%);
     -webkit-background-clip: text;
     background-clip: text;
     color: transparent;

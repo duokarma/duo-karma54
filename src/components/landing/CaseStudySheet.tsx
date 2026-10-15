@@ -43,8 +43,8 @@ export function CaseStudySheet({ project, onClose }: CaseStudySheetProps) {
   };
 
   const stages = [
-    { label: 'Challenge', icon: '⚡', text: project.problem, color: 'rgba(201,168,118,0.9)' },
-    { label: 'Solution', icon: '⚙️', text: project.solution, color: 'rgba(232,207,160,0.9)' },
+    { label: 'Challenge', icon: '⚡', text: project.problem, color: COLORS.accent },
+    { label: 'Solution', icon: '⚙️', text: project.solution, color: COLORS.accentHover },
     { label: 'Result', icon: '✦', text: project.result, color: COLORS.emerald },
   ];
 
@@ -93,7 +93,7 @@ export function CaseStudySheet({ project, onClose }: CaseStudySheetProps) {
       >
         {/* Drag handle */}
         <div style={{ display: 'flex', justifyContent: 'center', padding: '16px 0 4px' }}>
-          <div style={{ width: 40, height: 4, borderRadius: 999, background: 'rgba(243,238,227,0.15)' }} />
+          <div style={{ width: 40, height: 4, borderRadius: 999, background: COLORS.line }} />
         </div>
 
         <div style={{ padding: '16px 32px 48px', maxWidth: 700, margin: '0 auto' }}>
@@ -255,7 +255,7 @@ export function CaseStudySheet({ project, onClose }: CaseStudySheetProps) {
               borderRadius: 14,
               background: COLORS.accent,
               border: 'none',
-              color: '#0A0908',
+              color: '#0A0A09',
               fontFamily: "'Inter', sans-serif",
               fontSize: 15,
               fontWeight: 600,
