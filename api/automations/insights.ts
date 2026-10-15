@@ -30,27 +30,50 @@ Example: "Project X is at risk of being delayed. Do you want me to message the t
 Do not include any pleasantries or intro text. Just the insight.
   `.trim();
 
-  // 3. Call LLM (using GEMINI or GROQ)
+  // 3. Call LLM (using GROQ or GEMINI)
   let insightText = '';
   try {
-    const apiKey = process.env.GEMINI_API_KEY;
-    if (!apiKey) throw new Error("GEMINI_API_KEY missing");
-    
-    // We use the Gemini API endpoint
-    const response = await fetch(`https://generativelanguage.googleapis.com/v1beta/models/gemini-1.5-flash-latest:generateContent?key=${apiKey}`, {
-      method: 'POST',
-      headers: { 'Content-Type': 'application/json' },
-      body: JSON.stringify({
-        contents: [{ role: 'user', parts: [{ text: prompt }] }]
-      })
-    });
-
-    if (!response.ok) {
-      throw new Error(`LLM Error: ${response.statusText}`);
+    const groqKey = process.env.GROQ_API_KEY || process.env.VITE_GROQ_API_KEY;
+    if (groqKey) {
+      const groqRes = await fetch('https://api.groq.com/openai/v1/chat/completions', {
+        method: 'POST',
+        headers: {
+          'Content-Type': 'application/json',
+          'Authorization': `Bearer ${groqKey}`,
+        },
+        body: JSON.stringify({
+          model: 'llama-3.3-70b-versatile',
+          messages: [{ role: 'user', content: prompt }],
+          temperature: 0.3,
+          max_tokens: 200,
+        }),
+      });
+      if (groqRes.ok) {
+        const json = await groqRes.json();
+        insightText = json.choices?.[0]?.message?.content || '';
+      }
     }
 
-    const json = await response.json();
-    insightText = json.candidates?.[0]?.content?.parts?.[0]?.text || '';
+    if (!insightText) {
+      const apiKey = process.env.GEMINI_API_KEY;
+      if (!apiKey) throw new Error("No AI provider key found (GROQ_API_KEY or GEMINI_API_KEY)");
+      
+      // We use the Gemini API endpoint as fallback
+      const response = await fetch(`https://generativelanguage.googleapis.com/v1beta/models/gemini-1.5-flash-latest:generateContent?key=${apiKey}`, {
+        method: 'POST',
+        headers: { 'Content-Type': 'application/json' },
+        body: JSON.stringify({
+          contents: [{ role: 'user', parts: [{ text: prompt }] }]
+        })
+      });
+
+      if (!response.ok) {
+        throw new Error(`LLM Error: ${response.statusText}`);
+      }
+
+      const json = await response.json();
+      insightText = json.candidates?.[0]?.content?.parts?.[0]?.text || '';
+    }
   } catch (error) {
     console.error("Proactive Insights Generation Failed:", error);
     // Fallback static insight

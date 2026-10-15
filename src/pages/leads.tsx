@@ -270,16 +270,18 @@ export function LeadsPage() {
 
   const createMutation = useMutation({
     mutationFn: async (newLead: Partial<Lead>) => {
-      const { data, error } = await supabase.from("leads").insert([{
+      const record = {
         ...newLead,
         id: Math.random().toString(36).substring(2, 9),
         createdDate: new Date().toISOString().split('T')[0],
         lastContact: new Date().toISOString().split('T')[0]
-      }]);
+      };
+      const { error } = await supabase.from("leads").insert([record]);
       if (error) throw error;
-      return data;
+      return record as Lead;
     },
-    onSuccess: () => {
+    onSuccess: (newLead) => {
+      queryClient.setQueryData<Lead[]>(["leads"], (old) => old ? [newLead, ...old] : [newLead]);
       queryClient.invalidateQueries({ queryKey: ["leads"] });
       setIsDialogOpen(false);
       setFormData(defaultFormData);
@@ -288,11 +290,15 @@ export function LeadsPage() {
 
   const editMutation = useMutation({
     mutationFn: async (updatedLead: Partial<Lead>) => {
-      const { data, error } = await supabase.from("leads").update(updatedLead).eq("id", updatedLead.id);
+      const { error } = await supabase.from("leads").update(updatedLead).eq("id", updatedLead.id);
       if (error) throw error;
-      return data;
+      return updatedLead;
     },
-    onSuccess: () => {
+    onSuccess: (updatedLead) => {
+      queryClient.setQueryData<Lead[]>(["leads"], (old) => {
+        if (!old) return old;
+        return old.map(l => l.id === updatedLead.id ? { ...l, ...updatedLead } : l);
+      });
       queryClient.invalidateQueries({ queryKey: ["leads"] });
       setIsDialogOpen(false);
       setSelectedLead(null);
@@ -304,8 +310,10 @@ export function LeadsPage() {
     mutationFn: async (id: string) => {
       const { error } = await supabase.from("leads").delete().eq("id", id);
       if (error) throw error;
+      return id;
     },
-    onSuccess: () => {
+    onSuccess: (deletedId) => {
+      queryClient.setQueryData<Lead[]>(["leads"], (old) => old ? old.filter(l => l.id !== deletedId) : old);
       queryClient.invalidateQueries({ queryKey: ["leads"] });
     }
   });

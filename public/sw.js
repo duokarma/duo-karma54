@@ -34,10 +34,10 @@ self.addEventListener("push", (event) => {
       url: data.url || "/admin",
     },
     actions: [
-      { action: "open", title: "View Booking" },
+      { action: "open", title: "View Details" },
       { action: "close", title: "Dismiss" },
     ],
-    tag: "duo-karma-booking",
+    tag: "dk-" + Date.now() + "-" + Math.random().toString(36).substring(2, 6),
     renotify: true,
   };
 

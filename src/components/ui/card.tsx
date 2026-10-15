@@ -1,27 +1,16 @@
 import * as React from "react";
 import { cn } from "@/lib/utils";
-import { m as motion } from "framer-motion";
-import { TiltCard, Spotlight, GlassReflection } from "@/components/premium";
 
 const Card = React.forwardRef<HTMLDivElement, React.HTMLAttributes<HTMLDivElement>>(
-  ({ className, children, ...props }, ref) => (
-    <TiltCard maxTilt={3} className="h-full">
-      <Spotlight className="h-full rounded-[var(--radius-card)]" color="rgba(255,255,255,0.03)">
-        <motion.div
-          ref={ref}
-          className={cn(
-            "bg-[var(--color-card)] border border-[var(--color-edge)] rounded-[var(--radius-card)] transition-colors h-full relative group overflow-hidden",
-            className
-          )}
-          whileHover={{ y: -4, boxShadow: "0 10px 40px -10px rgba(0,0,0,0.4)", borderColor: "var(--color-edge-hover)" }}
-          transition={{ type: "spring", stiffness: 300, damping: 20 }}
-          {...props as any}
-        >
-          <GlassReflection />
-          {children}
-        </motion.div>
-      </Spotlight>
-    </TiltCard>
+  ({ className, ...props }, ref) => (
+    <div
+      ref={ref}
+      className={cn(
+        "rounded-[var(--radius-card)] border border-[var(--color-edge)] bg-[var(--color-card)] text-ink transition-all relative overflow-hidden backdrop-blur-sm",
+        className
+      )}
+      {...props}
+    />
   )
 );
 Card.displayName = "Card";

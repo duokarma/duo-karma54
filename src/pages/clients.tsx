@@ -37,6 +37,7 @@ import { formatCurrency } from "@/lib/utils";
 import type { Client } from "@/types";
 import { useToast } from "@/components/ui/toast";
 import { indianCities } from "@/lib/indian-cities";
+import { logActivity } from "@/lib/activity-logger";
 
 const clientSchema = z.object({
   name: z.string().min(2, "Name is required"),
@@ -92,9 +93,18 @@ export function ClientsPage() {
       };
       const { error } = await supabase.from("clients").insert([newClient]);
       if (error) throw error;
+      logActivity({
+        type: "client",
+        message: `Client "${values.name}" (${values.company || "Company"}) added`,
+      });
+      return newClient as Client;
     },
-    onSuccess: () => {
+    onSuccess: (newClient) => {
+      queryClient.setQueryData<Client[]>(["clients"], (old) => {
+        return old ? [newClient, ...old] : [newClient];
+      });
       queryClient.invalidateQueries({ queryKey: ["clients"] });
+      queryClient.invalidateQueries({ queryKey: ["activities"] });
       setAddOpen(false);
       reset();
       toast({ title: "Success", description: "Client added successfully", variant: "success" });
@@ -109,6 +119,10 @@ export function ClientsPage() {
       const { id, ...updateData } = values;
       const { error } = await supabase.from("clients").update(updateData).eq("id", id);
       if (error) throw error;
+      logActivity({
+        type: "client",
+        message: `Client "${values.name}" details updated`,
+      });
       return { id, ...updateData };
     },
     onSuccess: (data) => {
@@ -117,6 +131,7 @@ export function ClientsPage() {
         return old.map(c => c.id === data.id ? { ...c, ...data } : c);
       });
       queryClient.invalidateQueries({ queryKey: ["clients"] });
+      queryClient.invalidateQueries({ queryKey: ["activities"] });
       setAddOpen(false);
       reset();
       toast({ title: "Success", description: "Client updated successfully", variant: "success" });
@@ -130,9 +145,19 @@ export function ClientsPage() {
     mutationFn: async (id: string) => {
       const { error } = await supabase.from("clients").delete().eq("id", id);
       if (error) throw error;
+      logActivity({
+        type: "client",
+        message: `Client removed from database`,
+      });
+      return id;
     },
-    onSuccess: () => {
+    onSuccess: (deletedId) => {
+      queryClient.setQueryData<Client[]>(["clients"], (old) => {
+        if (!old) return old;
+        return old.filter(c => c.id !== deletedId);
+      });
       queryClient.invalidateQueries({ queryKey: ["clients"] });
+      queryClient.invalidateQueries({ queryKey: ["activities"] });
       setSelectedId(null);
     },
   });

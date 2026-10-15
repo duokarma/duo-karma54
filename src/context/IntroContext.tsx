@@ -10,26 +10,42 @@ const IntroContext = createContext<IntroContextValue>({
   onIntroDone: () => {},
 });
 
-export function IntroProvider({ children }: { children: React.ReactNode }) {
-  // If the user prefers reduced motion, skip the intro entirely
-  const prefersReduced =
-    typeof window !== 'undefined' &&
-    window.matchMedia('(prefers-reduced-motion: reduce)').matches;
+/** Returns true synchronously if the intro has already been shown in this session */
+function shouldSkipIntro(): boolean {
+  if (typeof window === 'undefined') return false;
+  // Skip if user prefers reduced motion
+  if (window.matchMedia('(prefers-reduced-motion: reduce)').matches) return true;
+  // Skip if already seen in current session
+  try {
+    if (sessionStorage.getItem('dk_intro_played') === 'true') {
+      return true;
+    }
+  } catch {
+    // ignore storage restrictions
+  }
+  return false;
+}
 
-  const [introDone, setIntroDone] = useState(prefersReduced);
+export function IntroProvider({ children }: { children: React.ReactNode }) {
+  const [introDone, setIntroDone] = useState(() => shouldSkipIntro());
 
   const onIntroDone = useCallback(() => {
+    try {
+      sessionStorage.setItem('dk_intro_played', 'true');
+    } catch {
+      // ignore
+    }
     setIntroDone(true);
   }, []);
 
-  // Safety fallback: if something goes wrong, never block the site forever
+  // Hard cap safety fallback: never block the site forever
   useEffect(() => {
-    if (prefersReduced) return;
+    if (introDone) return;
     const failsafe = window.setTimeout(() => {
-      setIntroDone(true);
-    }, 15_000); // 15 s hard cap
+      onIntroDone();
+    }, 4500); // 4.5s max cap
     return () => window.clearTimeout(failsafe);
-  }, [prefersReduced]);
+  }, [introDone, onIntroDone]);
 
   return (
     <IntroContext.Provider value={{ introDone, onIntroDone }}>

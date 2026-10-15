@@ -1,7 +1,19 @@
-import { useState, useCallback } from "react";
+import { useState, useCallback, useMemo } from "react";
 import { useParams, useNavigate } from "react-router-dom";
-import { Plus, Search, Trash2, Edit2, Database, ArrowLeft } from "lucide-react";
-import { m as motion } from "framer-motion";
+import {
+  Plus,
+  Search,
+  Trash2,
+  Edit2,
+  Database,
+  ArrowLeft,
+  Settings,
+  RotateCcw,
+  AlertTriangle,
+  Check,
+  X,
+} from "lucide-react";
+import { AnimatePresence } from "framer-motion";
 import { PageHeader } from "@/components/shared/page-header";
 import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
@@ -27,9 +39,63 @@ import { supabase } from "@/lib/supabase";
 import { useToast } from "@/components/ui/toast";
 import { cn } from "@/lib/utils";
 import { DataTable, type Column } from "@/components/shared/data-table";
-import type { DynamicSchema, DynamicSchemaField, DynamicRecord } from "@/types";
+import { logActivity } from "@/lib/activity-logger";
+import type { DynamicSchema, DynamicSchemaField, DynamicRecord, FieldType } from "@/types";
 
-// ── Dynamic Field Renderer (for the data entry form) ────────────────────────
+// ── Icon picker options ────────────────────────────────────────────────────────
+const ICON_OPTIONS = [
+  "Database", "Users", "Star", "Heart", "Briefcase", "ShoppingCart",
+  "Package", "Tag", "FileText", "BarChart3", "Layers", "Globe",
+  "Building2", "Truck", "Zap", "Target", "BookOpen", "Award",
+  "Calendar", "Camera", "Music", "Coffee", "Gift", "Home",
+];
+
+const FIELD_TYPES: { value: FieldType; label: string; description: string }[] = [
+  { value: "text",     label: "Short Text",    description: "Single-line text input" },
+  { value: "textarea", label: "Long Text",      description: "Multi-line text area" },
+  { value: "number",   label: "Number",         description: "Numeric value" },
+  { value: "email",    label: "Email",          description: "Valid email address" },
+  { value: "url",      label: "URL / Link",     description: "Website URL" },
+  { value: "date",     label: "Date",           description: "Date picker" },
+  { value: "boolean",  label: "Yes / No",       description: "Toggle switch" },
+  { value: "select",   label: "Dropdown",       description: "Pick from options you define" },
+];
+
+function slugify(str: string) {
+  return str.toLowerCase().replace(/\s+/g, "_").replace(/[^a-z0-9_]/g, "");
+}
+
+function renderIconComponent(name: string, className?: string) {
+  const icons: Record<string, React.ReactNode> = {
+    Database: <Database className={className} />,
+    Users: <span className={cn("inline-flex items-center justify-center", className)}>👥</span>,
+    Star: <span className={cn("inline-flex items-center justify-center", className)}>⭐</span>,
+    Heart: <span className={cn("inline-flex items-center justify-center", className)}>❤️</span>,
+    Briefcase: <span className={cn("inline-flex items-center justify-center", className)}>💼</span>,
+    ShoppingCart: <span className={cn("inline-flex items-center justify-center", className)}>🛒</span>,
+    Package: <span className={cn("inline-flex items-center justify-center", className)}>📦</span>,
+    Tag: <span className={cn("inline-flex items-center justify-center", className)}>🏷️</span>,
+    FileText: <span className={cn("inline-flex items-center justify-center", className)}>📄</span>,
+    BarChart3: <span className={cn("inline-flex items-center justify-center", className)}>📊</span>,
+    Layers: <span className={cn("inline-flex items-center justify-center", className)}>🗂️</span>,
+    Globe: <span className={cn("inline-flex items-center justify-center", className)}>🌍</span>,
+    Building2: <span className={cn("inline-flex items-center justify-center", className)}>🏢</span>,
+    Truck: <span className={cn("inline-flex items-center justify-center", className)}>🚚</span>,
+    Zap: <span className={cn("inline-flex items-center justify-center", className)}>⚡</span>,
+    Target: <span className={cn("inline-flex items-center justify-center", className)}>🎯</span>,
+    BookOpen: <span className={cn("inline-flex items-center justify-center", className)}>📖</span>,
+    Award: <span className={cn("inline-flex items-center justify-center", className)}>🏆</span>,
+    Calendar: <span className={cn("inline-flex items-center justify-center", className)}>📅</span>,
+    Camera: <span className={cn("inline-flex items-center justify-center", className)}>📷</span>,
+    Music: <span className={cn("inline-flex items-center justify-center", className)}>🎵</span>,
+    Coffee: <span className={cn("inline-flex items-center justify-center", className)}>☕</span>,
+    Gift: <span className={cn("inline-flex items-center justify-center", className)}>🎁</span>,
+    Home: <span className={cn("inline-flex items-center justify-center", className)}>🏠</span>,
+  };
+  return icons[name] ?? <Database className={className} />;
+}
+
+// ── Dynamic Field Renderer (for data entry form) ────────────────────────────
 function DynamicFieldInput({
   field,
   value,
@@ -108,7 +174,7 @@ function DynamicFieldInput({
           type="email"
           value={String(value ?? "")}
           onChange={(e) => onChange(e.target.value)}
-          placeholder={`Enter email...`}
+          placeholder="email@example.com"
         />
       );
 
@@ -146,7 +212,7 @@ function formatValue(value: unknown, field: DynamicSchemaField): string {
   }
 }
 
-// ── Main page ────────────────────────────────────────────────────────────────
+// ── Main Page Component ──────────────────────────────────────────────────────
 export function DynamicCollectionPage() {
   const { schemaSlug } = useParams<{ schemaSlug: string }>();
   const navigate = useNavigate();
@@ -156,8 +222,16 @@ export function DynamicCollectionPage() {
   const [search, setSearch] = useState("");
   const [formOpen, setFormOpen] = useState(false);
   const [detailOpen, setDetailOpen] = useState(false);
+  const [alterSchemaOpen, setAlterSchemaOpen] = useState(false);
+
   const [selectedRecord, setSelectedRecord] = useState<DynamicRecord | null>(null);
   const [formData, setFormData] = useState<Record<string, unknown>>({});
+
+  // Alter schema local state
+  const [editName, setEditName] = useState("");
+  const [editDesc, setEditDesc] = useState("");
+  const [editIcon, setEditIcon] = useState("Database");
+  const [editFields, setEditFields] = useState<Array<Partial<DynamicSchemaField> & { _tempId: string }>>([]);
 
   // ── Queries ──
   const { data: schema, isLoading: schemaLoading } = useQuery({
@@ -202,13 +276,27 @@ export function DynamicCollectionPage() {
     enabled: !!schema?.id,
   });
 
-  // ── Mutations ──
+  // Open the Alter Schema Drawer populated with current fields
+  const openAlterDrawer = useCallback(() => {
+    if (!schema) return;
+    setEditName(schema.name);
+    setEditDesc(schema.description || "");
+    setEditIcon(schema.icon || "Database");
+    setEditFields(fields.map((f) => ({ ...f, _tempId: f.id })));
+    setAlterSchemaOpen(true);
+  }, [schema, fields]);
+
+  // ── Record Mutations ──
   const createMutation = useMutation({
     mutationFn: async (data: Record<string, unknown>) => {
       const { error } = await supabase
         .from("dynamic_records")
         .insert([{ schema_id: schema!.id, data }]);
       if (error) throw error;
+      logActivity({
+        type: "project",
+        message: `New entry added in section "${schema!.name}"`,
+      });
     },
     onSuccess: () => {
       queryClient.invalidateQueries({ queryKey: ["dynamic_records", schema?.id] });
@@ -226,6 +314,10 @@ export function DynamicCollectionPage() {
         .update({ data })
         .eq("id", id);
       if (error) throw error;
+      logActivity({
+        type: "project",
+        message: `Entry updated in section "${schema!.name}"`,
+      });
     },
     onSuccess: () => {
       queryClient.invalidateQueries({ queryKey: ["dynamic_records", schema?.id] });
@@ -242,6 +334,10 @@ export function DynamicCollectionPage() {
     mutationFn: async (id: string) => {
       const { error } = await supabase.from("dynamic_records").delete().eq("id", id);
       if (error) throw error;
+      logActivity({
+        type: "project",
+        message: `Entry deleted from section "${schema!.name}"`,
+      });
     },
     onSuccess: () => {
       queryClient.invalidateQueries({ queryKey: ["dynamic_records", schema?.id] });
@@ -252,14 +348,103 @@ export function DynamicCollectionPage() {
     onError: (e: any) => toast({ title: "Error", description: e.message, variant: "error" }),
   });
 
-  // ── Open the add form ──
+  const clearAllRecordsMutation = useMutation({
+    mutationFn: async () => {
+      const { error } = await supabase
+        .from("dynamic_records")
+        .delete()
+        .eq("schema_id", schema!.id);
+      if (error) throw error;
+      logActivity({
+        type: "project",
+        message: `Wiped all entries in section "${schema!.name}"`,
+      });
+    },
+    onSuccess: () => {
+      queryClient.invalidateQueries({ queryKey: ["dynamic_records", schema?.id] });
+      toast({ title: "All records cleared", description: "All records deleted, section preserved.", variant: "success" });
+    },
+    onError: (e: any) => toast({ title: "Failed to clear records", description: e.message, variant: "destructive" }),
+  });
+
+  // ── Schema Alteration Mutations ──
+  const alterSchemaMutation = useMutation({
+    mutationFn: async () => {
+      if (!schema) return;
+      const { error: schemaError } = await supabase
+        .from("dynamic_schemas")
+        .update({
+          name: editName,
+          description: editDesc,
+          icon: editIcon,
+        })
+        .eq("id", schema.id);
+      if (schemaError) throw schemaError;
+
+      // Re-insert modified fields
+      await supabase.from("dynamic_schema_fields").delete().eq("schema_id", schema.id);
+      const toInsert = editFields
+        .filter((f) => f.name && f.type)
+        .map((f, i) => {
+          const field: any = {
+            schema_id: schema.id,
+            name: f.name!,
+            slug: f.slug || slugify(f.name!),
+            type: f.type!,
+            is_required: f.is_required ?? false,
+            sort_order: i,
+          };
+          if (f.options && f.options.length > 0) {
+            field.options = f.options;
+          }
+          return field;
+        });
+
+      if (toInsert.length > 0) {
+        const { error: fieldsError } = await supabase.from("dynamic_schema_fields").insert(toInsert);
+        if (fieldsError) throw fieldsError;
+      }
+
+      logActivity({
+        type: "project",
+        message: `Altered schema definition for "${editName}"`,
+      });
+    },
+    onSuccess: () => {
+      queryClient.invalidateQueries({ queryKey: ["dynamic_schema_by_slug", schemaSlug] });
+      queryClient.invalidateQueries({ queryKey: ["dynamic_schema_fields", schema?.id] });
+      queryClient.invalidateQueries({ queryKey: ["dynamic_schemas"] });
+      setAlterSchemaOpen(false);
+      toast({ title: "Schema altered successfully!", variant: "success" });
+    },
+    onError: (e: any) => toast({ title: "Error altering schema", description: e.message, variant: "error" }),
+  });
+
+  const deleteEntireSchemaMutation = useMutation({
+    mutationFn: async () => {
+      if (!schema) return;
+      const { error } = await supabase.from("dynamic_schemas").delete().eq("id", schema.id);
+      if (error) throw error;
+      logActivity({
+        type: "project",
+        message: `Section "${schema.name}" permanently deleted`,
+      });
+    },
+    onSuccess: () => {
+      queryClient.invalidateQueries({ queryKey: ["dynamic_schemas"] });
+      toast({ title: "Section permanently deleted", variant: "success" });
+      navigate("/admin/schema-builder");
+    },
+    onError: (e: any) => toast({ title: "Failed to delete section", description: e.message, variant: "destructive" }),
+  });
+
+  // ── Form handlers ──
   const openAddForm = useCallback(() => {
     setSelectedRecord(null);
     setFormData({});
     setFormOpen(true);
   }, []);
 
-  // ── Open the edit form ──
   const openEditForm = useCallback((record: DynamicRecord) => {
     setSelectedRecord(record);
     setFormData({ ...record.data });
@@ -267,57 +452,62 @@ export function DynamicCollectionPage() {
     setFormOpen(true);
   }, []);
 
-  // ── Click a row ──
   const openDetail = useCallback((record: DynamicRecord) => {
     setSelectedRecord(record);
     setDetailOpen(true);
   }, []);
 
-  // ── Filter records ──
-  const filtered = records.filter((r) => {
-    if (!search.trim()) return true;
-    return Object.values(r.data).some((v) =>
-      String(v ?? "").toLowerCase().includes(search.toLowerCase())
+  // Filter records
+  const filtered = useMemo(() => {
+    if (!search.trim()) return records;
+    const q = search.toLowerCase();
+    return records.filter((r) =>
+      Object.values(r.data).some((v) =>
+        String(v ?? "").toLowerCase().includes(q)
+      )
     );
-  });
+  }, [records, search]);
 
-  // ── Build columns dynamically from fields ──
-  const columns: Column<DynamicRecord>[] = fields.map((field, i) => ({
-    key: field.slug,
-    header: field.name,
-    sortValue: (r) => String(r.data[field.slug] ?? ""),
-    // Show first 2 columns more prominently
-    render: (r) => (
-      <span
-        className={cn(
-          "text-sm",
-          i === 0 ? "font-medium text-ink" : "text-ink-dim",
-          field.type === "boolean" && "text-base"
-        )}
-      >
-        {formatValue(r.data[field.slug], field)}
-      </span>
-    ),
-  }));
+  // Build dynamic table columns
+  const columns: Column<DynamicRecord>[] = useMemo(() => {
+    const fieldCols: Column<DynamicRecord>[] = fields.map((field, i) => ({
+      key: field.slug,
+      header: field.name,
+      sortValue: (r) => String(r.data[field.slug] ?? ""),
+      render: (r) => (
+        <span
+          className={cn(
+            "text-sm",
+            i === 0 ? "font-medium text-ink" : "text-ink-dim",
+            field.type === "boolean" && "text-base"
+          )}
+        >
+          {formatValue(r.data[field.slug], field)}
+        </span>
+      ),
+    }));
 
-  // Add a created_at column at the end
-  columns.push({
-    key: "created_at",
-    header: "Added",
-    sortValue: (r) => r.created_at,
-    render: (r) => (
-      <span className="text-xs text-ink-faint tabular">
-        {new Date(r.created_at).toLocaleDateString("en-IN", { day: "2-digit", month: "short" })}
-      </span>
-    ),
-  });
+    // Date column
+    fieldCols.push({
+      key: "created_at",
+      header: "Created",
+      sortValue: (r) => r.created_at,
+      render: (r) => (
+        <span className="text-xs text-ink-faint">
+          {new Date(r.created_at).toLocaleDateString("en-IN", { day: "2-digit", month: "short" })}
+        </span>
+      ),
+    });
+
+    return fieldCols;
+  }, [fields]);
 
   const isLoading = schemaLoading || fieldsLoading || recordsLoading;
 
   if (!schema && !schemaLoading) {
     return (
       <div className="flex flex-col items-center justify-center py-32 gap-4">
-        <p className="text-ink-faint">Section not found.</p>
+        <p className="text-ink-faint">Section not found or was removed.</p>
         <Button variant="ghost" onClick={() => navigate("/admin/schema-builder")}>
           <ArrowLeft className="h-4 w-4" />
           Back to Schema Builder
@@ -327,27 +517,53 @@ export function DynamicCollectionPage() {
   }
 
   return (
-    <div>
+    <div className="space-y-6 pb-12">
       <PageHeader
-        title={schema?.name ?? "Loading..."}
+        title={schema?.name ?? "Custom Section"}
         description={
           schema
-            ? `${records.length} ${records.length === 1 ? "record" : "records"} · ${fields.length} fields`
+            ? `${records.length} ${records.length === 1 ? "record" : "records"} stored · ${fields.length} columns defined`
             : undefined
         }
         actions={
-          <div className="flex items-center gap-2">
+          <div className="flex flex-wrap items-center gap-2">
+            {/* Alter Schema button - Maximum Alteration Power */}
             <Button
-              variant="ghost"
+              variant="outline"
               size="sm"
-              onClick={() => navigate("/admin/schema-builder")}
+              onClick={openAlterDrawer}
+              className="border-white/10 hover:bg-white/5 text-xs gap-1.5"
             >
-              <Edit2 className="h-3.5 w-3.5" />
-              Edit Fields
+              <Settings className="h-3.5 w-3.5 text-blue-400" />
+              <span>Alter Schema</span>
             </Button>
-            <Button onClick={openAddForm} disabled={!schema || fields.length === 0}>
+
+            {/* Clear All Records */}
+            {records.length > 0 && (
+              <Button
+                variant="outline"
+                size="sm"
+                onClick={() => {
+                  if (confirm(`Wipe all ${records.length} records in "${schema?.name}"? The columns structure will remain intact.`)) {
+                    clearAllRecordsMutation.mutate();
+                  }
+                }}
+                disabled={clearAllRecordsMutation.isPending}
+                className="border-white/10 hover:bg-white/5 text-xs text-ink-faint hover:text-white gap-1.5"
+              >
+                <RotateCcw className="h-3.5 w-3.5" />
+                <span>Clear Data</span>
+              </Button>
+            )}
+
+            {/* Add Record */}
+            <Button
+              onClick={openAddForm}
+              disabled={!schema || fields.length === 0}
+              className="text-xs gap-1.5"
+            >
               <Plus className="h-4 w-4" />
-              Add Record
+              <span>Add Record</span>
             </Button>
           </div>
         }
@@ -355,28 +571,32 @@ export function DynamicCollectionPage() {
 
       {/* Search bar */}
       {records.length > 0 && (
-        <div className="mb-4">
-          <div className="relative max-w-sm">
+        <div className="flex items-center justify-between gap-3">
+          <div className="relative max-w-sm w-full">
             <Search className="absolute left-3 top-1/2 h-4 w-4 -translate-y-1/2 text-ink-faint" />
             <Input
-              placeholder={`Search ${schema?.name ?? "records"}...`}
-              className="pl-10"
+              placeholder={`Search in ${schema?.name ?? "records"}...`}
+              className="pl-9 text-xs"
               value={search}
               onChange={(e) => setSearch(e.target.value)}
             />
           </div>
+
+          <span className="text-xs text-ink-faint shrink-0">
+            Showing {filtered.length} of {records.length}
+          </span>
         </div>
       )}
 
-      {/* No fields warning */}
+      {/* No fields defined warning */}
       {!isLoading && schema && fields.length === 0 && (
-        <Card>
+        <Card className="p-6">
           <EmptyState
             icon={Database}
             title="No fields defined yet"
-            description={`Go to Schema Builder to add fields to "${schema.name}" first, then come back to add records.`}
-            actionLabel="Open Schema Builder"
-            onAction={() => navigate("/admin/schema-builder")}
+            description={`Define fields for "${schema.name}" so you can start adding structured records.`}
+            actionLabel="Add Fields Now"
+            onAction={openAlterDrawer}
           />
         </Card>
       )}
@@ -390,14 +610,14 @@ export function DynamicCollectionPage() {
             ))}
           </div>
         ) : filtered.length === 0 ? (
-          <Card>
+          <Card className="p-6">
             <EmptyState
               icon={Database}
-              title={search ? "No results found" : `No ${schema?.name ?? "records"} yet`}
+              title={search ? "No results found" : `No records in ${schema?.name ?? "this section"}`}
               description={
                 search
-                  ? "Try a different search term."
-                  : "Click 'Add Record' to add your first entry."
+                  ? "Try searching for a different keyword."
+                  : "Click 'Add Record' above to insert your first data entry."
               }
               actionLabel={search ? "Clear search" : "Add Record"}
               onAction={search ? () => setSearch("") : openAddForm}
@@ -418,22 +638,22 @@ export function DynamicCollectionPage() {
         setFormOpen(open);
         if (!open) { setFormData({}); setSelectedRecord(null); }
       }}>
-        <DrawerContent>
+        <DrawerContent className="max-h-[90vh]">
           <DrawerHeader>
             <DrawerTitle>
-              {selectedRecord ? `Edit Record` : `Add to ${schema?.name ?? "Section"}`}
+              {selectedRecord ? `Edit Entry in ${schema?.name}` : `New Entry in ${schema?.name}`}
             </DrawerTitle>
             <DrawerDescription>
-              Fill in the fields below and hit save.
+              Fill out the fields defined in this schema and save.
             </DrawerDescription>
           </DrawerHeader>
 
-          <div className="space-y-4">
+          <div className="space-y-4 overflow-y-auto max-h-[70vh] px-1 pb-4 custom-scrollbar">
             {fields.map((field) => (
               <div key={field.id}>
                 <label className="mb-1.5 block text-xs font-medium text-ink-dim">
                   {field.name}
-                  {field.is_required && <span className="ml-1 text-rose">*</span>}
+                  {field.is_required && <span className="ml-1 text-rose-400">*</span>}
                 </label>
                 <DynamicFieldInput
                   field={field}
@@ -444,10 +664,9 @@ export function DynamicCollectionPage() {
             ))}
 
             <Button
-              className="w-full"
+              className="w-full h-10 mt-2"
               disabled={createMutation.isPending || updateMutation.isPending}
               onClick={() => {
-                // Validate required fields
                 const missing = fields
                   .filter((f) => f.is_required && !formData[f.slug] && formData[f.slug] !== false)
                   .map((f) => f.name);
@@ -469,66 +688,64 @@ export function DynamicCollectionPage() {
               {createMutation.isPending || updateMutation.isPending
                 ? "Saving..."
                 : selectedRecord
-                ? "Update Record"
-                : "Save Record"}
+                ? "Update Entry"
+                : "Save Entry"}
             </Button>
           </div>
         </DrawerContent>
       </Drawer>
 
-      {/* ── Record Detail Drawer ── */}
+      {/* ── Record Detail Preview Drawer ── */}
       <Drawer open={detailOpen} onOpenChange={(open) => {
         setDetailOpen(open);
         if (!open) setSelectedRecord(null);
       }}>
-        <DrawerContent>
+        <DrawerContent className="max-h-[90vh]">
           {selectedRecord && (
             <>
               <DrawerHeader>
-                <DrawerTitle>Record Details</DrawerTitle>
+                <DrawerTitle>Entry Details</DrawerTitle>
                 <DrawerDescription>
-                  Added {new Date(selectedRecord.created_at).toLocaleDateString("en-IN", { dateStyle: "medium" })}
+                  Recorded {new Date(selectedRecord.created_at).toLocaleDateString("en-IN", { dateStyle: "medium" })}
                 </DrawerDescription>
               </DrawerHeader>
 
-              <div className="space-y-3">
+              <div className="space-y-3 overflow-y-auto max-h-[70vh] px-1 pb-4 custom-scrollbar">
                 {fields.map((field) => (
-                  <motion.div
+                  <div
                     key={field.id}
-                    initial={{ opacity: 0, x: -4 }}
-                    animate={{ opacity: 1, x: 0 }}
-                    className="flex flex-col gap-0.5 rounded-[var(--radius-control)] bg-white/[0.03] px-3 py-2.5 border border-edge"
+                    className="flex flex-col gap-0.5 rounded-[var(--radius-control)] bg-white/[0.03] px-3.5 py-2.5 border border-edge"
                   >
                     <span className="text-[10px] font-medium uppercase tracking-wider text-ink-faint">
                       {field.name}
                     </span>
-                    <span className="text-sm text-ink">
+                    <span className="text-sm font-medium text-ink">
                       {formatValue(selectedRecord.data[field.slug], field)}
                     </span>
-                  </motion.div>
+                  </div>
                 ))}
 
-                <div className="flex gap-2 pt-2">
+                <div className="flex gap-2 pt-3">
                   <Button
-                    variant="secondary"
-                    className="flex-1"
+                    variant="outline"
+                    className="flex-1 border-white/10 hover:bg-white/5"
                     onClick={() => openEditForm(selectedRecord)}
                   >
-                    <Edit2 className="h-3.5 w-3.5" />
-                    Edit
+                    <Edit2 className="h-3.5 w-3.5 mr-1" />
+                    Edit Entry
                   </Button>
                   <Button
                     variant="destructive"
                     className="flex-1"
                     disabled={deleteMutation.isPending}
                     onClick={() => {
-                      if (confirm("Delete this record?")) {
+                      if (confirm("Delete this entry permanently?")) {
                         deleteMutation.mutate(selectedRecord.id);
                       }
                     }}
                   >
-                    <Trash2 className="h-3.5 w-3.5" />
-                    {deleteMutation.isPending ? "Deleting..." : "Delete"}
+                    <Trash2 className="h-3.5 w-3.5 mr-1" />
+                    {deleteMutation.isPending ? "Deleting..." : "Delete Entry"}
                   </Button>
                 </div>
               </div>
@@ -536,77 +753,225 @@ export function DynamicCollectionPage() {
           )}
         </DrawerContent>
       </Drawer>
-      {/* ── Record Detail Preview Drawer ── */}
-      <Drawer open={detailOpen} onOpenChange={(open) => {
-        setDetailOpen(open);
-        if (!open) { setFormData({}); setSelectedRecord(null); }
-      }}>
-        <DrawerContent>
-          <DrawerHeader>
-            <div className="flex items-start justify-between gap-4">
-              <div>
-                <DrawerTitle>Record Details</DrawerTitle>
-                <DrawerDescription>
-                  Preview details for this record.
-                </DrawerDescription>
-              </div>
-              <div className="flex items-center gap-2">
-                <Button
-                  size="sm"
-                  variant="outline"
-                  onClick={() => {
-                    setDetailOpen(false);
-                    setFormOpen(true);
-                  }}
-                >
-                  <Edit2 className="mr-1.5 h-3.5 w-3.5" /> Edit
-                </Button>
-                <Button
-                  size="sm"
-                  variant="outline"
-                  className="text-rose hover:bg-rose/10 hover:text-rose border-rose/20"
-                  disabled={deleteMutation.isPending}
-                  onClick={() => {
-                    if (confirm("Are you sure you want to delete this record?")) {
-                      deleteMutation.mutate(selectedRecord!.id);
-                    }
-                  }}
-                >
-                  <Trash2 className="mr-1.5 h-3.5 w-3.5" /> Delete
-                </Button>
-              </div>
-            </div>
-          </DrawerHeader>
 
-          <div className="space-y-6 pb-6">
-            <div className="grid grid-cols-1 sm:grid-cols-2 gap-x-6 gap-y-4">
-              {fields.map((field) => {
-                const val = selectedRecord?.data?.[field.slug];
-                const isEmpty = val === undefined || val === null || val === "";
-                
-                return (
-                  <div key={field.id} className="flex flex-col gap-1">
-                    <span className="text-[10px] font-semibold uppercase tracking-wider text-ink-faint">
-                      {field.name}
-                    </span>
-                    {isEmpty ? (
-                      <span className="text-sm text-ink-dim italic">—</span>
-                    ) : field.type === "url" ? (
-                      <a href={val as string} target="_blank" rel="noreferrer" className="text-sm text-electric hover:underline break-all">
-                        {val as string}
-                      </a>
-                    ) : field.type === "boolean" ? (
-                      <span className="text-sm text-ink">{val ? "Yes" : "No"}</span>
-                    ) : (
-                      <span className="text-sm text-ink whitespace-pre-wrap break-words">
-                        {String(val)}
-                      </span>
-                    )}
+      {/* ── In-Place Alter Schema Drawer (Maximum Alteration Power) ── */}
+      <Drawer open={alterSchemaOpen} onOpenChange={setAlterSchemaOpen}>
+        <DrawerContent className="max-h-[92vh]">
+          {schema && (
+            <>
+              <DrawerHeader>
+                <div className="flex items-center gap-3">
+                  <div className="flex h-10 w-10 items-center justify-center rounded-xl bg-white/[0.08] border border-edge text-2xl shadow-sm shrink-0">
+                    {renderIconComponent(editIcon)}
                   </div>
-                );
-              })}
-            </div>
-          </div>
+                  <div>
+                    <DrawerTitle>Alter "{schema.name}" Schema</DrawerTitle>
+                    <DrawerDescription>
+                      Full alteration power: add, rename, change types, or delete fields without leaving this section.
+                    </DrawerDescription>
+                  </div>
+                </div>
+              </DrawerHeader>
+
+              <div className="space-y-6 overflow-y-auto max-h-[72vh] px-1 pb-4 custom-scrollbar">
+                {/* General Settings */}
+                <div className="space-y-4">
+                  <div>
+                    <label className="mb-1.5 block text-xs font-medium text-ink-dim">Section Name *</label>
+                    <Input
+                      placeholder="e.g. Products, Suppliers..."
+                      value={editName}
+                      onChange={(e) => setEditName(e.target.value)}
+                    />
+                  </div>
+
+                  <div>
+                    <label className="mb-1.5 block text-xs font-medium text-ink-dim">Description</label>
+                    <Input
+                      placeholder="What is this section for?"
+                      value={editDesc}
+                      onChange={(e) => setEditDesc(e.target.value)}
+                    />
+                  </div>
+
+                  <div>
+                    <label className="mb-2 block text-xs font-medium text-ink-dim">Icon</label>
+                    <div className="flex flex-wrap gap-2">
+                      {ICON_OPTIONS.map((icon) => (
+                        <button
+                          key={icon}
+                          type="button"
+                          onClick={() => setEditIcon(icon)}
+                          title={icon}
+                          className={cn(
+                            "relative flex h-9 w-9 items-center justify-center rounded-lg border text-lg transition-all",
+                            editIcon === icon
+                              ? "border-electric bg-electric/20 shadow-[0_0_8px_rgba(96,165,250,0.4)]"
+                              : "border-edge bg-white/[0.04] hover:border-white/20 hover:bg-white/[0.08]"
+                          )}
+                        >
+                          {renderIconComponent(icon, "h-4 w-4")}
+                          {editIcon === icon && (
+                            <div className="absolute -top-1 -right-1 flex h-3.5 w-3.5 items-center justify-center rounded-full bg-electric">
+                              <Check className="h-2 w-2 text-white" />
+                            </div>
+                          )}
+                        </button>
+                      ))}
+                    </div>
+                  </div>
+                </div>
+
+                {/* Fields Editor */}
+                <div className="space-y-3 pt-4 border-t border-edge/60">
+                  <div className="flex items-center justify-between">
+                    <div>
+                      <h4 className="text-xs font-semibold text-white">Fields Structure</h4>
+                      <p className="text-[11px] text-ink-faint">{editFields.length} columns configured</p>
+                    </div>
+                    <Button
+                      size="sm"
+                      variant="outline"
+                      type="button"
+                      onClick={() => setEditFields([...editFields, { _tempId: crypto.randomUUID(), name: "", type: "text", is_required: false }])}
+                      className="text-xs h-8 gap-1"
+                    >
+                      <Plus className="h-3.5 w-3.5" /> Add Field
+                    </Button>
+                  </div>
+
+                  <div className="space-y-2">
+                    <AnimatePresence>
+                      {editFields.map((field, i) => (
+                        <div
+                          key={field._tempId}
+                          className="flex flex-col gap-2 rounded-[var(--radius-card)] border border-edge bg-white/[0.03] p-3"
+                        >
+                          <div className="flex items-center gap-2">
+                            <span className="flex h-5 w-5 shrink-0 items-center justify-center rounded-full bg-white/10 text-[10px] font-bold text-ink-faint">
+                              {i + 1}
+                            </span>
+                            <Input
+                              placeholder="Field name"
+                              value={field.name ?? ""}
+                              onChange={(e) => {
+                                const val = e.target.value;
+                                setEditFields(editFields.map((f) => f._tempId === field._tempId ? { ...f, name: val, slug: slugify(val) } : f));
+                              }}
+                              className="flex-1 text-sm"
+                            />
+                            <Select
+                              value={field.type ?? "text"}
+                              onValueChange={(val) => {
+                                setEditFields(editFields.map((f) => f._tempId === field._tempId ? { ...f, type: val as FieldType } : f));
+                              }}
+                            >
+                              <SelectTrigger className="w-36">
+                                <SelectValue />
+                              </SelectTrigger>
+                              <SelectContent>
+                                {FIELD_TYPES.map((ft) => (
+                                  <SelectItem key={ft.value} value={ft.value}>
+                                    {ft.label}
+                                  </SelectItem>
+                                ))}
+                              </SelectContent>
+                            </Select>
+                            <button
+                              type="button"
+                              onClick={() => setEditFields(editFields.filter((f) => f._tempId !== field._tempId))}
+                              className="p-1.5 rounded text-ink-faint hover:text-rose-400 hover:bg-rose-500/10"
+                              title="Delete field"
+                            >
+                              <X className="h-4 w-4" />
+                            </button>
+                          </div>
+
+                          {field.type === "select" && (
+                            <div className="pl-7 space-y-1">
+                              <label className="text-[10px] text-ink-faint uppercase font-medium">Dropdown options (comma separated)</label>
+                              <Input
+                                placeholder="Option 1, Option 2, Option 3"
+                                value={field.options?.join(", ") ?? ""}
+                                onChange={(e) => {
+                                  const opts = e.target.value.split(",").map((s) => s.trim()).filter(Boolean);
+                                  setEditFields(editFields.map((f) => f._tempId === field._tempId ? { ...f, options: opts } : f));
+                                }}
+                                className="text-xs"
+                              />
+                            </div>
+                          )}
+
+                          <div className="flex items-center justify-between pl-7 text-xs text-ink-faint">
+                            <span className="font-mono text-[10px]">Slug: {field.slug || slugify(field.name || "")}</span>
+                            <div className="flex items-center gap-2">
+                              <span>Required</span>
+                              <Switch
+                                checked={field.is_required ?? false}
+                                onCheckedChange={(chk) => {
+                                  setEditFields(editFields.map((f) => f._tempId === field._tempId ? { ...f, is_required: chk } : f));
+                                }}
+                              />
+                            </div>
+                          </div>
+                        </div>
+                      ))}
+                    </AnimatePresence>
+                  </div>
+                </div>
+
+                {/* Danger Zone */}
+                <div className="rounded-xl border border-rose-500/20 bg-rose-500/5 p-4 space-y-3">
+                  <div className="flex items-center gap-2 text-rose-400">
+                    <AlertTriangle className="h-4 w-4 shrink-0" />
+                    <span className="text-xs font-semibold uppercase tracking-wider">Danger Zone</span>
+                  </div>
+                  <div className="flex flex-col sm:flex-row gap-2 pt-1">
+                    <Button
+                      type="button"
+                      variant="outline"
+                      size="sm"
+                      disabled={clearAllRecordsMutation.isPending}
+                      className="text-xs border-rose-500/30 text-rose-300 hover:bg-rose-500/10 hover:border-rose-500/50"
+                      onClick={() => {
+                        if (confirm(`Wipe all stored data records in "${schema.name}"? The columns will stay.`)) {
+                          clearAllRecordsMutation.mutate();
+                        }
+                      }}
+                    >
+                      <RotateCcw className="h-3 w-3 mr-1" />
+                      Clear Stored Records
+                    </Button>
+
+                    <Button
+                      type="button"
+                      variant="destructive"
+                      size="sm"
+                      disabled={deleteEntireSchemaMutation.isPending}
+                      className="text-xs"
+                      onClick={() => {
+                        if (confirm(`PERMANENTLY DELETE "${schema.name}"? This deletes the section, all fields, and all its records forever.`)) {
+                          deleteEntireSchemaMutation.mutate();
+                        }
+                      }}
+                    >
+                      <Trash2 className="h-3 w-3 mr-1" />
+                      Delete Entire Section
+                    </Button>
+                  </div>
+                </div>
+
+                {/* Save Button */}
+                <Button
+                  className="w-full h-10"
+                  disabled={!editName.trim() || alterSchemaMutation.isPending}
+                  onClick={() => alterSchemaMutation.mutate()}
+                >
+                  {alterSchemaMutation.isPending ? "Saving Alterations..." : "Save Alterations"}
+                </Button>
+              </div>
+            </>
+          )}
         </DrawerContent>
       </Drawer>
     </div>

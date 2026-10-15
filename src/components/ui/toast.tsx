@@ -3,13 +3,13 @@ import { CheckCircle2, XCircle, Info, X } from "lucide-react";
 import { m as motion, AnimatePresence, useMotionValue, useTransform } from "framer-motion";
 import { cn } from "@/lib/utils";
 
-type ToastVariant = "success" | "error" | "info";
+type ToastVariant = "success" | "error" | "info" | "destructive";
 
 interface ToastItem {
   id: string;
   title: string;
   description?: string;
-  variant: ToastVariant;
+  variant?: ToastVariant;
 }
 
 interface ToastContextValue {
@@ -21,6 +21,7 @@ const ToastContext = React.createContext<ToastContextValue | undefined>(undefine
 const variantConfig: Record<ToastVariant, { icon: React.ComponentType<{ className?: string }>; className: string }> = {
   success: { icon: CheckCircle2, className: "text-emerald" },
   error: { icon: XCircle, className: "text-rose" },
+  destructive: { icon: XCircle, className: "text-rose" },
   info: { icon: Info, className: "text-electric" },
 };
 
@@ -37,7 +38,7 @@ function ToastCard({
   total: number;
   onDismiss: (id: string) => void;
 }) {
-  const config = variantConfig[t.variant];
+  const config = variantConfig[t.variant || "info"] || variantConfig.info;
   const Icon = config.icon;
   const isFront = index === 0;
 
@@ -87,7 +88,7 @@ function ToastCard({
       className={cn(
         "flex w-80 items-start gap-3 rounded-[var(--radius-card)] p-4 shadow-[var(--shadow-panel)]",
         "glass-panel-strong border border-[var(--color-edge)]",
-        !isFront && "pointer-events-none"
+        isFront ? "pointer-events-auto" : "pointer-events-none"
       )}
     >
       <Icon className={cn("h-5 w-5 shrink-0 mt-0.5", config.className)} />
@@ -121,7 +122,7 @@ export function ToastProvider({ children }: { children: React.ReactNode }) {
   const toast = React.useCallback((t: Omit<ToastItem, "id">) => {
     const id = Math.random().toString(36).slice(2);
     // Add new toasts to the front of the array
-    setToasts((prev) => [{ ...t, id }, ...prev]);
+    setToasts((prev) => [{ variant: "info", ...t, id }, ...prev]);
   }, []);
 
   const dismiss = React.useCallback((id: string) => {
@@ -131,8 +132,13 @@ export function ToastProvider({ children }: { children: React.ReactNode }) {
   return (
     <ToastContext.Provider value={{ toast }}>
       {children}
-      <div className="fixed bottom-6 right-6 z-[200] w-80 h-32 pointer-events-none flex items-end justify-end">
-        <ul className="relative w-full h-full pointer-events-auto">
+      <div
+        className={cn(
+          "fixed bottom-6 right-6 z-[250] pointer-events-none flex items-end justify-end",
+          toasts.length > 0 ? "w-80 h-32" : "w-0 h-0 overflow-hidden"
+        )}
+      >
+        <ul className="relative w-full h-full pointer-events-none">
           <AnimatePresence mode="popLayout">
             {toasts.map((t, i) => (
               <ToastCard
@@ -154,4 +160,9 @@ export function useToast() {
   const ctx = React.useContext(ToastContext);
   if (!ctx) throw new Error("useToast must be used within ToastProvider");
   return ctx;
+}
+
+export function useSafeToast() {
+  const ctx = React.useContext(ToastContext);
+  return ctx?.toast ?? (() => {});
 }

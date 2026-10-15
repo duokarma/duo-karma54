@@ -1,6 +1,7 @@
+import { useState } from "react";
 import { NavLink, useNavigate } from "react-router-dom";
 import { m as motion } from "framer-motion";
-import { ChevronsLeft, Search, LogOut } from "lucide-react";
+import { ChevronsLeft, Search, LogOut, ArrowUpRight, Plus, Pencil, ChevronDown, LayoutGrid } from "lucide-react";
 import { cn } from "@/lib/utils";
 import { navGroups, navItems } from "@/lib/nav-config";
 import { useSidebar } from "@/hooks/use-sidebar";
@@ -9,6 +10,9 @@ import { useAuth } from "@/hooks/use-auth";
 import { useQuery } from "@tanstack/react-query";
 import { supabase } from "@/lib/supabase";
 import type { DynamicSchema } from "@/types";
+import { Tooltip, TooltipTrigger, TooltipContent } from "@/components/ui/tooltip";
+import { useEcosystemApps } from "@/hooks/use-ecosystem-apps";
+import { ManageAppsDialog } from "@/components/layout/manage-apps-dialog";
 
 // Map icon name → emoji for sidebar rendering (lightweight, no extra deps)
 const ICON_EMOJI: Record<string, string> = {
@@ -22,8 +26,51 @@ const ICON_EMOJI: Record<string, string> = {
 export function Sidebar() {
   const { collapsed, toggleCollapsed, mobileOpen, setMobileOpen } = useSidebar();
   const { setOpen } = useCommandPalette();
-  const { signOut, user, displayName } = useAuth();
+  const { signOut, user, displayName, avatarUrl } = useAuth();
   const navigate = useNavigate();
+
+  const { apps } = useEcosystemApps();
+  const [appsOpen, setAppsOpen] = useState<boolean>(() => {
+    try {
+      const saved = localStorage.getItem("dk_sidebar_apps_open");
+      if (saved !== null) return saved === "true";
+    } catch {}
+    // Default to collapsed on mobile screens to keep navigation clean, open on desktop
+    return typeof window !== "undefined" ? window.innerWidth >= 1024 : false;
+  });
+  const [manageAppsOpen, setManageAppsOpen] = useState(false);
+  const [manageAppsMode, setManageAppsMode] = useState<"list" | "form">("list");
+  const [selectedEditAppId, setSelectedEditAppId] = useState<string | null>(null);
+
+  const handleToggleApps = (e?: React.MouseEvent) => {
+    e?.preventDefault();
+    e?.stopPropagation();
+    setAppsOpen((prev) => {
+      const next = !prev;
+      try {
+        localStorage.setItem("dk_sidebar_apps_open", String(next));
+      } catch {}
+      return next;
+    });
+  };
+
+  const handleOpenAddApp = (e?: React.MouseEvent) => {
+    e?.preventDefault();
+    e?.stopPropagation();
+    setSelectedEditAppId(null);
+    setManageAppsMode("form");
+    setManageAppsOpen(true);
+    setMobileOpen(false); // Close mobile drawer so modal takes full center stage
+  };
+
+  const handleOpenEditApp = (e: React.MouseEvent, appId: string) => {
+    e.preventDefault();
+    e.stopPropagation();
+    setSelectedEditAppId(appId);
+    setManageAppsMode("form");
+    setManageAppsOpen(true);
+    setMobileOpen(false); // Close mobile drawer so modal takes full center stage
+  };
 
   const userEmail = user?.email ?? "";
 
@@ -38,6 +85,20 @@ export function Sidebar() {
       if (error) throw error;
       return data as Pick<DynamicSchema, "id" | "name" | "slug" | "icon">[];
     },
+  });
+
+  // Fetch real-time count of unhandled/new website quotes
+  const { data: newInquiriesCount = 0 } = useQuery({
+    queryKey: ["website_inquiries", "new_count"],
+    queryFn: async () => {
+      const { count, error } = await supabase
+        .from("website_inquiries")
+        .select("*", { count: "exact", head: true })
+        .eq("status", "new");
+      if (error) return 0;
+      return count ?? 0;
+    },
+    refetchInterval: 20000,
   });
 
   return (
@@ -71,7 +132,7 @@ export function Sidebar() {
             aria-label="Go to Admin Dashboard"
             className="flex h-7 w-7 shrink-0 items-center justify-center overflow-hidden rounded-md"
           >
-            <img src="/logo.jpeg" alt="DuoKarma" className="h-full w-full object-cover" />
+            <img src="/duokarma-logo.jpeg" alt="DuoKarma" className="h-full w-full object-cover" />
           </button>
           {!collapsed && (
             <motion.div
@@ -157,9 +218,17 @@ export function Sidebar() {
                             />
                           </div>
                           {!collapsed && (
-                            <span className={cn("truncate text-[13px]", isActive && "font-medium text-ink")}>
+                            <span className={cn("truncate text-[13px] flex-1", isActive && "font-medium text-ink")}>
                               {item.label}
                             </span>
+                          )}
+                          {!collapsed && item.path === "/admin/quotes" && newInquiriesCount > 0 && (
+                            <span className="ml-auto flex items-center justify-center rounded-full bg-amber-500/20 px-1.5 py-0.2 text-[10px] font-bold text-amber-300 border border-amber-500/30">
+                              {newInquiriesCount}
+                            </span>
+                          )}
+                          {collapsed && item.path === "/admin/quotes" && newInquiriesCount > 0 && (
+                            <span className="absolute top-1 right-1 h-2 w-2 rounded-full bg-amber-400 ring-2 ring-black" />
                           )}
                         </>
                       )}
@@ -209,6 +278,203 @@ export function Sidebar() {
               </div>
             );
           })}
+
+          {/* ── Play Store-Style Workspace & Client Apps Section ── */}
+          <div className="mt-4 pt-3 border-t border-white/[0.08]">
+            {!collapsed ? (
+              <div className="space-y-1.5">
+                {/* Play Store Section Header */}
+                <div className="w-full flex items-center justify-between rounded-xl p-1 bg-white/[0.03] border border-white/5">
+                  {/* Dropdown toggle button */}
+                  <button
+                    type="button"
+                    onClick={handleToggleApps}
+                    className="flex-1 min-w-0 flex items-center justify-between px-2.5 py-2 rounded-lg hover:bg-white/[0.05] active:bg-white/10 transition-colors cursor-pointer select-none text-left"
+                    aria-expanded={appsOpen}
+                  >
+                    <div className="flex items-center gap-2 min-w-0">
+                      <div className="h-6 w-6 rounded-lg bg-blue-500/15 border border-blue-400/25 flex items-center justify-center text-blue-400 shrink-0">
+                        <LayoutGrid className="h-3.5 w-3.5" />
+                      </div>
+                      <span className="text-xs font-semibold text-white tracking-wide truncate">
+                        Workspace Apps
+                      </span>
+                      {apps.length > 0 && (
+                        <span className="rounded-full bg-white/10 px-1.5 py-0.2 text-[9px] font-bold text-ink-dim shrink-0">
+                          {apps.length}
+                        </span>
+                      )}
+                    </div>
+                    <div className="h-6 w-6 rounded-md flex items-center justify-center text-ink-faint shrink-0 ml-1">
+                      <ChevronDown
+                        className={cn(
+                          "h-3.5 w-3.5 transition-transform duration-200",
+                          appsOpen ? "rotate-180 text-white" : "rotate-0 text-ink-faint"
+                        )}
+                      />
+                    </div>
+                  </button>
+
+                  {/* Dedicated Add Button */}
+                  <button
+                    type="button"
+                    onClick={handleOpenAddApp}
+                    className="h-8 px-2.5 rounded-lg bg-blue-500/20 hover:bg-blue-500/30 active:bg-blue-500/40 border border-blue-400/30 text-xs font-medium text-blue-300 flex items-center gap-1 transition-all cursor-pointer shrink-0 ml-1"
+                    title="Add app"
+                  >
+                    <Plus className="h-3.5 w-3.5" />
+                    <span>Add</span>
+                  </button>
+                </div>
+
+                {/* Play Store App Cards Showcase */}
+                {appsOpen && (
+                  <div className="space-y-1.5 pt-1">
+                    {apps.length === 0 ? (
+                      <div className="p-3 text-center rounded-xl bg-white/[0.02] border border-white/5">
+                        <p className="text-[11px] text-ink-faint">No apps added yet.</p>
+                        <button
+                          type="button"
+                          onClick={handleOpenAddApp}
+                          className="mt-1.5 text-xs text-blue-400 hover:underline font-medium inline-flex items-center gap-1 cursor-pointer"
+                        >
+                          <Plus className="h-3 w-3" /> Add your first app
+                        </button>
+                      </div>
+                    ) : (
+                      <>
+                        {apps.map((app) => (
+                          <div
+                            key={app.id}
+                            className="group relative flex items-center justify-between rounded-xl p-2 border border-white/5 bg-white/[0.02] hover:border-white/15 hover:bg-white/[0.06] active:bg-white/10 transition-all gap-2"
+                          >
+                            <a
+                              href={app.url}
+                              target="_blank"
+                              rel="noopener noreferrer"
+                              onClick={() => setMobileOpen(false)}
+                              className="flex-1 min-w-0 flex items-center gap-2.5 cursor-pointer"
+                            >
+                              {/* Squircle App Icon (Play Store style) */}
+                              <div className="relative h-9 w-9 rounded-xl overflow-hidden border border-white/15 bg-black/60 flex items-center justify-center shrink-0 shadow-md group-hover:scale-105 transition-transform">
+                                <img
+                                  src={app.imageUrl || "/duokarma-logo.jpeg"}
+                                  alt={app.title}
+                                  className="h-full w-full object-cover"
+                                  onError={(e) => {
+                                    (e.target as HTMLImageElement).src = "/duokarma-logo.jpeg";
+                                  }}
+                                />
+                              </div>
+
+                              {/* App Name and Category/Domain */}
+                              <div className="min-w-0 flex-1">
+                                <p className="truncate text-xs font-semibold text-white group-hover:text-blue-400 transition-colors">
+                                  {app.title}
+                                </p>
+                                <p className="truncate text-[10px] text-ink-faint flex items-center gap-1 mt-0.5">
+                                  <span className="h-1.5 w-1.5 rounded-full bg-emerald-400 shrink-0" />
+                                  <span className="truncate">{app.category || "Client App"}</span>
+                                </p>
+                              </div>
+                            </a>
+
+                            {/* Actions: OPEN pill + Edit pencil */}
+                            <div className="flex items-center gap-1 shrink-0">
+                              <a
+                                href={app.url}
+                                target="_blank"
+                                rel="noopener noreferrer"
+                                onClick={() => setMobileOpen(false)}
+                                className="px-2 py-0.5 rounded-full border border-blue-500/30 bg-blue-500/10 text-blue-400 hover:bg-blue-500/20 text-[10px] font-semibold tracking-wide flex items-center gap-0.5 transition-colors cursor-pointer"
+                              >
+                                <span>OPEN</span>
+                                <ArrowUpRight className="h-2.5 w-2.5" />
+                              </a>
+
+                              <button
+                                type="button"
+                                onClick={(e) => handleOpenEditApp(e, app.id)}
+                                className="p-1.5 rounded-lg text-ink-faint hover:text-white hover:bg-white/10 active:bg-white/20 transition-all cursor-pointer"
+                                title={`Edit ${app.title}`}
+                                aria-label={`Edit ${app.title}`}
+                              >
+                                <Pencil className="h-3.5 w-3.5" />
+                              </button>
+                            </div>
+                          </div>
+                        ))}
+
+                        <button
+                          type="button"
+                          onClick={handleOpenAddApp}
+                          className="w-full flex items-center justify-center gap-1.5 rounded-xl border border-dashed border-white/10 py-2 text-xs text-ink-faint hover:text-white hover:border-white/20 hover:bg-white/[0.03] active:bg-white/10 transition-colors cursor-pointer mt-1"
+                        >
+                          <Plus className="h-3.5 w-3.5" />
+                          <span>Add New App</span>
+                        </button>
+                      </>
+                    )}
+                  </div>
+                )}
+              </div>
+            ) : (
+              <div className="flex flex-col items-center gap-1.5 pb-2">
+                <Tooltip>
+                  <TooltipTrigger asChild>
+                    <button
+                      type="button"
+                      onClick={() => {
+                        setSelectedEditAppId(null);
+                        setManageAppsOpen(true);
+                      }}
+                      className="rounded p-1 text-ink-faint hover:text-white hover:bg-white/10 transition-colors"
+                      aria-label="Add or manage apps"
+                    >
+                      <Plus className="h-3.5 w-3.5" />
+                    </button>
+                  </TooltipTrigger>
+                  <TooltipContent side="right">
+                    Add or manage apps
+                  </TooltipContent>
+                </Tooltip>
+
+                {apps.map((app) => (
+                  <Tooltip key={app.id}>
+                    <TooltipTrigger asChild>
+                      <a
+                        href={app.url}
+                        target="_blank"
+                        rel="noopener noreferrer"
+                        onClick={() => setMobileOpen(false)}
+                        className="group relative flex items-center justify-center rounded-[var(--radius-control)] py-1.5 transition-colors hover:bg-white/10"
+                      >
+                        <div className="h-6 w-6 rounded-md overflow-hidden border border-white/10 bg-black/40 flex items-center justify-center shrink-0 transition-transform group-hover:scale-110 shadow-sm">
+                          <img
+                            src={app.imageUrl || "/duokarma-logo.jpeg"}
+                            alt={app.title}
+                            className="h-full w-full object-cover"
+                            onError={(e) => {
+                              (e.target as HTMLImageElement).src = "/duokarma-logo.jpeg";
+                            }}
+                          />
+                        </div>
+                      </a>
+                    </TooltipTrigger>
+                    <TooltipContent side="right" className="flex items-center gap-2">
+                      <span>{app.title}</span>
+                      {app.category && (
+                        <span className="text-[10px] text-ink-faint font-mono">
+                          ({app.category})
+                        </span>
+                      )}
+                      <ArrowUpRight className="h-3 w-3 opacity-70" />
+                    </TooltipContent>
+                  </Tooltip>
+                ))}
+              </div>
+            )}
+          </div>
         </nav>
 
         {/* ── User profile + Collapse ── */}
@@ -216,7 +482,17 @@ export function Sidebar() {
           {/* User row */}
           {!collapsed && (
             <div className="flex items-center gap-2.5 px-3 py-2.5">
-              <img src="/logo.jpeg" alt="Admin Logo" className="h-7 w-7 shrink-0 rounded-md object-cover" />
+              {avatarUrl ? (
+                <img
+                  src={avatarUrl}
+                  alt={displayName}
+                  className="h-7 w-7 shrink-0 rounded-full object-cover border border-white/10"
+                />
+              ) : (
+                <div className="flex h-7 w-7 shrink-0 items-center justify-center rounded-full bg-[var(--color-accent)] text-xs font-semibold text-white shadow-sm ring-1 ring-white/10">
+                  {displayName[0]?.toUpperCase() ?? "A"}
+                </div>
+              )}
               <div className="min-w-0 flex-1">
                 <p className="truncate text-xs font-medium text-ink">{displayName}</p>
                 <p className="truncate text-[10px] text-ink-faint">{userEmail}</p>
@@ -248,6 +524,14 @@ export function Sidebar() {
           </button>
         </div>
       </motion.aside>
+
+      {/* ── Ecosystem Apps Management Modal ── */}
+      <ManageAppsDialog
+        open={manageAppsOpen}
+        onOpenChange={setManageAppsOpen}
+        initialEditAppId={selectedEditAppId}
+        initialMode={manageAppsMode}
+      />
     </>
   );
 }

@@ -2,31 +2,50 @@ import React, { useState, useEffect, Suspense } from 'react';
 import { useMotionValue, useSpring, useMotionTemplate, motion } from 'framer-motion';
 import { Nav } from '@/components/landing/Nav';
 import { Hero } from '@/components/landing/Hero';
-import { Cursor } from '@/components/landing/ui/Cursor';
 import { LoadingScreen } from '@/components/landing/ui/LoadingScreen';
-import { COLORS, FONT_IMPORT } from '@/components/landing/ui/theme';
+import { COLORS } from '@/components/landing/ui/theme';
 import { BottomDock } from '@/components/landing/BottomDock';
-import { CommandPalette } from '@/components/landing/CommandPalette';
 import { IntroProvider } from '@/context/IntroContext';
 import { useIntro } from '@/hooks/use-intro';
 
-// Lazy load below-the-fold components
-const About = React.lazy(() => import('@/components/landing/About').then(m => ({ default: m.About })));
-const WhatWeBuild = React.lazy(() => import('@/components/landing/WhatWeBuild').then(m => ({ default: m.WhatWeBuild })));
-const Showcase = React.lazy(() => import('@/components/landing/Showcase').then(m => ({ default: m.Showcase })));
-const Services = React.lazy(() => import('@/components/landing/Services').then(m => ({ default: m.Services })));
-const GlobalPresence = React.lazy(() => import('@/components/landing/GlobalPresence').then(m => ({ default: m.GlobalPresence })));
-const Process = React.lazy(() => import('@/components/landing/Process').then(m => ({ default: m.Process })));
-const Stats = React.lazy(() => import('@/components/landing/Stats').then(m => ({ default: m.Stats })));
-const Contact = React.lazy(() => import('@/components/landing/Contact').then(m => ({ default: m.Contact })));
-const Footer = React.lazy(() => import('@/components/landing/Footer').then(m => ({ default: m.Footer })));
-// AmbientEffects removed to improve performance and remove particle effects
+// Detect touch/mobile devices — module-level, no re-renders
+const isTouchDevice =
+  typeof window !== 'undefined' && window.matchMedia('(hover: none)').matches;
+
+// Lazy-load the cursor (desktop-only premium effect)
+const Cursor = !isTouchDevice
+  ? React.lazy(() =>
+      import('@/components/landing/ui/Cursor').then((m) => ({ default: m.Cursor }))
+    )
+  : null;
+
+// Lazy load below-the-fold components — each in its own Suspense boundary
+const About = React.lazy(() => import('@/components/landing/About').then((m) => ({ default: m.About })));
+const WhatWeBuild = React.lazy(() => import('@/components/landing/WhatWeBuild').then((m) => ({ default: m.WhatWeBuild })));
+const Showcase = React.lazy(() => import('@/components/landing/Showcase').then((m) => ({ default: m.Showcase })));
+const Services = React.lazy(() => import('@/components/landing/Services').then((m) => ({ default: m.Services })));
+const GlobalPresence = React.lazy(() => import('@/components/landing/GlobalPresence').then((m) => ({ default: m.GlobalPresence })));
+const Process = React.lazy(() => import('@/components/landing/Process').then((m) => ({ default: m.Process })));
+const Stats = React.lazy(() => import('@/components/landing/Stats').then((m) => ({ default: m.Stats })));
+const Contact = React.lazy(() => import('@/components/landing/Contact').then((m) => ({ default: m.Contact })));
+const Footer = React.lazy(() => import('@/components/landing/Footer').then((m) => ({ default: m.Footer })));
+
+// CommandPalette is keyboard-only — defer mount until first Ctrl+K
+const CommandPalette = React.lazy(() =>
+  import('@/components/landing/CommandPalette').then((m) => ({ default: m.CommandPalette }))
+);
+
+/** Minimal skeleton shown while each section loads */
+function SectionSkeleton({ height = 200 }: { height?: number }) {
+  return <div style={{ height }} aria-hidden="true" />;
+}
 
 // Inner component that consumes intro context for the fade-in effect
 function LandingPageInner() {
   const [cmdOpen, setCmdOpen] = useState(false);
+  const [cmdMounted, setCmdMounted] = useState(false);
 
-  // ── Mouse-light tracking — Framer Motion value system ──────────────────────
+  // ── Mouse-light tracking — only on desktop ──────────────────────────────────
   // Using useMotionValue + useSpring instead of useState+rAF eliminates full
   // React re-renders on every animation frame. The gradient <motion.div> reads
   // the motion values directly — zero React re-renders while the cursor moves.
@@ -36,14 +55,15 @@ function LandingPageInner() {
   const smoothY = useSpring(rawY, { stiffness: 60, damping: 20, mass: 0.5 });
 
   // Builds the gradient string reactively from motion values — no setState needed
-  const background = useMotionTemplate`radial-gradient(500px circle at ${smoothX}px ${smoothY}px, rgba(201,168,118,0.055) 0%, transparent 70%)`;
+  const background = useMotionTemplate`radial-gradient(500px circle at ${smoothX}px ${smoothY}px, rgba(175,221,255,0.055) 0%, transparent 70%)`;
 
   useEffect(() => {
+    if (isTouchDevice) return; // Skip on mobile — no mouse to track
     const onMove = (e: MouseEvent) => {
       rawX.set(e.clientX);
       rawY.set(e.clientY);
     };
-    window.addEventListener('mousemove', onMove);
+    window.addEventListener('mousemove', onMove, { passive: true });
     return () => window.removeEventListener('mousemove', onMove);
   }, [rawX, rawY]);
 
@@ -54,11 +74,12 @@ function LandingPageInner() {
     window.scrollTo(0, 0);
   }, []);
 
-  // ⌘K / Ctrl+K listener
+  // ⌘K / Ctrl+K — mount CommandPalette on first use
   useEffect(() => {
     const onKey = (e: KeyboardEvent) => {
       if ((e.metaKey || e.ctrlKey) && e.key === 'k') {
         e.preventDefault();
+        setCmdMounted(true);
         setCmdOpen((o) => !o);
       }
     };
@@ -77,10 +98,11 @@ function LandingPageInner() {
         overflowX: 'hidden',
         opacity: introDone ? 1 : 0,
         filter: introDone ? 'blur(0px)' : 'blur(4px)',
-        transition: 'opacity 0.8s cubic-bezier(0.16,1,0.3,1), filter 0.8s cubic-bezier(0.16,1,0.3,1)',
+        transition: isTouchDevice
+          ? 'opacity 0.15s ease, filter 0.15s ease'
+          : 'opacity 0.8s cubic-bezier(0.16,1,0.3,1), filter 0.8s cubic-bezier(0.16,1,0.3,1)',
       }}
     >
-      <style>{FONT_IMPORT}</style>
       <style>{`
         * { box-sizing: border-box; }
         body { margin: 0; }
@@ -90,8 +112,6 @@ function LandingPageInner() {
           * { animation-duration: 0.01ms !important; transition-duration: 0.01ms !important; }
         }
       `}</style>
-
-      {/* Ambient effects removed for performance */}
 
       {/* Noise texture overlay */}
       <div
@@ -121,35 +141,65 @@ function LandingPageInner() {
         }}
       />
 
-      {/* Mouse light — champagne radial glow driven by motion values (zero re-renders) */}
-      <motion.div
-        aria-hidden="true"
-        style={{
-          position: 'fixed',
-          inset: 0,
-          pointerEvents: 'none',
-          zIndex: 2,
-          background,
-        }}
-      />
+      {/* Mouse light — desktop only, zero re-renders via motion values */}
+      {!isTouchDevice && (
+        <motion.div
+          aria-hidden="true"
+          style={{
+            position: 'fixed',
+            inset: 0,
+            pointerEvents: 'none',
+            zIndex: 2,
+            background,
+          }}
+        />
+      )}
 
-      <Cursor />
+      {/* Cursor — desktop only, lazy-loaded */}
+      {Cursor && (
+        <Suspense fallback={null}>
+          <Cursor />
+        </Suspense>
+      )}
+
       <Nav />
       <BottomDock />
-      <CommandPalette open={cmdOpen} onClose={() => setCmdOpen(false)} />
+
+      {/* CommandPalette — mounted lazily on first Ctrl+K */}
+      {cmdMounted && (
+        <Suspense fallback={null}>
+          <CommandPalette open={cmdOpen} onClose={() => setCmdOpen(false)} />
+        </Suspense>
+      )}
 
       <Hero />
-      
-      {/* Lazy loaded sections */}
-      <Suspense fallback={<div className="h-[200px]" />}>
+
+      {/* Each section in its own Suspense so one slow section never blocks the rest */}
+      <Suspense fallback={<SectionSkeleton height={300} />}>
         <About />
+      </Suspense>
+      <Suspense fallback={<SectionSkeleton height={400} />}>
         <WhatWeBuild />
+      </Suspense>
+      <Suspense fallback={<SectionSkeleton height={600} />}>
         <Showcase />
+      </Suspense>
+      <Suspense fallback={<SectionSkeleton height={400} />}>
         <Services />
+      </Suspense>
+      <Suspense fallback={<SectionSkeleton height={500} />}>
         <GlobalPresence />
+      </Suspense>
+      <Suspense fallback={<SectionSkeleton height={400} />}>
         <Process />
+      </Suspense>
+      <Suspense fallback={<SectionSkeleton height={300} />}>
         <Stats />
+      </Suspense>
+      <Suspense fallback={<SectionSkeleton height={500} />}>
         <Contact />
+      </Suspense>
+      <Suspense fallback={<SectionSkeleton height={100} />}>
         <Footer />
       </Suspense>
     </main>
