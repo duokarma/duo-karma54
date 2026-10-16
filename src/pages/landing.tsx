@@ -22,7 +22,6 @@ const Cursor = !isTouchDevice
 // Lazy load below-the-fold components — each in its own Suspense boundary
 const About = React.lazy(() => import('@/components/landing/About').then((m) => ({ default: m.About })));
 const WhatWeBuild = React.lazy(() => import('@/components/landing/WhatWeBuild').then((m) => ({ default: m.WhatWeBuild })));
-const Showcase = React.lazy(() => import('@/components/landing/Showcase').then((m) => ({ default: m.Showcase })));
 const MagazineSection = React.lazy(() => import('@/components/landing/MagazineSection').then((m) => ({ default: m.MagazineSection })));
 const Services = React.lazy(() => import('@/components/landing/Services').then((m) => ({ default: m.Services })));
 const PraiseMarquee = React.lazy(() => import('@/components/landing/PraiseMarquee').then((m) => ({ default: m.PraiseMarquee })));
@@ -182,9 +181,6 @@ function LandingPageInner() {
       </Suspense>
       <Suspense fallback={<SectionSkeleton height={400} />}>
         <WhatWeBuild />
-      </Suspense>
-      <Suspense fallback={<SectionSkeleton height={600} />}>
-        <Showcase />
       </Suspense>
       <Suspense fallback={<SectionSkeleton height={600} />}>
         <MagazineSection />

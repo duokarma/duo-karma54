@@ -222,6 +222,11 @@ export function WhatWeBuild() {
   const isAnimatingRef = useRef(false);
   const activeAnimationRef = useRef<{ stop: () => void } | null>(null);
 
+  const sectionRef = useRef<HTMLElement>(null);
+  const scrollTimeoutRef = useRef<NodeJS.Timeout | null>(null);
+  const wheelTimeoutRef = useRef<NodeJS.Timeout | null>(null);
+  const lastScrollYRef = useRef<number>(typeof window !== 'undefined' ? window.scrollY : 0);
+
   // Responsive breakpoint and reduced-motion detection
   useEffect(() => {
     const handleResize = () => setScreenWidth(window.innerWidth);
@@ -283,6 +288,74 @@ export function WhatWeBuild() {
     rotateTo(currentSnapped + stepAngle);
   }, [rotation, stepAngle, rotateTo]);
 
+  // Direct mouse wheel / trackpad scroll over the 3D cylinder
+  const handleWheel = useCallback((e: React.WheelEvent) => {
+    if (activeModule || isDragging) return;
+
+    const delta = Math.abs(e.deltaX) > Math.abs(e.deltaY) ? e.deltaX : e.deltaY;
+    if (Math.abs(delta) < 1) return;
+
+    setIsHovered(true);
+    if (activeAnimationRef.current) activeAnimationRef.current.stop();
+
+    const wheelSensitivity = isMobile ? 0.32 : 0.22;
+    rotation.set(rotation.get() - delta * wheelSensitivity);
+
+    if (wheelTimeoutRef.current) clearTimeout(wheelTimeoutRef.current);
+    wheelTimeoutRef.current = setTimeout(() => {
+      if (!isDragging && !activeModule) {
+        const current = rotation.get();
+        const target = Math.round(current / stepAngle) * stepAngle;
+        rotateTo(target);
+      }
+    }, 180);
+  }, [activeModule, isDragging, isMobile, rotation, stepAngle, rotateTo]);
+
+  // Window scroll-driven rotation: as user scrolls down/up the page, the cylinder rotates
+  useEffect(() => {
+    if (prefersReducedMotion) return;
+
+    let ticking = false;
+
+    const handleWindowScroll = () => {
+      const currentScrollY = window.scrollY;
+      const delta = currentScrollY - lastScrollYRef.current;
+      lastScrollYRef.current = currentScrollY;
+
+      if (!sectionRef.current) return;
+      const rect = sectionRef.current.getBoundingClientRect();
+      const inView = rect.top < window.innerHeight && rect.bottom > 0;
+
+      if (inView && !isDragging && !activeModule) {
+        if (!ticking) {
+          requestAnimationFrame(() => {
+            if (activeAnimationRef.current) activeAnimationRef.current.stop();
+            const scrollFactor = isMobile ? 0.18 : 0.12;
+            rotation.set(rotation.get() - delta * scrollFactor);
+            ticking = false;
+          });
+          ticking = true;
+        }
+
+        if (scrollTimeoutRef.current) clearTimeout(scrollTimeoutRef.current);
+        scrollTimeoutRef.current = setTimeout(() => {
+          if (!isDragging && !activeModule) {
+            const current = rotation.get();
+            const target = Math.round(current / stepAngle) * stepAngle;
+            rotateTo(target);
+          }
+        }, 220);
+      }
+    };
+
+    window.addEventListener('scroll', handleWindowScroll, { passive: true });
+    return () => {
+      window.removeEventListener('scroll', handleWindowScroll);
+      if (scrollTimeoutRef.current) clearTimeout(scrollTimeoutRef.current);
+      if (wheelTimeoutRef.current) clearTimeout(wheelTimeoutRef.current);
+    };
+  }, [prefersReducedMotion, isDragging, activeModule, isMobile, rotation, stepAngle, rotateTo]);
+
   // Automatic idle rotation: advances to next card every 4.2s, pausing on hover, drag, modal, or reduced motion
   useEffect(() => {
     if (prefersReducedMotion) return;
@@ -328,6 +401,7 @@ export function WhatWeBuild() {
 
   return (
     <section
+      ref={sectionRef}
       id="work"
       style={{
         background: COLORS.bg,
@@ -383,6 +457,7 @@ export function WhatWeBuild() {
         onTouchEnd={() => {
           setTimeout(() => setIsHovered(false), 2500);
         }}
+        onWheel={handleWheel}
       >
         {/* Edge Vignettes to blend side cards into background */}
         <div

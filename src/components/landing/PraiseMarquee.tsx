@@ -6,21 +6,23 @@ interface MarqueeItem {
 }
 
 const ROW_1: MarqueeItem[] = [
-  { text: 'Building Software That Lasts', bold: true },
-  { text: 'Turning Complex Ideas Into Simple Products', bold: false },
-  { text: 'Thoughtful Engineering', bold: true },
-  { text: 'Business-First Technology', bold: false },
-  { text: 'No Templates. No Shortcuts.', bold: true },
-  { text: 'Systems Built To Scale', bold: false },
+  { text: 'Bloated Estimates & Scope Creep', bold: true },
+  { text: 'Endless Standup Meetings That Could Be an Email', bold: false },
+  { text: 'Over-Engineering Simple CRUD Apps', bold: true },
+  { text: 'Deploying Untested Code on Friday at 5 PM', bold: false },
+  { text: 'Buzzword Bingo & Shallow AI Hype', bold: true },
+  { text: 'Unindexed SQL Queries in Production', bold: false },
+  { text: 'Writing 60-Page PRDs Nobody Ever Reads', bold: true },
 ];
 
 const ROW_2: MarqueeItem[] = [
-  { text: 'From First Idea To Final Deployment', bold: false },
-  { text: 'Less Busywork. Better Workflows.', bold: true },
-  { text: 'Built Around Your Business', bold: false },
-  { text: 'Clean Code. Clear Communication.', bold: true },
-  { text: 'Designed With Purpose', bold: false },
-  { text: 'Software That Solves Real Problems', bold: true },
+  { text: 'Vendor Lock-in & Obfuscated Codebases', bold: false },
+  { text: 'Copy-Pasting Fragile WordPress Templates', bold: true },
+  { text: 'Saying Yes to Bad System Architecture', bold: false },
+  { text: 'Silent Failures Without Monitored Alerts', bold: true },
+  { text: 'Manual Database Migrations & Downtime', bold: false },
+  { text: 'Vanity Metrics & Fake Telemetry Dashboards', bold: true },
+  { text: 'Reinventing Solved Wheels For No Reason', bold: false },
 ];
 
 function MarqueeRow({
@@ -100,7 +102,7 @@ export function PraiseMarquee() {
           className="inline-block text-[11px] sm:text-[12px] font-medium tracking-[0.22em] uppercase text-[#77736B]"
           style={{ fontFamily: "'Inter', sans-serif" }}
         >
-          THINGS WE'RE GOOD AT...
+          THINGS WE ARE NOT GOOD AT...
         </span>
       </div>
 
