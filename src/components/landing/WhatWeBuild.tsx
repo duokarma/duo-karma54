@@ -616,7 +616,7 @@ export function WhatWeBuild() {
       </div>
 
       {/* Carousel Controls */}
-      <div className="max-w-[1240px] mx-auto px-6 mt-4 flex items-center justify-center gap-5">
+      <div className="max-w-[1240px] mx-auto px-6 mt-4 flex items-center justify-center gap-3">
         <button
           type="button"
           onClick={handlePrev}
@@ -627,10 +627,6 @@ export function WhatWeBuild() {
             <polyline points="15 18 9 12 15 6" />
           </svg>
         </button>
-
-        <span className="font-mono text-xs text-[#77736B] tracking-wider uppercase">
-          Drag cylinder or use arrows
-        </span>
 
         <button
           type="button"
