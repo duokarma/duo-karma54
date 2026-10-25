@@ -8,6 +8,13 @@ import { AuthProvider } from "@/hooks/use-auth";
 // ── Marketing pages (marketing chunk — no dashboard deps) ──────────────────
 import { LandingPage } from "@/pages/landing";
 
+// ── Interactive Dubai Real Estate Demo (Public Demo) ───────────────────────
+const DubaiRealEstateDemoPage = lazy(() =>
+  import("@/pages/dubai-real-estate-demo").then((m) => ({
+    default: m.DubaiRealEstateDemoPage,
+  }))
+);
+
 // ── Dashboard shell (separate async chunk) ────────────────────────────────
 // This single dynamic import carries: QueryClient, react-query, Radix providers,
 // cmdk, ToastProvider, TooltipProvider, SidebarProvider, CommandPaletteProvider,
@@ -30,6 +37,10 @@ function App() {
                 <Routes>
                   {/* ── Public marketing route ── */}
                   <Route path="/" element={<LandingPage />} />
+
+                  {/* ── Public Dubai Real Estate Demos ── */}
+                  <Route path="/demo/dubai-real-estate" element={<DubaiRealEstateDemoPage />} />
+                  <Route path="/demo/al-sayab" element={<DubaiRealEstateDemoPage />} />
 
                   {/* ── Dashboard shell (lazy chunk) ── */}
                   {/* We use a wildcard route so all other paths delegate to the shell,
