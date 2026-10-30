@@ -246,7 +246,7 @@ export function ManageAppsDialog({
   const handleResetDefaults = async () => {
     if (
       window.confirm(
-        "Reset all apps to original DuoKarma defaults (Ten11, WOW Salon, WOW Salon Admin, DuoKarma Main)?"
+        "Reset all apps to original DuoKarma defaults (Ten11, WOW Salon, WOW Salon Admin, DuoKarma Main, Pathway, Pathway Admin, Alvoun, Level Up)?"
       )
     ) {
       await resetToDefaults();

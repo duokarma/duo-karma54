@@ -45,20 +45,60 @@ export const DEFAULT_ECOSYSTEM_APPS: EcosystemApp[] = [
     category: "Official Hub",
     orderIndex: 3,
   },
+  // ── DuoKarma Own Projects ─────────────────────────────────
+  {
+    id: "pathway-website",
+    title: "Pathway",
+    url: "https://pathway-gamma-nine.vercel.app/",
+    imageUrl: "/apps/pathway-logo.png",
+    category: "Our Project",
+    orderIndex: 4,
+  },
+  {
+    id: "pathway-admin",
+    title: "Pathway Admin",
+    url: "https://pathway-rcpx.vercel.app/",
+    imageUrl: "/apps/pathway-logo.png",
+    category: "Our Project",
+    orderIndex: 5,
+  },
+  {
+    id: "alvoun",
+    title: "Alvoun",
+    url: "https://alvoun.vercel.app",
+    imageUrl: "/apps/alvoun-logo.png",
+    category: "Our Project",
+    orderIndex: 6,
+  },
+  {
+    id: "level-up",
+    title: "Level Up",
+    url: "https://level-up-six-wheat.vercel.app/",
+    imageUrl: "/apps/levelup-logo.svg",
+    category: "Our Project",
+    orderIndex: 7,
+  },
 ];
 
-const STORAGE_KEY = "dk_ecosystem_apps_v2";
+const STORAGE_KEY = "dk_ecosystem_apps_v3";
 const EVENT_NAME = "dk-ecosystem-apps-changed";
 
 function getLocalApps(): EcosystemApp[] {
   try {
-    const raw = localStorage.getItem(STORAGE_KEY);
+    const raw = localStorage.getItem(STORAGE_KEY) || localStorage.getItem("dk_ecosystem_apps_v2");
     if (!raw) {
       localStorage.setItem(STORAGE_KEY, JSON.stringify(DEFAULT_ECOSYSTEM_APPS));
       return DEFAULT_ECOSYSTEM_APPS;
     }
     const parsed = JSON.parse(raw);
     if (Array.isArray(parsed) && parsed.length > 0) {
+      const existingIds = new Set(parsed.map((a: EcosystemApp) => a.id));
+      const missingDefaults = DEFAULT_ECOSYSTEM_APPS.filter((a) => !existingIds.has(a.id));
+      if (missingDefaults.length > 0) {
+        const merged = [...parsed, ...missingDefaults];
+        localStorage.setItem(STORAGE_KEY, JSON.stringify(merged));
+        return merged;
+      }
       return parsed;
     }
   } catch (err) {
@@ -92,7 +132,7 @@ export function useEcosystemApps() {
     };
 
     const onStorage = (e: StorageEvent) => {
-      if (e.key === STORAGE_KEY) {
+      if (e.key === STORAGE_KEY || e.key === "dk_ecosystem_apps_v2") {
         setApps(getLocalApps());
       }
     };
@@ -134,6 +174,23 @@ export function useEcosystemApps() {
               createdAt: item.created_at,
               updatedAt: item.updated_at,
             }));
+
+            // Merge any default apps not yet in Supabase table
+            const existingIds = new Set(formatted.map((a) => a.id));
+            const missingDefaults = DEFAULT_ECOSYSTEM_APPS.filter((a) => !existingIds.has(a.id));
+            if (missingDefaults.length > 0) {
+              const seeds = missingDefaults.map((a) => ({
+                id: a.id,
+                title: a.title,
+                url: a.url,
+                image_url: a.imageUrl,
+                category: a.category,
+                order_index: a.orderIndex,
+              }));
+              supabase.from("ecosystem_apps").upsert(seeds).then(() => {});
+              formatted.push(...missingDefaults);
+            }
+
             setApps(formatted);
             saveLocalApps(formatted);
           } else {
